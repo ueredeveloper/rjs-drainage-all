@@ -1,7 +1,8 @@
 import { useContext, useEffect } from 'react';
 //import { createCircleRings } from '../tools';
-import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle } from '../../../services/shapes';
+import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle, find_points_in_rectangle } from '../../../services/shapes';
 import { SystemContext } from '../../MainFlow/Analyse';
+import { my_object } from '../../MainFlow/initial-state-grants';
 /**
 * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
   * @param {Object} map Map inicializado gmaps api.
@@ -130,18 +131,19 @@ const ElemDrawManager = ({ map }) => {
          * @param swy {float} Sudoeste longitude
          * @returns {array[]} Interferencias outorgadas.
        */
-        let rectangle = { nex: NE.lng(), ney: NE.lat(), swx: SW.lng(), swy: SW.lat() }
-        let points = await findPointsInsideRectangle(rectangle);
+        //let rectangle = { nex: NE.lng(), ney: NE.lat(), swx: SW.lng(), swy: SW.lat() }
+        
+        let markers = await find_points_in_rectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat());
+
+        console.log(markers)
+
         let id = Date.now();
 
         setOverlays(prev => {
           return {
             ...prev,
             rectangles: [...prev.rectangles, { id: id, ne: NE, sw: SW, draw: event.overlay }],
-            markers: [
-              ...prev.markers,
-              { points: points }
-            ]
+            markers: [...prev.markers, markers[0]]
           }
         })
 

@@ -1,6 +1,8 @@
+import { initial_state_grants } from "./initial-state-grants"
+
 const initialState = {
     "overlays": {
-        "markers": [],
+        "markers": initial_state_grants,
         "circles": [],
         "polygons": [],
         "rectangles": []

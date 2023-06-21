@@ -76,6 +76,40 @@ async function findPointsInASystem(tp_id, lat, lng) {
   return response;
 }
 
+/**
+   * Fetches data from the server using the specified rectangle coordinates
+   * @returns {Promise<void>} A Promise that resolves when the data is fetched and processed
+   */
+async function find_points_in_rectangle(xmin, ymin, xmax, ymax) {
+  console.log(xmin, ymin, xmax, ymax)
+  try {
+    const response = await fetch(url + '/find_points_in_rectangle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        xmin,
+        ymin,
+        xmax,
+        ymax
+      })
+    });
+    
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const data = await response.json();
+    console.log(data); // Process the received data
+    return data;
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 const njs_azure_url = `https://njs-azure.ueredeveloper.repl.co`;
 /**
 * Buscar a shape solicitada no servidor
@@ -114,4 +148,4 @@ async function findDemands(end_id) {
 }
 
 
-export { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle, findPointsInASystem, getUsers, findDemands, fetchShape}
+export { findPointsInsidePolygon, findPointsInsideRectangle, find_points_in_rectangle, findPointsInsideCircle, findPointsInASystem, getUsers, findDemands, fetchShape }

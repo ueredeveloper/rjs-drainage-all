@@ -5,6 +5,7 @@ import MapPanel from "./MapPanel";
 import AnalysePanel from "./AnalysePanel";
 import GrantsPanel from "./GrantsPanel";
 import { initialState } from "./initial-state";
+import { initial_state_grants } from "./initial-state-grants";
 
 export const SystemContext = createContext({});
 
@@ -14,8 +15,17 @@ export default function Analyse() {
     const [overlays, setOverlays] = useState(initialState.overlays);
 
     useEffect(()=>{
-        console.log(system, overlays)
-    }, [system, overlays])
+       
+
+            setOverlays(prev=>{
+                return {
+                    ...prev, 
+                    markers: initial_state_grants
+                }
+            })
+
+
+    }, [])
 
     return (
         <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
@@ -31,7 +41,9 @@ export default function Analyse() {
                 </Box>
             </Box>
             <Box sx={{ flex: 1 }}>
+            <SystemContext.Provider value={[system, setSystem, overlays, setOverlays]}>
                 <GrantsPanel />
+                </SystemContext.Provider>
             </Box>
         </Box>
     )

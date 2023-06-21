@@ -4,9 +4,8 @@ import MapContent from "./map/MapContent";
 
 export default function MapContainer() {
     return (
-        <Box sx={{ height: "100%"}}>
+        <Box sx={{ minHeight: 300, height: "100%"}}>
             <MapContent/>
-
         </Box>
     )
 }

@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
@@ -6,6 +6,8 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import AnalyseFlow from "./TableFlow";
 import TableGrants from "./TableGrants";
+import GrantsTable from "../Commom/GrantsTable";
+import { SystemContext } from './Analyse';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -40,31 +42,50 @@ function a11yProps(index) {
     };
 }
 
-export default function GrantsPanel () {
+export default function GrantsPanel() {
     const [value, setValue] = React.useState(0);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
+    const [system, setSystem, overlays, setOverlays] = useContext(SystemContext);
+
+    console.log(overlays.markers)
+
+
     return (
         <Box sx={{ width: "100%" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                    <Tab label="Item One" {...a11yProps(0)} />
-                    <Tab label="Item Two" {...a11yProps(1)} />
-                    <Tab label="Item Three" {...a11yProps(2)} />
+                    <Tab label="Superficial" {...a11yProps(0)} />
+                    <Tab label="Subterrânea" {...a11yProps(1)} />
+                    <Tab label="Lançamento" {...a11yProps(2)} />
+                    <Tab label="Barragem" {...a11yProps(3)} />
                 </Tabs>
             </Box>
-            <TabPanel value={value} index={0}>
-                <TableGrants />
-            </TabPanel>
-            <TabPanel value={value} index={1}>
-                Item Two
-            </TabPanel>
-            <TabPanel value={value} index={2}>
-                Item Three
-            </TabPanel>
+            {
+                overlays.markers.map(markers => {
+                    return (
+                        <>
+                            <TabPanel value={value} index={0}>
+                                <GrantsTable markers={markers.superficial_json} />
+                            </TabPanel>
+                            <TabPanel value={value} index={1}>
+                                <GrantsTable markers={markers.subterranea_json} />
+                            </TabPanel>
+                            <TabPanel value={value} index={2}>
+                                <GrantsTable markers={markers.lancamento_json} />
+                            </TabPanel>
+                            <TabPanel value={value} index={3}>
+                                <GrantsTable markers={markers.barragem_json} />
+                            </TabPanel>
+                        </>
+                    )
+                })
+            }
+
+
         </Box>
     );
 }
