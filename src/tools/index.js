@@ -1,8 +1,8 @@
 /**
-*  Converter uma união de shapes feita na jtst com formato do gmaps api para o formato que possa ser utilizado na arcgis rest service.
-*  @param {object[]} rings Array com coordenadas no formato gmaps api, ex: [{lat: -17, lng: -47},...]
-*  @returns {object[]} arcGis. Array no formato Arg Gis Rest Service, ex: [[[-47...,-15...],...,[-48...,-16...]]]
-*/
+ * Converte uma união de shapes feita na JTST com formato do Google Maps API para o formato que possa ser utilizado no ArcGIS REST Service.
+ * @param {object[]} rings - Array com coordenadas no formato do Google Maps API, por exemplo: [{lat: -17, lng: -47}, ...].
+ * @returns {object[]} - Array no formato do ArcGIS REST Service, por exemplo: [[[-47, ..., -15], ..., [-48, ..., -16]]].
+ */
 const gmapsToArcGis = (rings) => {
   // arcGis = [[]] => [[[-47,-16], [-47,-17], [-47,-18]]]
   let arcGis = [[]];
@@ -17,11 +17,11 @@ const gmapsToArcGis = (rings) => {
   return arcGis;
 }
 /**
-  * Criar linhas para cada ângulo do círculo (0 a 360º) e assim construir um polígono em formato circular para buscas de outorgas.
-  * @param {object} center. Latitude e longitude do centro de um círculo.
-  * @param {number} radius. Raio do circulo desenhado
-  * @return {array} rings. Retorna polígono em formato de círculo.
-  */
+ * Cria anéis para cada ângulo do círculo (0 a 360º) e constrói um polígono em formato circular para buscas de outorgas.
+ * @param {object} center - Latitude e longitude do centro de um círculo.
+ * @param {number} radius - Raio do círculo desenhado.
+ * @return {array} - Retorna polígono em formato de círculo.
+ */
 function createCircleRings(center, radius) {
   let angle = { start: 0, end: 360 }
   let rings = [];
@@ -40,10 +40,11 @@ function createCircleRings(center, radius) {
   }
   return rings;
 }
-/*
-*
-  *
-  */
+/**
+ * Converte um shape do PostGIS para o formato do Google Maps.
+ * @param {object} shape - Shape a ser convertido.
+ * @returns {object[]} - Array de coordenadas no formato do Google Maps.
+ */
 function converterPostgresToGmaps(shape) {
 
   if (shape.shape.type === 'MultiPolygon') {
@@ -67,10 +68,13 @@ function converterPostgresToGmaps(shape) {
 
 
 }
+
 /**
-* Abreviar valores (mil, milhares, bnilhares, ...) para mostrar na barra ( bar chart).
-  * link: https://stackoverflow.com/questions/9461621/format-a-number-as-2-5k-if-a-thousand-or-more-otherwise-900
-  */
+ * Abrevia valores para exibição em gráfico de barra.
+ * @param {number} num - Número a ser abreviado.
+ * @param {number} digits - Número de dígitos após a vírgula.
+ * @returns {string} - Valor abreviado.
+ */
 function nFormatter(num, digits) {
   const lookup = [
     { value: 1, symbol: "" },
@@ -88,67 +92,136 @@ function nFormatter(num, digits) {
   return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 /**
- * Analisar se é possível outorgar a partir da vazão requerida, vazões outorgadas etc.
+ * Analisa se é possível outorgar a partir da vazão requerida, vazões outorgadas etc.
+ * @param {object} _info - Informações sobre a outorga.
+ * @param {object[]} _points - Pontos de análise.
+ * @returns {object} - Resultado da análise.
  */
 function analyseItsAvaiable(_info, _points) {
-
   let _Q = 0;
   _points.map((_point) => {
-
     if (typeof _point.dt_demanda.vol_anual_ma === 'undefined') {
       return _Q += 0;
     } else {
       return _Q += parseFloat(_point.dt_demanda.vol_anual_ma);
     }
   });
-  // vazão explotável/ ano
+
+  // Vazão explotável/ano
   let _q_ex = _info.re_cm_ano;
-  // nº de pontos
+  // Número de pontos
   let _n_points = _points.length;
-  // somatório de vazão anual
+  // Somatório de vazão anual
   let _q_points = _Q;
-  // percentual de vazão utilizada
+  // Percentual de vazão utilizada
   let _q_points_per = (Number(_Q) * 100 / Number(_q_ex)).toFixed(4);
   if (isNaN(_q_points_per)) {
-    console.log('análise, porcentagem, NaN')
+    console.log('análise, porcentagem, NaN');
     _q_points_per = 0;
   }
 
   return {
-    bacia_nome: _info.bacia_nome,
-    // Unidade Hidrográfica
-    uh_label: _info.uh_label,
-    // Nome da UH
-    uh_nome: _info.uh_nome,
-    // Sitema (R3, P1)
-    sistema: _info.sistema,
-    // Código do Sitema
-    cod_plan: _info.cod_plan,
-    // Q explotável
-    q_ex: _q_ex,
-    // nº pontos
-    n_points: _n_points,
-    // Q outorgada
-    q_points: _q_points,
-    // % utilizada
-    q_points_per: _q_points_per,
-    // vol disponível
-    vol_avaiable: (Number(_q_ex) - Number(_q_points)).toFixed(4)
+    bacia_nome: _info.bacia_nome, // Nome da bacia
+    uh_label: _info.uh_label, // Unidade Hidrográfica
+    uh_nome: _info.uh_nome, // Nome da Unidade Hidrográfica
+    sistema: _info.sistema, // Sistema (R3, P1)
+    cod_plan: _info.cod_plan, // Código do Sistema
+    q_ex: _q_ex, // Vazão explotável
+    n_points: _n_points, // Número de pontos
+    q_points: _q_points, // Vazão outorgada
+    q_points_per: _q_points_per, // Percentual de vazão utilizada
+    vol_avaiable: (Number(_q_ex) - Number(_q_points)).toFixed(4) // Volume disponível
   };
 }
+
 /**
- * Adicionar pontos nos números, ex: 37274109,255484 para 37.274.109,255484.
- * @param {*} x 
- * @returns 
+ * Adiciona pontos separadores nos números, ex: 37274109,255484 para 37.274.109,255484.
+ * @param {*} x - O número a ser formatado.
+ * @returns {string} - O número formatado com os pontos separadores.
  */
 function numberWithCommas(x) {
-  // converte para float
-  x = parseFloat(x).toFixed(4)
-  // adiciona as pontuaçõas 2000000 => 2.000.000 e vírgula das casas decimais
+  // Converte para float e define a precisão de 4 casas decimais
+  x = parseFloat(x).toFixed(4);
+  // Divide o número em partes inteira e decimal
   var parts = x.toString().split(".");
+  // Adiciona os pontos separadores de milhares à parte inteira
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  // Junta novamente as partes inteira e decimal com o ponto decimal
   return parts.join(",");
 }
 
+/**
+ * Calcula a área de um retângulo com base nos limites fornecidos.
+ * @param {google.maps.LatLngBounds} bounds - Os limites do retângulo.
+ * @returns {number} - A área do retângulo.
+ */
+function calculateRectangleArea(bounds) {
+  var ne = bounds.getNorthEast();
+  var sw = bounds.getSouthWest();
 
-export { gmapsToArcGis, createCircleRings, converterPostgresToGmaps, nFormatter, analyseItsAvaiable, numberWithCommas }
+  // Calcula a largura usando a distância entre dois pontos no eixo leste-oeste
+  var width = window.google.maps.geometry.spherical.computeDistanceBetween(
+    new window.google.maps.LatLng(ne.lat(), ne.lng()),
+    new window.google.maps.LatLng(sw.lat(), ne.lng())
+  );
+
+  // Calcula a altura usando a distância entre dois pontos no eixo norte-sul
+  var height = window.google.maps.geometry.spherical.computeDistanceBetween(
+    new window.google.maps.LatLng(ne.lat(), ne.lng()),
+    new window.google.maps.LatLng(ne.lat(), sw.lng())
+  );
+
+  return Math.abs(width * height);
+}
+
+
+/**
+ * Calcula a área de um círculo com base no raio fornecido.
+ * @param {number} radius - Raio do círculo.
+ * @returns {number|string} - Área do círculo ou uma mensagem de erro se o raio for inválido.
+ */
+function calculateCircleArea(radius) {
+  if (radius >= 0) {
+    var area = Math.PI * Math.pow(radius, 2);
+    return area.toFixed(4);
+  } else {
+    return "Raio inválido";
+  }
+}
+
+/**
+ * Calcula a área de um polígono com base nos vértices fornecidos.
+ * @param {google.maps.Polygon} polygon - Polígono para calcular a área.
+ * @returns {number} - Área do polígono.
+ */
+function calculatePolygonArea(polygon) {
+  var path = polygon.getPath();
+  var coords = [];
+
+  for (var i = 0; i < path.getLength(); i++) {
+    var latLng = path.getAt(i);
+    coords.push({ lat: latLng.lat(), lng: latLng.lng() });
+  }
+
+  var area = window.google.maps.geometry.spherical.computeArea(coords);
+  return area;
+}
+
+/**
+ * Calcula o comprimento de uma polilinha com base nos pontos fornecidos.
+ * @param {google.maps.Polyline} polyline - Polilinha para calcular o comprimento.
+ * @returns {number} - Comprimento da polilinha em metros.
+ */
+function calculatePolylineLength(polyline) {
+  const lengthInMeters = window.google.maps.geometry.spherical.computeLength(polyline.getPath());
+  return lengthInMeters;
+}
+
+
+export {
+  gmapsToArcGis, createCircleRings,
+  converterPostgresToGmaps, nFormatter,
+  analyseItsAvaiable, numberWithCommas,
+  calculateCircleArea, calculateRectangleArea,
+  calculatePolylineLength, calculatePolygonArea
+}

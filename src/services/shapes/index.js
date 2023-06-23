@@ -95,15 +95,15 @@ async function find_points_in_rectangle(xmin, ymin, xmax, ymax) {
         ymax
       })
     });
-    
+
 
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
 
     const data = await response.json();
-    console.log(data); // Process the received data
-    return data;
+    // obter primeiro index da array
+    return data[0];
 
   } catch (error) {
     console.error(error);

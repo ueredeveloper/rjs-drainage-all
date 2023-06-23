@@ -3,9 +3,7 @@ import { initial_state_grants } from "./initial-state-grants"
 const initialState = {
     "overlays": {
         "markers": initial_state_grants,
-        "circles": [],
-        "polygons": [],
-        "rectangles": []
+        "shapes": []
     },
     "system": {
         "point": {
@@ -17,7 +15,7 @@ const initialState = {
             int_latitude: -15.775139,
             int_longitude: -47.939599,
             dt_demanda: { demandas: [] }
-          }],
+        }],
         // selected markers
         "sel_markers": [],
         "hg_shape": {

@@ -3,6 +3,8 @@ import { useContext, useEffect } from 'react';
 import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle, find_points_in_rectangle } from '../../../services/shapes';
 import { SystemContext } from '../../MainFlow/Analyse';
 import { my_object } from '../../MainFlow/initial-state-grants';
+import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea } from '../../../tools';
+import ElemInfoWindow from './ElemInfoWindow';
 /**
 * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
   * @param {Object} map Map inicializado gmaps api.
@@ -10,7 +12,26 @@ import { my_object } from '../../MainFlow/initial-state-grants';
   */
 const ElemDrawManager = ({ map }) => {
 
-  const [system, setSystem, overlays, setOverlays] = useContext(SystemContext)
+  const [system, setSystem, overlays, setOverlays] = useContext(SystemContext);
+
+  function setListener(shape, map) {
+    shape.draw.addListener("click", function (event) {
+
+      console.log('shape clicked event draw manager')
+
+      setOverlays(prev => {
+        const updateShape = prev.shapes.map(_shape => {
+          if (_shape.id === shape.id) {
+            return { ..._shape, position: event.latLng, map: map };
+          }
+          return _shape;
+        });
+
+        return { ...prev, shapes: updateShape };
+      });
+
+    });
+  }
 
   useEffect(() => {
 
@@ -24,6 +45,7 @@ const ElemDrawManager = ({ map }) => {
           window.google.maps.drawing.OverlayType.CIRCLE,
           window.google.maps.drawing.OverlayType.POLYGON,
           window.google.maps.drawing.OverlayType.RECTANGLE,
+          window.google.maps.drawing.OverlayType.POLYLINE
         ],
       },
       markerOptions: {
@@ -66,8 +88,14 @@ const ElemDrawManager = ({ map }) => {
 
       }
       if (event.type === 'circle') {
-        let { center, radius } = event.overlay;
-        let points = await findPointsInsideCircle(
+
+        let circle = event.overlay;
+        const { center, radius } = circle;
+        // adicionar o infowindow na lateral direita
+        const { lat: centerLat } = center;
+        const { lng: northEastLng } = circle.getBounds().getNorthEast();
+
+        let markers = await findPointsInsideCircle(
           {
             center: { lng: center.lng(), lat: center.lat() },
             radius: parseInt(radius)
@@ -75,6 +103,38 @@ const ElemDrawManager = ({ map }) => {
         );
         let id = Date.now();
 
+        let shape = {
+          id: Date.now(),
+          type: 'circle',
+          position: { lat: centerLat(), lng: northEastLng() },
+          map: map,
+          draw: event.overlay,
+          markers: markers,
+          area: calculateCircleArea(radius)
+        }
+
+        console.log(shape.area)
+
+        /*
+        window.google.maps.event.addListener(shape.draw, 'click', function(ev){
+         console.log('clicke ddd')
+      });*/
+
+        /* shape.draw.addListener('click', () => {
+           console.log('Circle clicked!');
+         });*/
+        //setListener(shape, map);
+
+
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
+
+
+        /*
         setOverlays(prev => {
           return {
             ...prev,
@@ -86,9 +146,11 @@ const ElemDrawManager = ({ map }) => {
             ]
 
           }
-        })
+        })*/
+
 
       }
+
       if (event.type === 'polygon') {
         // retorna array de coordenada no formato gmaps, ex: [{lat: -15, lng: -47}, ...]   
         let polygon = [];
@@ -99,8 +161,28 @@ const ElemDrawManager = ({ map }) => {
         polygon = [...polygon, polygon[0]]
 
         let points = await findPointsInsidePolygon(polygon);
-        let id = Date.now();
+        //let id = Date.now();
 
+        let shape = {
+          id: Date.now(),
+          type: 'polygon',
+          position: null,
+          map: null,
+          draw: event.overlay,
+          markers: await findPointsInsidePolygon(polygon),
+          area: calculatePolygonArea(event.overlay)
+        }
+
+        setListener(shape, map);
+
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
+
+        /*
         setOverlays(prev => {
           return {
             ...prev,
@@ -113,42 +195,65 @@ const ElemDrawManager = ({ map }) => {
               { points: points }
             ]
           }
-        })
+        })*/
 
 
       }
       /* Criação de um polígono a partir de um retângulo gmaps api
       */
       if (event.type === 'rectangle') {
+
         let bounds = event.overlay.getBounds();
         let NE = bounds.getNorthEast();
         let SW = bounds.getSouthWest();
-        /** SUPABASE
-         * Buscar pontos em um retângulo
-         * @param nex {float} Noroeste longitude
-         * @param ney {float} Noroeste latitude
-         * @param swx {float} Sudoeste longitude
-         * @param swy {float} Sudoeste longitude
-         * @returns {array[]} Interferencias outorgadas.
-       */
-        //let rectangle = { nex: NE.lng(), ney: NE.lat(), swx: SW.lng(), swy: SW.lat() }
-        
-        let markers = await find_points_in_rectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat());
 
-        console.log(markers)
+        let shape = {
+          id: Date.now(),
+          type: 'rectangle',
+          position: null,
+          map: null,
+          draw: event.overlay,
+          NE: NE,
+          SW: SW,
+          area: calculateRectangleArea(event.overlay.getBounds()),
+          markers: await find_points_in_rectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
+        }
 
-        let id = Date.now();
+        setListener(shape, map);
 
         setOverlays(prev => {
           return {
             ...prev,
-            rectangles: [...prev.rectangles, { id: id, ne: NE, sw: SW, draw: event.overlay }],
-            markers: [...prev.markers, markers[0]]
+            shapes: [...prev.shapes, shape]
           }
-        })
+        });
+
+      }
+      if (event.type === 'polyline') {
+
+        let shape = {
+          id: Date.now(),
+          type: 'polyline',
+          position: null,
+          map: null,
+          draw: event.overlay,
+          meters: calculatePolylineLength(event.overlay)
+
+        }
+
+        setListener(shape, map);
+
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
 
       }
     })
+
+
 
     _draw.setMap(map);
 
@@ -159,4 +264,7 @@ const ElemDrawManager = ({ map }) => {
 
 };
 
+
+
 export default ElemDrawManager;
+

@@ -6,6 +6,8 @@ import ElemDrawManager from './ElemDrawManager';
 import { orange } from '@mui/material/colors';
 import { SystemContext } from '../../MainFlow/Analyse';
 import ElemMarker from './ElemMarker';
+import ElemInfoWindow from './ElemInfoWindow';
+import { InfoWindow } from '@googlemaps/react-wrapper';
 
 
 function MapContent() {
@@ -16,8 +18,9 @@ function MapContent() {
   const [system, setSystem, overlays, setOverlays, shapes, setShapes] = useContext(SystemContext)
 
   useEffect(() => {
-    
+
   }, [overlays])
+
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
@@ -39,6 +42,12 @@ function MapContent() {
             })
           })
         */}
+        {overlays.shapes.map((shape, i) => {
+          if (shape.map !== null) {
+            return <ElemInfoWindow key={'shape_' + i} shape={shape} />
+          }
+
+        })}
       </Wrapper>
 
     </Box>

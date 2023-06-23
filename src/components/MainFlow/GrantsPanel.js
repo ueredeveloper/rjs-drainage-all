@@ -51,7 +51,7 @@ export default function GrantsPanel() {
 
     const [system, setSystem, overlays, setOverlays] = useContext(SystemContext);
 
-    console.log(overlays.markers)
+   // console.log(overlays.markers)
 
 
     return (
@@ -65,22 +65,22 @@ export default function GrantsPanel() {
                 </Tabs>
             </Box>
             {
-                overlays.markers.map(markers => {
+                overlays.markers.map((markers, i) => {
                     return (
-                        <>
+                        <div key={i}>
                             <TabPanel value={value} index={0}>
-                                <GrantsTable markers={markers.superficial_json} />
+                                <GrantsTable markers={markers.superficial_json !== null ? markers.superficial_json : []} />
                             </TabPanel>
                             <TabPanel value={value} index={1}>
-                                <GrantsTable markers={markers.subterranea_json} />
+                                <GrantsTable markers={markers.subterranea_json !== null ? markers.subterranea_json : []} />
                             </TabPanel>
                             <TabPanel value={value} index={2}>
-                                <GrantsTable markers={markers.lancamento_json} />
+                                <GrantsTable markers={markers.lancamento_json !== null ? markers.lancamento_json : []} />
                             </TabPanel>
                             <TabPanel value={value} index={3}>
-                                <GrantsTable markers={markers.barragem_json} />
+                                <GrantsTable markers={markers.barragem_json !== null ? markers.barragem_json : []} />
                             </TabPanel>
-                        </>
+                        </div>
                     )
                 })
             }

@@ -15,6 +15,10 @@ export default function Analyse() {
     const [overlays, setOverlays] = useState(initialState.overlays);
 
     useEffect(()=>{
+        console.log(overlays)
+    }, [overlays])
+
+    useEffect(()=>{
        
 
             setOverlays(prev=>{

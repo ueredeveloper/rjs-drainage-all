@@ -18,7 +18,8 @@ function ElemMap({ mode, map, setMap, zoom, center }) {
       setMap(
         new window.google.maps.Map(ref.current, {
           center,
-          zoom
+          zoom,
+          mapTypeId: 'hybrid'
         })
       );
     }
@@ -30,7 +31,7 @@ function ElemMap({ mode, map, setMap, zoom, center }) {
       // mode light dark
       mode === "dark" ? map.setOptions({ styles: darkMap }) : map.setOptions({ styles: [] });
       // click no mapa
-      map.addListener("click", onClick);
+     // map.addListener("click", onClick);
       // centralizar
       map.setCenter({ lat: parseFloat(center.lat), lng: parseFloat(center.lng) })
     }
