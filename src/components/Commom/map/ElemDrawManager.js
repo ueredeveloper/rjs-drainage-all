@@ -110,21 +110,10 @@ const ElemDrawManager = ({ map }) => {
           map: map,
           draw: event.overlay,
           markers: markers,
+          radius: radius,
           area: calculateCircleArea(radius)
+
         }
-
-        console.log(shape.area)
-
-        /*
-        window.google.maps.event.addListener(shape.draw, 'click', function(ev){
-         console.log('clicke ddd')
-      });*/
-
-        /* shape.draw.addListener('click', () => {
-           console.log('Circle clicked!');
-         });*/
-        //setListener(shape, map);
-
 
         setOverlays(prev => {
           return {
@@ -132,71 +121,32 @@ const ElemDrawManager = ({ map }) => {
             shapes: [...prev.shapes, shape]
           }
         });
-
-
-        /*
-        setOverlays(prev => {
-          return {
-            ...prev,
-            circles: [
-              ...prev.circles, { id: id, center: center, radius: radius, draw: event.overlay }],
-            markers: [
-              ...prev.markers,
-              { points: points }
-            ]
-
-          }
-        })*/
-
-
       }
 
       if (event.type === 'polygon') {
-        // retorna array de coordenada no formato gmaps, ex: [{lat: -15, lng: -47}, ...]   
-        let polygon = [];
-        event.overlay.getPath().getArray().forEach(p => {
-          polygon.push([p.lng(), p.lat()])
+        
+        let polygon = event.overlay;
+        // retorna array de coordenada no formato gmaps para busca no servidor. Ex: [{lat: -15, lng: -47}, ...]   
+        let serverPolygon = [];
+        polygon.getPath().getArray().forEach(p => {
+          serverPolygon.push([p.lng(), p.lat()])
         });
+        serverPolygon = [...serverPolygon, serverPolygon[0]];
 
-        polygon = [...polygon, polygon[0]]
-
-        let points = await findPointsInsidePolygon(polygon);
-        //let id = Date.now();
+        const pathArray = polygon.getPath().getArray();
+        // localização da infowindow, no começo do polígono
+        let minLat = pathArray[0].lat();
+        let minLng = pathArray[0].lng();
 
         let shape = {
           id: Date.now(),
           type: 'polygon',
-          position: null,
-          map: null,
+          position: { lat: minLat, lng: minLng },
+          map: map,
           draw: event.overlay,
-          markers: await findPointsInsidePolygon(polygon),
+          markers: await findPointsInsidePolygon(serverPolygon),
           area: calculatePolygonArea(event.overlay)
         }
-
-        setListener(shape, map);
-
-        setOverlays(prev => {
-          return {
-            ...prev,
-            shapes: [...prev.shapes, shape]
-          }
-        });
-
-        /*
-        setOverlays(prev => {
-          return {
-            ...prev,
-            polygons: [...prev.polygons, {
-              id: id,
-              rings: event.overlay.getPath().getArray().map(ll => { return { lat: ll.lat(), lng: ll.lng() } }), draw: event.overlay
-            }],
-            markers: [
-              ...prev.markers,
-              { points: points }
-            ]
-          }
-        })*/
-
 
       }
       /* Criação de um polígono a partir de um retângulo gmaps api
