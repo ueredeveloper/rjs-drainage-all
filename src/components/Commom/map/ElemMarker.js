@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
+import iconRed from '../../../assets/red.png';
+import iconGreen from '../../../assets/green.png';
+import iconOrange from '../../../assets/orange.png';
+import iconBlue from '../../../assets/blue.png';
+import iconPurple from '../../../assets/purple.png';
+import iconPink from '../../../assets/pink.png';
+import iconYellow from '../../../assets/yellow.png';
+import iconBrown from '../../../assets/brown.png';
+
 
 /**
  * Componente que representa um marcador no mapa.
  * @param {Object} props - Propriedades do componente.
- * @param {Object} props.marker - Objeto contendo as informações do marcador.
- * @param {number} props.marker.int_latitude - Latitude do marcador.
- * @param {number} props.marker.int_longitude - Longitude do marcador.
+ * @param {Object} props.info - Objeto contendo as informações do marcador.
+ * @param {number} props.info.int_latitude - Latitude do marcador.
+ * @param {number} props.info.int_longitude - Longitude do marcador.
  * @param {number} props.icon - Ícone do marcador.
  * @param {Object} props.map - Objeto do mapa onde o marcador será exibido.
  * @returns {null}
@@ -19,14 +28,41 @@ const ElemMarker = (props) => {
    * @param {number} tp_id - Tipo de identificação.
    * @returns {string} - Caminho do ícone.
    */
-  function setIcon(tp_id) {
-    if (tp_id === 0) {
-      return `https://www.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png`;
-    } else if (tp_id === 1) {
-      return `https://www.google.com/intl/en_us/mapfiles/ms/micons/green-dot.png`;
-    } else if (tp_id === 2) {
-      return `https://www.google.com/intl/en_us/mapfiles/ms/micons/orange-dot.png`;
+  function setIcon(ti_id, tp_id) {
+
+    //default = red
+    
+    // 1 - superficial
+    if (ti_id === 1) {
+      return iconGreen;
     }
+    // 2 - subterrâneo
+    else if (ti_id === 2) {
+      // manual
+      if (tp_id === 1) {
+        return iconBrown;
+      }
+      // tubular
+      else {
+        return iconBlue;
+      }
+      // 3 - lançamento de águas pluviais
+    } else if (ti_id === 3) {
+      return iconPurple;
+    }
+    // 4 - lançamento de efluentes
+    else if (ti_id === 4) {
+      return iconPink;
+    }
+    // 5 - barragem
+    else if (ti_id === 5) {
+      return iconYellow;
+    }
+    // 6 - caminhão pipa
+    else if (ti_id === 6) {
+      return iconOrange;
+    }
+
   }
 
   useEffect(() => {
@@ -42,16 +78,15 @@ const ElemMarker = (props) => {
   }, [marker]);
 
   if (marker) {
-    let { int_latitude, int_longitude } = props.marker;
-    let icon = props.icon;
+    let { int_latitude, int_longitude, ti_id, tp_id } = props.info;
 
     marker.setOptions({
-      icon: setIcon(icon),
+      icon: { url: setIcon(ti_id, tp_id), scaledSize: new window.google.maps.Size(30, 30) },
       position: { lat: parseFloat(int_latitude), lng: parseFloat(int_longitude) },
       map: props.map
     });
 
-    if (icon === 0) {
+    if (ti_id === 0) {
       marker.setAnimation(window.google.maps.Animation.BOUNCE);
     }
   }

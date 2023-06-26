@@ -14,16 +14,27 @@ superficial: {
     color: green
 }, 
 subterraneo: {
-   ti_id: 1 - manual || 2 - tubular
-   color: 1 - orange || 2 - blue
+   ti_id: 1 - manual    || 2 - tubular
+   color: 1 - brown     || 2 - blue
 }
-lancamento: {
+lancamento efluente: {
     color: purple
 },
+lançamento pluvial:{
+    color: pink
+}
 barragem:{
-    color: yellow
+    color: orange
 }
 ]
+
+DESCRICAO	                    ID_TIPO_INTERFERENCIA
+SUPERFICIAL	                    1
+SUBTERRANEA	                    2
+LANÇAMENTO DE ÁGUAS PLUVIAIS	3
+LANÇAMENTO DE EFLUENTES	        4
+BARRAGEM	                    5
+CAMINHÃO-PIPA	                6
 
 ```
 Cores dos marcadores
@@ -46,3 +57,6 @@ Cores dos marcadores
 6. Inserir buscas por NOME,CPF/CNPJ, ENDEREÇO, PROCESSO, NÚMERO DE
 ATO, BACIA, UH, RA
 7. Adicionar infowindow - gmaps api - com informações do marcador.
+8. Cores diferentes para os marcadores
+    26/06/2023 - Ok.
+    ícones: https://icons8.com/icon/PMQzP1Pr8GzE/google-maps

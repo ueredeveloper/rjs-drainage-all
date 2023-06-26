@@ -17,11 +17,12 @@ const ElemInfoWindow = ({ shape }) => {
         }
 
         if (shape.map && shape.position && infowindow) {
+            infowindow.setMap(null)
             infowindow.setPosition(shape.position);
             infowindow.setMap(shape.map);
 
         }
-    }, [shape.map, shape.position, infowindow])
+    }, [shape.map, shape.position, shape.radius, infowindow])
 
     return null;
 };
@@ -31,44 +32,61 @@ const setContent = (shape) => {
 
     if (shape.type === 'polyline') {
         let coordinates = [];
-        let htmlContent = '';
+        let htmlCoords = '';
 
         shape.draw.getPath().forEach((latLng) => {
             coordinates.push({ lat: latLng.lat(), lng: latLng.lng() });
         });
         coordinates.forEach((coordinate, index) => {
-            htmlContent += `coordenadas ${index + 1}: ${coordinate.lat}, ${coordinate.lng}<br>`;
+            htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}<br>`;
         });
         /* conversão: 1000 metros = 1km */
+        let meters = shape.meters.toFixed(3);
+        let formatMeters = numberWithCommas(meters)
+        let km = shape.meters / 1000;
+        let formatKm = numberWithCommas(km)
 
         return `
-            <div style="overflow-y: scroll; height: 8rem;  width: 20rem">
+            <div style="overflow-y: scroll; padding: 0px; height: 4rem;  width: 20rem">
                 <h3> Polilinha </h3>
-                <p><b> ${shape.meters.toFixed(3)} metros </b></p>
-                <p><b> ${(shape.meters / 1000).toFixed(3)} quilometros </b></p>
-                ${htmlContent}
+                <div style="font-size: 12px">
+                    <b> ${formatMeters} metros = ${formatKm} km </b>
+                <br/>
+                ${htmlCoords}
+                </div>
             </div>
         `
     }
     if (shape.type === 'rectangle') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
+
+        let areaM2 = shape.area.toFixed(2)
+        let formatAreaM2 = numberWithCommas(areaM2)
+        let areakKm2 = shape.area / 1000000
+        let formatAreaKm2 = numberWithCommas(areakKm2)
         return `
-        <div style="overflow-y: scroll; height: 8rem; width: 20rem">
-            <h3> Retângulo </h3>
-            <p><b> area: ${shape.area.toFixed(3)} m² </b></p>
-            <p><b> area: ${(shape.area / 1000000).toFixed(3)} km² </b></p>
-        </div>
-    `
+            <div style="overflow-y: scroll; height: 4rem; width: 20rem">
+                <h3> Retângulo </h3>
+                <div style="font-size: 12px">
+                    <b> Área: ${formatAreaM2} m² = ${formatAreaKm2} km² </b>
+                </div>
+            </div>
+        `
     }
     if (shape.type === 'polygon') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
+        let areaM2 = shape.area.toFixed(2)
+        let formatAreaM2 = numberWithCommas(areaM2)
+        let areakKm2 = shape.area / 1000000
+        let formatAreaKm2 = numberWithCommas(areakKm2)
         return `
-       <div style="overflow-y: scroll; height: 8rem; width: 20rem">
-           <h3> Polígono </h3>
-           <p><b> area: ${shape.area.toFixed(3)} m² </b></p>
-           <p><b> area: ${(shape.area / 1000000).toFixed(3)} km² </b></p>
-       </div>
-   `
+            <div style="overflow-y: scroll; height: 4rem; width: 20rem">
+                <h3> Polígono </h3>
+                <div style="font-size: 12px">
+                    <b> Área: ${formatAreaM2} m² = ${formatAreaKm2} km² </b>
+                </div>
+            </div>
+        `
     }
     if (shape.type === 'circle') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
@@ -80,14 +98,14 @@ const setContent = (shape) => {
         return `
             <div >
                 <h3> Informações do Círculo <h3/>
-                <div style="font-size: 11px">
-                    <p> Area: ${formatAream2} m² = ${(formatKm2)} km²</p>
+                <div style="font-size: 12px">
+                    <p> Área: ${formatAream2} m² = ${(formatKm2)} km²</p>
                     <b> Raio: ${formatRadius} metros</p>
                 </div>   
             </div>
-`
+        `
     }
-    return `<div>vazio</div>`
+    return `<div></div>`
 }
 
 export default ElemInfoWindow;

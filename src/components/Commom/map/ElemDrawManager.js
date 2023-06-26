@@ -14,7 +14,11 @@ const ElemDrawManager = ({ map }) => {
 
   const [system, setSystem, overlays, setOverlays] = useContext(SystemContext);
 
+  // O listener não está funcionando no círculo, como não é prioridade, buscar depois.
+
+  /*
   function setListener(shape, map) {
+
     shape.draw.addListener("click", function (event) {
 
       console.log('shape clicked event draw manager')
@@ -31,7 +35,7 @@ const ElemDrawManager = ({ map }) => {
       });
 
     });
-  }
+  }*/
 
   useEffect(() => {
 
@@ -65,26 +69,26 @@ const ElemDrawManager = ({ map }) => {
 
       if (event.type === 'marker') {
 
+        let marker = event.overlay;
         let position = event.overlay.position
+
+        
 
         setSystem(prev => {
           return {
             ...prev,
-            point: {
-              ...prev.point,
-              lat: parseFloat(position.lat()),
-              lng: parseFloat(position.lng())
-            },
             markers: [{
+              type: 'marker',
+              tp_id: 1,
               int_latitude: parseFloat(position.lat()),
               int_longitude: parseFloat(position.lng()),
               dt_demanda: { demandas: [] }
             }]
           }
-        })
+        });
 
         // retirar o marcador do mapa depois de capturar a coordenada
-        event.overlay.setMap(null);
+        marker.setMap(null);
 
       }
       if (event.type === 'circle') {
@@ -124,7 +128,7 @@ const ElemDrawManager = ({ map }) => {
       }
 
       if (event.type === 'polygon') {
-        
+
         let polygon = event.overlay;
         // retorna array de coordenada no formato gmaps para busca no servidor. Ex: [{lat: -15, lng: -47}, ...]   
         let serverPolygon = [];
@@ -148,6 +152,13 @@ const ElemDrawManager = ({ map }) => {
           area: calculatePolygonArea(event.overlay)
         }
 
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
+
       }
       /* Criação de um polígono a partir de um retângulo gmaps api
       */
@@ -160,8 +171,8 @@ const ElemDrawManager = ({ map }) => {
         let shape = {
           id: Date.now(),
           type: 'rectangle',
-          position: null,
-          map: null,
+          position: { lat: NE.lat(), lng: NE.lng() },
+          map: map,
           draw: event.overlay,
           NE: NE,
           SW: SW,
@@ -169,7 +180,7 @@ const ElemDrawManager = ({ map }) => {
           markers: await find_points_in_rectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
         }
 
-        setListener(shape, map);
+        //setListener(shape, map);
 
         setOverlays(prev => {
           return {
@@ -181,17 +192,21 @@ const ElemDrawManager = ({ map }) => {
       }
       if (event.type === 'polyline') {
 
+        let polyline = event.overlay;
+        let path = polyline.getPath();
+        let lastCoordinate = path.getAt(path.getLength() - 1);
+
         let shape = {
           id: Date.now(),
           type: 'polyline',
-          position: null,
-          map: null,
-          draw: event.overlay,
-          meters: calculatePolylineLength(event.overlay)
+          position: lastCoordinate,
+          map: map,
+          draw: polyline,
+          meters: calculatePolylineLength(polyline)
 
         }
 
-        setListener(shape, map);
+        //setListener(shape, map);
 
         setOverlays(prev => {
           return {

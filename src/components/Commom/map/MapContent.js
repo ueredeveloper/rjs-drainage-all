@@ -27,11 +27,22 @@ function MapContent() {
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} center={{ lat: -15.764514558482336, lng: -47.76491209127806 }} />
         <ElemDrawManager map={map} />
-        {/*
-          overlays.markers.map(markers => {
-            
+        {
+          ['subterranea_json', 'superficial_json', 'lancamento_json', 'barragem_json'].map(type => {
+            return overlays.markers.map(markers => {
+              return markers[type].map((info, ii) => {
+                return <ElemMarker
+                  key={'marker_' + ii}
+                  info={info}
+                  map={map}
+                />
+              })
+            })
+          })
+          /*overlays.markers[markers].map(markers => {
+      
             return markers.points.map((m, ii) => {
-
+ 
               return (
                 <ElemMarker
                   key={ii}
@@ -40,14 +51,15 @@ function MapContent() {
                   icon={m.tp_id}
                 />)
             })
+          })*/
+        }
+        {
+          overlays.shapes.map((shape, i) => {
+            if (shape.map !== null) {
+              return <ElemInfoWindow key={'shape_' + i} shape={shape} />
+            }
           })
-        */}
-        {overlays.shapes.map((shape, i) => {
-          if (shape.map !== null) {
-            return <ElemInfoWindow key={'shape_' + i} shape={shape} />
-          }
-
-        })}
+        }
       </Wrapper>
 
     </Box>
