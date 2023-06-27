@@ -17,42 +17,35 @@ function MapContent() {
 
   const [marker, setMarker, system, setSystem, overlays, setOverlays, shapes, setShapes] = useContext(SystemContext)
 
-  useEffect(() => {
-
-  }, [overlays])
-
-
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
-        <ElemMap mode={mode} map={map} setMap={setMap} zoom={10}/>
+        <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
         <ElemDrawManager map={map} />
         <ElemMarker
-                  
-                  info={marker}
-                  map={map}
-                 
-                />
+          marker={marker}
+          map={map}
+        />
         {
-          /*['subterranea_json', 'superficial_json', 'lancamento_json', 'barragem_json'].map(type => {
+          ['subterranea_json', 'superficial_json', 'lancamento_json', 'barragem_json'].map(type => {
             return overlays.markers.map(markers => {
-              return markers[type].map((info, ii) => {
+              return markers[type].map((marker, ii) => {
                 return <ElemMarker
                   key={'marker_' + ii}
-                  info={info}
+                  marker={marker}
                   map={map}
                 />
               })
             })
-          })*/
-         
+          })
+
         }
-        {
+        {/*
           overlays.shapes.map((shape, i) => {
             if (shape.map !== null) {
               return <ElemInfoWindow key={'shape_' + i} shape={shape} />
             }
-          })
+          })*/
         }
       </Wrapper>
 

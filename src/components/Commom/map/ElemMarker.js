@@ -1,95 +1,104 @@
 import { useEffect, useState } from 'react';
-import iconRed from '../../../assets/red.png';
-import iconGreen from '../../../assets/green.png';
-import iconOrange from '../../../assets/orange.png';
-import iconBlue from '../../../assets/blue.png';
-import iconPurple from '../../../assets/purple.png';
-import iconPink from '../../../assets/pink.png';
-import iconYellow from '../../../assets/yellow.png';
-import iconBrown from '../../../assets/brown.png';
-
+import redIcon from '../../../assets/red-icon.png';
+import greenIcon from '../../../assets/green-icon.png';
+import orangeIcon from '../../../assets/orange-icon.png';
+import blueIcon from '../../../assets/blue-icon.png';
+import purpleIcon from '../../../assets/purple-icon.png';
+import pinkIcon from '../../../assets/pink-icon.png';
+import yellowIcon from '../../../assets/yellow-icon.png';
+import brownIcon from '../../../assets/brown-icon.png';
 
 /**
- * Componente que representa um marcador no mapa.
- * @param {Object} props - Propriedades do componente.
- * @param {Object} props.info - Objeto contendo as informações do marcador.
- * @param {number} props.info.int_latitude - Latitude do marcador.
- * @param {number} props.info.int_longitude - Longitude do marcador.
- * @param {number} props.icon - Ícone do marcador.
- * @param {Object} props.map - Objeto do mapa onde o marcador será exibido.
- * @returns {null}
+ * @typedef {import('react').PropsWithChildren} Props
+ */
+
+/**
+ * @typedef {Object} MarkerOptions
+ * @property {string} url - URL of the marker icon image.
+ * @property {Object} scaledSize - Scaled size of the marker icon.
+ */
+
+/**
+ * @typedef {Object} MarkerInfo
+ * @property {number} id - Marker ID.
+ * @property {number} ti_id - Type of interference ID.
+ * @property {number} tp_id - Type of pipeline ID.
+ * @property {string} int_latitude - Marker latitude.
+ * @property {string} int_longitude - Marker longitude.
+ */
+
+/**
+ * React component for displaying a marker on a map.
+ * @param {Props & { info: MarkerInfo, map: object }} props - Component props containing marker information and map object.
+ * @returns {null} Null component.
  */
 const ElemMarker = (props) => {
 
-  const [marker, setMarker] = useState();
+  const [_marker, _setMarker] = useState();
 
   /**
-   * Retorna o caminho do ícone com base no tipo de identificação.
-   * @param {number} tp_id - Tipo de identificação.
-   * @returns {string} - Caminho do ícone.
+   * Sets the icon for the marker based on the provided parameters.
+   * @param {number} id - Marker ID.
+   * @param {number} ti_id - Type of interference ID.
+   * @param {number} tp_id - Type of pipeline ID.
+   * @returns {string} URL of the marker icon image.
    */
   function setIcon(id, ti_id, tp_id) {
 
     if (id === 0) {
-      return iconRed;
+      return redIcon;
     }
-    // 1 - superficial
     else if (ti_id === 1) {
-      return iconGreen;
+      return greenIcon;
     }
-    // 2 - subterrâneo
     else if (ti_id === 2) {
-      // manual
       if (tp_id === 1) {
-        return iconBrown;
+        return brownIcon;
       }
-      // tubular
       else {
-        return iconBlue;
+        return blueIcon;
       }
-      // 3 - lançamento de águas pluviais
-    } else if (ti_id === 3) {
-      return iconPurple;
     }
-    // 4 - lançamento de efluentes
+    else if (ti_id === 3) {
+      return purpleIcon;
+    }
     else if (ti_id === 4) {
-      return iconPink;
+      return pinkIcon;
     }
-    // 5 - barragem
     else if (ti_id === 5) {
-      return iconYellow;
+      return yellowIcon;
     }
-    // 6 - caminhão pipa
     else if (ti_id === 6) {
-      return iconOrange;
+      return orangeIcon;
     }
 
   }
 
   useEffect(() => {
-    if (!marker) {
-      setMarker(new window.google.maps.Marker());
+
+    if (!_marker) {
+      _setMarker(new window.google.maps.Marker());
     }
 
     return () => {
-      if (marker) {
-        marker.setMap(null);
+      if (_marker) {
+        _marker.setMap(null);
       }
     };
-  }, [marker]);
+  }, [_marker]);
 
-  if (marker) {
-    let { id, ti_id, tp_id, int_latitude, int_longitude } = props.info;
+  if (_marker) {
+    console.log(props.marker)
+    let { id, ti_id, tp_id, int_latitude, int_longitude } = props.marker;
 
-    marker.setOptions({
-      
+    _marker.setOptions({
       icon: { url: setIcon(id, ti_id, tp_id), scaledSize: new window.google.maps.Size(30, 30) },
       position: { lat: parseFloat(int_latitude), lng: parseFloat(int_longitude) },
       map: props.map
     });
 
     if (id === 0) {
-      marker.setAnimation(window.google.maps.Animation.BOUNCE);
+      _marker.setAnimation(window.google.maps.Animation.BOUNCE);
     }
   }
 
