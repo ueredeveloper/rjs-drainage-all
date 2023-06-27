@@ -9,11 +9,9 @@ const ElemInfoWindow = ({ shape }) => {
     useEffect(() => {
 
         if (!infowindow) {
-
             setInfowindow(new window.google.maps.InfoWindow(
                 { content: setContent(shape) }
             ));
-
         }
 
         if (shape.map && shape.position && infowindow) {
@@ -48,7 +46,7 @@ const setContent = (shape) => {
 
         return `
             <div style="overflow-y: scroll; padding: 0px; height: 4rem;  width: 20rem">
-                <h3> Polilinha </h3>
+                <h3> Informações da Polilinha </h3>
                 <div style="font-size: 12px">
                     <b> ${formatMeters} metros = ${formatKm} km </b>
                 <br/>
@@ -66,7 +64,7 @@ const setContent = (shape) => {
         let formatAreaKm2 = numberWithCommas(areakKm2)
         return `
             <div style="overflow-y: scroll; height: 4rem; width: 20rem">
-                <h3> Retângulo </h3>
+                <h3> Informações do Retângulo </h3>
                 <div style="font-size: 12px">
                     <b> Área: ${formatAreaM2} m² = ${formatAreaKm2} km² </b>
                 </div>
@@ -81,7 +79,7 @@ const setContent = (shape) => {
         let formatAreaKm2 = numberWithCommas(areakKm2)
         return `
             <div style="overflow-y: scroll; height: 4rem; width: 20rem">
-                <h3> Polígono </h3>
+                <h3> Informações do Polígono </h3>
                 <div style="font-size: 12px">
                     <b> Área: ${formatAreaM2} m² = ${formatAreaKm2} km² </b>
                 </div>

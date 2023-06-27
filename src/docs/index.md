@@ -27,7 +27,7 @@ barragem:{
     color: orange
 }
 ]
-
+Marcador inicial
 DESCRICAO	                    ID_TIPO_INTERFERENCIA
 SUPERFICIAL	                    1
 SUBTERRANEA	                    2

@@ -2,7 +2,6 @@ import { useContext, useEffect } from 'react';
 //import { createCircleRings } from '../tools';
 import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle, find_points_in_rectangle } from '../../../services/shapes';
 import { SystemContext } from '../../MainFlow/Analyse';
-import { my_object } from '../../MainFlow/initial-state-grants';
 import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea } from '../../../tools';
 import ElemInfoWindow from './ElemInfoWindow';
 /**
@@ -12,7 +11,7 @@ import ElemInfoWindow from './ElemInfoWindow';
   */
 const ElemDrawManager = ({ map }) => {
 
-  const [system, setSystem, overlays, setOverlays] = useContext(SystemContext);
+  const [marker, setMarker, system, setSystem, overlays, setOverlays] = useContext(SystemContext);
 
   // O listener não está funcionando no círculo, como não é prioridade, buscar depois.
 
@@ -36,6 +35,10 @@ const ElemDrawManager = ({ map }) => {
 
     });
   }*/
+
+  useEffect(() => {
+    console.log(marker)
+  }, [marker])
 
   useEffect(() => {
 
@@ -65,29 +68,37 @@ const ElemDrawManager = ({ map }) => {
       },
     });
 
+
     window.google.maps.event.addListener(_draw, 'overlaycomplete', async function (event) {
 
       if (event.type === 'marker') {
 
         let marker = event.overlay;
-        let position = event.overlay.position
+        let position = marker.position
 
-        
-
-        setSystem(prev => {
+        setMarker(prev => {
           return {
             ...prev,
-            markers: [{
-              type: 'marker',
-              tp_id: 1,
-              int_latitude: parseFloat(position.lat()),
-              int_longitude: parseFloat(position.lng()),
-              dt_demanda: { demandas: [] }
-            }]
+            int_latitude: parseFloat(position.lat()),
+            int_longitude: parseFloat(position.lng()),
           }
-        });
+        })
+        /*
+                setSystem(prev => {
+                  return {
+                    ...prev,
+                    markers: [{
+                      type: 'marker',
+                      tp_id: 1,
+                      int_latitude: parseFloat(position.lat()),
+                      int_longitude: parseFloat(position.lng()),
+                      dt_demanda: { demandas: [] }
+                    }]
+                  }
+                });*/
 
         // retirar o marcador do mapa depois de capturar a coordenada
+        map.setCenter({ lat: parseFloat(position.lat()), lng: parseFloat(position.lng()) })
         marker.setMap(null);
 
       }
@@ -95,9 +106,10 @@ const ElemDrawManager = ({ map }) => {
 
         let circle = event.overlay;
         const { center, radius } = circle;
-        // adicionar o infowindow na lateral direita
-        const { lat: centerLat } = center;
-        const { lng: northEastLng } = circle.getBounds().getNorthEast();
+        // adicionar o infowindow na parte superior do cículo
+        let bounds = circle.getBounds();
+        var lat = bounds.getNorthEast().lat();
+        var lng = circle.getCenter().lng();
 
         let markers = await findPointsInsideCircle(
           {
@@ -110,7 +122,7 @@ const ElemDrawManager = ({ map }) => {
         let shape = {
           id: Date.now(),
           type: 'circle',
-          position: { lat: centerLat(), lng: northEastLng() },
+          position: { lat: lat, lng: lng },
           map: map,
           draw: event.overlay,
           markers: markers,
@@ -137,15 +149,31 @@ const ElemDrawManager = ({ map }) => {
         });
         serverPolygon = [...serverPolygon, serverPolygon[0]];
 
-        const pathArray = polygon.getPath().getArray();
-        // localização da infowindow, no começo do polígono
-        let minLat = pathArray[0].lat();
-        let minLng = pathArray[0].lng();
+        // Pega as coordenadas do polígono
+        let paths = polygon.getPaths();
+
+        // Inicialização das variáveis
+        let topLatitude = null;
+        let topLongitude = null;
+
+        // Itera para buscar a coordenada mais alta no polígono para que o infowindow fique sempre acima do polígono.
+        paths.forEach(function (path) {
+          path.forEach(function (point) {
+            var latitude = point.lat();
+            var longitude = point.lng();
+
+            // Checar a coordenada mais alta
+            if (topLatitude === null || latitude > topLatitude) {
+              topLatitude = latitude;
+              topLongitude = longitude;
+            }
+          });
+        });
 
         let shape = {
           id: Date.now(),
           type: 'polygon',
-          position: { lat: minLat, lng: minLng },
+          position: { lat: topLatitude, lng: topLongitude },
           map: map,
           draw: event.overlay,
           markers: await findPointsInsidePolygon(serverPolygon),
@@ -194,12 +222,18 @@ const ElemDrawManager = ({ map }) => {
 
         let polyline = event.overlay;
         let path = polyline.getPath();
-        let lastCoordinate = path.getAt(path.getLength() - 1);
+
+        // Obtenha o índice do último ponto
+        var lastPointIndex = path.getLength() - 1;
+
+        // Obtenha as coordenadas do último ponto
+        var lastLatitude = path.getAt(lastPointIndex).lat();
+        var lastLongitude = path.getAt(lastPointIndex).lng();
 
         let shape = {
           id: Date.now(),
           type: 'polyline',
-          position: lastCoordinate,
+          position: { lat: lastLatitude, lng: lastLongitude },
           map: map,
           draw: polyline,
           meters: calculatePolylineLength(polyline)

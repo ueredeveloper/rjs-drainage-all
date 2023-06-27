@@ -4,9 +4,10 @@ import { darkMap } from './mode/dark-map'
   * Elemento mapa
   */
 
-function ElemMap({ mode, map, setMap, zoom, center }) {
+function ElemMap({ mode, map, setMap, zoom }) {
 
   const ref = useRef();
+  const center= { lat: -15.764514558482336, lng: -47.76491209127806 }
 
   function onClick() {
     console.log('on click')
@@ -33,7 +34,7 @@ function ElemMap({ mode, map, setMap, zoom, center }) {
       // click no mapa
      // map.addListener("click", onClick);
       // centralizar
-      map.setCenter({ lat: parseFloat(center.lat), lng: parseFloat(center.lng) })
+      //map.setCenter({ lat: parseFloat(center.lat), lng: parseFloat(center.lng) })
     }
   }, [ref, map, mode, onClick]);
 

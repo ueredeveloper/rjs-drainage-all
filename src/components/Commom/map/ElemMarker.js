@@ -28,12 +28,13 @@ const ElemMarker = (props) => {
    * @param {number} tp_id - Tipo de identificação.
    * @returns {string} - Caminho do ícone.
    */
-  function setIcon(ti_id, tp_id) {
+  function setIcon(id, ti_id, tp_id) {
 
-    //default = red
-    
+    if (id === 0) {
+      return iconRed;
+    }
     // 1 - superficial
-    if (ti_id === 1) {
+    else if (ti_id === 1) {
       return iconGreen;
     }
     // 2 - subterrâneo
@@ -78,15 +79,16 @@ const ElemMarker = (props) => {
   }, [marker]);
 
   if (marker) {
-    let { int_latitude, int_longitude, ti_id, tp_id } = props.info;
+    let { id, ti_id, tp_id, int_latitude, int_longitude } = props.info;
 
     marker.setOptions({
-      icon: { url: setIcon(ti_id, tp_id), scaledSize: new window.google.maps.Size(30, 30) },
+      
+      icon: { url: setIcon(id, ti_id, tp_id), scaledSize: new window.google.maps.Size(30, 30) },
       position: { lat: parseFloat(int_latitude), lng: parseFloat(int_longitude) },
       map: props.map
     });
 
-    if (ti_id === 0) {
+    if (id === 0) {
       marker.setAnimation(window.google.maps.Animation.BOUNCE);
     }
   }

@@ -15,7 +15,7 @@ function MapContent() {
   const [mode, setMode] = useState('light');
   const [map, setMap] = useState();
 
-  const [system, setSystem, overlays, setOverlays, shapes, setShapes] = useContext(SystemContext)
+  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapes, setShapes] = useContext(SystemContext)
 
   useEffect(() => {
 
@@ -25,10 +25,16 @@ function MapContent() {
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
-        <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} center={{ lat: -15.764514558482336, lng: -47.76491209127806 }} />
+        <ElemMap mode={mode} map={map} setMap={setMap} zoom={10}/>
         <ElemDrawManager map={map} />
+        <ElemMarker
+                  
+                  info={marker}
+                  map={map}
+                 
+                />
         {
-          ['subterranea_json', 'superficial_json', 'lancamento_json', 'barragem_json'].map(type => {
+          /*['subterranea_json', 'superficial_json', 'lancamento_json', 'barragem_json'].map(type => {
             return overlays.markers.map(markers => {
               return markers[type].map((info, ii) => {
                 return <ElemMarker
@@ -38,20 +44,8 @@ function MapContent() {
                 />
               })
             })
-          })
-          /*overlays.markers[markers].map(markers => {
-      
-            return markers.points.map((m, ii) => {
- 
-              return (
-                <ElemMarker
-                  key={ii}
-                  marker={m}
-                  map={map}
-                  icon={m.tp_id}
-                />)
-            })
           })*/
+         
         }
         {
           overlays.shapes.map((shape, i) => {
