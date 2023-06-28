@@ -24,8 +24,10 @@ function MapContent() {
         <ElemDrawManager map={map} />
         <ElemMarker
           marker={marker}
+          setMarker={setMarker}
           map={map}
         />
+
         {
           ['subterranea_json', 'superficial_json', 'lancamento_json', 'barragem_json'].map(type => {
             return overlays.markers.map(markers => {
@@ -33,6 +35,7 @@ function MapContent() {
                 return <ElemMarker
                   key={'marker_' + ii}
                   marker={marker}
+                  setMarker={setMarker}
                   map={map}
                 />
               })
@@ -41,9 +44,9 @@ function MapContent() {
 
         }
         {/*
-          overlays.shapes.map((shape, i) => {
-            if (shape.map !== null) {
-              return <ElemInfoWindow key={'shape_' + i} shape={shape} />
+          overlays.shapes.map((draw, i) => {
+            if (draw.map !== null) {
+              return <ElemInfoWindow key={'shape_' + i} draw={draw} />
             }
           })*/
         }

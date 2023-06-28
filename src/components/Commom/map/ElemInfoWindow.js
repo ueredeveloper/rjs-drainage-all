@@ -1,7 +1,7 @@
 import { createRef, useEffect, useState } from 'react';
 import { numberWithCommas } from '../../../tools';
 
-const ElemInfoWindow = ({ shape }) => {
+const ElemInfoWindow = ({ draw }) => {
 
     const [infowindow, setInfowindow] = useState();
 
@@ -10,38 +10,39 @@ const ElemInfoWindow = ({ shape }) => {
 
         if (!infowindow) {
             setInfowindow(new window.google.maps.InfoWindow(
-                { content: setContent(shape) }
+                { content: setContent(draw) }
             ));
         }
 
-        if (shape.map && shape.position && infowindow) {
+        if (draw.map && draw.position && infowindow) {
             infowindow.setMap(null)
-            infowindow.setPosition(shape.position);
-            infowindow.setMap(shape.map);
+            
+            infowindow.setPosition(draw.position);
+            infowindow.setMap(draw.map);
 
         }
-    }, [shape.map, shape.position, shape.radius, infowindow])
+    }, [draw.map, draw.position, draw.radius, infowindow])
 
     return null;
 };
 
 
-const setContent = (shape) => {
+const setContent = (draw) => {
 
-    if (shape.type === 'polyline') {
+    if (draw.type === 'polyline') {
         let coordinates = [];
         let htmlCoords = '';
 
-        shape.draw.getPath().forEach((latLng) => {
+        draw.draw.getPath().forEach((latLng) => {
             coordinates.push({ lat: latLng.lat(), lng: latLng.lng() });
         });
         coordinates.forEach((coordinate, index) => {
             htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}<br>`;
         });
         /* conversão: 1000 metros = 1km */
-        let meters = shape.meters.toFixed(3);
+        let meters = draw.meters.toFixed(3);
         let formatMeters = numberWithCommas(meters)
-        let km = shape.meters / 1000;
+        let km = draw.meters / 1000;
         let formatKm = numberWithCommas(km)
 
         return `
@@ -55,12 +56,12 @@ const setContent = (shape) => {
             </div>
         `
     }
-    if (shape.type === 'rectangle') {
+    if (draw.type === 'rectangle') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
 
-        let areaM2 = shape.area.toFixed(2)
+        let areaM2 = draw.area.toFixed(2)
         let formatAreaM2 = numberWithCommas(areaM2)
-        let areakKm2 = shape.area / 1000000
+        let areakKm2 = draw.area / 1000000
         let formatAreaKm2 = numberWithCommas(areakKm2)
         return `
             <div style="overflow-y: scroll; height: 4rem; width: 20rem">
@@ -71,11 +72,12 @@ const setContent = (shape) => {
             </div>
         `
     }
-    if (shape.type === 'polygon') {
+    if (draw.type === 'polygon') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
-        let areaM2 = shape.area.toFixed(2)
+        console.log('polygon', draw.position)
+        let areaM2 = draw.area.toFixed(2)
         let formatAreaM2 = numberWithCommas(areaM2)
-        let areakKm2 = shape.area / 1000000
+        let areakKm2 = draw.area / 1000000
         let formatAreaKm2 = numberWithCommas(areakKm2)
         return `
             <div style="overflow-y: scroll; height: 4rem; width: 20rem">
@@ -86,13 +88,13 @@ const setContent = (shape) => {
             </div>
         `
     }
-    if (shape.type === 'circle') {
+    if (draw.type === 'circle') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
 
-        let formatAream2 = numberWithCommas(shape.area)
-        let km2 = shape.area / 1000000
+        let formatAream2 = numberWithCommas(draw.area)
+        let km2 = draw.area / 1000000
         let formatKm2 = numberWithCommas(km2)
-        let formatRadius = numberWithCommas(shape.radius)
+        let formatRadius = numberWithCommas(draw.radius)
         return `
             <div >
                 <h3> Informações do Círculo <h3/>
@@ -103,6 +105,19 @@ const setContent = (shape) => {
             </div>
         `
     }
+    /*
+    if (draw.type==='marker'){
+       
+        return `
+            <div >
+                <h3> Informações do Marcador <h3/>
+                <div style="font-size: 12px">
+                    <p> Coordenadas: ${draw.int_latitude}, ${draw.int_longitude}</p>
+                    
+                </div>   
+            </div>
+        `
+    }*/
     return `<div></div>`
 }
 

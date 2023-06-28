@@ -88,7 +88,7 @@ const ElemMarker = (props) => {
   }, [_marker]);
 
   if (_marker) {
-    console.log(props.marker)
+
     let { id, ti_id, tp_id, int_latitude, int_longitude } = props.marker;
 
     _marker.setOptions({
@@ -97,8 +97,27 @@ const ElemMarker = (props) => {
       map: props.map
     });
 
+    let content = `
+          <div >
+            <h3> Informações do Marcador <h3/>
+            <div style="font-size: 12px">
+                <p> Coordenadas: ${int_latitude}, ${int_longitude}</p>
+            </div>   
+          </div>`
+
+    let infowindow = new window.google.maps.InfoWindow({
+      content: content,
+    });
+    _marker.addListener("click", () => {
+      infowindow.open({
+        anchor: _marker,
+       // map:props.map,
+      });
+    });
+
+   
     if (id === 0) {
-      _marker.setAnimation(window.google.maps.Animation.BOUNCE);
+      //_marker.setAnimation(window.google.maps.Animation.BOUNCE);
     }
   }
 
