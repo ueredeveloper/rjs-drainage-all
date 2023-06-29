@@ -30,13 +30,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import PrintIcon from '@mui/icons-material/Print';
 import ShareIcon from '@mui/icons-material/Share';
 import GetAppIcon from '@mui/icons-material/GetApp';
-import { makeStyles } from '@mui/styles';
-
-const useStyles = makeStyles({
-  smallIcon: {
-    fontSize: '10px',
-  },
-});
+// Exportar javascript para excel
+import * as XLSX from 'xlsx';
 
 
 function descendingComparator(a, b, orderBy) {
@@ -235,6 +230,16 @@ EnhancedTableHead.propTypes = {
 function EnhancedTableToolbar(props) {
   const { numSelected } = props;
 
+
+  const downloadExcel = (data) => {
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    //let buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+    //XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
+    XLSX.writeFile(workbook, "DataSheet.xlsx");
+  };
+
   return (
     <Toolbar
       sx={{
@@ -282,6 +287,12 @@ function EnhancedTableToolbar(props) {
           </IconButton>
         </Tooltip>
       )}
+      <Tooltip title="exportar">
+        <IconButton>
+          <GetAppIcon onClick={() => { downloadExcel(props.markers) }} />
+        </IconButton>
+      </Tooltip>
+
     </Toolbar>
   );
 }
@@ -447,111 +458,118 @@ export default function GrantsTable({ markers }) {
 
   const isSelected = (id) => selected.indexOf(id) !== -1;
 
-  const classes = useStyles();
 
   return (
     <Box>
       <Paper elevation={3}>
+        <Box>
+          <EnhancedTableToolbar numSelected={selected.length} markers={markers} />
+          <TableContainer sx={{ maxHeight: 300 }}>
+            <Table
+              sx={{ minWidth: 750 }}
+              aria-labelledby="tableTitle"
+              size={dense ? "small" : "medium"}
+            >
 
-        <EnhancedTableToolbar numSelected={selected.length} />
-        <TableContainer sx={{ maxHeight: 300 }}>
-          <Table
-            sx={{ minWidth: 750 }}
-            aria-labelledby="tableTitle"
-            size={dense ? "small" : "medium"}
-          >
+              <EnhancedTableHead
+                numSelected={selected.length}
+                order={order}
+                orderBy={orderBy}
+                onSelectAllClick={handleSelectAllClick}
+                onRequestSort={handleRequestSort}
 
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              onSelectAllClick={handleSelectAllClick}
-              onRequestSort={handleRequestSort}
-
-              rowCount={markers.length}
-            />
-            <TableBody>
-              {visibleRows
-                ? visibleRows.map((row, index) => {
-                  const isItemSelected = isSelected(row.id);
-                  const labelId = `enhanced-table-checkbox-${index}`;
-
-                  return (
-                    <TableRow
-                      hover
-                      onClick={(event) => handleClick(event, row.id)}
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={'elem_list_grants_' + index}
-                      selected={isItemSelected}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          inputProps={{
-                            "aria-labelledby": labelId
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell component="th" id={labelId} scope="row" padding="none">{row.us_nome}</TableCell>
-                      <TableCell align="right">{row.us_cpf_cnpj}</TableCell>
-                      <TableCell align="right">{row.int_processo}</TableCell>
-                      <TableCell align="right">{row.emp_endereco}</TableCell>
-                      {
-                        /* row.dt_demanda.demandas.map((dem, i) => {
-                           return (
-                             <TableCell key={i}>
-                               {parseFloat(dem.vol_mensal_mm).toFixed(2)}
-                             </TableCell>
-                           );
-                         })*/
-                      }
-                    </TableRow>
-                  );
-                })
-                : null}
-              {paddingHeight > 0 && (
-                <TableRow
-                  style={{
-                    height: paddingHeight
-                  }}
-                >
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-        </TableContainer>
-        <SpeedDial
-          ariaLabel=""
-          sx={{ position: 'absolute', left: 25, bottom: -260, fontSize: '10px' }}
-          icon={<SpeedDialIcon classes={{ root: classes.smallIcon }} />}
-        >
-          {
-            [
-              { icon: <FileCopyIcon />, name: 'Copy' },
-              { icon: <GetAppIcon onClick={() => { console.log('excel') }} />, name: 'Excel' }
-            ].map((action) => (
-              <SpeedDialAction
-                key={action.name}
-                icon={action.icon}
-                tooltipTitle={action.name}
+                rowCount={markers.length}
               />
-            ))}
-        </SpeedDial>
-        <TablePagination
-          rowsPerPageOptions={[50, 100, 150, 300, 350, 400]}
-          component="div"
-          count={markers.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
+              <TableBody>
+                {visibleRows
+                  ? visibleRows.map((row, index) => {
+                    const isItemSelected = isSelected(row.id);
+                    const labelId = `enhanced-table-checkbox-${index}`;
+
+                    return (
+                      <TableRow
+                        hover
+                        onClick={(event) => handleClick(event, row.id)}
+                        role="checkbox"
+                        aria-checked={isItemSelected}
+                        tabIndex={-1}
+                        key={'elem_list_grants_' + index}
+                        selected={isItemSelected}
+                        sx={{ cursor: "pointer" }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            color="primary"
+                            checked={isItemSelected}
+                            inputProps={{
+                              "aria-labelledby": labelId
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell component="th" id={labelId} scope="row" padding="none">{row.us_nome}</TableCell>
+                        <TableCell align="right">{row.us_cpf_cnpj}</TableCell>
+                        <TableCell align="right">{row.int_processo}</TableCell>
+                        <TableCell align="right">{row.emp_endereco}</TableCell>
+                        {
+                          /* row.dt_demanda.demandas.map((dem, i) => {
+                             return (
+                               <TableCell key={i}>
+                                 {parseFloat(dem.vol_mensal_mm).toFixed(2)}
+                               </TableCell>
+                             );
+                           })*/
+                        }
+                      </TableRow>
+                    );
+                  })
+                  : null}
+                {paddingHeight > 0 && (
+                  <TableRow
+                    style={{
+                      height: paddingHeight
+                    }}
+                  >
+                    <TableCell colSpan={6} />
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+
+          </TableContainer>
+
+          <TablePagination
+            rowsPerPageOptions={[50, 100, 150, 300, 350, 400]}
+            component="div"
+            count={markers.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Box>
+        {/**
+         <Box>
+          <SpeedDial
+            ariaLabel=""
+            sx={{ position: 'absolute', right: 25, bottom: 0, top: 0 }}
+            icon={<SpeedDialIcon style={{ fontSize: '10px' }} />}
+          >
+            {
+              [
+                { icon: <FileCopyIcon />, name: 'Copy' },
+                { icon: <GetAppIcon onClick={() => { console.log('excel') }} />, name: 'Excel' }
+              ].map((action) => (
+                <SpeedDialAction
+                  key={action.name}
+                  icon={action.icon}
+                  tooltipTitle={action.name}
+                />
+              ))}
+          </SpeedDial>
+        </Box>
+         */}
+
+
       </Paper>
     </Box>
   );
