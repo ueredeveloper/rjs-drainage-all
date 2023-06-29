@@ -22,6 +22,22 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
 
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import FileCopyIcon from '@mui/icons-material/FileCopyOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import PrintIcon from '@mui/icons-material/Print';
+import ShareIcon from '@mui/icons-material/Share';
+import GetAppIcon from '@mui/icons-material/GetApp';
+import { makeStyles } from '@mui/styles';
+
+const useStyles = makeStyles({
+  smallIcon: {
+    fontSize: '10px',
+  },
+});
+
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -274,7 +290,7 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired
 };
 
-export default function GrantsTable ({markers}) {
+export default function GrantsTable({ markers }) {
   const [order, setOrder] = useState(DEFAULT_ORDER);
   const [orderBy, setOrderBy] = useState(DEFAULT_ORDER_BY);
   const [selected, setSelected] = useState([]);
@@ -312,14 +328,14 @@ export default function GrantsTable ({markers}) {
     });
 
     //let _hg_analyse = analyseItsAvaiable(hg_info, _sel_markers);
-/*
-    setContext((prev) => {
-      return {
-        ...prev,
-        sel_markers: _sel_markers,
-        hg_analyse: _hg_analyse,
-      };
-    });*/
+    /*
+        setContext((prev) => {
+          return {
+            ...prev,
+            sel_markers: _sel_markers,
+            hg_analyse: _hg_analyse,
+          };
+        });*/
 
   }, [selected])
 
@@ -431,9 +447,12 @@ export default function GrantsTable ({markers}) {
 
   const isSelected = (id) => selected.indexOf(id) !== -1;
 
+  const classes = useStyles();
+
   return (
     <Box>
-      <Paper elevation={3} >
+      <Paper elevation={3}>
+
         <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer sx={{ maxHeight: 300 }}>
           <Table
@@ -482,14 +501,14 @@ export default function GrantsTable ({markers}) {
                       <TableCell align="right">{row.int_processo}</TableCell>
                       <TableCell align="right">{row.emp_endereco}</TableCell>
                       {
-                       /* row.dt_demanda.demandas.map((dem, i) => {
-                          return (
-                            <TableCell key={i}>
-                              {parseFloat(dem.vol_mensal_mm).toFixed(2)}
-                            </TableCell>
-                          );
-                        })*/
-                        }
+                        /* row.dt_demanda.demandas.map((dem, i) => {
+                           return (
+                             <TableCell key={i}>
+                               {parseFloat(dem.vol_mensal_mm).toFixed(2)}
+                             </TableCell>
+                           );
+                         })*/
+                      }
                     </TableRow>
                   );
                 })
@@ -505,7 +524,25 @@ export default function GrantsTable ({markers}) {
               )}
             </TableBody>
           </Table>
+
         </TableContainer>
+        <SpeedDial
+          ariaLabel=""
+          sx={{ position: 'absolute', left: 25, bottom: -260, fontSize: '10px' }}
+          icon={<SpeedDialIcon classes={{ root: classes.smallIcon }} />}
+        >
+          {
+            [
+              { icon: <FileCopyIcon />, name: 'Copy' },
+              { icon: <GetAppIcon onClick={() => { console.log('excel') }} />, name: 'Excel' }
+            ].map((action) => (
+              <SpeedDialAction
+                key={action.name}
+                icon={action.icon}
+                tooltipTitle={action.name}
+              />
+            ))}
+        </SpeedDial>
         <TablePagination
           rowsPerPageOptions={[50, 100, 150, 300, 350, 400]}
           component="div"
@@ -516,10 +553,6 @@ export default function GrantsTable ({markers}) {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
-      <FormControlLabel
-        control={<Switch checked={dense} onChange={handleChangeDense} />}
-        label=""
-      />
     </Box>
   );
 }

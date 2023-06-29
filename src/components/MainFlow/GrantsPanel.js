@@ -67,6 +67,7 @@ export default function GrantsPanel() {
                     return (
                         <div id="div-panel" key={i} style={{height: '500px'}}>
                             <TabPanel value={value} index={0}>
+                                {console.log(shape.markers.subterranea)}
                                 <GrantsTable markers={shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
                             </TabPanel>
                             <TabPanel value={value} index={1}>
