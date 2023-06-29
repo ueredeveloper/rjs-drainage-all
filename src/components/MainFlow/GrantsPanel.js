@@ -51,9 +51,6 @@ export default function GrantsPanel() {
 
     const [system, setSystem, overlays, setOverlays] = useContext(SystemContext);
 
-   // console.log(overlays.markers)
-
-
     return (
         <Box sx={{ width: "100%" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -68,7 +65,7 @@ export default function GrantsPanel() {
             {
                 overlays.shapes.map((shape, i)=>{
                     return (
-                        <div key={i}>
+                        <div id="div-panel" key={i} style={{height: '500px'}}>
                             <TabPanel value={value} index={0}>
                                 <GrantsTable markers={shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
                             </TabPanel>
@@ -87,24 +84,6 @@ export default function GrantsPanel() {
                         </div>
                     )
                   })
-              /*  overlays.shape.markers.map((markers, i) => {
-                    return (
-                        <div key={i}>
-                            <TabPanel value={value} index={0}>
-                                <GrantsTable markers={shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
-                            </TabPanel>
-                            <TabPanel value={value} index={1}>
-                                <GrantsTable markers={shape.markers.superficial !== null ? shape.markers.superficial : []} />
-                            </TabPanel>
-                            <TabPanel value={value} index={2}>
-                                <GrantsTable markers={shape.markers.lancamento_pluviais !== null ? shape.markers.lancamento_pluviais : []} />
-                            </TabPanel>
-                            <TabPanel value={value} index={3}>
-                                <GrantsTable markers={shape.markers.barragem !== null ? shape.markers.barragem : []} />
-                            </TabPanel>
-                        </div>
-                    )
-                })*/
             }
 
 
