@@ -29,27 +29,21 @@ function MapContent() {
         />
 
         {
-          ['subterranea_json', 'superficial_json', 'lancamento_json', 'barragem_json'].map(type => {
-            return overlays.markers.map(markers => {
-              return markers[type].map((marker, ii) => {
-                return <ElemMarker
-                  key={'marker_' + ii}
-                  marker={marker}
-                  setMarker={setMarker}
-                  map={map}
-                />
-              })
+          overlays.shapes.map(shape=>{
+            return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type=>{
+                if(shape.markers[type]!==null)
+                return shape.markers[type].map((marker, ii) => {
+                  return <ElemMarker
+                    key={'marker_' + ii}
+                    marker={marker}
+                    setMarker={setMarker}
+                    map={map}
+                  />
+                })
+    
             })
           })
-
-        }
-        {/*
-          overlays.shapes.map((draw, i) => {
-            if (draw.map !== null) {
-              return <ElemInfoWindow key={'shape_' + i} draw={draw} />
-            }
-          })*/
-        }
+          }
       </Wrapper>
 
     </Box>

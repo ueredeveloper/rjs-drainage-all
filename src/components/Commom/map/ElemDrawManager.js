@@ -57,6 +57,7 @@ const ElemDrawManager = ({ map }) => {
         });
         let position = marker.position;
 
+
         let content = `
           <div >
             <h3> Informações do Marcador <h3/>
@@ -76,16 +77,11 @@ const ElemDrawManager = ({ map }) => {
           });
         });
 
-        let draw = {
-          position: position,
-          marker: marker,
-          map: map
-        }
-
         setMarker(prev => {
           return {
             ...prev,
-            draw: draw
+            int_latitude: position.lat(),
+            int_longitude: position.lng()
           }
         })
 
@@ -264,8 +260,6 @@ const ElemDrawManager = ({ map }) => {
       }
     })
 
-
-
     draw.setMap(map);
 
   }, [map]);
@@ -353,19 +347,6 @@ const setContent = (draw) => {
           </div>
       `
   }
-  /*
-  if (draw.type==='marker'){
-     
-      return `
-          <div >
-              <h3> Informações do Marcador <h3/>
-              <div style="font-size: 12px">
-                  <p> Coordenadas: ${draw.int_latitude}, ${draw.int_longitude}</p>
-                  
-              </div>   
-          </div>
-      `
-  }*/
   return `<div></div>`
 }
 

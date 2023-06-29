@@ -15,11 +15,6 @@ export default function Analyse() {
     const [system, setSystem] = useState(initialState.system);
     const [overlays, setOverlays] = useState(initialState.overlays);
     
-
-    useEffect(() => {
-        console.log(overlays)
-    }, [overlays])
-
     return (
         <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
             <Box sx={{ display: "flex", flex: 1, flexWrap: "wrap" }}>

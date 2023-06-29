@@ -58,31 +58,53 @@ export default function GrantsPanel() {
         <Box sx={{ width: "100%" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                    <Tab label="Superficial" {...a11yProps(0)} />
-                    <Tab label="Subterrânea" {...a11yProps(1)} />
-                    <Tab label="Lançamento" {...a11yProps(2)} />
-                    <Tab label="Barragem" {...a11yProps(3)} />
+                    <Tab label="Subterrâneas" {...a11yProps(0)} />
+                    <Tab label="Superficiais" {...a11yProps(1)} />
+                    <Tab label="Lançamentos Pluviais" {...a11yProps(2)} />
+                    <Tab label="Lançamentos Efluentes" {...a11yProps(3)} />
+                    <Tab label="Barragens" {...a11yProps(4)} />
                 </Tabs>
             </Box>
             {
-                overlays.markers.map((markers, i) => {
+                overlays.shapes.map((shape, i)=>{
                     return (
                         <div key={i}>
                             <TabPanel value={value} index={0}>
-                                <GrantsTable markers={markers.superficial_json !== null ? markers.superficial_json : []} />
+                                <GrantsTable markers={shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
                             </TabPanel>
                             <TabPanel value={value} index={1}>
-                                <GrantsTable markers={markers.subterranea_json !== null ? markers.subterranea_json : []} />
+                                <GrantsTable markers={shape.markers.superficial !== null ? shape.markers.superficial : []} />
                             </TabPanel>
                             <TabPanel value={value} index={2}>
-                                <GrantsTable markers={markers.lancamento_json !== null ? markers.lancamento_json : []} />
+                                <GrantsTable markers={shape.markers.lancamento_pluviais !== null ? shape.markers.lancamento_pluviais : []} />
                             </TabPanel>
                             <TabPanel value={value} index={3}>
-                                <GrantsTable markers={markers.barragem_json !== null ? markers.barragem_json : []} />
+                                <GrantsTable markers={shape.markers.lancamento_efluentes !== null ? shape.markers.lancamento_efluentes : []} />
+                            </TabPanel>
+                            <TabPanel value={value} index={4}>
+                                <GrantsTable markers={shape.markers.barragem !== null ? shape.markers.barragem : []} />
                             </TabPanel>
                         </div>
                     )
-                })
+                  })
+              /*  overlays.shape.markers.map((markers, i) => {
+                    return (
+                        <div key={i}>
+                            <TabPanel value={value} index={0}>
+                                <GrantsTable markers={shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
+                            </TabPanel>
+                            <TabPanel value={value} index={1}>
+                                <GrantsTable markers={shape.markers.superficial !== null ? shape.markers.superficial : []} />
+                            </TabPanel>
+                            <TabPanel value={value} index={2}>
+                                <GrantsTable markers={shape.markers.lancamento_pluviais !== null ? shape.markers.lancamento_pluviais : []} />
+                            </TabPanel>
+                            <TabPanel value={value} index={3}>
+                                <GrantsTable markers={shape.markers.barragem !== null ? shape.markers.barragem : []} />
+                            </TabPanel>
+                        </div>
+                    )
+                })*/
             }
 
 

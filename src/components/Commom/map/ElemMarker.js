@@ -89,7 +89,13 @@ const ElemMarker = (props) => {
 
   if (_marker) {
 
-    let { id, ti_id, tp_id, int_latitude, int_longitude } = props.marker;
+    let { id,
+      us_nome, us_cpf_cnpj,
+      emp_endereco,
+      int_processo,
+      ti_id,
+      tp_id,
+      int_latitude, int_longitude } = props.marker;
 
     _marker.setOptions({
       icon: { url: setIcon(id, ti_id, tp_id), scaledSize: new window.google.maps.Size(30, 30) },
@@ -99,8 +105,12 @@ const ElemMarker = (props) => {
 
     let content = `
           <div >
-            <h3> Informações do Marcador <h3/>
+            <h3> Outorga <h3/>
             <div style="font-size: 12px">
+                <p> Nome: ${us_nome}</p>
+                <p>CPF: ${us_cpf_cnpj}</p>
+                <p> Endereço: ${emp_endereco}</p>
+                <p> Processo: ${int_processo}</p>
                 <p> Coordenadas: ${int_latitude}, ${int_longitude}</p>
             </div>   
           </div>`
@@ -111,11 +121,11 @@ const ElemMarker = (props) => {
     _marker.addListener("click", () => {
       infowindow.open({
         anchor: _marker,
-       // map:props.map,
+        // map:props.map,
       });
     });
 
-   
+
     if (id === 0) {
       //_marker.setAnimation(window.google.maps.Animation.BOUNCE);
     }
