@@ -17,3 +17,6 @@ async function findShape(shape) {
     })
     return response;
   }
+
+
+  export {findShape}
