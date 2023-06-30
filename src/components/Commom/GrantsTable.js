@@ -232,12 +232,13 @@ function EnhancedTableToolbar(props) {
 
 
   const downloadExcel = (data) => {
+
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Outorgas1");
     //let buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
     //XLSX.write(workbook, { bookType: "xlsx", type: "binary" });
-    XLSX.writeFile(workbook, "DataSheet.xlsx");
+    XLSX.writeFile(workbook, `outorgas.xlsx`);
   };
 
   return (
@@ -288,8 +289,8 @@ function EnhancedTableToolbar(props) {
         </Tooltip>
       )}
       <Tooltip title="exportar">
-        <IconButton>
-          <GetAppIcon onClick={() => { downloadExcel(props.markers) }} />
+        <IconButton onClick={() => { downloadExcel(props.markers) }}>
+          <GetAppIcon  />
         </IconButton>
       </Tooltip>
 
@@ -547,29 +548,6 @@ export default function GrantsTable({ markers }) {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Box>
-        {/**
-         <Box>
-          <SpeedDial
-            ariaLabel=""
-            sx={{ position: 'absolute', right: 25, bottom: 0, top: 0 }}
-            icon={<SpeedDialIcon style={{ fontSize: '10px' }} />}
-          >
-            {
-              [
-                { icon: <FileCopyIcon />, name: 'Copy' },
-                { icon: <GetAppIcon onClick={() => { console.log('excel') }} />, name: 'Excel' }
-              ].map((action) => (
-                <SpeedDialAction
-                  key={action.name}
-                  icon={action.icon}
-                  tooltipTitle={action.name}
-                />
-              ))}
-          </SpeedDial>
-        </Box>
-         */}
-
-
       </Paper>
     </Box>
   );

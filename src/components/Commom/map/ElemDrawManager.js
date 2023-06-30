@@ -1,6 +1,6 @@
 import { useContext, useEffect } from 'react';
 //import { createCircleRings } from '../tools';
-import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle, find_points_in_rectangle } from '../../../services/shapes';
+import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle, findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle } from '../../../services/geolocation';
 import { SystemContext } from '../../MainFlow/Analyse';
 import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea, numberWithCommas } from '../../../tools';
 import ElemInfoWindow from './ElemInfoWindow';
@@ -95,7 +95,7 @@ const ElemDrawManager = ({ map }) => {
         var lat = bounds.getNorthEast().lat();
         var lng = circle.getCenter().lng();
 
-        let markers = await findPointsInsideCircle(
+        let markers = await findAllPointsInCircle(
           {
             center: { lng: center.lng(), lat: center.lat() },
             radius: parseInt(radius)
@@ -166,7 +166,7 @@ const ElemDrawManager = ({ map }) => {
           position: { lat: lat, lng: lng },
           map: map,
           draw: event.overlay,
-          markers: await findPointsInsidePolygon(serverPolygon),
+          markers: await findAllPointsInPolygon(serverPolygon),
           area: calculatePolygonArea(event.overlay)
         }
         let infowindow = new window.google.maps.InfoWindow({
@@ -204,8 +204,10 @@ const ElemDrawManager = ({ map }) => {
           NE: NE,
           SW: SW,
           area: calculateRectangleArea(event.overlay.getBounds()),
-          markers: await find_points_in_rectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
+          markers: await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
         }
+
+        console.log(shape)
         // Mostrar informações do polígono
         let infowindow = new window.google.maps.InfoWindow({
           content: setContent(shape),
@@ -239,7 +241,15 @@ const ElemDrawManager = ({ map }) => {
           type: 'polyline',
           position: { lat: lat, lng: lng },
           map: map,
+          markers: {
+            "subterranea": [],
+            "superficial": [],
+            "barragem": [],
+            "lancamento_efluentes": [],
+            "lancamento_pluviais": []
+          },
           draw: polyline,
+
           meters: calculatePolylineLength(polyline)
 
         }

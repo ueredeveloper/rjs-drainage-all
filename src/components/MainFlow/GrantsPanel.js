@@ -63,28 +63,28 @@ export default function GrantsPanel() {
                 </Tabs>
             </Box>
             {
-                overlays.shapes.map((shape, i)=>{
+                overlays.shapes.map((shape, i) => {
                     return (
-                        <div id="div-panel" key={i} style={{height: '500px'}}>
+                        <div id="div-panel" key={i} style={{ height: '500px' }}>
                             <TabPanel value={value} index={0}>
-                                {console.log(shape.markers.subterranea)}
-                                <GrantsTable markers={shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
+
+                                <GrantsTable name={"subterranea"} markers={shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
                             </TabPanel>
                             <TabPanel value={value} index={1}>
-                                <GrantsTable markers={shape.markers.superficial !== null ? shape.markers.superficial : []} />
+                                <GrantsTable name={"superficial"} markers={shape.markers.superficial !== null ? shape.markers.superficial : []} />
                             </TabPanel>
                             <TabPanel value={value} index={2}>
-                                <GrantsTable markers={shape.markers.lancamento_pluviais !== null ? shape.markers.lancamento_pluviais : []} />
+                                <GrantsTable name={"lancamento_pluviais"} markers={shape.markers.lancamento_pluviais !== null ? shape.markers.lancamento_pluviais : []} />
                             </TabPanel>
                             <TabPanel value={value} index={3}>
-                                <GrantsTable markers={shape.markers.lancamento_efluentes !== null ? shape.markers.lancamento_efluentes : []} />
+                                <GrantsTable name={"lancamento_efluentes"} markers={shape.markers.lancamento_efluentes !== null ? shape.markers.lancamento_efluentes : []} />
                             </TabPanel>
                             <TabPanel value={value} index={4}>
-                                <GrantsTable markers={shape.markers.barragem !== null ? shape.markers.barragem : []} />
+                                <GrantsTable name={"barragem"} markers={shape.markers.barragem !== null ? shape.markers.barragem : []} />
                             </TabPanel>
                         </div>
                     )
-                  })
+                })
             }
 
 
