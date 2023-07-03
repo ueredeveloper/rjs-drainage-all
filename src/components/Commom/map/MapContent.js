@@ -3,15 +3,10 @@ import { Wrapper } from "@googlemaps/react-wrapper";
 import { Box } from '@mui/material';
 import ElemMap from './ElemMap';
 import ElemDrawManager from './ElemDrawManager';
-import { orange } from '@mui/material/colors';
 import { SystemContext } from '../../MainFlow/Analyse';
 import ElemMarker from './ElemMarker';
 import ElemInfoWindow from './ElemInfoWindow';
-import { InfoWindow } from '@googlemaps/react-wrapper';
-import CustomInfoWindow from './CustomInfoWindow';
-import ElemPopup from './ElemPopupOverlay';
-import PopupOverlay from './ElemPopupOverlay';
-import GMapsOverlayView from './ElemPopupOverlay';
+import ElemPopupOverlay from './ElemPopupOverlay';
 
 
 function MapContent() {
@@ -42,7 +37,7 @@ function MapContent() {
                 if(shape.markers[type]!==null)
                 return shape.markers[type].map((marker, ii) => {
                   return <ElemMarker
-                    key={'marker_' + ii}
+                    key={'marker-' + ii}
                     marker={marker}
                     setMarker={setMarker}
                     map={map}
@@ -57,7 +52,7 @@ function MapContent() {
             return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type=>{
                 if(shape.markers[type]!==null)
                 return shape.markers[type].map((marker, ii) => {
-                  return <ElemInfoWindow key={'popup_'+ii}
+                  return <ElemInfoWindow key={'infowindow-'+ii}
                   draw={marker}
                   
                 />
@@ -67,7 +62,7 @@ function MapContent() {
           })
           }
           {overlays.shapes.map((shape, i)=>{
-            return <GMapsOverlayView key={'popup_'+i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape}/>
+            return <ElemPopupOverlay key={'popup_'+i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape}/>
           })}
       </Wrapper>
 

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { numberWithCommas } from '../../../tools';
 
-const GMapsOverlayView = ({ map, position, content, draw }) => {
+const ElemPopupOverlay = ({ map, position, content, draw }) => {
     const overlayRef = useRef(null);
 
     useEffect(() => {
@@ -10,10 +10,7 @@ const GMapsOverlayView = ({ map, position, content, draw }) => {
         class PopupOverlay extends window.google.maps.OverlayView {
             constructor() {
                 super();
-                content = document.createElement('div');
-                content.style.className = 'content';
-                content.innerHTML = 'Hello'
-
+               
                 const styleElement = document.createElement('style');
                 document.head.appendChild(styleElement);
                 const cssRule1 = `
@@ -62,20 +59,15 @@ const GMapsOverlayView = ({ map, position, content, draw }) => {
                 styleElement.sheet.insertRule(cssRule2);
                 styleElement.sheet.insertRule(cssRule3);
                 styleElement.sheet.insertRule(cssRule4);
-                content.innerHTML = 'Hello'
-                content.classList.add("popup-bubble");
-
-                // This zero-height div is positioned at the bottom of the bubble.
+              
                 const bubbleAnchor = document.createElement("div");
 
                 bubbleAnchor.classList.add("popup-bubble-anchor");
-                bubbleAnchor.appendChild(content);
-                // This zero-height div is positioned at the bottom of the tip.
                 this.containerDiv = document.createElement("div");
                 this.containerDiv.classList.add("popup-container");
                 this.containerDiv.appendChild(bubbleAnchor);
 
-                bubbleAnchor.appendChild(content);
+                bubbleAnchor.appendChild(setContent(draw));
 
                 this.containerDiv = document.createElement("div");
                 this.containerDiv.classList.add("popup-container");
@@ -168,15 +160,15 @@ const setContent = (draw) => {
         const divElement = document.createElement('div');
         //divElement.setAttribute('id', 'content')
         divElement.classList.add("popup-bubble");
-        divElement.style.overflowY = 'scroll';
-        divElement.style.height = '4rem';
+        //divElement.style.overflowY = 'scroll';
+        //divElement.style.height = '4rem';
         divElement.style.width = '20rem';
 
-        const h3Element = document.createElement('h3');
+        const h3Element = document.createElement('h4');
         h3Element.textContent = 'Informações do Retângulo';
 
         const innerDivElement = document.createElement('div');
-        innerDivElement.style.fontSize = '12px';
+        //innerDivElement.style.fontSize = '12px';
 
         const bElement = document.createElement('b');
         bElement.textContent = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
@@ -238,4 +230,4 @@ const setContent = (draw) => {
 }
 
 
-export default GMapsOverlayView;
+export default ElemPopupOverlay;
