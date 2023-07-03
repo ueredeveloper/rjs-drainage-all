@@ -85,7 +85,7 @@ async function findPointsInASystem(tp_id, lat, lng) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findAllPointsInRectangle(xmin, ymin, xmax, ymax) {
-  console.log(xmin, ymin, xmax, ymax);
+ 
   try {
     const response = await fetch(url + '/findAllPointsInRectangle', {
       method: 'POST',
@@ -133,7 +133,7 @@ async function findAllPointsInPolygon(polygon) {
     }
 
     const data = await response.json();
-    console.log(data);
+    
     // obter primeiro índice da matriz
     return data[0];
   } catch (error) {

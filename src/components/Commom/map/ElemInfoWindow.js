@@ -1,27 +1,57 @@
-import { createRef, useEffect, useState } from 'react';
+import { createRef, useEffect, useRef, useState } from 'react';
 import { numberWithCommas } from '../../../tools';
 
 const ElemInfoWindow = ({ draw }) => {
 
     const [infowindow, setInfowindow] = useState();
+    const [isOpen, setIsOpen] = useState(false);
+    const hoverEffectRef = useRef(null);
+    const [divElement, setDivElement] = useState(null);
 
 
     useEffect(() => {
 
         if (!infowindow) {
-            setInfowindow(new window.google.maps.InfoWindow(
-                { content: setContent(draw) }
-            ));
+
+            let _infowindow = new window.google.maps.InfoWindow({
+                content: setContent(draw)
+            })
+          
+            setInfowindow(_infowindow);
         }
 
+
         if (draw.map && draw.position && infowindow) {
-            infowindow.setMap(null)
-            
+            //infowindow.setMap(null)
+            console.log('hhh')
             infowindow.setPosition(draw.position);
             infowindow.setMap(draw.map);
 
+            window.google.maps.event.addListener(infowindow, 'domready', function() {
+                console.log('ready')
+            });
+            
+
+            const handleCloseClick = () => {
+                //gm-ui-hover-effect
+                //setIsOpen(false);
+                //console.log('window listener on close click')
+                // Handle focus manually.
+
+                window.document.querySelectorAll('.gm-ui-hover-effect').forEach((el) => el.addEventListener("closeclick", function () {
+                    console.log("clicked item inside infowindow")
+                }));
+            };
+
+            //infowindow.addListener('closeclick', handleCloseClick);
+            window.google.maps.event.addListener(infowindow, 'domready', handleCloseClick);
+
         }
+
+        
     }, [draw.map, draw.position, draw.radius, infowindow])
+
+  
 
     return null;
 };
@@ -105,9 +135,9 @@ const setContent = (draw) => {
             </div>
         `
     }
-    /*
-    if (draw.type==='marker'){
-       
+
+    if (draw.type === 'marker') {
+
         return `
             <div >
                 <h3> Informações do Marcador <h3/>
@@ -117,7 +147,7 @@ const setContent = (draw) => {
                 </div>   
             </div>
         `
-    }*/
+    }
     return `<div></div>`
 }
 

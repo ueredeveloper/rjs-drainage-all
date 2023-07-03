@@ -8,6 +8,10 @@ import { SystemContext } from '../../MainFlow/Analyse';
 import ElemMarker from './ElemMarker';
 import ElemInfoWindow from './ElemInfoWindow';
 import { InfoWindow } from '@googlemaps/react-wrapper';
+import CustomInfoWindow from './CustomInfoWindow';
+import ElemPopup from './ElemPopupOverlay';
+import PopupOverlay from './ElemPopupOverlay';
+import GMapsOverlayView from './ElemPopupOverlay';
 
 
 function MapContent() {
@@ -15,7 +19,11 @@ function MapContent() {
   const [mode, setMode] = useState('light');
   const [map, setMap] = useState();
 
-  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapes, setShapes] = useContext(SystemContext)
+  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapes, setShapes] = useContext(SystemContext);
+
+  const handleInfoWindowClose = (marker) => {
+   console.log('on close')
+  };
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
@@ -44,6 +52,23 @@ function MapContent() {
             })
           })
           }
+          {
+          overlays.shapes.map(shape=>{
+            return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type=>{
+                if(shape.markers[type]!==null)
+                return shape.markers[type].map((marker, ii) => {
+                  return <ElemInfoWindow key={'popup_'+ii}
+                  draw={marker}
+                  
+                />
+                })
+    
+            })
+          })
+          }
+          {overlays.shapes.map((shape, i)=>{
+            return <GMapsOverlayView key={'popup_'+i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape}/>
+          })}
       </Wrapper>
 
     </Box>

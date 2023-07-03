@@ -65,7 +65,7 @@ const ElemDrawManager = ({ map }) => {
                 <p> Coordenadas: ${position.lat()}, ${position.lng()}</p>
             </div>   
           </div>`
-
+/*
         let infowindow = new window.google.maps.InfoWindow({
           content: content,
         });
@@ -75,11 +75,12 @@ const ElemDrawManager = ({ map }) => {
             anchor: marker,
             map,
           });
-        });
+        });*/
 
         setMarker(prev => {
           return {
             ...prev,
+            position: {lat: position.lat(), lng:position.lng()},
             int_latitude: position.lat(),
             int_longitude: position.lng()
           }
@@ -114,12 +115,13 @@ const ElemDrawManager = ({ map }) => {
           area: calculateCircleArea(radius)
 
         }
+        /*
         let infowindow = new window.google.maps.InfoWindow({
           content: setContent(shape),
           map
         });
         infowindow.setPosition({ lat: lat, lng: lng });
-        infowindow.setMap(map);
+        infowindow.setMap(map);*/
 
         setOverlays(prev => {
           return {
@@ -169,12 +171,13 @@ const ElemDrawManager = ({ map }) => {
           markers: await findAllPointsInPolygon(serverPolygon),
           area: calculatePolygonArea(event.overlay)
         }
+        /*
         let infowindow = new window.google.maps.InfoWindow({
           content: setContent(shape),
           map
         });
         infowindow.setPosition({ lat: lat, lng: lng });
-        infowindow.setMap(map);
+        infowindow.setMap(map);*/
 
         setOverlays(prev => {
           return {
@@ -206,7 +209,7 @@ const ElemDrawManager = ({ map }) => {
           area: calculateRectangleArea(event.overlay.getBounds()),
           markers: await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
         }
-
+/*
         console.log(shape)
         // Mostrar informações do polígono
         let infowindow = new window.google.maps.InfoWindow({
@@ -214,7 +217,7 @@ const ElemDrawManager = ({ map }) => {
           map
         });
         infowindow.setPosition({ lat: lat, lng: lng });
-        infowindow.setMap(map);
+        infowindow.setMap(map);*/
 
         setOverlays(prev => {
           return {
@@ -254,12 +257,14 @@ const ElemDrawManager = ({ map }) => {
 
         }
 
+        /*
         let infowindow = new window.google.maps.InfoWindow({
           content: setContent(shape),
           map
         });
         infowindow.setPosition({ lat: lat, lng: lng });
         infowindow.setMap(map);
+        */
 
         setOverlays(prev => {
           return {
