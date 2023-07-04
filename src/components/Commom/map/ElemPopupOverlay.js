@@ -10,11 +10,12 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
         class PopupOverlay extends window.google.maps.OverlayView {
             constructor() {
                 super();
-               
+
                 const styleElement = document.createElement('style');
                 document.head.appendChild(styleElement);
                 const cssRule1 = `
                     .popup-bubble {
+                       
                         position: absolute;
                         top: 0;
                         left: 0;
@@ -26,13 +27,16 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
                         overflow-y: auto;
                         max-height: 60px;
                         box-shadow: 0px 2px 10px 1px rgba(0, 0, 0, 0.5);
+                       
                     }`;
                 const cssRule2 = `
                     .popup-bubble-anchor {  
+                      
                         position: absolute;
                         width: 100%;
                         bottom: 8px;
                         left: 0;
+                        
                     }`;
                 const cssRule3 = `
                     .popup-bubble-anchor::after {
@@ -45,21 +49,22 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
                         height: 0;
                         border-left: 6px solid transparent;
                         border-right: 6px solid transparent;
-                        border-top: 8px solid white;
+                        border-top: 8px solid #000;
                     }`;
                 const cssRule4 = `
-                        .popup-container {
+                    .popup-container {
                         cursor: auto;
                         height: 0;
                         position: absolute;
                         width: 200px;
+                        
                     }`;
 
                 styleElement.sheet.insertRule(cssRule1);
                 styleElement.sheet.insertRule(cssRule2);
                 styleElement.sheet.insertRule(cssRule3);
                 styleElement.sheet.insertRule(cssRule4);
-              
+
                 const bubbleAnchor = document.createElement("div");
 
                 bubbleAnchor.classList.add("popup-bubble-anchor");
@@ -67,11 +72,8 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
                 this.containerDiv.classList.add("popup-container");
                 this.containerDiv.appendChild(bubbleAnchor);
 
-                bubbleAnchor.appendChild(setContent(draw));
 
-                this.containerDiv = document.createElement("div");
-                this.containerDiv.classList.add("popup-container");
-                this.containerDiv.appendChild(bubbleAnchor);
+                bubbleAnchor.appendChild(setContent(draw));
 
             }
 
@@ -99,6 +101,7 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
         }
 
         const popupOverlay = new PopupOverlay();
+
         popupOverlay.setMap(map);
 
         overlayRef.current = popupOverlay;
@@ -122,6 +125,52 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
 
 const setContent = (draw) => {
 
+    const thumbStyle = document.createElement('style');
+    thumbStyle.innerHTML = `
+        .overlay-info {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            overflow-y: scroll;
+            font-size: 12px;
+            width: 17rem;
+            min-height: 5rem;
+            background-color: #000;
+            color: #fff;
+            opacity: 0.8;
+        }
+        .overlay-info::-webkit-scrollbar {
+            width: 10px;
+            }
+        
+        .overlay-info::-webkit-scrollbar-thumb {
+        
+            background: red;
+        }
+    `;
+    document.head.appendChild(thumbStyle);
+
+    function createContentDiv(type, content) {
+
+        const divElement = document.createElement('div');
+        divElement.classList.add("popup-bubble");
+
+
+        const h3Element = document.createElement('h4');
+        h3Element.textContent = `Informações do ${type}`;
+        const innerDivElement = document.createElement('div');
+        const bElement = document.createElement('b');
+        bElement.textContent = content;
+
+        innerDivElement.appendChild(bElement);
+        divElement.appendChild(h3Element);
+        divElement.appendChild(innerDivElement);
+        divElement.classList.add('overlay-info');
+
+        return divElement;
+
+    }
+
     if (draw.type === 'polyline') {
         let coordinates = [];
         let htmlCoords = '';
@@ -138,16 +187,9 @@ const setContent = (draw) => {
         let km = draw.meters / 1000;
         let formatKm = numberWithCommas(km)
 
-        return `
-            <div style="overflow-y: scroll; padding: 0px; height: 4rem;  width: 20rem">
-                <h3> Informações da Polilinha </h3>
-                <div style="font-size: 12px">
-                    <b> ${formatMeters} metros = ${formatKm} km </b>
-                <br/>
-                ${htmlCoords}
-                </div>
-            </div>
-        `
+        let content = `${formatMeters} metros = ${formatKm} km.`
+        let type = `Polilinha`;
+        return createContentDiv(type, content);
     }
     if (draw.type === 'rectangle') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
@@ -157,75 +199,36 @@ const setContent = (draw) => {
         let areakKm2 = draw.area / 1000000
         let formatAreaKm2 = numberWithCommas(areakKm2)
 
-        const divElement = document.createElement('div');
-        //divElement.setAttribute('id', 'content')
-        divElement.classList.add("popup-bubble");
-        //divElement.style.overflowY = 'scroll';
-        //divElement.style.height = '4rem';
-        divElement.style.width = '20rem';
-
-        const h3Element = document.createElement('h4');
-        h3Element.textContent = 'Informações do Retângulo';
-
-        const innerDivElement = document.createElement('div');
-        //innerDivElement.style.fontSize = '12px';
-
-        const bElement = document.createElement('b');
-        bElement.textContent = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
-
-        innerDivElement.appendChild(bElement);
-        divElement.appendChild(h3Element);
-        divElement.appendChild(innerDivElement);
-
-        return divElement;
+        let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
+        let type = `Retângulo`;
+        return createContentDiv(type, content);
 
     }
     if (draw.type === 'polygon') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
-        console.log('polygon', draw.position)
+    
         let areaM2 = draw.area.toFixed(2)
         let formatAreaM2 = numberWithCommas(areaM2)
         let areakKm2 = draw.area / 1000000
         let formatAreaKm2 = numberWithCommas(areakKm2)
-        return `
-            <div style="overflow-y: scroll; height: 4rem; width: 20rem">
-                <h3> Informações do Polígono </h3>
-                <div style="font-size: 12px">
-                    <b> Área: ${formatAreaM2} m² = ${formatAreaKm2} km² </b>
-                </div>
-            </div>
-        `
+
+        let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
+        let type = `Polígono`;
+        return createContentDiv(type, content);
     }
     if (draw.type === 'circle') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
 
-        let formatAream2 = numberWithCommas(draw.area)
+        let formatAreaM2 = numberWithCommas(draw.area)
         let km2 = draw.area / 1000000
-        let formatKm2 = numberWithCommas(km2)
+        let formatAreaKm2 = numberWithCommas(km2)
         let formatRadius = numberWithCommas(draw.radius)
-        return `
-            <div >
-                <h3> Informações do Círculo <h3/>
-                <div style="font-size: 12px">
-                    <p> Área: ${formatAream2} m² = ${(formatKm2)} km²</p>
-                    <b> Raio: ${formatRadius} metros</p>
-                </div>   
-            </div>
-        `
+
+        let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km², Raio: ${formatRadius} metros`;
+        let type = `Círculo`;
+        return createContentDiv(type, content);
     }
 
-    if (draw.type === 'marker') {
-
-        return `
-            <div >
-                <h3> Informações do Marcador <h3/>
-                <div style="font-size: 12px">
-                    <p> Coordenadas: ${draw.int_latitude}, ${draw.int_longitude}</p>
-                    
-                </div>   
-            </div>
-        `
-    }
     return `<div></div>`
 }
 

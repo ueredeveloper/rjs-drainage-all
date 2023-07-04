@@ -77,7 +77,9 @@ const ElemMarker = (props) => {
   useEffect(() => {
 
     if (!_marker) {
-      _setMarker(new window.google.maps.Marker());
+
+      let _marker = new window.google.maps.Marker();
+      _setMarker(_marker);
     }
 
     return () => {
@@ -104,7 +106,7 @@ const ElemMarker = (props) => {
     });
 
     let content = `
-          <div >
+          <div" >
             <h3> Outorga <h3/>
             <div style="font-size: 12px">
                 <p> Nome: ${us_nome}</p>
@@ -118,6 +120,8 @@ const ElemMarker = (props) => {
     let infowindow = new window.google.maps.InfoWindow({
       content: content,
     });
+    infowindow.setZIndex(10);
+    
     _marker.addListener("click", () => {
       infowindow.open({
         anchor: _marker,

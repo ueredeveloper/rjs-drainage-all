@@ -331,7 +331,7 @@ const setContent = (draw) => {
   }
   if (draw.type === 'polygon') {
     /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
-    console.log('polygon', draw.position)
+  
     let areaM2 = draw.area.toFixed(2)
     let formatAreaM2 = numberWithCommas(areaM2)
     let areakKm2 = draw.area / 1000000

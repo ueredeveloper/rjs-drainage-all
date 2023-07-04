@@ -15,7 +15,8 @@ const ElemInfoWindow = ({ draw }) => {
 
             let _infowindow = new window.google.maps.InfoWindow({
                 content: setContent(draw)
-            })
+            });
+            //_infowindow.setZIndex(0);
           
             setInfowindow(_infowindow);
         }

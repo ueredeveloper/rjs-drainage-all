@@ -30,6 +30,9 @@ function MapContent() {
           setMarker={setMarker}
           map={map}
         />
+        {overlays.shapes.map((shape, i)=>{
+            return <ElemPopupOverlay key={'popup_'+i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape}/>
+          })}
 
         {
           overlays.shapes.map(shape=>{
@@ -61,9 +64,7 @@ function MapContent() {
             })
           })
           }
-          {overlays.shapes.map((shape, i)=>{
-            return <ElemPopupOverlay key={'popup_'+i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape}/>
-          })}
+          
       </Wrapper>
 
     </Box>
