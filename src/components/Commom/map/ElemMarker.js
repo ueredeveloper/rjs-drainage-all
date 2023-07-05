@@ -77,9 +77,7 @@ const ElemMarker = (props) => {
   useEffect(() => {
 
     if (!_marker) {
-
-      let _marker = new window.google.maps.Marker();
-      _setMarker(_marker);
+      _setMarker(new window.google.maps.Marker());
     }
 
     return () => {
@@ -105,6 +103,15 @@ const ElemMarker = (props) => {
       map: props.map
     });
 
+    /*
+    props.setMarker(prev => {
+      return {
+        ...prev,
+        marker: _marker
+      }
+    })*/
+
+    /*
     let content = `
           <div" >
             <h3> Outorga <h3/>
@@ -127,11 +134,11 @@ const ElemMarker = (props) => {
         anchor: _marker,
         // map:props.map,
       });
-    });
+    });*/
 
 
     if (id === 0) {
-      //_marker.setAnimation(window.google.maps.Animation.BOUNCE);
+      _marker.setAnimation(window.google.maps.Animation.BOUNCE);
     }
   }
 

@@ -17,8 +17,12 @@ function MapContent() {
   const [marker, setMarker, system, setSystem, overlays, setOverlays, shapes, setShapes] = useContext(SystemContext);
 
   const handleInfoWindowClose = (marker) => {
-   console.log('on close')
+    console.log('on close')
   };
+
+  useEffect(()=>{
+    console.log(overlays)
+  }, [overlays])
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
@@ -30,41 +34,38 @@ function MapContent() {
           setMarker={setMarker}
           map={map}
         />
-        {overlays.shapes.map((shape, i)=>{
-            return <ElemPopupOverlay key={'popup_'+i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape}/>
-          })}
-
         {
-          overlays.shapes.map(shape=>{
-            return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type=>{
-                if(shape.markers[type]!==null)
-                return shape.markers[type].map((marker, ii) => {
+          overlays.shapes.map(shape => {
+            return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type => {
+              if (shape.markers[type] !== null)
+                return shape.markers[type].map((marker, i) => {
                   return <ElemMarker
-                    key={'marker-' + ii}
+                    key={'marker-' + i}
                     marker={marker}
                     setMarker={setMarker}
                     map={map}
                   />
                 })
-    
+
             })
           })
-          }
-          {
-          overlays.shapes.map(shape=>{
-            return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type=>{
-                if(shape.markers[type]!==null)
-                return shape.markers[type].map((marker, ii) => {
-                  return <ElemInfoWindow key={'infowindow-'+ii}
-                  draw={marker}
-                  
-                />
+        }
+        {
+          overlays.shapes.map(shape => {
+            return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type => {
+              if (shape.markers[type] !== null)
+                return shape.markers[type].map((marker, i) => {
+                  return <ElemInfoWindow key={'infowindow-' + i}
+                    marker={marker}
+                  />
                 })
-    
+
             })
           })
-          }
-          
+        }
+        {overlays.shapes.map((shape, i) => {
+          return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />
+        })}
       </Wrapper>
 
     </Box>
