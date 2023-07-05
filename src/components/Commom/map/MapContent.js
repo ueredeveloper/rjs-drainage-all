@@ -30,8 +30,7 @@ function MapContent() {
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
         <ElemDrawManager map={map} />
         <ElemMarker
-          marker={marker}
-          setMarker={setMarker}
+          info={marker}
           map={map}
         />
         {
@@ -41,8 +40,7 @@ function MapContent() {
                 return shape.markers[type].map((marker, i) => {
                   return <ElemMarker
                     key={'marker-' + i}
-                    marker={marker}
-                    setMarker={setMarker}
+                    info={marker}
                     map={map}
                   />
                 })
@@ -50,7 +48,7 @@ function MapContent() {
             })
           })
         }
-        {
+        {/*
           overlays.shapes.map(shape => {
             return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type => {
               if (shape.markers[type] !== null)
@@ -61,7 +59,7 @@ function MapContent() {
                 })
 
             })
-          })
+          })*/
         }
         {overlays.shapes.map((shape, i) => {
           return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />

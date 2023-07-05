@@ -7,6 +7,7 @@ import purpleIcon from '../../../assets/purple-icon.png';
 import pinkIcon from '../../../assets/pink-icon.png';
 import yellowIcon from '../../../assets/yellow-icon.png';
 import brownIcon from '../../../assets/brown-icon.png';
+import ElemInfoWindow from './ElemInfoWindow';
 
 /**
  * @typedef {import('react').PropsWithChildren} Props
@@ -32,9 +33,9 @@ import brownIcon from '../../../assets/brown-icon.png';
  * @param {Props & { info: MarkerInfo, map: object }} props - Component props containing marker information and map object.
  * @returns {null} Null component.
  */
-const ElemMarker = (props) => {
+const ElemMarker = ({ info, map }) => {
 
-  const [_marker, _setMarker] = useState();
+  const [marker, setMarker] = useState();
 
   /**
    * Sets the icon for the marker based on the provided parameters.
@@ -76,18 +77,19 @@ const ElemMarker = (props) => {
 
   useEffect(() => {
 
-    if (!_marker) {
-      _setMarker(new window.google.maps.Marker());
+    if (!marker) {
+      setMarker(new window.google.maps.Marker());
     }
 
     return () => {
-      if (_marker) {
-        _marker.setMap(null);
+      if (marker) {
+        marker.setMap(null);
+
       }
     };
-  }, [_marker]);
+  }, [marker]);
 
-  if (_marker) {
+  if (info) {
 
     let { id,
       us_nome, us_cpf_cnpj,
@@ -95,52 +97,28 @@ const ElemMarker = (props) => {
       int_processo,
       ti_id,
       tp_id,
-      int_latitude, int_longitude } = props.marker;
+      int_latitude, int_longitude } = info;
 
-    _marker.setOptions({
-      icon: { url: setIcon(id, ti_id, tp_id), scaledSize: new window.google.maps.Size(30, 30) },
-      position: { lat: parseFloat(int_latitude), lng: parseFloat(int_longitude) },
-      map: props.map
-    });
+    if (marker) {
 
-    /*
-    props.setMarker(prev => {
-      return {
-        ...prev,
-        marker: _marker
-      }
-    })*/
-
-    /*
-    let content = `
-          <div" >
-            <h3> Outorga <h3/>
-            <div style="font-size: 12px">
-                <p> Nome: ${us_nome}</p>
-                <p>CPF: ${us_cpf_cnpj}</p>
-                <p> Endereço: ${emp_endereco}</p>
-                <p> Processo: ${int_processo}</p>
-                <p> Coordenadas: ${int_latitude}, ${int_longitude}</p>
-            </div>   
-          </div>`
-
-    let infowindow = new window.google.maps.InfoWindow({
-      content: content,
-    });
-    infowindow.setZIndex(10);
-    
-    _marker.addListener("click", () => {
-      infowindow.open({
-        anchor: _marker,
-        // map:props.map,
+      marker.setOptions({
+        icon: { url: setIcon(id, ti_id, tp_id), scaledSize: new window.google.maps.Size(30, 30) },
+        position: { lat: parseFloat(int_latitude), lng: parseFloat(int_longitude) },
+        map: map
       });
-    });*/
+      if (id === 0) {
+
+        //marker.setAnimation(window.google.maps.Animation.BOUNCE);
+      }
 
 
-    if (id === 0) {
-      _marker.setAnimation(window.google.maps.Animation.BOUNCE);
+      return <div><ElemInfoWindow marker={marker} info={info} map={map} /></div>
+
     }
+
+
   }
+
 
   return null;
 };

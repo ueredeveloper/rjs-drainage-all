@@ -1,7 +1,7 @@
 import { createRef, useEffect, useRef, useState } from 'react';
-import { numberWithCommas } from '../../../tools';
+import { wi_pluviais_icon, wi_efluentes_icon, wi_manuais_icon, wi_tubulares_icon, wi_barragens_icon, wi_superficiais_icon} from '../../../assets/svgs-icons';
 
-const ElemInfoWindow = ({ marker, map }) => {
+const ElemInfoWindow = ({ marker, info, map }) => {
 
     const [infowindow, setInfowindow] = useState();
     const [isOpen, setIsOpen] = useState(false);
@@ -14,58 +14,187 @@ const ElemInfoWindow = ({ marker, map }) => {
         if (!infowindow) {
 
             let _infowindow = new window.google.maps.InfoWindow({
-                content: setContent(marker)
+                content: setContent(info)
             });
+            // sobrepor infowindow ao popup do polígono, retângulo etc...
+            _infowindow.setZIndex(10);
 
-            /*
-            if (marker.marker) {
-                marker.marker.addListener("click", () => {
+
+            if (marker) {
+                marker.addListener("click", () => {
+                    console.log('listener marker click')
                     _infowindow.open({
-                        anchor: marker.marker,
-                        // map:props.map,
+                        anchor: marker,
+                        map: map,
                     });
                 });
-            }*/
+            }
+
             setInfowindow(_infowindow);
         }
 
 
-        if (marker.map && marker.position && infowindow) {
-            //infowindow.setMap(null)
-            console.log('hhh')
+        if (map && marker && infowindow) {
+
             infowindow.setPosition(marker.position);
-            infowindow.setMap(marker.map);
-
-            window.google.maps.event.addListener(infowindow, 'domready', function () {
-                console.log('ready')
-            });
-
         }
 
 
-    }, [marker.map, marker.position, marker.radius, infowindow])
-
-
+    }, [map, marker, infowindow])
 
     return null;
 };
 
 
-const setContent = (marker) => {
 
-    if (marker.type === 'marker') {
+const setContent = (info) => {
 
-        return `
-            <div >
-                <h3> Informações do Marcador <h3/>
-                <div style="font-size: 12px">
-                    <p> Coordenadas: ${marker.int_latitude}, ${marker.int_longitude}</p>
-                    
-                </div>   
-            </div>
-        `
+    let svgData = null;
+
+    if (info.ti_id === 1) {
+        svgData = wi_superficiais_icon;
+    } else if (info.ti_id === 2 && info.tp_id === 1) {
+        svgData = wi_manuais_icon;
     }
-    return `<div></div>`
+    else if (info.ti_id === 2 && info.tp_id === 2) {
+        svgData = wi_tubulares_icon;
+    }
+    else if (info.ti_id === 3) {
+        svgData = wi_pluviais_icon;
+    }
+    else if (info.ti_id === 4) {
+        svgData = wi_efluentes_icon;
+    }
+    else if (info.ti_id === 5) {
+        svgData = wi_barragens_icon;
+    }
+
+    // Create an object element
+    const image = document.createElement('object');
+    image.setAttribute('type', 'image/svg+xml');
+    image.setAttribute('data', `data:image/svg+xml,${encodeURIComponent(svgData)}`);
+    image.style.width = '70px';
+    image.style.height = '70px';
+
+
+    // Create the container div
+    const containerDiv = document.createElement('div');
+    containerDiv.id = 'container';
+
+    // Create the title div
+    const titleDiv = document.createElement('div');
+    titleDiv.id = 'wi-title';
+
+    const tittleType = document.createElement('div');
+    tittleType.textContent = info.ti_descricao;
+    const wellType = document.createElement('div');
+    wellType.textContent = info.tp_descricao;
+    titleDiv.appendChild(tittleType);
+    titleDiv.appendChild(wellType);
+
+    // Create a <style> element
+    const styleElement = document.createElement('style');
+
+    // Set the CSS styles
+    styleElement.textContent = `
+        #wi-title {
+            font-family: 'Open Sans Condensed', sans-serif;
+            font-size: 22px;
+            font-weight: 400;
+            padding: 10px;
+            background-color: #48b5e9;
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        #wi-overflow {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        #wi-subtitle {
+            font-size: 16px;
+            font-weight: 700;
+            padding: 5px 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            
+            }
+        #wi-info{
+            font-size: 13px;
+            line-height: 18px;
+            font-weight: 400;
+            padding: 15px;
+            max-height: 140px;
+        
+        }
+        `;
+
+    // Append the <style> element to the <head> of the document
+    document.head.appendChild(styleElement);
+
+    const overlflowDiv = document.createElement('div');
+    overlflowDiv.id = 'wi-overflow';
+
+    // Create the subtitle div
+    const subtitleDiv = document.createElement('div');
+    subtitleDiv.id = 'wi-subtitle';
+
+    // Create the first inner div of the subtitle
+    const infoDiv = document.createElement('div');
+    infoDiv.textContent = 'Informações';
+
+    // Create the second inner div of the subtitle
+    //const imageDiv = document.createElement('div');
+    //imageDiv.appendChild(image);
+
+    // Append the inner divs to the subtitle div
+    subtitleDiv.appendChild(infoDiv);
+    subtitleDiv.appendChild(image);
+
+
+
+    // Create the info div
+    const infoContentDiv = document.createElement('div');
+    infoContentDiv.id = 'wi-info'
+    const infoTextDiv = document.createElement('div');
+
+    // Create the <p> elements for each property and set their text content
+    const nomeElement = document.createElement('p');
+    nomeElement.textContent = `Nome: ${info.us_nome}`;
+
+    const cpfElement = document.createElement('p');
+    cpfElement.textContent = `CPF: ${info.us_cpf_cnpj}`;
+
+    const enderecoElement = document.createElement('p');
+    enderecoElement.textContent = `Endereço: ${info.emp_endereco}`;
+
+    const processoElement = document.createElement('p');
+    processoElement.textContent = `Processo: ${info.int_processo}`;
+
+    const coordenadasElement = document.createElement('p');
+    coordenadasElement.textContent = `Coordenadas: ${info.int_latitude}, ${info.int_longitude}`;
+
+    infoTextDiv.appendChild(nomeElement);
+    infoTextDiv.appendChild(cpfElement);
+    infoTextDiv.appendChild(enderecoElement);
+    infoTextDiv.appendChild(processoElement);
+    infoTextDiv.appendChild(coordenadasElement);
+
+    infoContentDiv.appendChild(infoTextDiv);
+
+    // Append all the elements to the container div
+    containerDiv.appendChild(titleDiv);
+    overlflowDiv.appendChild(subtitleDiv);
+    overlflowDiv.appendChild(infoContentDiv);
+
+    containerDiv.appendChild(overlflowDiv);
+
+    return containerDiv;
 }
 
 export default ElemInfoWindow;
