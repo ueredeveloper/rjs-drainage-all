@@ -3,3 +3,7 @@
   flex-direction: column;
   height: 100vh;
 }
+.custom-infowindow {
+  width: 400px;
+  height: 300px;
+}

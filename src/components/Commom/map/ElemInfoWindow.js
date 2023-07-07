@@ -17,7 +17,8 @@ const ElemInfoWindow = ({ marker, info, map }) => {
         if (!infowindow) {
 
             let _infowindow = new window.google.maps.InfoWindow({
-                content: setContent(theme.palette.primary.main, info)
+                content: setContent(theme.palette.primary.main, info),
+                
             });
             // sobrepor infowindow ao popup do polígono, retângulo etc...
             _infowindow.setZIndex(10);
@@ -66,7 +67,7 @@ const setContent = (color, info) => {
 
     // Create the container div
     const containerDiv = document.createElement('div');
-    containerDiv.id = 'container';
+    containerDiv.id = 'wi-container';
 
     // Create the title div
     const titleDiv = document.createElement('div');
@@ -86,6 +87,10 @@ const setContent = (color, info) => {
 
     const setStyles = (bgColor) => {
         return `
+          #wi-container {
+                width: 400px;
+                height: 300px;
+            }
           #wi-title {
               font-family: 'Open Sans Condensed', sans-serif;
               font-size: 22px;

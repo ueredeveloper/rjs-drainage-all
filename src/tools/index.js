@@ -208,17 +208,17 @@ function setInfoMarkerIcon (id, ti_id, tp_id) {
   } else {
     switch (ti_id) {
       case 1:
-        return { type: 'superficial', mkr: mkrGreenIcon, color: '#019367', iw: iwSuperficialIcon('#019367') };
+        return { type: 'superficial', mkr: mkrGreenIcon, color: '#019367', iw: iwSuperficialIcon() };
       case 2:
         return tp_id === 1 ?
-          { type: 'subterraneo-manual', mkr: mkrBrownIcon, color: '#BD371A', iw: iwManualIcon('#BD371A') } :
-          { type: 'subterraneo-tubular', mkr: mkrBlueIcon, color: '#040C9D', iw: iwTubularIcon('#040C9D') };
+          { type: 'subterraneo-manual', mkr: mkrBrownIcon, color: '#BD371A', iw: iwManualIcon() } :
+          { type: 'subterraneo-tubular', mkr: mkrBlueIcon, color: '#040C9D', iw: iwTubularIcon() };
       case 3:
-        return { type: 'pluvial', mkr: mkrOrangeIcon, color: '#E3AB00', iw: iwPluvialIcon('#E3AB00') };
+        return { type: 'pluvial', mkr: mkrOrangeIcon, color: '#E3AB00', iw: iwPluvialIcon() };
       case 4:
-        return { type: 'efluente', mkr: mkrPurpleIcon, color: '#9D0471', iw: iwEfluenteIcon('#9D0471') };
+        return { type: 'efluente', mkr: mkrPurpleIcon, color: '#9D0471', iw: iwEfluenteIcon() };
       case 5:
-        return { type: 'barragem', mkr: mkrYellowIcon, color: '#BDB01A', iw: iwBarragemIcon('#BDB01A') };
+        return { type: 'barragem', mkr: mkrYellowIcon, color: '#BDB01A', iw: iwBarragemIcon() };
       case 6:
         return { type: 'caminhao', mrk: mkrPinkIcon, color: '#BD1A8E', iw: 'null' }
       default:
