@@ -1,5 +1,7 @@
 import { createRef, useEffect, useRef, useState } from 'react';
-import { wi_pluviais_icon, wi_efluentes_icon, wi_manuais_icon, wi_tubulares_icon, wi_barragens_icon, wi_superficiais_icon} from '../../../assets/svgs-icons';
+import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEfluenteIcon, iwPluvialIcon } from '../../../assets/svg/svgs-icons';
+import { setInfoMarkerIcon } from '../../../tools';
+import { useTheme } from '@mui/material/styles';
 
 const ElemInfoWindow = ({ marker, info, map }) => {
 
@@ -8,13 +10,14 @@ const ElemInfoWindow = ({ marker, info, map }) => {
     const hoverEffectRef = useRef(null);
     const [divElement, setDivElement] = useState(null);
 
-
+    const theme = useTheme();
+    
     useEffect(() => {
 
         if (!infowindow) {
 
             let _infowindow = new window.google.maps.InfoWindow({
-                content: setContent(info)
+                content: setContent(theme.palette.primary.main, info)
             });
             // sobrepor infowindow ao popup do polígono, retângulo etc...
             _infowindow.setZIndex(10);
@@ -47,32 +50,16 @@ const ElemInfoWindow = ({ marker, info, map }) => {
 
 
 
-const setContent = (info) => {
+const setContent = (color, info) => {
 
-    let svgData = null;
-
-    if (info.ti_id === 1) {
-        svgData = wi_superficiais_icon;
-    } else if (info.ti_id === 2 && info.tp_id === 1) {
-        svgData = wi_manuais_icon;
-    }
-    else if (info.ti_id === 2 && info.tp_id === 2) {
-        svgData = wi_tubulares_icon;
-    }
-    else if (info.ti_id === 3) {
-        svgData = wi_pluviais_icon;
-    }
-    else if (info.ti_id === 4) {
-        svgData = wi_efluentes_icon;
-    }
-    else if (info.ti_id === 5) {
-        svgData = wi_barragens_icon;
-    }
+    let svgData = setInfoMarkerIcon(info.id, info.ti_id, info.tp_id).iw;
 
     // Create an object element
+
     const image = document.createElement('object');
     image.setAttribute('type', 'image/svg+xml');
     image.setAttribute('data', `data:image/svg+xml,${encodeURIComponent(svgData)}`);
+
     image.style.width = '70px';
     image.style.height = '70px';
 
@@ -96,43 +83,46 @@ const setContent = (info) => {
     const styleElement = document.createElement('style');
 
     // Set the CSS styles
-    styleElement.textContent = `
-        #wi-title {
-            font-family: 'Open Sans Condensed', sans-serif;
-            font-size: 22px;
-            font-weight: 400;
-            padding: 10px;
-            background-color: #48b5e9;
-            color: white;
-            margin: 0;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-        }
-        #wi-overflow {
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        #wi-subtitle {
-            font-size: 16px;
-            font-weight: 700;
-            padding: 5px 0;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-around;
-            align-items: center;
-            padding: 10px;
-            
-            }
-        #wi-info{
-            font-size: 13px;
-            line-height: 18px;
-            font-weight: 400;
-            padding: 15px;
-            max-height: 140px;
-        
-        }
+
+    const setStyles = (bgColor) => {
+        return `
+          #wi-title {
+              font-family: 'Open Sans Condensed', sans-serif;
+              font-size: 22px;
+              font-weight: 400;
+              padding: 10px;
+              background-color: ${bgColor};
+              color: white;
+              margin: 0;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
+          }
+          #wi-overflow {
+              overflow-y: auto;
+              overflow-x: hidden;
+          }
+          #wi-subtitle {
+              font-size: 16px;
+              font-weight: 700;
+              padding: 5px 0;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-around;
+              align-items: center;
+              padding: 10px;
+          }
+          #wi-info {
+              font-size: 13px;
+              line-height: 18px;
+              font-weight: 400;
+              padding: 15px;
+              max-height: 140px;
+          }
         `;
+    };
+
+    styleElement.textContent = setStyles(color);
 
     // Append the <style> element to the <head> of the document
     document.head.appendChild(styleElement);
@@ -147,10 +137,6 @@ const setContent = (info) => {
     // Create the first inner div of the subtitle
     const infoDiv = document.createElement('div');
     infoDiv.textContent = 'Informações';
-
-    // Create the second inner div of the subtitle
-    //const imageDiv = document.createElement('div');
-    //imageDiv.appendChild(image);
 
     // Append the inner divs to the subtitle div
     subtitleDiv.appendChild(infoDiv);
@@ -193,6 +179,8 @@ const setContent = (info) => {
     overlflowDiv.appendChild(infoContentDiv);
 
     containerDiv.appendChild(overlflowDiv);
+
+
 
     return containerDiv;
 }

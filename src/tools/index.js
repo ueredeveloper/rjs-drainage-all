@@ -1,21 +1,6 @@
-/**
- * Converte uma união de shapes feita na JTST com formato do Google Maps API para o formato que possa ser utilizado no ArcGIS REST Service.
- * @param {object[]} rings - Array com coordenadas no formato do Google Maps API, por exemplo: [{lat: -17, lng: -47}, ...].
- * @returns {object[]} - Array no formato do ArcGIS REST Service, por exemplo: [[[-47, ..., -15], ..., [-48, ..., -16]]].
- */
-const gmapsToArcGis = (rings) => {
-  // arcGis = [[]] => [[[-47,-16], [-47,-17], [-47,-18]]]
-  let arcGis = [[]];
-  rings.forEach(r => {
-    // adicionar tudo na posição 0 da array.
-    arcGis[0].push([r.lng(), r.lat()])
-  })
-  // adicionar a primeira coordenada no final do polígono para fechar completamente
-  if (arcGis[0][0][0] !== arcGis[0][arcGis[0].length - 1][0]) {
-    arcGis[0].push(arcGis[0][0])
-  }
-  return arcGis;
-}
+import { mkrBlueIcon, mkrBrownIcon, mkrGreenIcon, mkrOrangeIcon, mkrPinkIcon, mkrPurpleIcon, mkrRedIcon, mkrYellowIcon } from "../assets";
+import { iwBarragemIcon, iwEfluenteIcon, iwManualIcon, iwPluvialIcon, iwSuperficialIcon, iwTubularIcon } from "../assets/svg/svgs-icons";
+
 /**
  * Cria anéis para cada ângulo do círculo (0 a 360º) e constrói um polígono em formato circular para buscas de outorgas.
  * @param {object} center - Latitude e longitude do centro de um círculo.
@@ -217,11 +202,37 @@ function calculatePolylineLength(polyline) {
   return lengthInMeters;
 }
 
+function setInfoMarkerIcon (id, ti_id, tp_id) {
+  if (id === 0) {
+    return { mkr: mkrRedIcon, color: '#9D0404' };
+  } else {
+    switch (ti_id) {
+      case 1:
+        return { type: 'superficial', mkr: mkrGreenIcon, color: '#019367', iw: iwSuperficialIcon('#019367') };
+      case 2:
+        return tp_id === 1 ?
+          { type: 'subterraneo-manual', mkr: mkrBrownIcon, color: '#BD371A', iw: iwManualIcon('#BD371A') } :
+          { type: 'subterraneo-tubular', mkr: mkrBlueIcon, color: '#040C9D', iw: iwTubularIcon('#040C9D') };
+      case 3:
+        return { type: 'pluvial', mkr: mkrOrangeIcon, color: '#E3AB00', iw: iwPluvialIcon('#E3AB00') };
+      case 4:
+        return { type: 'efluente', mkr: mkrPurpleIcon, color: '#9D0471', iw: iwEfluenteIcon('#9D0471') };
+      case 5:
+        return { type: 'barragem', mkr: mkrYellowIcon, color: '#BDB01A', iw: iwBarragemIcon('#BDB01A') };
+      case 6:
+        return { type: 'caminhao', mrk: mkrPinkIcon, color: '#BD1A8E', iw: 'null' }
+      default:
+        return null; // Return null or handle other cases as needed
+    }
+  }
+}
+
 
 export {
-  gmapsToArcGis, createCircleRings,
+  createCircleRings,
   converterPostgresToGmaps, nFormatter,
   analyseItsAvaiable, numberWithCommas,
   calculateCircleArea, calculateRectangleArea,
-  calculatePolylineLength, calculatePolygonArea
+  calculatePolylineLength, calculatePolygonArea,
+  setInfoMarkerIcon
 }

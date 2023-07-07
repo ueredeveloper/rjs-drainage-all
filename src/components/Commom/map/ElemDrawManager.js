@@ -4,7 +4,7 @@ import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCir
 import { SystemContext } from '../../MainFlow/Analyse';
 import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea, numberWithCommas } from '../../../tools';
 
-import redIcon from '../../../assets/red-icon.png'
+import redIcon from '../../../assets/png/red-icon.png';
 /**
 * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
   * @param {Object} map Map inicializado gmaps api.
