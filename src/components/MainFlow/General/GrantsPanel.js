@@ -6,8 +6,8 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import AnalyseFlow from "./TableFlow";
 import TableGrants from "./TableGrants";
-import GrantsTable from "../Commom/GrantsTable";
-import { SystemContext } from './Analyse';
+import GrantsTable from "../../Commom/GrantsTable";
+import { SystemContext } from '../Analyse';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
