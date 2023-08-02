@@ -20,6 +20,11 @@ export default function Analyse() {
     const [system, setSystem] = useState(initialState.system);
     const [overlays, setOverlays] = useState(initialState.overlays);
 
+    useEffect(() => {
+       // console.log(marker.position)
+       console.log(overlays.shapes.length)
+    }, [overlays])
+
     function TabPanel(props) {
         const { children, value, index, ...other } = props;
 
@@ -77,13 +82,19 @@ export default function Analyse() {
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>
-                        <GeneralAnalysePanel />
+                        <SystemContext.Provider value={[marker, setMarker, setOverlays]}>
+                            <GeneralAnalysePanel />
+                        </SystemContext.Provider>
                     </TabPanel>
                     <TabPanel value={value} index={1}>
-                        <SubterraneanAnalysePanel />
+                        <SystemContext.Provider value={[marker, setMarker, setOverlays]}>
+                            <SubterraneanAnalysePanel />
+                        </SystemContext.Provider>
                     </TabPanel>
                     <TabPanel value={value} index={2}>
-                        <SurfaceAnalysePanel />
+                        <SystemContext.Provider value={[marker, setMarker, setOverlays]}>
+                            <SurfaceAnalysePanel />
+                        </SystemContext.Provider>
                     </TabPanel>
                 </Box>
             </Box>

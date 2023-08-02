@@ -68,7 +68,7 @@ const grants = [
                 "int_processo": "197000477/2012",
                 "int_longitude": -47.911944
             },
-          
+
         ],
         "lancamento_json": [
             {
@@ -117,13 +117,22 @@ const grants = [
 
 const initialState = {
     "marker": {
+        position: { lat: -15.769526979446034, lng: -47.94437625785457 },
+        user: {
+            id: 0,
+            ti_id: 2,
+            tp_id: 1,
+            int_latitude: -15.775139,
+            int_longitude: -47.939599,
+            dt_demanda: { demandas: [] }
+        },
         id: 0,
         type: 'marker',
-        ti_id: 2,
-        tp_id: 1,
-        int_latitude: -15.7745922,
-        int_longitude: -47.9403749,
-        dt_demanda: { demandas: [] }
+            ti_id: 2,
+            tp_id: 1,
+            int_latitude: -15.775139,
+            int_longitude: -47.939599,
+            dt_demanda: { demandas: [] }
     },
     "overlays": {
         "markers": grants,

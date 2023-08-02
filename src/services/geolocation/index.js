@@ -24,6 +24,7 @@ async function findPointsInsidePolygon(polygon) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findPointsInsideCircle(circle) {
+
   let points = await fetch(url + '/findPointsInsideCircle', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -148,6 +149,8 @@ async function findAllPointsInPolygon(polygon) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findAllPointsInCircle(circle) {
+
+  console.log(circle)
   try {
     const response = await fetch(url + '/findAllPointsInCircle', {
       method: 'POST',
@@ -162,6 +165,8 @@ async function findAllPointsInCircle(circle) {
     }
 
     const data = await response.json();
+
+    console.log(data[0])
     // obter primeiro índice da matriz
     return data[0];
   } catch (error) {

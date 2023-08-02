@@ -1,3 +1,4 @@
+import { useRadioGroup } from "@mui/material";
 
 const njs_azure_url = `https://njs-azure.ueredeveloper.repl.co`;
 
@@ -43,6 +44,27 @@ async function findUsers(us_nome, us_cpf_cnpj, doc_sei, proc_sei) {
   
     return response;
   }
+
+  const njs_drainage_url = 'https://njs-drainage.ueredeveloper.repl.co';
+
+  async function findByColumn (searchQuery) {
+
+    const urlWithParams = `${njs_drainage_url}/findAllPoints?searchQuery=${searchQuery}`;
+
+    let response = await fetch(urlWithParams, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/JSON',
+        'Content-Type': 'application/JSON',
+      }
+    }).then(res => {
+      return res.json();
+    });
+
+    return response;
+  }
   
-  export { findUsers, findDemands };
+
+  
+  export { findUsers, findDemands, findByColumn };
   

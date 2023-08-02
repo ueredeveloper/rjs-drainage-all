@@ -35,6 +35,7 @@ function MapContent() {
         />
         {
           overlays.shapes.map(shape => {
+            console.log(shapes)
             return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type => {
               if (shape.markers[type] !== null)
                 return shape.markers[type].map((marker, i) => {

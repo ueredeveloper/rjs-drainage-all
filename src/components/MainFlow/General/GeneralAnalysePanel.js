@@ -5,9 +5,10 @@ import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import AnalyseFlow from "./TableFlow";
-import CoordPaper from "./CoordPaper";
+import CoordPaper from "../../Commom/CoordPaper";
 import WellTypePaper from "./WellTypePaper";
 import ChartPaper from "./ChartPaper";
+import SearchPaper from "./SearchPaper";
 
 
 
@@ -16,10 +17,8 @@ export default function GeneralAnalysePanel() {
 
     return (
         <Box sx={{ width: "100%" }}>
-            <CoordPaper />
-            <WellTypePaper />
-            <AnalyseFlow />
-            <ChartPaper />
+            <CoordPaper value={0} />
+            <SearchPaper value={0}/>
         </Box>
     );
 }

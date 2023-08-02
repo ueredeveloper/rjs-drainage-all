@@ -1,7 +1,11 @@
+import { Box } from '@mui/material'
 import React from 'react'
+import CoordPaper from '../../Commom/CoordPaper'
 
 export default function SubterraneanAnalysePanel() {
     return (
-        <div> Subterranean</div>
+        <Box>
+            <CoordPaper value={1}/>
+        </Box>
     )
 }

@@ -61,4 +61,7 @@ ATO, BACIA, UH, RA
     26/06/2023 - Ok.
     ícones: https://icons8.com/icon/PMQzP1Pr8GzE/google-maps
 
+9. Busca de um ponto pleas coordenadas
+    Buscar um ponto e as outorgas próximas em um raio de 100 metros utilizando um cículo do gmaps api.
+
 
