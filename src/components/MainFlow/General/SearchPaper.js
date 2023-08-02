@@ -38,9 +38,6 @@ export default function SearchPaper({ value }) {
             area: null
   
           }
-
-          console.log('SearchPaper shape', shape.markers, setOverlays)
-
         
           setOverlays(prev => {
             return {

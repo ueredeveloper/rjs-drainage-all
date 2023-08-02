@@ -49,7 +49,7 @@ export default function CoordPaper({ value }) {
                     area: null
           
                   }
-                console.log(setOverlays)
+                  
                   setOverlays(prev => {
                     return {
                       ...prev,

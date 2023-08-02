@@ -51,17 +51,25 @@ async function findUsers(us_nome, us_cpf_cnpj, doc_sei, proc_sei) {
 
     const urlWithParams = `${njs_drainage_url}/findAllPoints?searchQuery=${searchQuery}`;
 
-    let response = await fetch(urlWithParams, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/JSON',
-        'Content-Type': 'application/JSON',
+    try {
+      const response = await fetch(urlWithParams, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    }).then(res => {
-      return res.json();
-    });
-
-    return response;
+  
+      const data = await response.json();
+      
+      // obter primeiro índice da matriz
+      return data[0];
+    } catch (error) {
+      console.error(error);
+    }
   }
   
 
