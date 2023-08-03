@@ -13,7 +13,7 @@ export default function SearchPaper({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
 
-    const [searchQuery, setSearchQuery] = useState('333');
+    const [searchQuery, setSearchQuery] = useState('');
     const [marker, setMarker, setOverlays] = useContext(SystemContext);
 
     function searchQueryHandle(event) {
