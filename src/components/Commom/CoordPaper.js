@@ -28,7 +28,7 @@ export default function CoordPaper({ value }) {
             }
         });
 
-            let radius = 6699;
+            let radius = 600;
             
                 let markers = await findAllPointsInCircle(
                     {
