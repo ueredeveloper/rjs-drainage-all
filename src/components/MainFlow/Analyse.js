@@ -22,7 +22,7 @@ export default function Analyse() {
 
     useEffect(() => {
        // console.log(marker.position)
-       console.log(overlays.shapes.length)
+       console.log('analyse overlays', overlays)
     }, [overlays])
 
     function TabPanel(props) {
@@ -82,17 +82,17 @@ export default function Analyse() {
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>
-                        <SystemContext.Provider value={[marker, setMarker, setOverlays]}>
+                        <SystemContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
                             <GeneralAnalysePanel />
                         </SystemContext.Provider>
                     </TabPanel>
                     <TabPanel value={value} index={1}>
-                        <SystemContext.Provider value={[marker, setMarker, setOverlays]}>
+                        <SystemContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
                             <SubterraneanAnalysePanel />
                         </SystemContext.Provider>
                     </TabPanel>
                     <TabPanel value={value} index={2}>
-                        <SystemContext.Provider value={[marker, setMarker, setOverlays]}>
+                        <SystemContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
                             <SurfaceAnalysePanel />
                         </SystemContext.Provider>
                     </TabPanel>

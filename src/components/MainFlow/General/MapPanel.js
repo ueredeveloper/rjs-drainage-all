@@ -4,6 +4,7 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import MapContainer from "../../Commom/MapContainer";
+import MapControllers from "../../Commom/map/MapControllers";
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -53,10 +54,9 @@ export default function MapPanel({ height }) {
                     <Tab label="Mapa" {...a11yProps(0)} />
                 </Tabs>
             </Box>
-            <TabPanel value={value} index={0}>
+            <TabPanel value={value} index={0} >
                 <MapContainer />
             </TabPanel>
-
         </Box>
     );
 }

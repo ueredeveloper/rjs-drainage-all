@@ -7,7 +7,7 @@ import { darkMap } from './mode/dark-map'
 function ElemMap({ mode, map, setMap, zoom }) {
 
   const ref = useRef();
-  const center= { lat: -15.764514558482336, lng: -47.76491209127806 }
+  const center = { lat: -15.764514558482336, lng: -47.76491209127806 }
 
   function onClick() {
     console.log('on click')
@@ -32,14 +32,14 @@ function ElemMap({ mode, map, setMap, zoom }) {
       // mode light dark
       mode === "dark" ? map.setOptions({ styles: darkMap }) : map.setOptions({ styles: [] });
       // click no mapa
-     // map.addListener("click", onClick);
+      // map.addListener("click", onClick);
       // centralizar
       //map.setCenter({ lat: parseFloat(center.lat), lng: parseFloat(center.lng) })
     }
   }, [ref, map, mode, onClick]);
 
   return (
-    <div style={{ width: '100%', height: '100%' }} ref={ref} id="map" />
+    <div style={{ width: '100%', height: '100%', minHeight: 300, }} ref={ref} id="map" />
   );
 
 }

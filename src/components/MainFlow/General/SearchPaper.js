@@ -14,7 +14,7 @@ export default function SearchPaper({ value }) {
     const [loading, setLoading] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [marker, setMarker, setOverlays] = useContext(SystemContext);
+    const [marker, setMarker, , setOverlays] = useContext(SystemContext);
 
     function searchQueryHandle(event) {
         let { value } = event.target;
@@ -51,8 +51,8 @@ export default function SearchPaper({ value }) {
 
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
-            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 0 }}>Buscador</FormLabel>
-            <Paper elevation={3} style={{ margin: 3 }}>
+            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Buscador</FormLabel>
+            <Paper elevation={3} style={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
                 <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}
                 >

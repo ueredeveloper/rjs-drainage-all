@@ -134,10 +134,12 @@ const initialState = {
             int_longitude: -47.939599,
             dt_demanda: { demandas: [] }
     },
+    /* desenhos feitos pelo usuário no mapa (cículos, polígonos, retângulos)*/
     "overlays": {
         "markers": grants,
         "shapes": []
     },
+    /* cálculos no subsistema (poroso, fraturado) */
     "system": {
         "markers": [{
             int_latitude: -15.775139,
@@ -170,6 +172,7 @@ const initialState = {
             "vol_avaiable": 0
         }
     },
+    /* shapes como unidade hidrográfica, bacia */
     "shapes": {
         "fraturado": {
             "checked": false,

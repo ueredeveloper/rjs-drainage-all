@@ -11,7 +11,7 @@ import { findAllPointsInCircle } from "../../services/geolocation";
 export default function CoordPaper({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
-    const [marker, setMarker, setOverlays] = useContext(SystemContext);
+    const [marker, setMarker,, setOverlays] = useContext(SystemContext);
     const [position, setPosition] = useState(marker.position);
     
     useEffect(() => {
@@ -75,8 +75,8 @@ export default function CoordPaper({ value }) {
 
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
-            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 0 }}>Coordenadas</FormLabel>
-            <Paper elevation={3} style={{ margin: 3 }}>
+            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas</FormLabel>
+            <Paper elevation={3} style={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
                 <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}
                 >
