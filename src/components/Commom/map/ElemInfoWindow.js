@@ -119,7 +119,7 @@ const setContent = (color, info) => {
     const setStyles = (bgColor) => {
         return `
           #wi-container {
-                width: 400px;
+                width: 100%;
                 height: 300px;
             }
           #wi-title {
