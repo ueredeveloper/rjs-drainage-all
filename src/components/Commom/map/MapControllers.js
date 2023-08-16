@@ -12,11 +12,8 @@ export default function MapControllers() {
        
         const _propertyName = elem.scope.split('/').pop();
         
-        const _checked = checkBoxState.find(cbState => {
-            if (cbState.name = _propertyName) {
-                return cbState.checked
-            }
-        })
+        const _chBoxProperty = checkBoxState.find(cbState => cbState.name===_propertyName)
+        
         /*
         let _checkBoxState;
         for (const propertyName in mapControllersSchema.data) {
@@ -26,8 +23,8 @@ export default function MapControllers() {
         }*/
 
         let chBoxProperties = {
-            name: _propertyName,
-            checked: _checked,
+            name: _chBoxProperty.name,
+            checked: _chBoxProperty.checked,
             onChange: () => { handleChange(_propertyName, false) },
         }
 
@@ -49,17 +46,20 @@ export default function MapControllers() {
     const [shapes, setShapes] = useState([]);
 
     useEffect(() => {
+        console.table(checkBoxState)
 
-        checkBoxState.map(ch => {
-            if (ch.checked === true) {
-                shapes.map(shape => {
-                    if (shape.name = ch.name) {
+       checkBoxState.map(cbState => {
+        console.log(cbState)
+            if (cbState.checked === true) {
+                console.log('cbState true')
+              /*  shapes.map(shape => {
+                    if (shape.name = cbState.name) {
                         console.log('sim')
                     } else {
                         console.log('não')
                     }
-                })
-                //fetchShape(ch.name).then(result => console.log(result));
+                })*/
+                //fetchShape(cbState.name).then(result => console.log(result));
             }
         })
 
