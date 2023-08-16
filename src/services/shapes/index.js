@@ -1,9 +1,10 @@
+const url = 'https://njs-drainage.ueredeveloper.repl.co';
 /**
 * Buscar a shape solicitada no servidor
 * @param shape Pode ser os valores 'hidrogeo_fraturado' ou 'hidrogeo_poroso'
 *
   */
-async function findShape(shape) {
+async function fetchShape (shape) {
 
     let response = await fetch(url + `/getShape?shape=${shape}`, {
       method: 'GET',
@@ -19,4 +20,4 @@ async function findShape(shape) {
   }
 
 
-  export {findShape}
+  export {fetchShape}

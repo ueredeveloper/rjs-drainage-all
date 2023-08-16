@@ -3,41 +3,76 @@ import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@
 import LayersClearIcon from '@mui/icons-material/LayersClear';
 import { SystemContext } from '../../MainFlow/Analyse';
 import { initialState } from '../../../initial-state';
+import { fetchShape } from '../../../services/shapes';
 
 
 export default function MapControllers() {
 
-    const createCheckboxProps = (elem, index) => {
-        const propertyName = elem.scope.split('/').pop();
+    const createCheckboxProps = (elem, checkBoxState) => {
+       
+        const _propertyName = elem.scope.split('/').pop();
+        
+        const _checked = checkBoxState.find(cbState => {
+            if (cbState.name = _propertyName) {
+                return cbState.checked
+            }
+        })
+        /*
+        let _checkBoxState;
+        for (const propertyName in mapControllersSchema.data) {
+
+            if (propertyName === _propertyName)
+                _checkBoxState = mapControllersSchema.data[propertyName]
+        }*/
+
         let chBoxProperties = {
-            name: propertyName,
-            checked: checked[index],
-            onChange: () => { handleChange(index) },
+            name: _propertyName,
+            checked: _checked,
+            onChange: () => { handleChange(_propertyName, false) },
         }
 
         return chBoxProperties;
     };
-    const initializeCheckedState = (data) => {
+    const initializeCheckBoxState = (data) => {
         const initialState = [];
         // capturar o valor (true ou false), ex: hg_faturado = false
-        for (const property in data) {
-            initialState.push(data[property]);
+        for (const propertyName in data) {
+
+            initialState.push({ name: propertyName, checked: data[propertyName] });
         }
         return initialState;
     };
 
+
     const [marker, setMarker, , , overlays, setOverlays] = useContext(SystemContext);
-    const [checked, setChecked] = useState(initializeCheckedState(mapControllersSchema.data));
+    const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
     const [shapes, setShapes] = useState([]);
 
-    const handleChange = (index) => {
-        let _checked = checked.map((ch, i) => { if (i === index) { return !ch } else { return ch } })
-        setChecked(_checked)
+    useEffect(() => {
+
+        checkBoxState.map(ch => {
+            if (ch.checked === true) {
+                shapes.map(shape => {
+                    if (shape.name = ch.name) {
+                        console.log('sim')
+                    } else {
+                        console.log('não')
+                    }
+                })
+                //fetchShape(ch.name).then(result => console.log(result));
+            }
+        })
+
+    }, [checkBoxState])
+
+    const handleChange = (propertyName) => {
+        let _checkBoxState = checkBoxState.map((ch, i) => { if (ch.name === propertyName) { return { name: ch.name, checked: !ch.checked } } else { return ch } })
+        setCheckBoxState(_checkBoxState)
     };
 
     const clearMapHandler = (event) => {
-        let _checked = checked.map(ch => ch = false)
-        setChecked(_checked);
+        // let _checkBoxState = checkBoxState.map(ch => ch = false)
+        //  setCheckBoxState(_checked);
     };
 
 
@@ -50,7 +85,7 @@ export default function MapControllers() {
                 <Box sx={{ display: 'flex', flexDirection: 'row' }}>
                     {mapControllersSchema.uischema.elements.map((elem, i) =>
                         <Box key={'map-contr-ch-box-' + i}>
-                            <Checkbox color="secondary"  {...createCheckboxProps(elem, i)} />
+                            <Checkbox color="secondary"  {...createCheckboxProps(elem, checkBoxState)} />
                             <FormLabel color="secondary" id="demo-controlled-radio-buttons-group">{elem.label}</FormLabel>
                         </Box>
                     )}
@@ -75,11 +110,11 @@ const mapControllersSchema = {
                 "type": "boolean",
                 "default": false
             },
-            "bacia_hidrografica": {
+            "bacias_hidrograficas": {
                 "type": "boolean",
                 "default": false
             },
-            "unidade_hidrografica": {
+            "unidades_hidrograficas": {
                 "type": "boolean",
                 "default": false
             },
@@ -101,19 +136,19 @@ const mapControllersSchema = {
             {
                 "type": "Control",
                 "label": "Bacia Hidrográfica",
-                "scope": "#/properties/bacia_hidrografica"
+                "scope": "#/properties/bacias_hidrograficas"
             },
             {
                 "type": "Control",
                 "label": "Unidade Hidrográfica",
-                "scope": "#/properties/unidade_hidrografica"
+                "scope": "#/properties/unidades_hidrograficas"
             },
         ]
     },
     data: {
         hidrogeo_fraturado: false,
         hidrogeo_poroso: false,
-        bacia_hidrografica: false,
-        unidade_hidrografica: false
+        bacias_hidrograficas: false,
+        unidades_hidrograficas: false
     }
 }
