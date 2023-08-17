@@ -31,6 +31,7 @@ function createCircleRings(center, radius) {
  * @returns {object[]} - Array de coordenadas no formato do Google Maps.
  */
 function converterPostgresToGmaps(shape) {
+  console.log(shape)
 
   if (shape.shape.type === 'MultiPolygon') {
 
@@ -52,6 +53,27 @@ function converterPostgresToGmaps(shape) {
   }
 
 
+}
+
+function convertShapesPostgressToGmaps(shape) {
+
+  console.log(shape)
+
+  if (shape.type === 'MultiPolygon') {
+    return shape.coordinates.map(coordinates => {
+      return coordinates.map(coords => {
+        return coords.map(c => {
+          return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
+        })
+      })
+    });
+  } else {
+    return shape.shape.coordinates.map(coordinates => {
+      return coordinates.map(c => {
+        return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
+      })
+    });
+  }
 }
 
 /**
@@ -202,7 +224,7 @@ function calculatePolylineLength(polyline) {
   return lengthInMeters;
 }
 
-function setInfoMarkerIcon (id, ti_id, tp_id) {
+function setInfoMarkerIcon(id, ti_id, tp_id) {
   if (id === 0) {
     return { mkr: mkrRedIcon, color: '#9D0404' };
   } else {
@@ -230,7 +252,7 @@ function setInfoMarkerIcon (id, ti_id, tp_id) {
 
 export {
   createCircleRings,
-  converterPostgresToGmaps, nFormatter,
+  converterPostgresToGmaps, convertShapesPostgressToGmaps, nFormatter,
   analyseItsAvaiable, numberWithCommas,
   calculateCircleArea, calculateRectangleArea,
   calculatePolylineLength, calculatePolygonArea,
