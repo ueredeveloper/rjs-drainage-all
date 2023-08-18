@@ -55,27 +55,6 @@ function converterPostgresToGmaps(shape) {
 
 }
 
-function convertShapesPostgressToGmaps(shape) {
-
-  console.log(shape)
-
-  if (shape.type === 'MultiPolygon') {
-    return shape.coordinates.map(coordinates => {
-      return coordinates.map(coords => {
-        return coords.map(c => {
-          return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
-        })
-      })
-    });
-  } else {
-    return shape.shape.coordinates.map(coordinates => {
-      return coordinates.map(c => {
-        return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
-      })
-    });
-  }
-}
-
 /**
  * Abrevia valores para exibição em gráfico de barra.
  * @param {number} num - Número a ser abreviado.
@@ -252,7 +231,7 @@ function setInfoMarkerIcon(id, ti_id, tp_id) {
 
 export {
   createCircleRings,
-  converterPostgresToGmaps, convertShapesPostgressToGmaps, nFormatter,
+  converterPostgresToGmaps, nFormatter,
   analyseItsAvaiable, numberWithCommas,
   calculateCircleArea, calculateRectangleArea,
   calculatePolylineLength, calculatePolygonArea,

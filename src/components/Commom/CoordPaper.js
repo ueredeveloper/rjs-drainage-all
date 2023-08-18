@@ -5,13 +5,13 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/
 import SearchIcon from '@mui/icons-material/Search';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
-import { SystemContext } from "../MainFlow/Analyse";
+import { AnalyseContext } from "../MainFlow/Analyse";
 import { findAllPointsInCircle } from "../../services/geolocation";
 
 export default function CoordPaper({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
-    const [marker, setMarker,, setOverlays] = useContext(SystemContext);
+    const [marker, setMarker,, setOverlays] = useContext(AnalyseContext);
     const [position, setPosition] = useState(marker.position);
     
     useEffect(() => {

@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import AnalyseFlow from "./TableFlow";
 import TableGrants from "./TableGrants";
 import GrantsTable from "../../Commom/GrantsTable";
-import { SystemContext } from '../Analyse';
+import { AnalyseContext } from '../Analyse';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -49,7 +49,7 @@ export default function GrantsPanel() {
         setValue(newValue);
     };
 
-    const [system, setSystem, overlays, setOverlays] = useContext(SystemContext);
+    const [system, setSystem, overlays, setOverlays] = useContext(AnalyseContext);
 
     return (
         <Box sx={{ width: "100%" }}>

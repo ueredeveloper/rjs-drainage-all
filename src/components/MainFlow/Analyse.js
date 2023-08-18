@@ -12,13 +12,15 @@ import SubterraneanAnalysePanel from "./Subterranean/SubterraneanAnalysePanel";
 import SurfaceAnalysePanel from "./Surface/SurfaceAnalysePanel";
 
 
-export const SystemContext = createContext({});
+export const AnalyseContext = createContext({});
 
 export default function Analyse() {
 
     const [marker, setMarker] = useState(initialState.marker);
     const [system, setSystem] = useState(initialState.system);
     const [overlays, setOverlays] = useState(initialState.overlays);
+    
+    const [shapesState, setShapesState] = useState([]);
 
     useEffect(() => {
        // console.log(marker.position)
@@ -68,9 +70,9 @@ export default function Analyse() {
         <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
             <Box sx={{ display: "flex", flex: 1, flexWrap: "wrap" }}>
                 <Box sx={{ display: "flex", flex: 1, minWidth: 200 }} >
-                    <SystemContext.Provider value={[marker, setMarker, system, setSystem, overlays, setOverlays]}>
+                    <AnalyseContext.Provider value={[marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState]}>
                         <MapPanel />
-                    </SystemContext.Provider>
+                    </AnalyseContext.Provider>
 
                 </Box>
                 <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 200 }}>
@@ -82,26 +84,26 @@ export default function Analyse() {
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>
-                        <SystemContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
+                        <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
                             <GeneralAnalysePanel />
-                        </SystemContext.Provider>
+                        </AnalyseContext.Provider>
                     </TabPanel>
                     <TabPanel value={value} index={1}>
-                        <SystemContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
+                        <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
                             <SubterraneanAnalysePanel />
-                        </SystemContext.Provider>
+                        </AnalyseContext.Provider>
                     </TabPanel>
                     <TabPanel value={value} index={2}>
-                        <SystemContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
+                        <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
                             <SurfaceAnalysePanel />
-                        </SystemContext.Provider>
+                        </AnalyseContext.Provider>
                     </TabPanel>
                 </Box>
             </Box>
             <Box sx={{ flex: 1 }}>
-                <SystemContext.Provider value={[system, setSystem, overlays, setOverlays]}>
+                <AnalyseContext.Provider value={[system, setSystem, overlays, setOverlays]}>
                     <GrantsPanel />
-                </SystemContext.Provider>
+                </AnalyseContext.Provider>
             </Box>
         </Box>
     )

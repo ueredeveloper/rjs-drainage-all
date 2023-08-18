@@ -1,7 +1,7 @@
 import { useContext, useEffect } from 'react';
 //import { createCircleRings } from '../tools';
 import { findPointsInsidePolygon, findPointsInsideRectangle, findPointsInsideCircle, findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle } from '../../../services/geolocation';
-import { SystemContext } from '../../MainFlow/Analyse';
+import { AnalyseContext } from '../../MainFlow/Analyse';
 import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea, numberWithCommas } from '../../../tools';
 
 import redIcon from '../../../assets/png/red-icon.png';
@@ -12,7 +12,7 @@ import redIcon from '../../../assets/png/red-icon.png';
   */
 const ElemDrawManager = ({ map }) => {
 
-  const [marker, setMarker, system, setSystem, overlays, setOverlays] = useContext(SystemContext);
+  const [marker, setMarker, system, setSystem, overlays, setOverlays] = useContext(AnalyseContext);
 
   useEffect(() => {
 
@@ -95,14 +95,7 @@ const ElemDrawManager = ({ map }) => {
           area: calculateCircleArea(radius)
 
         }
-        /*
-        let infowindow = new window.google.maps.InfoWindow({
-          content: setContent(shape),
-          map
-        });
-        infowindow.setPosition({ lat: lat, lng: lng });
-        infowindow.setMap(map);*/
-
+   
         setOverlays(prev => {
           return {
             ...prev,

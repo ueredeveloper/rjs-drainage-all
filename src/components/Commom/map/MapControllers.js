@@ -6,19 +6,17 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@mui/material';
 import LayersClearIcon from '@mui/icons-material/LayersClear';
-import { SystemContext } from '../../MainFlow/Analyse';
+import { AnalyseContext } from '../../MainFlow/Analyse';
 import { initialState } from '../../../initial-state';
 import { fetchShape } from '../../../services/shapes';
 import { ChatSharp } from '@mui/icons-material';
-import { convertShapesPostgressToGmaps, converterPostgresToGmaps } from '../../../tools';
-import { multi_example, postgress_multipolygon_example, postgress_polygon_example } from '../../../tools/multipolygon-example';
-
+import { converterPostgresToGmaps } from '../../../tools';
 /**
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
  * @returns {JSX.Element} JSX do componente MapControllers.
  */
 export default function MapControllers() {
-    const [marker, setMarker, , , overlays, setOverlays] = useContext(SystemContext);
+
 
     /**
      * Inicializa o estado das caixas de seleção com base nos dados.
@@ -34,7 +32,8 @@ export default function MapControllers() {
     };
 
     const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
-    const [shapesState, setShapesState] = useState([]);
+    const [, , , , , , shapesState, setShapesState] = useContext(AnalyseContext)
+
 
     /**
      * Cria um objeto de propriedades para a caixa de seleção.
@@ -68,18 +67,19 @@ export default function MapControllers() {
                 if (shapesState.length === 0) {
                     const shape = await fetchShape(cbState.name).then(shape => {
                         // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
-                        return shape.map(sh => { return { ...sh, shape: { coordinates: convertShapesPostgressToGmaps(sh) } } })
+                        return shape.map(sh => { return { ...sh, shape: { coordinates: converterPostgresToGmaps(sh) } } })
 
                     });
                     setShapesState(prev => [...prev, { name: cbState.name, shape: shape }]);
                 } else {
-                    let search = shapesState.find(st => st.name === cbState.name);
-                    // verificar se a shapeState já foi solicitada, se não, solicitar.
-                    // Assim, não se repete solicitação de camada no servidor.
-                    if (search === undefined) {
+                    let searchShapeState = shapesState.find(st => st.name === cbState.name);
+                    // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
+                    // Assim, não se repete solicitação de camada no servidor.]
+                    if (searchShapeState === undefined) {
+
                         const shape = await fetchShape(cbState.name).then(shape => {
 
-                            return shape.map(sh => { return { ...sh, shape: { coordinates: convertShapesPostgressToGmaps(sh) } } })
+                            return shape.map(sh => { return { ...sh, shape: { coordinates: converterPostgresToGmaps(sh) } } })
 
                         });
                         setShapesState(prev => [...prev, { name: cbState.name, shape: shape }]);
@@ -88,24 +88,9 @@ export default function MapControllers() {
             }
         });
 
-        console.log('click', shapesState)
+
 
     }, [checkBoxState]);
-
-    useEffect(() => {
-        let shape = postgress_multipolygon_example;
-
-        console.log(shape)
-
-        let _shape = {
-            ...shape, shapes: convertShapesPostgressToGmaps(shape)
-        }
-
-        console.log(_shape)
-
-
-    })
-
 
 
     /**
