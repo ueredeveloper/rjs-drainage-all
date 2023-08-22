@@ -15,7 +15,7 @@ import { converterPostgresToGmaps } from '../../../tools';
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
  * @returns {JSX.Element} JSX do componente MapControllers.
  */
-export default function MapControllers() {
+export default function MapControllers({ updateCheckBoxState }) {
 
 
     /**
@@ -28,6 +28,7 @@ export default function MapControllers() {
         for (const propertyName in data) {
             initialState.push({ name: propertyName, checked: data[propertyName] });
         }
+        console.log(initialState)
         return initialState;
     };
 
@@ -58,7 +59,6 @@ export default function MapControllers() {
         return mapControllersSchema.uischema.elements[index].label;
     }
 
-
     useEffect(() => {
 
         checkBoxState.map(async cbState => {
@@ -88,8 +88,6 @@ export default function MapControllers() {
             }
         });
 
-
-
     }, [checkBoxState]);
 
 
@@ -106,6 +104,8 @@ export default function MapControllers() {
             }
         });
         setCheckBoxState(_checkBoxState);
+        console.log('update')
+        updateCheckBoxState(_checkBoxState)
     };
 
     /**
