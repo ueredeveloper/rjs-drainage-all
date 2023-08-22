@@ -33,7 +33,7 @@ export default function MapControllers({ updateCheckBoxState }) {
     };
 
     const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
-    const [, , , , , , shapesState, setShapesState] = useContext(AnalyseContext)
+    const [, , , , overlays, setOverlays, shapesState, setShapesState] = useContext(AnalyseContext)
 
 
     /**
@@ -104,7 +104,6 @@ export default function MapControllers({ updateCheckBoxState }) {
             }
         });
         setCheckBoxState(_checkBoxState);
-        console.log('update')
         updateCheckBoxState(_checkBoxState)
     };
 
@@ -114,14 +113,20 @@ export default function MapControllers({ updateCheckBoxState }) {
      */
     const clearMapHandler = (event) => {
         // let _checkBoxState = checkBoxState.map(ch => ch = false)
-        // setCheckBoxState(_checked);
+        setCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
+        updateCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
+        overlays.shapes.map(shape => {
+            if (shape.draw !== null)
+                shape.draw.setMap(null)
+        });
+        setOverlays(initialState.overlays)
     };
 
     return (
         <FormControl style={{ display: "flex", flex: 1, flexDirection: 'column' }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Camadas</FormLabel>
             <Paper elevation={3} style={{ padding: 5, margin: 1 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     {checkBoxState.map((elem, index) =>
                         <Box key={'map-contr-ch-box-' + index}>
                             <Checkbox color="secondary"  {...createCheckboxProps(elem)} />
