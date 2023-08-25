@@ -48,7 +48,6 @@ function MapContent({ checkBoxState }) {
 
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
-          console.log(shape)
           return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type => {
             if (shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
@@ -72,7 +71,7 @@ function MapContent({ checkBoxState }) {
           return checkBoxState.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
               return shape.shape.map((sh, ii) => {
-             
+
                 return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
               });
             }

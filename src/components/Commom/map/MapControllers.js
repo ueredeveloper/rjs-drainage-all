@@ -91,6 +91,10 @@ export default function MapControllers({ updateCheckBoxState }) {
 
     }, [checkBoxState]);
 
+    useEffect(()=>{
+        console.log(shapesState)
+    }, [shapesState])
+
     /**
      * Manipula o evento de mudança da caixa de seleção.
      * @param {Object} elem - Elemento da caixa de seleção.

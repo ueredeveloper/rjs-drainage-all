@@ -25,7 +25,6 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
             shapeCode = shape.bacia_cod;
         } else if (shape.shapeName === 'unidades_hidrograficas') {
             shapeCode = shape.uh_codigo;
-            console.log(shapeCode);
         } else {
             shapeCode = shape.cod_plan;
         }
@@ -57,14 +56,35 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     const titleDiv = document.createElement('div');
     titleDiv.id = 'wi-title';
 
-    // Cria os elementos div para exibir o tipo e descrição.
-    const tittleType = document.createElement('div');
-    // bacia
-    tittleType.textContent = `${shape.bacia_nome}`;
-    //uh uh_nome
-    //tittleType.textContent = `${shape.uh_nome}`;
+    let title1, title2;
 
-    titleDiv.appendChild(tittleType);
+    // Verifica qual shape está sendo solicitada e seu código específico.
+    if (shape.shapeName === 'bacias_hidrograficas') {
+        console.log('sh name = bacia')
+        title1 = `Nome da Bacia: ${shape.bacia_nome}`;
+        title2 = `Bacia Código: ${shape.bacia_cod}`
+    } else if (shape.shapeName === 'unidades_hidrograficas') {
+        title1 = `Nome da UH: ${shape.uh_nome}`;
+        title2 = `${shape.uh_label}`
+    } else if (shape.shapeName === 'hidrogeo_poroso') {
+        title1 = `Sistema: ${shape.sistema}`;
+        title2 = `Código: ${shape.cod_plan}`;
+    } else {
+        title1 = `Sistema: ${shape.sistema}, Subsistema: ${shape.subsistema}`;
+        title2 = `Código: ${shape.cod_plan}`;
+    }
+
+    // Cria os elementos div para exibir o tipo e descrição.
+    const titleDiv1 = document.createElement('div');
+    // bacia
+    titleDiv1.textContent = `${title1}`;
+    // Cria os elementos div para exibir o tipo e descrição.
+    const titleDiv2 = document.createElement('div');
+    // bacia
+    titleDiv2.textContent = `${title2}`;
+
+    titleDiv.appendChild(titleDiv1);
+    titleDiv.appendChild(titleDiv2);
 
     // Cria um elemento <style> para definir os estilos CSS.
     const styleElement = document.createElement('style');
@@ -110,7 +130,15 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
               font-weight: 400;
               padding: 15px;
               max-height: 140px;
-          }
+          },
+          .custom-button {
+              background-color: ${bgColor};
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 5px;
+              cursor: pointer;
+}
         `;
     };
 
@@ -126,6 +154,7 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     // Cria o elemento div para o subtítulo.
     const subtitleDiv = document.createElement('div');
     subtitleDiv.id = 'wi-subtitle';
+    //subtitleDiv.textContent = `${'subtitle'}`;
 
     // Cria o primeiro div interno do subtítulo.
     const infoDiv = document.createElement('div');
@@ -142,17 +171,16 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 
     // Cria os elementos <p> para cada propriedade e define o conteúdo de texto.
     const pInfo1 = document.createElement('p');
-    pInfo1.textContent = `Nome da Bacia: ${shape.bacia_nome}`;
+    pInfo1.textContent = `${title1}`;
 
     const pInfo2 = document.createElement('p');
-    pInfo2.textContent = `Código: ${shape.bacia_cod}`;
+    pInfo2.textContent = `${title2}`;
 
     const btnSearch = document.createElement('button');
-    btnSearch.innerHTML = 'Buscar';
+    btnSearch.innerHTML = 'Buscar Outorgas';
+    btnSearch.className = 'custom-button'
     btnSearch.addEventListener("click", function () {
-        console.log('obtain grants')
         obtainGrants(shape, map)
-
     }, false);
 
     infoTextDiv.appendChild(pInfo1);
