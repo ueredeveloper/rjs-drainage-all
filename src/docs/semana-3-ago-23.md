@@ -25,6 +25,8 @@ App.js
                 |-- ElemDrawManager.js
                 |-- EleInfoWindows.js
                 |-- ElemPolygon.js
+                    <ElemPolygonInfowindow>
+                        <HTMLPolygonContent/>
                 |-- ElemPopupOverlay.js
                 |-- MapControllers.js
                 |-- MapContent.js
@@ -38,6 +40,9 @@ App.js
 
             |-- MapContainer.js
                 <MapContent />
+                    const [map, setMap]
+                    <ElemPolygon/>
+                        
                 <MapControllers />
 
-                
+                <ElemPolygon>

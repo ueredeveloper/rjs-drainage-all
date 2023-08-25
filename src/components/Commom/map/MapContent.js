@@ -5,7 +5,7 @@ import ElemMap from './ElemMap';
 import ElemDrawManager from './ElemDrawManager';
 import { AnalyseContext } from '../../MainFlow/Analyse';
 import ElemMarker from './ElemMarker';
-import ElemInfoWindow from './ElemInfoWindow';
+import ElemInfoWindow from './infowindow/ElemMarkerInfoWindow';
 import ElemPopupOverlay from './ElemPopupOverlay';
 import MapControllers from './MapControllers';
 import ElemPolygon from './ElemPolygon';
@@ -48,10 +48,10 @@ function MapContent({ checkBoxState }) {
 
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
+          console.log(shape)
           return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type => {
             if (shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
-                console.log(marker)
                 return <ElemMarker
                   key={'marker-' + i}
                   info={marker}
@@ -72,8 +72,8 @@ function MapContent({ checkBoxState }) {
           return checkBoxState.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
               return shape.shape.map((sh, ii) => {
-                console.log(sh.type)
-                return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} />;
+             
+                return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
               });
             }
           });

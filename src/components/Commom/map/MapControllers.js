@@ -28,7 +28,7 @@ export default function MapControllers({ updateCheckBoxState }) {
         for (const propertyName in data) {
             initialState.push({ name: propertyName, checked: data[propertyName] });
         }
-        console.log(initialState)
+
         return initialState;
     };
 
@@ -67,8 +67,9 @@ export default function MapControllers({ updateCheckBoxState }) {
                 if (shapesState.length === 0) {
                     const shape = await fetchShape(cbState.name).then(shape => {
                         // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
-                        return shape.map(sh => { return { ...sh, shape: { coordinates: converterPostgresToGmaps(sh) } } })
-
+                        return shape.map(sh => {
+                            return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
+                        })
                     });
                     setShapesState(prev => [...prev, { name: cbState.name, shape: shape }]);
                 } else {
@@ -76,11 +77,11 @@ export default function MapControllers({ updateCheckBoxState }) {
                     // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
                     // Assim, não se repete solicitação de camada no servidor.]
                     if (searchShapeState === undefined) {
-
                         const shape = await fetchShape(cbState.name).then(shape => {
+                            return shape.map(sh => {
 
-                            return shape.map(sh => { return { ...sh, shape: { coordinates: converterPostgresToGmaps(sh) } } })
-
+                                return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
+                            })
                         });
                         setShapesState(prev => [...prev, { name: cbState.name, shape: shape }]);
                     }
@@ -89,7 +90,6 @@ export default function MapControllers({ updateCheckBoxState }) {
         });
 
     }, [checkBoxState]);
-
 
     /**
      * Manipula o evento de mudança da caixa de seleção.

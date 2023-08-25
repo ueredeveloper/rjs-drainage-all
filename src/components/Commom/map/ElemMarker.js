@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { mkrBlueIcon, mkrBrownIcon, mkrGreenIcon, mkrOrangeIcon, mkrPinkIcon, mkrPurpleIcon, mkrRedIcon, mkrYellowIcon } from '../../../assets';
-import ElemInfoWindow from './ElemInfoWindow';
 import { setInfoMarkerIcon } from '../../../tools';
+import ElemMarkerInfoWindow from './infowindow/ElemMarkerInfoWindow';
 
 /**
  * @typedef {import('react').PropsWithChildren} Props
@@ -70,7 +69,7 @@ const ElemMarker = ({ info, map }) => {
       }
 
 
-      return <div><ElemInfoWindow marker={marker} info={info} map={map} /></div>
+      return <div><ElemMarkerInfoWindow marker={marker} info={info} map={map} /></div>
 
     }
 

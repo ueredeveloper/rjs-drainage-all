@@ -166,7 +166,6 @@ async function findAllPointsInCircle(circle) {
 
     const data = await response.json();
 
-    console.log(data[0])
     // obter primeiro índice da matriz
     return data[0];
   } catch (error) {
