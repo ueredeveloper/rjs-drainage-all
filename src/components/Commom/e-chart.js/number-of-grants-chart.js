@@ -26,8 +26,8 @@ function NumberOfGrantsChart() {
       feature: {
         mark: { show: true },
         dataView: { show: true, readOnly: false },
-        restore: { show: true },
-        saveAsImage: { show: true }
+        restore: { show: false },
+        saveAsImage: { show: false }
       }
     },
     tooltip: {
