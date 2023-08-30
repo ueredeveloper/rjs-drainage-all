@@ -17,52 +17,50 @@ function NumberOfGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
   const [, , overlays, setOverlays] = useContext(AnalyseContext);
 
-  // Estado para armazenar a contagem de concessões por tipo.
-  const [numberOfGrants, setNumberOfGrants] = useState([
-    { value: 0, name: 'Subterrâneo' },
-    { value: 0, name: 'Superficial' },
-    { value: 0, name: 'Pluvial' },
-    { value: 0, name: 'Efluente' },
-    { value: 0, name: 'Barragem' }
-  ]);
+  const [options, setOptions] = useState({
+    legend: {
+      top: 'top'
+    },
+    toolbox: {
+      show: true,
+      feature: {
+        mark: { show: true },
+        dataView: { show: true, readOnly: false },
+        restore: { show: true },
+        saveAsImage: { show: true }
+      }
+    },
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [
+      {
+        name: '',
+        type: 'pie',
+        radius: [50, 100],
+        center: ['50%', '50%'],
+        roseType: 'area',
+        itemStyle: {
+          borderRadius: 8
+        },
+        data: [
+          { value: 0, name: 'Subterrâneas' },
+          { value: 0, name: 'Superficiais' },
+          { value: 0, name: 'Pluviais' },
+          { value: 0, name: 'Efluentes' },
+          { value: 0, name: 'Barragens' }
+        ]
+
+      }
+    ]
+  });
 
   useEffect(() => {
     // Cria uma instância do ECharts
     const myChart = echarts.init(document.getElementById('myChart'));
 
-    // Configuração do ECharts e definição dos dados
-    const options = {
-      legend: {
-        top: 'top'
-      },
-      toolbox: {
-        show: true,
-        feature: {
-          mark: { show: true },
-          dataView: { show: true, readOnly: false },
-          restore: { show: true },
-          saveAsImage: { show: true }
-        }
-      },
-      tooltip: {
-        trigger: 'item'
-      },
-      series: [
-        {
-          name: '',
-          type: 'pie',
-          radius: [50, 100],
-          center: ['50%', '50%'],
-          roseType: 'area',
-          itemStyle: {
-            borderRadius: 8
-          },
-          data: numberOfGrants
-        }
-      ]
-    };
-
     // Define as opções para o gráfico
+    console.log(options)
     myChart.setOption(options);
 
     myChart.on('legendselectchanged', function (params) {
@@ -78,20 +76,44 @@ function NumberOfGrantsChart() {
   // Efeito para atualizar o gráfico com base no estado das caixas de seleção.
   useEffect(() => {
     overlays.shapes.map(shape => {
-      let _numberOfGrants = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(shapeName => {
+      let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
+
+        let _data = options.series[0].data.find(item => item.name === selectShape(shapeName))
+
         if (shape.markers[shapeName] !== null) {
-          return { name: shapeName, value: shape.markers[shapeName].length };
+          return { ..._data, value: shape.markers[shapeName].length };
         }
-        return { name: shapeName, value: 0 };
+        return { ..._data, value: 0 };
       });
-      setNumberOfGrants(_numberOfGrants);
-      console.log('use eff', _numberOfGrants)
+
+      const newOptions = { ...options }; // Create a copy of options
+      newOptions.series[0].data = newData; // Update data with new values
+      setOptions(newOptions); // Update state with new options
     });
   }, [overlays]);
 
   return (
     <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}></div>
   );
+}
+
+function selectShape(shapeName) {
+  switch (shapeName) {
+    case 'subterranea':
+      return 'Subterrâneas';
+
+    case 'superficial':
+      return 'Superficiais';
+
+    case 'lancamento_pluviais':
+      return 'Pluviais';
+
+    case 'lancamento_efluentes':
+      return 'Efluentes';
+
+    case 'barragem':
+      return 'Barragens';
+  }
 }
 
 export default NumberOfGrantsChart;
