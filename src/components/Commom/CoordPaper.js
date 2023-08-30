@@ -11,14 +11,15 @@ import { findAllPointsInCircle } from "../../services/geolocation";
 export default function CoordPaper({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
-    const [marker, setMarker,, setOverlays] = useContext(AnalyseContext);
+    const [marker, setMarker, overlays, setOverlays] = useContext(AnalyseContext);
     const [position, setPosition] = useState(marker.position);
-    
+
     useEffect(() => {
         setPosition(marker.position);
     }, [marker]);
 
     async function handle() {
+
 
         setMarker(prev => {
             return {
@@ -28,35 +29,35 @@ export default function CoordPaper({ value }) {
             }
         });
 
-            let radius = 600;
-            
-                let markers = await findAllPointsInCircle(
-                    {
-                      center: { lng: position.lng, lat: position.lat },
-                      radius: parseInt(radius)
-                    }
-                  );
-                  let id = Date.now();
-          
-                  let shape = {
-                    id: Date.now(),
-                    type: 'circle',
-                    position: { lat: position.lat, lng: position.lng },
-                    map: null,
-                    draw: null,
-                    markers: markers,
-                    radius: radius,
-                    area: null
-          
-                  }
-                  
-                  setOverlays(prev => {
-                    return {
-                      ...prev,
-                      shapes: [...prev.shapes, shape]
-                    }
-                  });
-        
+        let radius = 600;
+
+        let markers = await findAllPointsInCircle(
+            {
+                center: { lng: position.lng, lat: position.lat },
+                radius: parseInt(radius)
+            }
+        );
+        let id = Date.now();
+
+        let shape = {
+            id: Date.now(),
+            type: 'circle',
+            position: { lat: position.lat, lng: position.lng },
+            map: null,
+            draw: null,
+            markers: markers,
+            radius: radius,
+            area: null
+
+        }
+
+        setOverlays(prev => {
+            return {
+                ...prev,
+                shapes: [...prev.shapes, shape]
+            }
+        });
+
     }
 
     function handleChange(event) {

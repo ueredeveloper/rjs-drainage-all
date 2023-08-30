@@ -57,7 +57,7 @@ function MapContent({ checkBoxState }) {
                   map={map}
                 />;
               });
-            }
+            } else {return null}
           });
         })}
 

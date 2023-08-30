@@ -15,7 +15,7 @@ App.js
             |-- GeneralAnalysePanel.js
                 <CoordPaper/>
                 <SearchPaper/>
-                <ElemPolarAreaChart>
+                <NumberOfGrantsChart>
             |-- GrantsPanel.js
                 <GrantsTable/>
                 
