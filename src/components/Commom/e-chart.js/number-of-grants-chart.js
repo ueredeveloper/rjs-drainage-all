@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { AnalyseContext } from '../../MainFlow/Analyse';
 
@@ -9,15 +9,30 @@ import { AnalyseContext } from '../../MainFlow/Analyse';
 
 function NumberOfGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
-  const [, , overlays, setOverlays] = useContext(AnalyseContext);
+
+
+  const [_selectedShapes, _setSelectedShapes] = useState([]);
+  const [, , overlays, setOverlays, handleClickSetParams] = useContext(AnalyseContext);
 
   const [params, setParams] = useState({
-    
-  });
+    "selected": {
+      "Pluviais": true,
+      "Subterrâneas": true,
+      "Superficiais": true,
+      "Efluentes": true,
+      "Barragens": true
+    }
+  })
+
   useEffect(() => {
-    console.log('params', JSON.stringify(params.selected))
+    console.log('NumberOfGrantsChart', params, overlays)
+    if (params && params.selected) {
+      //handleClickSetParams(params)
+    }
 
   }, [params])
+
+  // const [params, setParams] = useState({});
 
   const [options, setOptions] = useState({
     legend: {
@@ -58,6 +73,18 @@ function NumberOfGrantsChart() {
     ]
   });
 
+  const handleClick = useCallback((event) => {
+
+    setParams(prevParams => ({
+      ...prevParams,
+      selected: {
+        ...prevParams.selected,
+        [event.name]: event.selected[event.name]
+      }
+    }));
+
+  }, []);
+
   useEffect(() => {
     // Cria uma instância do ECharts
     const myChart = echarts.init(document.getElementById('myChart'));
@@ -67,17 +94,13 @@ function NumberOfGrantsChart() {
 
     myChart.on('legendselectchanged', function (event) {
 
-      setParams(prevParams => ({
-        ...prevParams,
-        selected: {
-          ...prevParams.selected,
-          [event.name]: event.selected[event.name]
-        }
-      }));
-    
-         
+      //handleClick(event)
+      handleClickSetParams(event)
 
     });
+
+
+
 
     // Limpa a instância do gráfico quando o componente é desmontado
     return () => {
@@ -87,7 +110,7 @@ function NumberOfGrantsChart() {
 
   // Efeito para atualizar o gráfico com base no estado das caixas de seleção.
   useEffect(() => {
-    
+
     overlays.shapes.map(shape => {
       let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
         let _data = options.series[0].data.find(item => item.name === convertOptionsDataName(shapeName))
@@ -99,41 +122,15 @@ function NumberOfGrantsChart() {
       const newOptions = { ...options }; // Create a copy of options
       newOptions.series[0].data = newData; // Update data with new values
       setOptions(newOptions); // Update state with new options
-      
+
+
     });
-   
-    /*
-    if (params && params.selected) {
-      let keys = Object.keys(params.selected)
 
-      keys.forEach(key => {
-        console.log(key, params.selected[key])
 
-        let tableName = convertToShapeName(key);
-        setOverlays(prevState => {
-
-          const newShapes = prevState.shapes.map(shape => {
-            if (shape.markers) {
-              const newMarkers = {
-                ...shape.markers,
-
-                [tableName]: null 
-                //event.selected[key] === false ? null : shape.markers[tableName], // Replace the table array with the new object
-              };
-              return { ...shape, markers: newMarkers };
-            }
-            return shape;
-          });
-
-          return { ...prevState, shapes: newShapes };
-        });
-      })
-    }*/
   }, [overlays, params]);
 
   return (
-    <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}>
-    </div>
+    <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}></div>
   );
 }
 

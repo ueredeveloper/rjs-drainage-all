@@ -49,3 +49,17 @@ App.js
                     <MapControllers />
 
                     <ElemPolygon>
+
+
+
+<Analyse/>
+    <MapPanel/>
+        <MapContainer/>
+            <MapContent>
+                <Marker/>
+    <GeneralAnalysePanel/>
+        <CoordPaper/>
+        <SearchPaper/>
+        <NumberOfGrantsChart/>
+
+    

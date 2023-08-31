@@ -9,6 +9,7 @@ import ElemInfoWindow from './infowindow/ElemMarkerInfoWindow';
 import ElemPopupOverlay from './ElemPopupOverlay';
 import MapControllers from './MapControllers';
 import ElemPolygon from './ElemPolygon';
+import { useSelectedShapes } from '../../../context/selected-shapes-provider';
 
 /**
  * Componente que representa o conteúdo do mapa.
@@ -24,7 +25,7 @@ function MapContent({ checkBoxState }) {
 
   // Obtém os estados do contexto de análise
   const [marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState] = useContext(AnalyseContext);
-
+  
   /**
    * Manipulador para o fechamento da janela de informações do marcador.
    *

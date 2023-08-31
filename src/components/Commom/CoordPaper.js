@@ -20,7 +20,6 @@ export default function CoordPaper({ value }) {
 
     async function handle() {
 
-
         setMarker(prev => {
             return {
                 ...prev,
