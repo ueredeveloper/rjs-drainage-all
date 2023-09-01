@@ -13,14 +13,25 @@ import SurfaceAnalysePanel from "./Surface/SurfaceAnalysePanel";
 
 export const AnalyseContext = createContext({});
 
+/**
+ * Função que representa o componente Analyse.
+ * @returns {JSX.Element} O componente Analyse.
+ */
 export default function Analyse() {
 
+    // Estado para o marcador
     const [marker, setMarker] = useState(initialState.marker);
+
+    // Estado para o sistema
     const [system, setSystem] = useState(initialState.system);
+
+    // Estado para sobreposições
     const [overlays, setOverlays] = useState(initialState.overlays);
 
+    // Estado para os marcadores por tabelas (subterranea, superficial...)
     const [shapesState, setShapesState] = useState([]);
 
+    // Estado para parâmetros selecionados no chart (Number-Of-Grants-Chart)
     const [params, setParams] = useState({
         selected: {
             "Pluviais": true,
@@ -30,11 +41,15 @@ export default function Analyse() {
             "Barragens": true
         }
     })
- 
 
+    // Estado para formas selecionadas. Renderizar marcadores de acordo com o que o usuário escolho no chart.
     const [selectedsShapes, setSelectedsShapes] = useState(['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'])
 
-
+    /**
+     * Função para converter um nome de dado em um nome de forma.
+     * @param {string} dataName - O nome do dado.
+     * @returns {string} O nome da forma correspondente.
+     */
     function convertToShapeName(dataName) {
         switch (dataName) {
             case 'Subterrâneas':
@@ -51,19 +66,20 @@ export default function Analyse() {
     }
 
     useEffect(() => {
+
         let keys = Object.keys(params.selected)
         keys.forEach((key) => {
             let tableName = convertToShapeName(key);
             if (params.selected[key] === true) {
                 setSelectedsShapes(prev => {
-                    // verifica se existe o nome selecionado, se existir retira
+                    // Verifica se existe o nome selecionado, se existir retira
                     const selecteds = prev.filter(s => s !== tableName)
-                    // inclui nome selecionado
+                    // Inclui o nome selecionado
                     return [...selecteds, tableName]
                 })
             } else {
                 setSelectedsShapes(prev => {
-                    // filtra para retirar nome não selecionado
+                    // Filtra para retirar nome não selecionado
                     return [...prev.filter(prev => prev != tableName)]
                 })
             }
@@ -71,6 +87,14 @@ export default function Analyse() {
 
     }, [params]);
 
+    /**
+     * Função para renderizar um painel de guias.
+     * @param {object} props - As propriedades do painel.
+     * @param {ReactNode} props.children - Os elementos filho do painel.
+     * @param {number} props.value - O valor do painel.
+     * @param {number} props.index - O índice do painel.
+     * @returns {JSX.Element} O painel de guias renderizado.
+     */
     function TabPanel(props) {
         const { children, value, index, ...other } = props;
 
@@ -97,6 +121,11 @@ export default function Analyse() {
         value: PropTypes.number.isRequired,
     };
 
+    /**
+     * Função para obter propriedades de acessibilidade para uma guia.
+     * @param {number} index - O índice da guia.
+     * @returns {object} As propriedades de acessibilidade.
+     */
     function a11yProps(index) {
         return {
             id: `simple-tab-${index}`,
@@ -104,51 +133,59 @@ export default function Analyse() {
         };
     }
 
+    // Estado para o valor selecionado
     const [value, setValue] = React.useState(0);
 
+    /**
+     * Função para lidar com a mudança de valor da guia.
+     * @param {object} event - O evento de mudança.
+     * @param {number} newValue - O novo valor da guia.
+     */
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
- 
-    return (
-        <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
-            <Box sx={{ display: "flex", flex: 1, flexWrap: "wrap" }}>
-                <Box sx={{ display: "flex", flex: 1, minWidth: 200 }} >
-                    <AnalyseContext.Provider value={[marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState, selectedsShapes]}>
-                        <MapPanel />
-                    </AnalyseContext.Provider>
 
-                </Box>
-                <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 200 }}>
-                    <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                            <Tab label="Geral" {...a11yProps(0)} />
-                            <Tab label="Subterrâneo" {...a11yProps(1)} />
-                            <Tab label="Superficial" {...a11yProps(2)} />
-                        </Tabs>
-                    </Box>
-                    <TabPanel value={value} index={0}>
-                        <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays, params, setParams]}>
-                            <GeneralAnalysePanel />
-                        </AnalyseContext.Provider>
-                    </TabPanel>
-                    <TabPanel value={value} index={1}>
-                        <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
-                            <SubterraneanAnalysePanel />
-                        </AnalyseContext.Provider>
-                    </TabPanel>
-                    <TabPanel value={value} index={2}>
-                        <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
-                            <SurfaceAnalysePanel />
-                        </AnalyseContext.Provider>
-                    </TabPanel>
-                </Box>
-            </Box>
-            <Box sx={{ flex: 1 }}>
-                <AnalyseContext.Provider value={[system, setSystem, overlays, setOverlays]}>
-                    <GrantsPanel />
+
+
+return (
+    <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
+        <Box sx={{ display: "flex", flex: 1, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", flex: 1, minWidth: 200 }} >
+                <AnalyseContext.Provider value={[marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState, selectedsShapes]}>
+                    <MapPanel />
                 </AnalyseContext.Provider>
+
+            </Box>
+            <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 200 }}>
+                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                    <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+                        <Tab label="Geral" {...a11yProps(0)} />
+                        <Tab label="Subterrâneo" {...a11yProps(1)} />
+                        <Tab label="Superficial" {...a11yProps(2)} />
+                    </Tabs>
+                </Box>
+                <TabPanel value={value} index={0}>
+                    <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays, params, setParams]}>
+                        <GeneralAnalysePanel />
+                    </AnalyseContext.Provider>
+                </TabPanel>
+                <TabPanel value={value} index={1}>
+                    <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
+                        <SubterraneanAnalysePanel />
+                    </AnalyseContext.Provider>
+                </TabPanel>
+                <TabPanel value={value} index={2}>
+                    <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays]}>
+                        <SurfaceAnalysePanel />
+                    </AnalyseContext.Provider>
+                </TabPanel>
             </Box>
         </Box>
-    )
+        <Box sx={{ flex: 1 }}>
+            <AnalyseContext.Provider value={[system, setSystem, overlays, setOverlays]}>
+                <GrantsPanel />
+            </AnalyseContext.Provider>
+        </Box>
+    </Box>
+)
 }

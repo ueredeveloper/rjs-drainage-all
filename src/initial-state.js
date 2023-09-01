@@ -4,7 +4,6 @@ const markers ={
     
 }
 
-
 const initialState = {
     "marker": {
         position: { lat: -15.769526979446034, lng: -47.94437625785457 },

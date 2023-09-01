@@ -9,7 +9,6 @@ import LayersClearIcon from '@mui/icons-material/LayersClear';
 import { AnalyseContext } from '../../MainFlow/Analyse';
 import { initialState } from '../../../initial-state';
 import { fetchShape } from '../../../services/shapes';
-import { ChatSharp } from '@mui/icons-material';
 import { converterPostgresToGmaps } from '../../../tools';
 /**
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
