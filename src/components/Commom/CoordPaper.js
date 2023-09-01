@@ -71,8 +71,6 @@ export default function CoordPaper({ value }) {
 
 
     }
-
-
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas</FormLabel>

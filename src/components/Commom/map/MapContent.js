@@ -5,11 +5,8 @@ import ElemMap from './ElemMap';
 import ElemDrawManager from './ElemDrawManager';
 import { AnalyseContext } from '../../MainFlow/Analyse';
 import ElemMarker from './ElemMarker';
-import ElemInfoWindow from './infowindow/ElemMarkerInfoWindow';
 import ElemPopupOverlay from './ElemPopupOverlay';
-import MapControllers from './MapControllers';
 import ElemPolygon from './ElemPolygon';
-import { useSelectedShapes } from '../../../context/selected-shapes-provider';
 
 /**
  * Componente que representa o conteúdo do mapa.
@@ -24,7 +21,7 @@ function MapContent({ checkBoxState }) {
   const [map, setMap] = useState();
 
   // Obtém os estados do contexto de análise
-  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState] = useContext(AnalyseContext);
+  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState, selectedsShapes] = useContext(AnalyseContext);
   
   /**
    * Manipulador para o fechamento da janela de informações do marcador.
@@ -49,7 +46,7 @@ function MapContent({ checkBoxState }) {
 
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
-          return ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map(type => {
+          return selectedsShapes.map(type => {
             if (shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
                 return <ElemMarker

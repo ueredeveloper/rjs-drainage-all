@@ -4,8 +4,6 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import MapContainer from "../../Commom/MapContainer";
-import MapControllers from "../../Commom/map/MapControllers";
-import { SelectedShapesProvider } from "../../../context/selected-shapes-provider";
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -56,10 +54,7 @@ export default function MapPanel({ height }) {
                 </Tabs>
             </Box>
             <TabPanel value={value} index={0} >
-                <SelectedShapesProvider>
                     <MapContainer />
-                    </SelectedShapesProvider>
-                
             </TabPanel>
         </Box>
     );

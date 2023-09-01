@@ -10,41 +10,21 @@ import { AnalyseContext } from '../../MainFlow/Analyse';
 function NumberOfGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
 
+  const [, , overlays, , params, setParams] = useContext(AnalyseContext);
 
-  const [_selectedShapes, _setSelectedShapes] = useState([]);
-  const [, , overlays, setOverlays, handleClickSetParams] = useContext(AnalyseContext);
-
-  const [params, setParams] = useState({
-    "selected": {
-      "Pluviais": true,
-      "Subterrâneas": true,
-      "Superficiais": true,
-      "Efluentes": true,
-      "Barragens": true
-    }
-  })
-
-  useEffect(() => {
-    console.log('NumberOfGrantsChart', params, overlays)
-    if (params && params.selected) {
-      //handleClickSetParams(params)
-    }
-
-  }, [params])
-
-  // const [params, setParams] = useState({});
+  const [_params, _setParams] = useState(params)
 
   const [options, setOptions] = useState({
     legend: {
       top: 'top',
-      selected: params.selected,
+      selected: _params.selected,
     },
     toolbox: {
       show: true,
       feature: {
         mark: { show: true },
         dataView: { show: true, readOnly: false },
-        restore: { show: true },
+        restore: { show: false },
         saveAsImage: { show: false }
       }
     },
@@ -73,18 +53,6 @@ function NumberOfGrantsChart() {
     ]
   });
 
-  const handleClick = useCallback((event) => {
-
-    setParams(prevParams => ({
-      ...prevParams,
-      selected: {
-        ...prevParams.selected,
-        [event.name]: event.selected[event.name]
-      }
-    }));
-
-  }, []);
-
   useEffect(() => {
     // Cria uma instância do ECharts
     const myChart = echarts.init(document.getElementById('myChart'));
@@ -93,14 +61,24 @@ function NumberOfGrantsChart() {
     myChart.setOption(options);
 
     myChart.on('legendselectchanged', function (event) {
-
-      //handleClick(event)
-      handleClickSetParams(event)
+      // atualizar variável ambiente
+      _setParams(prevParams => ({
+        ...prevParams,
+        selected: {
+          ...prevParams.selected,
+          [event.name]: event.selected[event.name]
+        }
+      }));
+      // atualizar vairável global (Analyse.js)
+      setParams(prevParams => ({
+        ...prevParams,
+        selected: {
+          ...prevParams.selected,
+          [event.name]: event.selected[event.name]
+        }
+      }));
 
     });
-
-
-
 
     // Limpa a instância do gráfico quando o componente é desmontado
     return () => {
@@ -123,11 +101,10 @@ function NumberOfGrantsChart() {
       newOptions.series[0].data = newData; // Update data with new values
       setOptions(newOptions); // Update state with new options
 
-
     });
 
 
-  }, [overlays, params]);
+  }, [overlays]);
 
   return (
     <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}></div>
