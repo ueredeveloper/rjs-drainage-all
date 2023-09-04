@@ -15,7 +15,7 @@ App.js
             |-- GeneralAnalysePanel.js
                 <CoordPaper/>
                 <SearchPaper/>
-                <NumberOfGrantsChart>
+                <ElemGrantsChart>
             |-- GrantsPanel.js
                 <GrantsTable/>
                 

@@ -7,7 +7,7 @@ import { AnalyseContext } from '../../MainFlow/Analyse';
  * @component
  */
 
-function NumberOfGrantsChart() {
+function ElemGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
   const [, , overlays, , selectedCharts, setSelectedsCharts] = useContext(AnalyseContext);
 
@@ -134,4 +134,4 @@ function convertOptionsDataName(shapeName) {
   }
 }
 
-export default NumberOfGrantsChart;
+export default ElemGrantsChart;
