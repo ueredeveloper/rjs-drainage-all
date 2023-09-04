@@ -32,14 +32,12 @@ export default function Analyse() {
     const [shapesState, setShapesState] = useState([]);
 
     // Estado para parâmetros selecionados no chart (Number-Of-Grants-Chart)
-    const [params, setParams] = useState({
-        selected: {
-            "Pluviais": true,
-            "Subterrâneas": true,
-            "Superficiais": true,
-            "Efluentes": true,
-            "Barragens": true
-        }
+    const [selectedsCharts, setSelectedsCharts] = useState({
+        "Pluviais": true,
+        "Subterrâneas": true,
+        "Superficiais": true,
+        "Efluentes": true,
+        "Barragens": true
     })
 
     // Estado para formas selecionadas. Renderizar marcadores de acordo com o que o usuário escolho no chart.
@@ -67,10 +65,10 @@ export default function Analyse() {
 
     useEffect(() => {
 
-        let keys = Object.keys(params.selected)
+        let keys = Object.keys(selectedsCharts)
         keys.forEach((key) => {
             let tableName = convertToShapeName(key);
-            if (params.selected[key] === true) {
+            if (selectedsCharts[key] === true) {
                 setSelectedsShapes(prev => {
                     // Verifica se existe o nome selecionado, se existir retira
                     const selecteds = prev.filter(s => s !== tableName)
@@ -85,7 +83,7 @@ export default function Analyse() {
             }
         });
 
-    }, [params]);
+    }, [selectedsCharts]);
 
     /**
      * Função para renderizar um painel de guias.
@@ -145,8 +143,6 @@ export default function Analyse() {
         setValue(newValue);
     };
 
-
-
 return (
     <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
         <Box sx={{ display: "flex", flex: 1, flexWrap: "wrap" }}>
@@ -165,7 +161,7 @@ return (
                     </Tabs>
                 </Box>
                 <TabPanel value={value} index={0}>
-                    <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays, params, setParams]}>
+                    <AnalyseContext.Provider value={[marker, setMarker, overlays, setOverlays, selectedsCharts, setSelectedsCharts]}>
                         <GeneralAnalysePanel />
                     </AnalyseContext.Provider>
                 </TabPanel>

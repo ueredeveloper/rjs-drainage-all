@@ -9,12 +9,9 @@ import { AnalyseContext } from '../../MainFlow/Analyse';
 
 function NumberOfGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
+  const [, , overlays, , selectedCharts, setSelectedsCharts] = useContext(AnalyseContext);
 
-  const [, , overlays, , params, setParams] = useContext(AnalyseContext);
-
-  const [_params, _setParams] = useState(params)
-
-  const [options, setOptions] = useState({
+  let options = {
     color: [
       "#5470c6",//blue -> subterrânea
       "#91cc75",//green -> superficial
@@ -28,7 +25,7 @@ function NumberOfGrantsChart() {
     ],
     legend: {
       top: 'top',
-      selected: _params.selected,
+      selected: selectedCharts,
     },
     toolbox: {
       show: true,
@@ -62,32 +59,27 @@ function NumberOfGrantsChart() {
 
       }
     ]
-  });
+  };
+
+  let myChart = null;
 
   useEffect(() => {
     // Cria uma instância do ECharts
-    const myChart = echarts.init(document.getElementById('myChart'));
+    myChart = echarts.init(document.getElementById('myChart'));
+
 
     // Define as opções para o gráfico
     myChart.setOption(options);
 
     myChart.on('legendselectchanged', function (event) {
-      // atualizar variável ambiente
-      _setParams(prevParams => ({
-        ...prevParams,
-        selected: {
-          ...prevParams.selected,
-          [event.name]: event.selected[event.name]
-        }
-      }));
+
       // atualizar vairável global (Analyse.js)
-      setParams(prevParams => ({
-        ...prevParams,
-        selected: {
-          ...prevParams.selected,
+      setSelectedsCharts(prev => {
+        return {
+          ...prev,
           [event.name]: event.selected[event.name]
         }
-      }));
+      });
 
     });
 
@@ -110,15 +102,16 @@ function NumberOfGrantsChart() {
       });
       const newOptions = { ...options }; // Create a copy of options
       newOptions.series[0].data = newData; // Update data with new values
-      setOptions(newOptions); // Update state with new options
-
+      myChart.setOption(newOptions)
     });
 
 
   }, [overlays]);
 
   return (
-    <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}></div>
+    <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}>
+      {console.log('div renderiza')}
+    </div>
   );
 }
 
@@ -138,28 +131,6 @@ function convertOptionsDataName(shapeName) {
 
     case 'barragem':
       return 'Barragens';
-  }
-}
-function convertToShapeName(dataName) {
-  switch (dataName) {
-    case 'Subterrâneas':
-      return 'subterranea';
-    case 'Superficiais':
-      return 'superficial';
-    case 'Pluviais':
-      return 'lancamento_pluviais';
-    case 'Efluentes':
-      return 'lancamento_efluentes';
-    case 'Barragens':
-      return 'barragem';
-  }
-}
-
-function getSelectedFalseKeys(data) {
-  if (data && data.selected) {
-    return Object.keys(data.selected).filter(key => data.selected[key] === false);
-  } else {
-    return [];
   }
 }
 
