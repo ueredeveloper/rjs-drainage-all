@@ -12,6 +12,7 @@ export default function MapContainer() {
         setCheckBoxState(newState)
     }
    
+    
     return (
         <Box sx={{ height: "100%", width: "100%" }}>
             <Box>

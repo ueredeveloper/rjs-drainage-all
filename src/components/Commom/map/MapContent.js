@@ -33,6 +33,7 @@ function MapContent({ checkBoxState }) {
     console.log('on close');
   };
 
+  
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>

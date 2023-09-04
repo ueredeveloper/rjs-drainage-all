@@ -91,6 +91,7 @@ function NumberOfGrantsChart() {
 
   // Efeito para atualizar o gráfico com base no estado das caixas de seleção.
   useEffect(() => {
+    
 
     overlays.shapes.map(shape => {
       let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {

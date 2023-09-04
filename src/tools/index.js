@@ -198,6 +198,8 @@ function calculatePolylineLength(polyline) {
   return lengthInMeters;
 }
 
+
+
 function setInfoMarkerIcon(id, ti_id, tp_id) {
   if (id === 0) {
     return { mkr: mkrRedIcon, color: '#9D0404' };

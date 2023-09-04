@@ -17,6 +17,7 @@ import { converterPostgresToGmaps } from '../../../tools';
 export default function MapControllers({ updateCheckBoxState }) {
 
 
+    
     /**
      * Inicializa o estado das caixas de seleção com base nos dados.
      * @param {Object} data - Dados para inicialização das caixas de seleção.
