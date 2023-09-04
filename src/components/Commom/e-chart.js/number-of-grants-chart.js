@@ -15,6 +15,17 @@ function NumberOfGrantsChart() {
   const [_params, _setParams] = useState(params)
 
   const [options, setOptions] = useState({
+    color: [
+      "#5470c6",//blue -> subterrânea
+      "#91cc75",//green -> superficial
+      "#fac858",//orange -> pluviais
+      "#ee6666",//red -> efluentes
+      "#9a60b4",// purple -> barragem
+      "#3ba272",
+      "#fc8452",
+      "#9a60b4",
+      "#ea7ccc",
+    ],
     legend: {
       top: 'top',
       selected: _params.selected,

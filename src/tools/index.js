@@ -31,7 +31,7 @@ function createCircleRings(center, radius) {
  * @returns {object[]} - Array de coordenadas no formato do Google Maps.
  */
 function converterPostgresToGmaps(shape) {
- 
+
   if (shape.shape.type === 'MultiPolygon') {
     let _paths = shape.shape.coordinates.map(coord => {
       return coord[0].map(c => {
@@ -207,14 +207,14 @@ function setInfoMarkerIcon(id, ti_id, tp_id) {
         return { type: 'superficial', mkr: mkrGreenIcon, color: '#019367', iw: iwSuperficialIcon() };
       case 2:
         return tp_id === 1 ?
-          { type: 'subterraneo-manual', mkr: mkrBrownIcon, color: '#BD371A', iw: iwManualIcon() } :
+          { type: 'subterraneo-manual', mkr: mkrBlueIcon, color: '#BD371A', iw: iwManualIcon() } :
           { type: 'subterraneo-tubular', mkr: mkrBlueIcon, color: '#040C9D', iw: iwTubularIcon() };
       case 3:
         return { type: 'pluvial', mkr: mkrOrangeIcon, color: '#E3AB00', iw: iwPluvialIcon() };
       case 4:
-        return { type: 'efluente', mkr: mkrPurpleIcon, color: '#9D0471', iw: iwEfluenteIcon() };
+        return { type: 'efluente', mkr: mkrRedIcon, color: '#9D0471', iw: iwEfluenteIcon() };
       case 5:
-        return { type: 'barragem', mkr: mkrYellowIcon, color: '#BDB01A', iw: iwBarragemIcon() };
+        return { type: 'barragem', mkr: mkrPurpleIcon, color: '#BDB01A', iw: iwBarragemIcon() };
       case 6:
         return { type: 'caminhao', mrk: mkrPinkIcon, color: '#BD1A8E', iw: 'null' }
       default:
