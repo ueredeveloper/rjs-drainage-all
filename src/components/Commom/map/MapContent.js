@@ -7,6 +7,7 @@ import { AnalyseContext } from '../../MainFlow/Analyse';
 import ElemMarker from './ElemMarker';
 import ElemPopupOverlay from './ElemPopupOverlay';
 import ElemPolygon from './ElemPolygon';
+import { useData } from '../../../hooks';
 
 /**
  * Componente que representa o conteúdo do mapa.
@@ -21,8 +22,8 @@ function MapContent({ checkBoxState }) {
   const [map, setMap] = useState();
 
   // Obtém os estados do contexto de análise
-  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState, selectedsShapes] = useContext(AnalyseContext);
-  
+  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState] = useContext(AnalyseContext);
+
   /**
    * Manipulador para o fechamento da janela de informações do marcador.
    *
@@ -33,7 +34,54 @@ function MapContent({ checkBoxState }) {
     console.log('on close');
   };
 
-  
+  /**
+     * Função para converter um nome de dado em um nome de forma.
+     * @param {string} dataName - O nome do dado.
+     * @returns {string} O nome da forma correspondente.
+     */
+  function convertToShapeName(dataName) {
+    switch (dataName) {
+      case 'Subterrâneas':
+        return 'subterranea';
+      case 'Superficiais':
+        return 'superficial';
+      case 'Pluviais':
+        return 'lancamento_pluviais';
+      case 'Efluentes':
+        return 'lancamento_efluentes';
+      case 'Barragens':
+        return 'barragem';
+    }
+  }
+
+  const { selectedsCharts, setSelectedsCharts } = useData();
+
+  // Estado para formas selecionadas. Renderizar marcadores de acordo com o que o usuário escolho no chart.
+  const [selectedsShapes, setSelectedsShapes] = useState(['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem']);
+
+
+  useEffect(() => {
+
+    let keys = Object.keys(selectedsCharts)
+    keys.forEach((key) => {
+      let tableName = convertToShapeName(key);
+      if (selectedsCharts[key] === true) {
+        setSelectedsShapes(prev => {
+          // Verifica se existe o nome selecionado, se existir retira
+          const selecteds = prev.filter(s => s !== tableName)
+          // Inclui o nome selecionado
+          return [...selecteds, tableName]
+        })
+      } else {
+        setSelectedsShapes(prev => {
+          // Filtra para retirar nome não selecionado
+          return [...prev.filter(prev => prev != tableName)]
+        })
+      }
+    });
+  }, [selectedsCharts]);
+
+
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
@@ -56,7 +104,7 @@ function MapContent({ checkBoxState }) {
                   map={map}
                 />;
               });
-            } else {return null}
+            } else { return null }
           });
         })}
 

@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import MenuAppBar from './components/Commom/MenuAppBar';
 import Analyse from './components/MainFlow/Analyse';
