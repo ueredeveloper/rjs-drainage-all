@@ -17,7 +17,7 @@ function ElemGrantsChart() {
       "#5470c6",//blue -> subterrânea
       "#91cc75",//green -> superficial
       "#fac858",//orange -> pluviais
-      "#ee6666",//red -> efluentes
+      "#BD1A8E",//red -> efluentes
       "#9a60b4",// purple -> barragem
       "#3ba272",
       "#fc8452",

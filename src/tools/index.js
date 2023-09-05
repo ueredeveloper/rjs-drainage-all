@@ -214,7 +214,7 @@ function setInfoMarkerIcon(id, ti_id, tp_id) {
       case 3:
         return { type: 'pluvial', mkr: mkrOrangeIcon, color: '#E3AB00', iw: iwPluvialIcon() };
       case 4:
-        return { type: 'efluente', mkr: mkrRedIcon, color: '#9D0471', iw: iwEfluenteIcon() };
+        return { type: 'efluente', mkr: mkrPinkIcon, color: '#9D0471', iw: iwEfluenteIcon() };
       case 5:
         return { type: 'barragem', mkr: mkrPurpleIcon, color: '#BDB01A', iw: iwBarragemIcon() };
       case 6:
