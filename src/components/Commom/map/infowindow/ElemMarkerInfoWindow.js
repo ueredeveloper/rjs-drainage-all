@@ -19,7 +19,6 @@ const ElemMarkerInfoWindow = ({ marker, info, map }) => {
      */
     const [infowindow, setInfowindow] = useState();
 
-
     /**
      * O tema do Material-UI sendo utilizado no componente.
      */
@@ -39,7 +38,6 @@ const ElemMarkerInfoWindow = ({ marker, info, map }) => {
 
         // Atualiza a posição da janela de informações ao marcador.
         if (map && marker && infowindow) {
-            //infowindow.setPosition(marker.position);
             // Adiciona um listener para abrir a janela de informações quando o marcador for clicado.
             if (marker) {
                 marker.addListener("click", () => {

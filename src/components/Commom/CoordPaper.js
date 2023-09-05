@@ -12,18 +12,19 @@ export default function CoordPaper({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
     const [marker, setMarker, overlays, setOverlays] = useContext(AnalyseContext);
-    const [position, setPosition] = useState(marker.position);
+    const [position, setPosition] = useState(marker);
 
     useEffect(() => {
-        setPosition(marker.position);
+        setPosition(marker);
     }, [marker]);
 
-    async function handle() {
+    async function handleClick() {
 
         setMarker(prev => {
             return {
                 ...prev,
-                position: position
+                int_latitude: position.int_latitude,
+                int_longitude: position.int_longitude
 
             }
         });
@@ -32,7 +33,7 @@ export default function CoordPaper({ value }) {
 
         let markers = await findAllPointsInCircle(
             {
-                center: { lng: position.lng, lat: position.lat },
+                center: { lng: position.int_longitude, lat: position.int_latitude },
                 radius: parseInt(radius)
             }
         );
@@ -41,7 +42,7 @@ export default function CoordPaper({ value }) {
         let shape = {
             id: Date.now(),
             type: 'circle',
-            position: { lat: position.lat, lng: position.lng },
+            position: { lat: position.int_latitude, lng: position.int_longitude },
             map: null,
             draw: null,
             markers: markers,
@@ -89,7 +90,7 @@ export default function CoordPaper({ value }) {
                             label="Latitude"
                             color="secondary"
                             name="lat"
-                            value={position.lat}
+                            value={position.int_latitude}
                             onChange={handleChange}
                             size="small"
                         />
@@ -104,7 +105,7 @@ export default function CoordPaper({ value }) {
                             color="secondary"
                             label="Longitude"
                             name="lng"
-                            value={position.lng}
+                            value={position.int_longitude}
                             onChange={handleChange}
                             size="small"
                         />
@@ -124,7 +125,7 @@ export default function CoordPaper({ value }) {
                                     <CircularProgress size={25} />
                                 </Fade>
                                 :
-                                <IconButton color="secondary" size="large" onClick={() => { handle().then(() => { setLoading(false); }); }}>
+                                <IconButton color="secondary" size="large" onClick={() => { handleClick().then(() => { setLoading(false); }); }}>
                                     <SearchIcon />
                                 </IconButton>
                         }

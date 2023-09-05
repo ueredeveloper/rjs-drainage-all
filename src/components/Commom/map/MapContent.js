@@ -25,16 +25,6 @@ function MapContent({ checkBoxState }) {
   const [marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState] = useContext(AnalyseContext);
 
   /**
-   * Manipulador para o fechamento da janela de informações do marcador.
-   *
-   * @param {Object} marker - O marcador associado à janela de informações.
-   * @returns {void}
-   */
-  const handleInfoWindowClose = (marker) => {
-    console.log('on close');
-  };
-
-  /**
      * Função para converter um nome de dado em um nome de forma.
      * @param {string} dataName - O nome do dado.
      * @returns {string} O nome da forma correspondente.

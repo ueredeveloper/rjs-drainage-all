@@ -96,7 +96,6 @@ function ElemGrantsChart() {
       let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
         let _data = options.series[0].data.find(item => item.name === convertOptionsDataName(shapeName))
         if (shape.markers[shapeName] !== null) {
-          //console.log({ ..._data, value: shape.markers[shapeName].length })
           return { ..._data, value: shape.markers[shapeName].length };
         }
         return { ..._data, value: 0 };
@@ -113,7 +112,6 @@ function ElemGrantsChart() {
 
   return (
     <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}>
-      {console.log('chart render')}
     </div>
   );
 }

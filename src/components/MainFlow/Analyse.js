@@ -100,7 +100,6 @@ export default function Analyse() {
                     <AnalyseContext.Provider value={[marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState]}>
                         <MapPanel />
                     </AnalyseContext.Provider>
-
                 </Box>
                 <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 200 }}>
                     <Box sx={{ borderBottom: 1, borderColor: "divider" }}>

@@ -97,7 +97,6 @@ function analyseItsAvaiable(_info, _points) {
   // Percentual de vazão utilizada
   let _q_points_per = (Number(_Q) * 100 / Number(_q_ex)).toFixed(4);
   if (isNaN(_q_points_per)) {
-    console.log('análise, porcentagem, NaN');
     _q_points_per = 0;
   }
 
