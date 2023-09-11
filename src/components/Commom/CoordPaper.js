@@ -1,3 +1,7 @@
+/**
+ * Componente para entrada e manipulação de coordenadas.
+ * @returns {JSX.Element} O elemento React que representa o componente.
+ */
 import React, { useState, useEffect, useContext } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -7,12 +11,17 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
 import { findAllPointsInCircle } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
+import RadiusPaper from "./RadiusPaper";
 
+/**
+ * Componente CoordPaper.
+ * @returns {JSX.Element} O elemento React que representa o componente CoordPaper.
+ */
 export default function CoordPaper() {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
-    //const [, , , setOverlays] = useContext(AnalyseContext);
-    const { marker, setMarker, setOverlays} = useData();
+    // const [, , , setOverlays] = useContext(AnalyseContext);
+    const { marker, setMarker, setOverlays, radius } = useData();
 
     const [position, setPosition] = useState(marker);
 
@@ -20,6 +29,12 @@ export default function CoordPaper() {
         setPosition(marker);
     }, [marker]);
 
+    /**
+     * Manipula o clique no botão de pesquisa.
+     * Atualiza o marcador com as coordenadas atuais, pesquisa marcadores no raio especificado
+     * e adiciona uma forma de círculo aos overlays.
+     * @async
+     */
     async function handleClick() {
 
         setMarker(prev => {
@@ -27,11 +42,10 @@ export default function CoordPaper() {
                 ...prev,
                 int_latitude: position.int_latitude,
                 int_longitude: position.int_longitude
-
             }
         });
 
-        let radius = 600;
+        // let radius = 600;
 
         let markers = await findAllPointsInCircle(
             {
@@ -62,6 +76,10 @@ export default function CoordPaper() {
 
     }
 
+    /**
+     * Manipula a alteração de valores nos campos de entrada de coordenadas.
+     * @param {Object} event - O evento de alteração.
+     */
     function handleChange(event) {
         let { name, value } = event.target;
 
@@ -73,13 +91,13 @@ export default function CoordPaper() {
         })
 
     }
+
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas</FormLabel>
             <Paper elevation={3} style={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
-                <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}
-                >
+                <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}>
                     <Box sx={{ display: 'flex', flex: 4, flexDirection: 'row' }}>
                         <TextField
                             sx={{
@@ -113,6 +131,7 @@ export default function CoordPaper() {
                     </Box>
                     {/* Botões de Manipulação */}
                     <Box sx={{ display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <RadiusPaper />
                         {
                             loading ?
                                 <Fade

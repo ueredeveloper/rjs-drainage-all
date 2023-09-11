@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import * as echarts from 'echarts';
-import { AnalyseContext } from '../../MainFlow/Analyse';
 import { useData } from '../../../hooks/analyse-hooks';
 
 /**

@@ -1,7 +1,7 @@
 /**
- * Módulo DataContext.js
+ * Módulo analyse-hooks.js
  * 
- * Este módulo define o contexto de dados compartilhados para gerenciar o estado 'selectedsCharts'.
+ * Este módulo define o contexto de dados compartilhados para gerenciar o estado de hooks como 'selectedsCharts'.
  * Ele fornece o DataProvider para envolver a aplicação e o hook useData para acessar o estado.
  */
 
@@ -33,13 +33,14 @@ export const DataProvider = ({ children }) => {
   // Estado para o sistema fraturado e poroso
   const [system, setSystem] = useState(initialsStates.system);
 
-
-  // Estado para os marcadores por tabelas (subterranea, superficial...)
+  // Estado para os marcadores por tabelas (subterrânea, superficial...)
   const [shapesState, setShapesState] = useState([]);
+
+  const [radius, setRadius] = useState(600);
 
   return (
     // Fornece o estado 'selectedsCharts' para os componentes filhos
-    <DataContext.Provider value={{ selectedsCharts, setSelectedsCharts, marker, setMarker, overlays, setOverlays, shapesState, setShapesState }}>
+    <DataContext.Provider value={{ selectedsCharts, setSelectedsCharts, marker, setMarker, overlays, setOverlays, shapesState, setShapesState, radius, setRadius }}>
       {children}
     </DataContext.Provider>
   );
@@ -53,3 +54,4 @@ export const DataProvider = ({ children }) => {
  * @returns {Object} Um objeto que contém o estado 'selectedsCharts' e a função 'setSelectedsCharts'.
  */
 export const useData = () => useContext(DataContext);
+

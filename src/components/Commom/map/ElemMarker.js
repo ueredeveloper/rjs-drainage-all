@@ -58,7 +58,7 @@ const ElemMarker = ({ info, map }) => {
 
         marker.setAnimation(window.google.maps.Animation.BOUNCE);
 
-        // Stop the animation after 3 seconds (3000 milliseconds)
+        // Parar animação do marcador com 3 segundos (3000 milliseconds)
         setTimeout(function () {
           marker.setAnimation(null); // Set animation to null to stop it
         }, 3000);
