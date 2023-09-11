@@ -12,7 +12,7 @@ import { useData } from '../../../hooks/analyse-hooks';
 const ElemDrawManager = ({ map }) => {
 
   //const [, setMarker, , , , setOverlays] = useContext(AnalyseContext);
-  const {setMarker, setOverlays} = useData();
+  const { setMarker, setOverlays } = useData();
 
   useEffect(() => {
 
@@ -51,16 +51,16 @@ const ElemDrawManager = ({ map }) => {
         if (marker) {
           marker.setMap(null);
         }
+        // obter o marcador a partir do ponto clicado
         marker = event.overlay;
-        marker.setOptions({
-          icon: { url: redIcon, scaledSize: new window.google.maps.Size(30, 30) }
-        });
+        // obter posição do marcador
         let position = marker.position;
-
+        // retirar o marcador do mapa
+        marker.setMap(null);
+        // editar posição do marcador, este sim será mostrado no mapa
         setMarker(prev => {
           return {
             ...prev,
-            position: {lat: position.lat(), lng:position.lng()},
             int_latitude: position.lat(),
             int_longitude: position.lng()
           }
@@ -95,7 +95,7 @@ const ElemDrawManager = ({ map }) => {
           area: calculateCircleArea(radius)
 
         }
-   
+
         setOverlays(prev => {
           return {
             ...prev,

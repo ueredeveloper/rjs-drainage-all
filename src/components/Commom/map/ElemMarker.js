@@ -56,7 +56,12 @@ const ElemMarker = ({ info, map }) => {
       });
       if (id === 0) {
 
-        //marker.setAnimation(window.google.maps.Animation.BOUNCE);
+        marker.setAnimation(window.google.maps.Animation.BOUNCE);
+
+        // Stop the animation after 3 seconds (3000 milliseconds)
+        setTimeout(function () {
+          marker.setAnimation(null); // Set animation to null to stop it
+        }, 3000);
       }
       return <div><ElemMarkerInfoWindow marker={marker} info={info} map={map} /></div>
 
