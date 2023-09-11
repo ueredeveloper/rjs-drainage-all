@@ -303,8 +303,6 @@ export default function GrantsTable({ markers }) {
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = useState(0);
 
-  //const [{ markers, hg_info }, setContext] = useContext(SystemContext);
-
   useEffect(() => {
     let rowsOnMount = stableSort(
       markers,

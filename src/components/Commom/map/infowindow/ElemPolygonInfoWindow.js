@@ -11,6 +11,7 @@ import { useContext, useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import HTMLPolygonContent from './html-polygon-content';
 import { AnalyseContext } from '../../../MainFlow/Analyse';
+import { useData } from '../../../../hooks/analyse-hooks';
 
 const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
 
@@ -19,7 +20,8 @@ const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
      * @type {google.maps.InfoWindow}
      */
     const [infowindow, setInfowindow] = useState();
-    const [, , , , , setOverlays] = useContext(AnalyseContext)
+   // const [, , , , , setOverlays] = useContext(AnalyseContext)
+   const {setOverlays} = useData()
 
 
 

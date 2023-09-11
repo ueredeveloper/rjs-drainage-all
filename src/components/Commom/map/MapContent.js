@@ -3,11 +3,10 @@ import { Wrapper } from "@googlemaps/react-wrapper";
 import { Box } from '@mui/material';
 import ElemMap from './ElemMap';
 import ElemDrawManager from './ElemDrawManager';
-import { AnalyseContext } from '../../MainFlow/Analyse';
 import ElemMarker from './ElemMarker';
 import ElemPopupOverlay from './ElemPopupOverlay';
 import ElemPolygon from './ElemPolygon';
-import { useData } from '../../../hooks';
+import { useData } from '../../../hooks/analyse-hooks';
 
 /**
  * Componente que representa o conteúdo do mapa.
@@ -22,7 +21,7 @@ function MapContent({ checkBoxState }) {
   const [map, setMap] = useState();
 
   // Obtém os estados do contexto de análise
-  const [marker, setMarker, system, setSystem, overlays, setOverlays, shapesState, setShapesState] = useContext(AnalyseContext);
+  const {marker, overlays, setOverlays, shapesState} = useData();
 
   /**
      * Função para converter um nome de dado em um nome de forma.

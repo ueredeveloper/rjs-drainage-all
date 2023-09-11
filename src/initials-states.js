@@ -1,5 +1,5 @@
 
-const initialState = {
+const initialsStates = {
     "marker": {
         //position: { lat: -15.769526979446034, lng: -47.94437625785457 },
         //user: {},
@@ -55,7 +55,14 @@ const initialState = {
             "checked": false,
             "polygons": []
         }
+    },
+    "selectedsCharts": {
+        "Pluviais": true,
+        "Subterrâneas": true,
+        "Superficiais": true,
+        "Efluentes": true,
+        "Barragens": true
     }
 }
 
-export { initialState }
+export { initialsStates }

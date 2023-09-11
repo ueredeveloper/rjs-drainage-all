@@ -2,12 +2,9 @@ import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import AnalyseFlow from "./TableFlow";
-import TableGrants from "./TableGrants";
 import GrantsTable from "../../Commom/GrantsTable";
-import { AnalyseContext } from '../Analyse';
+import { useData } from "../../../hooks/analyse-hooks";
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -49,7 +46,8 @@ export default function GrantsPanel() {
         setValue(newValue);
     };
 
-    const [system, setSystem, overlays, setOverlays] = useContext(AnalyseContext);
+    //const [, , overlays, ] = useContext(AnalyseContext);
+    const {overlays} = useData();
 
     return (
         <Box sx={{ width: "100%" }}>

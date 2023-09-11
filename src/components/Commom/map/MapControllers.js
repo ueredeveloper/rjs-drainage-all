@@ -6,18 +6,16 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@mui/material';
 import LayersClearIcon from '@mui/icons-material/LayersClear';
-import { AnalyseContext } from '../../MainFlow/Analyse';
-import { initialState } from '../../../initial-state';
+import { initialsStates } from '../../../initials-states';
 import { fetchShape } from '../../../services/shapes';
 import { converterPostgresToGmaps } from '../../../tools';
+import { useData } from '../../../hooks/analyse-hooks';
 /**
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
  * @returns {JSX.Element} JSX do componente MapControllers.
  */
 export default function MapControllers({ updateCheckBoxState }) {
 
-
-    
     /**
      * Inicializa o estado das caixas de seleção com base nos dados.
      * @param {Object} data - Dados para inicialização das caixas de seleção.
@@ -33,8 +31,7 @@ export default function MapControllers({ updateCheckBoxState }) {
     };
 
     const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
-    const [, , , , overlays, setOverlays, shapesState, setShapesState] = useContext(AnalyseContext)
-
+    const {overlays, setOverlays, shapesState, setShapesState} = useData();
 
     /**
      * Cria um objeto de propriedades para a caixa de seleção.
@@ -119,7 +116,7 @@ export default function MapControllers({ updateCheckBoxState }) {
             if (shape.draw !== null)
                 shape.draw.setMap(null)
         });
-        setOverlays(initialState.overlays)
+        setOverlays(initialsStates.overlays)
     };
 
     return (

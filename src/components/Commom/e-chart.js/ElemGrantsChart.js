@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { AnalyseContext } from '../../MainFlow/Analyse';
-import { useData } from '../../../hooks';
+import { useData } from '../../../hooks/analyse-hooks';
 
 /**
  * Componente que exibe um gráfico de pizza com a contagem de concessões por tipo.
@@ -10,7 +10,8 @@ import { useData } from '../../../hooks';
 
 function ElemGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
-  const [marker, setMarker, overlays, setOverlays] = useContext(AnalyseContext);
+  //const [marker, setMarker, overlays, setOverlays] = useContext(AnalyseContext);
+  const { overlays, selectedsCharts, setSelectedsCharts } = useData();
 
   let options = {
     color: [
@@ -26,7 +27,7 @@ function ElemGrantsChart() {
     ],
     legend: {
       top: 'top',
-      //selected: selectedCharts,
+      //selected: selectedsCharts,
     },
     toolbox: {
       show: true,
@@ -62,14 +63,12 @@ function ElemGrantsChart() {
     ]
   };
 
-  const { selectedsCharts, setSelectedsCharts } = useData()
-
-  let myChart = null;
+  //let myChart = null;
+  const [myChart, setMyChart] = useState(null)
 
   useEffect(() => {
     // Cria uma instância do ECharts
-    myChart = echarts.init(document.getElementById('myChart'));
-
+    let myChart = echarts.init(document.getElementById('myChart'));
 
     // Define as opções para o gráfico
     myChart.setOption(options);
@@ -79,6 +78,8 @@ function ElemGrantsChart() {
       setSelectedsCharts(event.selected)
 
     });
+
+    setMyChart(myChart)
 
     // Limpa a instância do gráfico quando o componente é desmontado
     return () => {
@@ -90,7 +91,8 @@ function ElemGrantsChart() {
   useEffect(() => {
 
     const newOptions = { ...options }; // Create a copy of options
-    let newOptionsData = []
+    let newOptionsData = [];
+
     overlays.shapes.map((shape, i) => {
 
       let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
@@ -106,7 +108,13 @@ function ElemGrantsChart() {
       })
       newOptions.series[0].data = newOptionsData;
     });
-    myChart.setOption(newOptions)
+
+    console.log(myChart)
+
+    if (myChart) {
+      myChart.setOption(newOptions)
+    }
+
 
   }, [overlays]);
 

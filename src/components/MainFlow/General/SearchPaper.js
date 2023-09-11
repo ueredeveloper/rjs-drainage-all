@@ -5,8 +5,8 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/
 import SearchIcon from '@mui/icons-material/Search';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
-import { AnalyseContext } from "../Analyse";
 import { findByColumn } from "../../../services/users";
+import { useData } from "../../../hooks/analyse-hooks";
 
 
 export default function SearchPaper({ value }) {
@@ -14,7 +14,8 @@ export default function SearchPaper({ value }) {
     const [loading, setLoading] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [marker, setMarker, , setOverlays] = useContext(AnalyseContext);
+  //  const [, , , setOverlays] = useContext(AnalyseContext);
+    const {setOverlays} = useData();
 
     function searchQueryHandle(event) {
         let { value } = event.target;

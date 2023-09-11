@@ -1,10 +1,9 @@
 import { useContext, useEffect } from 'react';
-//import { createCircleRings } from '../tools';
 import { findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle } from '../../../services/geolocation';
-import { AnalyseContext } from '../../MainFlow/Analyse';
 import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea, numberWithCommas } from '../../../tools';
 
 import redIcon from '../../../assets/png/red-icon.png';
+import { useData } from '../../../hooks/analyse-hooks';
 /**
 * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
   * @param {Object} map Map inicializado gmaps api.
@@ -12,7 +11,8 @@ import redIcon from '../../../assets/png/red-icon.png';
   */
 const ElemDrawManager = ({ map }) => {
 
-  const [marker, setMarker, system, setSystem, overlays, setOverlays] = useContext(AnalyseContext);
+  //const [, setMarker, , , , setOverlays] = useContext(AnalyseContext);
+  const {setMarker, setOverlays} = useData();
 
   useEffect(() => {
 

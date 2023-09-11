@@ -5,13 +5,15 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/
 import SearchIcon from '@mui/icons-material/Search';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
-import { AnalyseContext } from "../MainFlow/Analyse";
 import { findAllPointsInCircle } from "../../services/geolocation";
+import { useData } from "../../hooks/analyse-hooks";
 
-export default function CoordPaper({ value }) {
+export default function CoordPaper() {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
-    const [marker, setMarker, overlays, setOverlays] = useContext(AnalyseContext);
+    //const [, , , setOverlays] = useContext(AnalyseContext);
+    const { marker, setMarker, setOverlays} = useData();
+
     const [position, setPosition] = useState(marker);
 
     useEffect(() => {
@@ -70,7 +72,6 @@ export default function CoordPaper({ value }) {
             }
         })
 
-
     }
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
@@ -89,7 +90,7 @@ export default function CoordPaper({ value }) {
                             }}
                             label="Latitude"
                             color="secondary"
-                            name="lat"
+                            name="int_latitude"
                             value={position.int_latitude}
                             onChange={handleChange}
                             size="small"
@@ -104,7 +105,7 @@ export default function CoordPaper({ value }) {
                             }}
                             color="secondary"
                             label="Longitude"
-                            name="lng"
+                            name="int_longitude"
                             value={position.int_longitude}
                             onChange={handleChange}
                             size="small"

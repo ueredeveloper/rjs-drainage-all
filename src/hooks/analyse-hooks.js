@@ -5,7 +5,8 @@
  * Ele fornece o DataProvider para envolver a aplicação e o hook useData para acessar o estado.
  */
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { initialsStates } from '../initials-states';
 
 // Criação de um contexto para o estado compartilhado
 const DataContext = createContext();
@@ -21,17 +22,24 @@ const DataContext = createContext();
  */
 export const DataProvider = ({ children }) => {
   // Inicializa o estado 'selectedsCharts' com valores padrão
-  const [selectedsCharts, setSelectedsCharts] = useState({
-    "Pluviais": true,
-    "Subterrâneas": true,
-    "Superficiais": true,
-    "Efluentes": true,
-    "Barragens": true
-  });
+  const [selectedsCharts, setSelectedsCharts] = useState(initialsStates.selectedsCharts);
+
+  // Estado para o marcador inicial
+  const [marker, setMarker] = useState(initialsStates.marker);
+
+  // Estado para sobreposições (polígonos, círculos etc).
+  const [overlays, setOverlays] = useState(initialsStates.overlays);
+
+  // Estado para o sistema fraturado e poroso
+  const [system, setSystem] = useState(initialsStates.system);
+
+
+  // Estado para os marcadores por tabelas (subterranea, superficial...)
+  const [shapesState, setShapesState] = useState([]);
 
   return (
     // Fornece o estado 'selectedsCharts' para os componentes filhos
-    <DataContext.Provider value={{ selectedsCharts, setSelectedsCharts }}>
+    <DataContext.Provider value={{ selectedsCharts, setSelectedsCharts, marker, setMarker, overlays, setOverlays, shapesState, setShapesState }}>
       {children}
     </DataContext.Provider>
   );
