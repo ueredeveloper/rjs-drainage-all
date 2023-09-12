@@ -102,9 +102,10 @@ export default function CoordPaper() {
                         <TextField
                             sx={{
                                 my: 1,
-                                ml: 1,
+                                mx: 1,
                                 display: 'flex',
-                                flexGrow: 1
+                                flexGrow: 1,
+                                minWidth: '5rem'
                             }}
                             label="Latitude"
                             color="secondary"
@@ -116,9 +117,10 @@ export default function CoordPaper() {
                         <TextField
                             sx={{
                                 my: 1,
-                                ml: 1,
+                                mx: 1,
                                 display: 'flex',
                                 flexGrow: 1,
+                                minWidth: '5rem'
 
                             }}
                             color="secondary"

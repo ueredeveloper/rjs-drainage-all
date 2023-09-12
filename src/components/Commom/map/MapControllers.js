@@ -127,13 +127,13 @@ export default function MapControllers({ updateCheckBoxState }) {
                     {checkBoxState.map((elem, index) =>
                         <Box key={'map-contr-ch-box-' + index}>
                             <Checkbox color="secondary"  {...createCheckboxProps(elem)} />
-                            <FormLabel color="secondary" id="demo-controlled-radio-buttons-group">{
+                            <FormLabel style={{ wordBreak: "break-all" }} color="secondary" id="demo-controlled-radio-buttons-group">{
                                 createLabelText(index)
                             }</FormLabel>
                         </Box>
                     )}
                     <Tooltip title="Limpar Mapa">
-                        <Button sx={{ marginLeft: '1rem', marginRight: '1rem' }} onClick={clearMapHandler}><LayersClearIcon color="secondary" /></Button>
+                        <Button sx={{ mx: '0rem' }} onClick={clearMapHandler}><LayersClearIcon color="secondary" /></Button>
                     </Tooltip>
                 </Box>
             </Paper>
