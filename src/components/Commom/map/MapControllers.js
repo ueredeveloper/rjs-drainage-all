@@ -3,7 +3,7 @@
  * @module MapControllers
  */
 
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@mui/material';
 import LayersClearIcon from '@mui/icons-material/LayersClear';
 import { initialsStates } from '../../../initials-states';
@@ -31,7 +31,7 @@ export default function MapControllers({ updateCheckBoxState }) {
     };
 
     const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
-    const {overlays, setOverlays, shapesState, setShapesState} = useData();
+    const { overlays, setOverlays, shapesState, setShapesState } = useData();
 
     /**
      * Cria um objeto de propriedades para a caixa de seleção.

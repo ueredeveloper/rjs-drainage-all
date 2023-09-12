@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/material";
@@ -14,8 +14,8 @@ export default function SearchPaper({ value }) {
     const [loading, setLoading] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
-  //  const [, , , setOverlays] = useContext(AnalyseContext);
-    const {setOverlays} = useData();
+    //  const [, , , setOverlays] = useContext(AnalyseContext);
+    const { setOverlays } = useData();
 
     function searchQueryHandle(event) {
         let { value } = event.target;
@@ -24,11 +24,11 @@ export default function SearchPaper({ value }) {
 
     async function findByColumnHandler() {
 
-            
+
         let markers = await findByColumn(searchQuery);
-          let id = Date.now();
-  
-          let shape = {
+        let id = Date.now();
+
+        let shape = {
             id: Date.now(),
             type: null,
             position: { lat: null, lng: null },
@@ -37,15 +37,15 @@ export default function SearchPaper({ value }) {
             markers: markers,
             radius: null,
             area: null
-  
-          }
-        
-          setOverlays(prev => {
+
+        }
+
+        setOverlays(prev => {
             return {
-              ...prev,
-              shapes: [...prev.shapes, shape]
+                ...prev,
+                shapes: [...prev.shapes, shape]
             }
-          });
+        });
     }
 
 

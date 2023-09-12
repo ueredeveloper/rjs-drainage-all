@@ -1,6 +1,4 @@
-import { useContext } from "react";
 import { fetchGrantsInsideShape } from "../../../../services/shapes";
-//import { AnalyseContext } from "../../../MainFlow/Analyse";
 
 const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 

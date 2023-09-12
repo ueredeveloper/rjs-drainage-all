@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { alpha } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -281,7 +281,7 @@ function EnhancedTableToolbar(props) {
       )}
       <Tooltip title="exportar">
         <IconButton onClick={() => { downloadExcel(props.markers) }}>
-          <GetAppIcon  />
+          <GetAppIcon />
         </IconButton>
       </Tooltip>
 

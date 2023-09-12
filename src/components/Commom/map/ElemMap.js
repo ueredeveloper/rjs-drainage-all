@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { darkMap } from './mode/dark-map'
 /**
   * Elemento mapa

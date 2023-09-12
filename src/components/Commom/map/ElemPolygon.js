@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
 //import { converterPostgresToGmaps } from '../../../tools';
 
@@ -10,7 +10,7 @@ import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
 const ElemPolygon = ({ shape, map }) => {
 
   const [polygon, setPolygon] = useState();
- 
+
   useEffect(() => {
 
     if (!polygon) {
@@ -24,7 +24,7 @@ const ElemPolygon = ({ shape, map }) => {
     };
   }, [polygon, setPolygon]);
 
-  
+
 
   if (polygon) {
     // cor aleatóra para o polígono
@@ -43,7 +43,7 @@ const ElemPolygon = ({ shape, map }) => {
     );
   }
 
-  return <div><ElemPolygonInfoWindow polygon={polygon} shape={shape} map={map}/></div>;
+  return <div><ElemPolygonInfoWindow polygon={polygon} shape={shape} map={map} /></div>;
 
 };
 

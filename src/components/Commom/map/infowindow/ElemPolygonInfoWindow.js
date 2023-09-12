@@ -7,10 +7,9 @@
  * @param {google.maps.Map} props.map - O mapa ao qual o polígono e a janela de informações pertencem.
  * @returns {null} Retorna null, pois este componente não possui renderização visível.
  */
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import HTMLPolygonContent from './html-polygon-content';
-import { AnalyseContext } from '../../../MainFlow/Analyse';
 import { useData } from '../../../../hooks/analyse-hooks';
 
 const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {

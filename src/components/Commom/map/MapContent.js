@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Wrapper } from "@googlemaps/react-wrapper";
 import { Box } from '@mui/material';
 import ElemMap from './ElemMap';
@@ -21,7 +21,7 @@ function MapContent({ checkBoxState }) {
   const [map, setMap] = useState();
 
   // Obtém os estados do contexto de análise
-  const {marker, overlays, setOverlays, shapesState} = useData();
+  const { marker, overlays, setOverlays, shapesState } = useData();
 
   /**
      * Função para converter um nome de dado em um nome de forma.

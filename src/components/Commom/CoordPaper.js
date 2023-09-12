@@ -2,7 +2,7 @@
  * Componente para entrada e manipulação de coordenadas.
  * @returns {JSX.Element} O elemento React que representa o componente.
  */
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/material";
