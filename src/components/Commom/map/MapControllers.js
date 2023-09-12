@@ -116,7 +116,7 @@ export default function MapControllers({ updateCheckBoxState }) {
             if (shape.draw !== null)
                 shape.draw.setMap(null)
         });
-        setOverlays(initialsStates.overlays)
+        setOverlays(initialsStates.overlays);
     };
 
     return (

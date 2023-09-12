@@ -62,6 +62,7 @@ function ElemGrantsChart() {
     ]
   };
 
+
   //let myChart = null;
   const [myChart, setMyChart] = useState(null)
 
@@ -108,12 +109,9 @@ function ElemGrantsChart() {
       newOptions.series[0].data = newOptionsData;
     });
 
-    console.log(myChart)
-
     if (myChart) {
       myChart.setOption(newOptions)
     }
-
 
   }, [overlays]);
 
