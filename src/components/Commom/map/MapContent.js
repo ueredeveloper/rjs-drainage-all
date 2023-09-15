@@ -19,6 +19,7 @@ function MapContent({ checkBoxState }) {
   // Estados do componente
   const [mode, setMode] = useState('light');
   
+  
 
   // Obtém os estados do contexto de análise
   const { map, setMap, marker, overlays, setOverlays, shapesState } = useData();
