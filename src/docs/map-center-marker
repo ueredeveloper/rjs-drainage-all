@@ -1,0 +1,38 @@
+# Centralizar o Marcador no Mapa
+
+## Autor
+**Nome:** [ueredeveloper](mailto:ueredeveloper@gmail.com)
+
+## Data
+**Data de Criação:** 15/09/2023
+
+## Introdução
+
+Ao inserir a coordenada desejada, centralizar o marcador no mapa para melhor visualização do usuário.
+
+Para isso foi criado o branch center-marker-map.
+
+
+## Branch "center-marker-map"
+
+### Objetivo
+
+O objetivo do branch "center-marker-map" é adicionar a funcionalidade de centralizar o marcador no mapa. Isso permite que os usuários visualizem informações detalhadas sobre uma localização específica sem perder a referência do marcador principal.
+
+### Uso
+
+Exemplo em JavaScript:
+
+```
+hooks/analyse-hooks.js
+
+useEffect(()=>{
+
+    if(map){
+      let latLng = {lat: parseFloat(marker.int_latitude), lng: parseFloat(marker.int_longitude)}
+      map.setCenter(latLng)
+    }
+   
+  }, [marker])
+
+```

@@ -44,9 +44,7 @@ export default function CoordPaper() {
                 int_longitude: position.int_longitude
             }
         });
-
-        // let radius = 600;
-
+        // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
         let markers = await findAllPointsInCircle(
             {
                 center: { lng: position.int_longitude, lat: position.int_latitude },
@@ -54,7 +52,7 @@ export default function CoordPaper() {
             }
         );
         let id = Date.now();
-
+        // salvar uma shape, polígono, com o raio solicitado.
         let shape = {
             id: Date.now(),
             type: 'circle',

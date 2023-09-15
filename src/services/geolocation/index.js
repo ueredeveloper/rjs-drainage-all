@@ -150,7 +150,6 @@ async function findAllPointsInPolygon(polygon) {
  */
 async function findAllPointsInCircle(circle) {
 
-  console.log(circle)
   try {
     const response = await fetch(url + '/findAllPointsInCircle', {
       method: 'POST',

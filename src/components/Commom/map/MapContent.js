@@ -18,10 +18,10 @@ import { useData } from '../../../hooks/analyse-hooks';
 function MapContent({ checkBoxState }) {
   // Estados do componente
   const [mode, setMode] = useState('light');
-  const [map, setMap] = useState();
+  
 
   // Obtém os estados do contexto de análise
-  const { marker, overlays, setOverlays, shapesState } = useData();
+  const { map, setMap, marker, overlays, setOverlays, shapesState } = useData();
 
   /**
      * Função para converter um nome de dado em um nome de forma.
