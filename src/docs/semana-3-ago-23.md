@@ -52,7 +52,7 @@ App.js
 
 
 
-<Analyse/>
+<Analyse>
     <MapPanel/>
         <MapContainer/>
             <MapContent>
