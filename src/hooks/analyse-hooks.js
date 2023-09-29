@@ -12,13 +12,10 @@ import { initialsStates } from '../initials-states';
 const DataContext = createContext();
 
 /**
- * Provedor de Dados
- * 
- * Um componente que fornece o estado 'selectedsCharts' para seus componentes filhos.
- * 
+ * Módulo que fornece o estados utilizados no component Analyse.js.
+ * @module
  * @param {Object} props - Propriedades do componente.
  * @param {ReactNode} props.children - Os componentes filhos que terão acesso ao estado compartilhado.
- * @returns {JSX.Element} O componente DataProvider.
  */
 export const DataProvider = ({ children }) => {
   // Inicializa o estado 'selectedsCharts' com valores padrão

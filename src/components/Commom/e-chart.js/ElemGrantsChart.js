@@ -1,24 +1,48 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { useData } from '../../../hooks/analyse-hooks';
 
 /**
- * Componente que exibe um gráfico de pizza com a contagem de concessões por tipo.
+ * Componente que exibe um gráfico com contagem de concessões de outorga por tipo.
  * @component
  */
-
 function ElemGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
-  //const [marker, setMarker, overlays, setOverlays] = useContext(AnalyseContext);
-  const { overlays, selectedsCharts, setSelectedsCharts } = useData();
+  const { overlays, setSelectedsCharts } = useData();
 
+  /**
+   * Converte o nome de uma forma (shape) em um nome mais legível.
+   *
+   * @param {string} shapeName - O nome da forma a ser convertido.
+   * @returns {string} O nome legível da forma.
+   */
+  function convertOptionsDataName(shapeName) {
+    switch (shapeName) {
+      case 'subterranea':
+        return 'Subterrâneas';
+
+      case 'superficial':
+        return 'Superficiais';
+
+      case 'lancamento_pluviais':
+        return 'Pluviais';
+
+      case 'lancamento_efluentes':
+        return 'Efluentes';
+
+      case 'barragem':
+        return 'Barragens';
+    }
+  }
+
+  // Opções iniciais para o gráfico.
   let options = {
     color: [
-      "#5470c6",//blue -> subterrânea
-      "#91cc75",//green -> superficial
-      "#fac858",//orange -> pluviais
-      "#BD1A8E",//red -> efluentes
-      "#9a60b4",// purple -> barragem
+      "#5470c6", // azul -> subterrânea
+      "#91cc75", // verde -> superficial
+      "#fac858", // laranja -> pluviais
+      "#BD1A8E", // vermelho -> efluentes
+      "#9a60b4", // roxo -> barragem
       "#3ba272",
       "#fc8452",
       "#9a60b4",
@@ -26,7 +50,6 @@ function ElemGrantsChart() {
     ],
     legend: {
       top: 'top',
-      //selected: selectedsCharts,
     },
     toolbox: {
       show: true,
@@ -62,8 +85,6 @@ function ElemGrantsChart() {
     ]
   };
 
-
-  //let myChart = null;
   const [myChart, setMyChart] = useState(null)
 
   useEffect(() => {
@@ -90,7 +111,7 @@ function ElemGrantsChart() {
   // Efeito para atualizar o gráfico com base no estado das caixas de seleção.
   useEffect(() => {
 
-    const newOptions = { ...options }; // Create a copy of options
+    const newOptions = { ...options }; // Cria uma cópia das opções
     let newOptionsData = [];
 
     overlays.shapes.map((shape, i) => {
@@ -119,25 +140,6 @@ function ElemGrantsChart() {
     <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}>
     </div>
   );
-}
-
-function convertOptionsDataName(shapeName) {
-  switch (shapeName) {
-    case 'subterranea':
-      return 'Subterrâneas';
-
-    case 'superficial':
-      return 'Superficiais';
-
-    case 'lancamento_pluviais':
-      return 'Pluviais';
-
-    case 'lancamento_efluentes':
-      return 'Efluentes';
-
-    case 'barragem':
-      return 'Barragens';
-  }
 }
 
 export default ElemGrantsChart;

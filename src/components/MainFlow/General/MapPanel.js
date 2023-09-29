@@ -38,10 +38,25 @@ function a11yProps(index) {
         "aria-controls": `simple-tabpanel-${index}`,
     };
 }
-
-export default function MapPanel({ height }) {
+/**
+ * Componente que exibe um painel de mapa.
+ * @component
+ * @requires MapContainer
+ *
+ * @param {object} props - As propriedades do componente.
+ * @param {number} props.height - A altura do painel de mapa.
+ * @returns {JSX.Element} O elemento JSX que representa o painel de mapa.
+ */
+function MapPanel() {
+    
     const [value, setValue] = React.useState(0);
 
+    /**
+     * Manipula a alteração de valor nas guias.
+     *
+     * @param {object} event - O evento de mudança.
+     * @param {number} newValue - O novo valor da guia.
+     */
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
@@ -59,3 +74,5 @@ export default function MapPanel({ height }) {
         </Box>
     );
 }
+
+export default MapPanel;

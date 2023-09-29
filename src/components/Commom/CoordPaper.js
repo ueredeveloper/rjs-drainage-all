@@ -15,9 +15,10 @@ import RadiusPaper from "./RadiusPaper";
 
 /**
  * Componente CoordPaper.
+ * @component
  * @returns {JSX.Element} O elemento React que representa o componente CoordPaper.
  */
-export default function CoordPaper() {
+function CoordPaper() {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
     // const [, , , setOverlays] = useContext(AnalyseContext);
@@ -158,3 +159,5 @@ export default function CoordPaper() {
         </FormControl>
     );
 }
+
+export default CoordPaper;

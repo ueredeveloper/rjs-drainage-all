@@ -1,4 +1,8 @@
-import * as React from 'react';
+/**
+ * @description Este módulo contém o componente de barra de navegação do aplicativo.
+ */
+
+import React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -7,6 +11,12 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 
+/**
+ * Componente funcional que representa a barra de navegação do aplicativo.
+ * @component
+ * 
+ * @returns {JSX.Element} O elemento JSX que representa a barra de navegação.
+ */
 export default function MenuAppBar() {
   return (
     <Box>

@@ -1,6 +1,6 @@
 {
   "name": "rjs-drainage-all",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -8,6 +8,7 @@
     "@googlemaps/react-wrapper": "^1.1.35",
     "@mui/icons-material": "^5.13.7",
     "@mui/material": "^5.13.7",
+    "better-docs": "^2.7.2",
     "echarts": "^5.4.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -19,7 +20,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "docs": "jsdoc -c jsdoc.conf.json"
   },
   "eslintConfig": {
     "extends": [
@@ -38,5 +40,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.2"
   }
 }

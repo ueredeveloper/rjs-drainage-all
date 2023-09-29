@@ -1,8 +1,12 @@
-import React, { useState, createContext, useEffect, useCallback, useMemo } from "react";
+/**
+ * @component
+ * @description Este módulo contém o componente de análise geral.
+ */
+
+import React from "react";
 
 import MapPanel from "./General/MapPanel";
 import GrantsPanel from "./General/GrantsPanel";
-import { initialState } from "../../initials-states";
 import PropTypes from "prop-types";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
@@ -12,13 +16,14 @@ import SubterraneanAnalysePanel from "./Subterranean/SubterraneanAnalysePanel";
 import SurfaceAnalysePanel from "./Surface/SurfaceAnalysePanel";
 import { DataProvider } from "../../hooks/analyse-hooks";
 
-
 /**
- * Função que representa o componente Analyse.
- * @returns {JSX.Element} O componente Analyse.
+ * Elemento para análise dos dados renderizados no mapa.
+ * @component
+ * @requires GeneralAnalysePanel
+ * @requires SubterraneanAnalysePanel
+ * @requires SurfaceAnalysePanel
  */
-export default function Analyse() {
-
+function Analyse() {
 
     /**
      * Função para renderizar um painel de guias.
@@ -78,7 +83,6 @@ export default function Analyse() {
         setValue(newValue);
     };
 
-
     return (
         <DataProvider>
             <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
@@ -112,3 +116,5 @@ export default function Analyse() {
         </DataProvider>
     )
 }
+
+export default Analyse;

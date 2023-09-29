@@ -1,7 +1,16 @@
+
+import React from 'react';
 import './App.css';
 import MenuAppBar from './components/Commom/MenuAppBar';
 import Analyse from './components/MainFlow/Analyse';
 
+/**
+ * Componente principal da aplicação.
+ * @component
+ * @requires MenuAppBar
+ * @requires Analyse
+ * 
+ */
 function App() {
   return (
     <div className="App">

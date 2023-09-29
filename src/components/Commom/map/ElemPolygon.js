@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react';
 import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
-//import { converterPostgresToGmaps } from '../../../tools';
 
-/**
-* Elemento de Polígono gmaps api.
-*
-*
-*/
 const ElemPolygon = ({ shape, map }) => {
 
   const [polygon, setPolygon] = useState();

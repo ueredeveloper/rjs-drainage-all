@@ -293,7 +293,7 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired
 };
 
-export default function GrantsTable({ markers }) {
+function GrantsTable({ markers }) {
   const [order, setOrder] = useState(DEFAULT_ORDER);
   const [orderBy, setOrderBy] = useState(DEFAULT_ORDER_BY);
   const [selected, setSelected] = useState([]);
@@ -541,3 +541,5 @@ export default function GrantsTable({ markers }) {
     </Box>
   );
 }
+
+export default GrantsTable;

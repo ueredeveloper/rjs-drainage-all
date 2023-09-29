@@ -8,8 +8,14 @@ import IconButton from '@mui/material/IconButton';
 import { findByColumn } from "../../../services/users";
 import { useData } from "../../../hooks/analyse-hooks";
 
-
-export default function SearchPaper({ value }) {
+/**
+ * 
+ * Buscador de outorgas por coordenadas
+ * @component
+ * @requires findByColumn
+ * @requires useData
+ */
+function SearchPaper() {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
 
@@ -102,3 +108,4 @@ export default function SearchPaper({ value }) {
         </FormControl>
     );
 }
+export default SearchPaper;

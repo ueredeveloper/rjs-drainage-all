@@ -38,8 +38,15 @@ function a11yProps(index) {
         "aria-controls": `simple-tabpanel-${index}`,
     };
 }
-
-export default function GrantsPanel() {
+/**
+ * Componente que exibe painéis com tabelas de concessões de outorga.
+ *
+ * @component
+ * @requires GrantsTable
+ * @requires useData
+ * @returns {JSX.Element} O elemento JSX que representa os painéis de guias.
+ */
+function GrantsPanel() {
     const [value, setValue] = React.useState(0);
 
     const handleChange = (event, newValue) => {
@@ -88,3 +95,5 @@ export default function GrantsPanel() {
         </Box>
     );
 }
+
+export default GrantsPanel

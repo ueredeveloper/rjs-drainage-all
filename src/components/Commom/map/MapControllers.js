@@ -14,7 +14,7 @@ import { useData } from '../../../hooks/analyse-hooks';
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
  * @returns {JSX.Element} JSX do componente MapControllers.
  */
-export default function MapControllers({ updateCheckBoxState }) {
+function MapControllers({ updateCheckBoxState }) {
 
     /**
      * Inicializa o estado das caixas de seleção com base nos dados.
@@ -199,3 +199,5 @@ const mapControllersSchema = {
         unidades_hidrograficas: false
     }
 }
+
+export default MapControllers;

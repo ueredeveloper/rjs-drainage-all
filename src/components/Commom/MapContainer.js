@@ -4,7 +4,13 @@ import { Box } from "@mui/material";
 import MapContent from "./map/MapContent";
 import MapControllers from "./map/MapControllers";
 
-export default function MapContainer() {
+/**
+ * Organiza a renderização do mapa.
+ * @component
+ * @requires MapContent
+ * @requires MapControllers
+ */
+function MapContainer() {
 
     const [checkBoxState, setCheckBoxState] = useState([])
 
@@ -20,3 +26,5 @@ export default function MapContainer() {
         </Box>
     )
 }
+
+export default MapContainer;

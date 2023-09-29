@@ -1,30 +1,23 @@
+/**
+ * Módulo responsável pelo componente ElemMarker.
+ * @module ElemMarker
+ * @requires useEffect
+ * @requires useState
+ * @requires setInfoMarkerIcon
+ * @requires ElemMarkerInfoWindow
+ */
+
 import { useEffect, useState } from 'react';
 import { setInfoMarkerIcon } from '../../../tools';
 import ElemMarkerInfoWindow from './infowindow/ElemMarkerInfoWindow';
 
 /**
- * @typedef {import('react').PropsWithChildren} Props
- */
-
-/**
- * @typedef {Object} MarkerOptions
- * @property {string} url - URL of the marker icon image.
- * @property {Object} scaledSize - Scaled size of the marker icon.
- */
-
-/**
- * @typedef {Object} MarkerInfo
- * @property {number} id - Marker ID.
- * @property {number} ti_id - Type of interference ID.
- * @property {number} tp_id - Type of pipeline ID.
- * @property {string} int_latitude - Marker latitude.
- * @property {string} int_longitude - Marker longitude.
- */
-
-/**
- * React component for displaying a marker on a map.
- * @param {Props & { info: MarkerInfo, map: object }} props - Component props containing marker information and map object.
- * @returns {null} Null component.
+ * Componente ElemMarker que representa um marcador no mapa.
+ * @function
+ * @param {object} props - As propriedades do componente.
+ * @param {object} props.info - As informações do marcador.
+ * @param {object} props.map - O objeto de mapa do Google Maps.
+ * @returns {JSX.Element|null} O elemento JSX representando o marcador ou null se não houver informações.
  */
 const ElemMarker = ({ info, map }) => {
 
@@ -39,7 +32,6 @@ const ElemMarker = ({ info, map }) => {
     return () => {
       if (marker) {
         marker.setMap(null);
-
       }
     };
   }, [marker]);
@@ -66,10 +58,7 @@ const ElemMarker = ({ info, map }) => {
       return <div><ElemMarkerInfoWindow marker={marker} info={info} map={map} /></div>
 
     }
-
-
   }
-
 
   return null;
 };

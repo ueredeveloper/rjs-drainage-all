@@ -4,7 +4,14 @@ import CoordPaper from "../../Commom/CoordPaper";
 import SearchPaper from "./SearchPaper";
 import ElemGrantsChart from "../../Commom/e-chart.js/ElemGrantsChart";
 
-export default function GeneralAnalysePanel() {
+/**
+ * Renderiza painel geral de análise de dados.
+ * @component
+ * @requires CoordPaper
+ * @requires SearchPaper
+ * @requires ElemGrantsChart
+ */
+function GeneralAnalysePanel() {
 
     return (
         <Box sx={{ width: "100%" }}>
@@ -14,3 +21,4 @@ export default function GeneralAnalysePanel() {
         </Box>
     );
 }
+export default GeneralAnalysePanel;

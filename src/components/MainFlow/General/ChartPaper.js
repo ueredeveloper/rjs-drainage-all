@@ -2,7 +2,11 @@ import React from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 
-export default function ChartPaper() {
+/**
+ * Componente que renderiza um papel (Paper) para gráficos.
+ * @component
+ */
+function ChartPaper() {
     return (
         <Box
             sx={{
@@ -15,7 +19,7 @@ export default function ChartPaper() {
             }}
         >
             <Paper elevation={3} />
-
         </Box>
     );
 }
+export default ChartPaper;

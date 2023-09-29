@@ -3,10 +3,9 @@ import { Slider } from "@mui/material";
 import { useData } from "../../hooks/analyse-hooks";
 
 /**
- * Componente RadiusPaper
- * 
- * Um componente para ajustar o raio de pesquisa em metros.
- * 
+ 
+ * Componente para ajustar o raio de pesquisa em metros.
+ * @component
  * @returns {JSX.Element} O elemento React que representa o componente.
  */
 export default function RadiusPaper() {
