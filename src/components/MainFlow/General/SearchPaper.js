@@ -59,7 +59,7 @@ function SearchPaper() {
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Buscador</FormLabel>
-            <Paper elevation={3} style={{ margin: 0 }}>
+            <Paper elevation={3} sx={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
                 <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}
                 >

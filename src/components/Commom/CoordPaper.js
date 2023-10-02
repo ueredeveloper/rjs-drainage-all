@@ -94,7 +94,7 @@ function CoordPaper() {
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas</FormLabel>
-            <Paper elevation={3} style={{ margin: 0 }}>
+            <Paper elevation={3} sx={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
                 <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}>
                     <Box sx={{ display: 'flex', flex: 4, flexDirection: 'row' }}>
