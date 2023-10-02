@@ -3,6 +3,7 @@ import React from 'react'
 import CoordPaper from '../../Commom/CoordPaper'
 import WellTypeSelector from '../../Commom/Subterranean/WellTypeSelector';
 import DataAnalyseTable from '../../Commom/Subterranean/DataAnalyseTable';
+import DataAnalyseChart from '../../Commom/Subterranean/DataAnalyseChart';
 
 /**
  * Painel de análise de dados subterrãneos
@@ -16,6 +17,7 @@ function SubterraneanAnalysePanel() {
             <CoordPaper value={1}/>
             <WellTypeSelector/>
             <DataAnalyseTable/>
+            <DataAnalyseChart/>
         </Box>
     )
 }
