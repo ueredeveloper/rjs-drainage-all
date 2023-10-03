@@ -1,6 +1,6 @@
 import { Box } from '@mui/material'
 import React from 'react'
-import CoordPaper from '../../Commom/CoordPaper'
+import SearchCoords from '../../Commom/SearchCoords'
 import WellTypeSelector from '../../Commom/Subterranean/WellTypeSelector';
 import DataAnalyseTable from '../../Commom/Subterranean/DataAnalyseTable';
 import DataAnalyseChart from '../../Commom/Subterranean/DataAnalyseChart';
@@ -8,16 +8,15 @@ import DataAnalyseChart from '../../Commom/Subterranean/DataAnalyseChart';
 /**
  * Painel de análise de dados subterrãneos
  * @component
- * @requires CoordPaper
+ * @requires SearchCoords
  * 
  */
 function SubterraneanAnalysePanel() {
     return (
         <Box>
-            <CoordPaper value={1}/>
-            <WellTypeSelector/>
-            <DataAnalyseTable/>
-            <DataAnalyseChart/>
+            <SearchCoords value={1} />
+            <DataAnalyseTable />
+            <DataAnalyseChart />
         </Box>
     )
 }

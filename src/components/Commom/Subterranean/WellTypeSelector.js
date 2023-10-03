@@ -4,7 +4,8 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
-import { Paper, TableContainer } from '@mui/material';
+import { FormGroup, InputLabel, Paper, TableContainer, Tooltip, Typography } from '@mui/material';
+import { Box, fontSize } from '@mui/system';
 //import { SystemContext } from './elem-content';
 
 /**
@@ -13,8 +14,8 @@ import { Paper, TableContainer } from '@mui/material';
  */
 function WellTypeSelector() {
   // Obtém o contexto do sistema
- // const [context, setContext] = useContext(SystemContext);
-  
+  // const [context, setContext] = useContext(SystemContext);
+
   /**
    * Manipulador de evento chamado quando o valor do rádio muda.
    * @param {Object} event O evento de mudança.
@@ -37,29 +38,40 @@ function WellTypeSelector() {
   };
 
   return (
-    <FormControl style={{ display: "flex", flexDirection: 'column' }}>
-      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Tipo do Poço</FormLabel>
-      <Paper elevation={3} sx={{ margin: 0 }}>
-        <RadioGroup
-          aria-labelledby="demo-controlled-radio-buttons-group"
-          name="controlled-radio-buttons-group"
-          value={'context.point.tp_id'}
-          onChange={handleChange}
-          sx={{ display: 'flex', flexFlow: 'row wrap', ml: 2, my: 1 }}
-        >
-          <FormControlLabel value="1" control={<Radio sx={{
-            '& .MuiSvgIcon-root': {
-              fontSize: 20,
-            },
-          }} color="secondary" />} label="Manual/Tubular Raso" />
-          <FormControlLabel value="2" control={<Radio sx={{
-            '& .MuiSvgIcon-root': {
-              fontSize: 20,
-            },
-          }} color="secondary" />} label="Tubular Profundo" />
-        </RadioGroup>
-      </Paper>
-    </FormControl>
+    <Box id="wts-content-box" sx={{ display: "flex", flexDirection: "row" }}>
+      <RadioGroup
+        id="wts-radio-group"
+        value={'context.point.tp_id'}
+        onChange={handleChange}
+        sx={{ display: 'flex', flexFlow: 'row wrap', padding: 0, margin: 0 }}
+      >
+        <fieldset id="wts-fieldset" style={{ borderWidth: '0px', padding: '0px' }}>
+          <legend style={{ fontSize: '12px'}}>Tipo de Poço</legend>
+          <FormGroup sx={{ flexDirection: "row", mx: 4 }}>
+            <FormControlLabel value="1" sx={{ '& .MuiFormControlLabel-label': { fontSize: 14 } }} control={
+              <Tooltip title="Manual/Tubular Raso">
+                <Radio sx={{
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 20,
+                  },
+                }} color="secondary" />
+              </Tooltip>
+            } label="Manual" />
+            <FormControlLabel value="2" sx={{ '& .MuiFormControlLabel-label': { fontSize: 14 } }} control={
+              <Tooltip title="Tubular Profundo">
+                <Radio sx={{
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 20,
+                  },
+                }} color="secondary" />
+              </Tooltip>} label="Tubular" />
+
+          </FormGroup>
+        </fieldset>
+
+      </RadioGroup>
+    </Box>
+
   );
 }
 

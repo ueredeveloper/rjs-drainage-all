@@ -8,7 +8,7 @@ import { useData } from "../../hooks/analyse-hooks";
  * @component
  * @returns {JSX.Element} O elemento React que representa o componente.
  */
-export default function RadiusPaper() {
+function RadiusSelector() {
 
     // Obtém o estado do raio e a função para definir o raio do contexto compartilhado
     const { radius, setRadius } = useData();
@@ -31,7 +31,7 @@ export default function RadiusPaper() {
     }
 
     return (
-        <Slider sx={{ minWidth: 100, mx: 2, py: 3 }}
+        <Slider sx={{ minWidth: 100, py: 3, mx: 2 }}
             size="small"
             getAriaValueText={valueLabelFormat}
             valueLabelFormat={valueLabelFormat}
@@ -44,3 +44,5 @@ export default function RadiusPaper() {
         />
     );
 }
+
+export default RadiusSelector;

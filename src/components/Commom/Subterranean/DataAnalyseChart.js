@@ -46,7 +46,9 @@ const DataAnalyseChart = () => {
             },
             yAxis: {},
             grid: {
-                bottom: 100,
+                left: 30,
+                top: 150,
+                bottom: 110,
             },
             series: [
                 {
@@ -108,10 +110,10 @@ const DataAnalyseChart = () => {
     }, []);
 
     return (
-        <FormControl style={{ display: "flex", flexDirection: 'column' }}>
-            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1}}>Gráfico</FormLabel>
-            <Paper elevation={3} sx={{ margin: 0, maxHeight: 160 }}>
-                <div id="chart-container" style={{ width: '100%', height: '250px' }}></div>
+        <FormControl sx={{ display: "flex", flex: 1, height: 200 }}>
+            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
+            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
+                <div id="chart-container" style={{width: '100%', height: '100%' }}></div>
             </Paper>
         </FormControl>
 

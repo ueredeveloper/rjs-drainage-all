@@ -11,14 +11,15 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
 import { findAllPointsInCircle } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
-import RadiusPaper from "./RadiusPaper";
+import RadiusSelector from "./RadiusSelector";
+import WellTypeSelector from "./Subterranean/WellTypeSelector";
 
 /**
- * Componente CoordPaper.
+ * Componente SearchCoords.
  * @component
- * @returns {JSX.Element} O elemento React que representa o componente CoordPaper.
+ * @returns {JSX.Element} O elemento React que representa o componente SearchCoords.
  */
-function CoordPaper() {
+function SearchCoords({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
     // const [, , , setOverlays] = useContext(AnalyseContext);
@@ -96,15 +97,13 @@ function CoordPaper() {
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas</FormLabel>
             <Paper elevation={3} sx={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
-                <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}>
-                    <Box sx={{ display: 'flex', flex: 4, flexDirection: 'row' }}>
+                <Box id="sc-container" sx={{ display: 'flex', flexFlow: 'row wrap' }}>
+                    <Box id="sc-text-fields" sx={{  display: "flex", flex: 1, flexDirection: "row" }}>
                         <TextField
                             sx={{
                                 my: 1,
                                 mx: 1,
-                                display: 'flex',
-                                flexGrow: 1,
-                                minWidth: '5rem'
+                                minWidth: '1rem'
                             }}
                             label="Latitude"
                             color="secondary"
@@ -117,11 +116,10 @@ function CoordPaper() {
                             sx={{
                                 my: 1,
                                 mx: 1,
-                                display: 'flex',
-                                flexGrow: 1,
-                                minWidth: '5rem'
+                                minWidth: '1rem'
 
                             }}
+                          
                             color="secondary"
                             label="Longitude"
                             name="int_longitude"
@@ -130,29 +128,32 @@ function CoordPaper() {
                             size="small"
                         />
                     </Box>
-                    {/* Botões de Manipulação */}
-                    <Box sx={{ display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <RadiusPaper />
-                        {
-                            loading ?
-                                <Fade
-                                    sx={{ color: "secondary.main" }}
-                                    in={loading}
-                                    style={{
-                                        transitionDelay: loading ? '800ms' : '0ms',
-                                    }}
-                                    unmountOnExit
-                                >
-                                    <CircularProgress size={25} />
-                                </Fade>
-                                :
-                                <IconButton color="secondary" size="large" onClick={() => { handleClick().then(() => { setLoading(false); }); }}>
-                                    <SearchIcon />
-                                </IconButton>
-                        }
-                        <IconButton color="secondary" size="large">
-                            <ContentCopyIcon />
-                        </IconButton>
+                    <Box id="sc-controls" sx={{display: "flex", flex: 1, flexDirection: "row", alignItems: "center"}}>
+                        <Box id="sc-selector" sx={{display: "flex", flex: 3, alignItems:"center", justifyContent: "center" }}>
+                            {value === 0 ? <RadiusSelector /> : <WellTypeSelector />}
+                        </Box>
+                        <Box id="sc-search-copy-controls" sx={{ minWidth: 100}}>
+                            {
+                                loading ?
+                                    <Fade
+                                        sx={{ color: "secondary.main" }}
+                                        in={loading}
+                                        style={{
+                                            transitionDelay: loading ? '800ms' : '0ms',
+                                        }}
+                                        unmountOnExit
+                                    >
+                                        <CircularProgress size={25} />
+                                    </Fade>
+                                    :
+                                    <IconButton color="secondary" size="large" onClick={() => { handleClick().then(() => { setLoading(false); }); }}>
+                                        <SearchIcon />
+                                    </IconButton>
+                            }
+                            <IconButton color="secondary" size="large">
+                                <ContentCopyIcon />
+                            </IconButton>
+                        </Box>
                     </Box>
                 </Box>
             </Paper>
@@ -160,4 +161,4 @@ function CoordPaper() {
     );
 }
 
-export default CoordPaper;
+export default SearchCoords;

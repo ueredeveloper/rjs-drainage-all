@@ -1,15 +1,15 @@
 import { Box } from '@mui/material'
 import React from 'react'
-import CoordPaper from '../../Commom/CoordPaper'
+import SearchCoords from '../../Commom/SearchCoords'
 /**
  * Painel de análise de dados superficiais.
  * @Component
- * @requires CoordPaper
+ * @requires SearchCoords
  */
 export default function SurfaceAnalysePanel() {
     return (
         <Box>
-            <CoordPaper value={2}/>
+            <SearchCoords value={2} />
         </Box>
     )
 }
