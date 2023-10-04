@@ -13,6 +13,7 @@ import { findAllPointsInCircle } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import RadiusSelector from "./RadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
+import { initialsStates } from "../../initials-states";
 
 /**
  * Componente SearchCoords.
@@ -23,7 +24,9 @@ function SearchCoords({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
     // const [, , , setOverlays] = useContext(AnalyseContext);
-    const { marker, setMarker, setOverlays, radius } = useData();
+    // Estado para o marcador inicial
+    const [marker, setMarker] = useState(initialsStates.marker);
+    const { setOverlays, radius } = useData();
 
     const [position, setPosition] = useState(marker);
 
@@ -129,7 +132,7 @@ function SearchCoords({ value }) {
                         />
                     </Box>
                     <Box id="sc-controls" sx={{display: "flex", flex: 1, flexDirection: "row", alignItems: "center"}}>
-                        <Box id="sc-selector" sx={{display: "flex", flex: 3, alignItems:"center", justifyContent: "center" }}>
+                        <Box id="sc-selector" sx={{display: "flex", flex: 1, alignItems:"center", justifyContent: "center" }}>
                             {value === 0 ? <RadiusSelector /> : <WellTypeSelector />}
                         </Box>
                         <Box id="sc-search-copy-controls" sx={{ minWidth: 100}}>

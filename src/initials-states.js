@@ -4,6 +4,7 @@ const initialsStates = {
         //position: { lat: -15.769526979446034, lng: -47.94437625785457 },
         //user: {},
         id: 0,
+        tp_id: 1,
         int_latitude: -15.775139,
         int_longitude: -47.939599,
     },
@@ -13,14 +14,15 @@ const initialsStates = {
 
     },
     /* cálculos no subsistema (poroso, fraturado) */
-    "system": {
+    "subsystem": {
         "markers": [{
             int_latitude: -15.775139,
             int_longitude: -47.939599,
+            tp_id: 1,
             dt_demanda: { demandas: [] }
         }],
         // selected markers
-        "sel_markers": [],
+        "selectedMarkers": [],
         "hg_shape": {
             "type": null,
             "coordinates": []

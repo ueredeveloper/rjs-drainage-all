@@ -1,75 +1,82 @@
+
 import React, { useContext, useEffect, useState } from 'react';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import { FormGroup, InputLabel, Paper, TableContainer, Tooltip, Typography } from '@mui/material';
-import { Box, fontSize } from '@mui/system';
-//import { SystemContext } from './elem-content';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import { Box } from '@mui/system';
+import { useData } from '../../../hooks/analyse-hooks';
 
 /**
- * Componente para selecionar o tipo de poço.
- * @returns {JSX.Element} O componente de tipo de poço.
+ * Lista de tipos de poços.
+ * @type {Array<Object>}
+ */
+const wellType = [
+  {
+    value: "1",
+    label: 'Manual/Tubular Raso',
+  },
+  {
+    value: "2",
+    label: 'Tubular Profundo',
+  }
+];
+
+/**
+ * @component WellTypeSelector
+ * Este componente rederiza os tipos de poços e atualiza a variável marker.
+ * @requires useData from '../../../hooks/analyse-hooks'
  */
 function WellTypeSelector() {
-  // Obtém o contexto do sistema
-  // const [context, setContext] = useContext(SystemContext);
+
+  // Especifica o tipo de poço (TpId), onde 1 representa Poço Manual/Tubular Raso e 2 representa Poço Tubular Profundo.
+  const [tpId, setTpId] = useState(1);
+
+  // Obtém a função setMarker do hook useData.
+  const { setMarker } = useData();
 
   /**
-   * Manipulador de evento chamado quando o valor do rádio muda.
-   * @param {Object} event O evento de mudança.
+   * Manipula o evento de alteração do input select e atualiza o estado tpId.
+   * @param {Object} e - O objeto de evento
    */
-  const handleChange = (event) => {
-    // event.target.value = 1 || 2
-    let value = Number(event.target.value);
+  const onHandleChange = (e) => {
+    let tpId = Number(e.target.value)
+    setTpId(tpId)
+  }
 
-    /*
-    // Atualiza o contexto com o novo tipo de poço selecionado
-    setContext(prev => {
+  /**
+   * Atualiza a variável marker com o ID do tipo de poço selecionado (tpId) quando ele muda.
+   */
+  useEffect(() => {
+    setMarker(prev => {
       return {
         ...prev,
-        point: {
-          ...prev.point,
-          tp_id: value
-        }
+        tp_id: tpId
       }
-    })*/
-  };
+    })
+  }, [tpId])
 
   return (
-    <Box id="wts-content-box" sx={{ display: "flex", flexDirection: "row" }}>
-      <RadioGroup
-        id="wts-radio-group"
-        value={'context.point.tp_id'}
-        onChange={handleChange}
-        sx={{ display: 'flex', flexFlow: 'row wrap', padding: 0, margin: 0 }}
+    <Box component="form"
+      sx={{
+        width: '100%',
+        mx: 1,
+        '& .MuiInputBase-root': { height: '2.5rem' },
+      }}
+      noValidate
+      autoComplete="off">
+      <TextField
+        sx={{ width: '100%' }}
+        select
+        label="Tipo de Poço"
+        defaultValue="1"
+        onChange={onHandleChange}
       >
-        <fieldset id="wts-fieldset" style={{ borderWidth: '0px', padding: '0px' }}>
-          <legend style={{ fontSize: '12px'}}>Tipo de Poço</legend>
-          <FormGroup sx={{ flexDirection: "row", mx: 4 }}>
-            <FormControlLabel value="1" sx={{ '& .MuiFormControlLabel-label': { fontSize: 14 } }} control={
-              <Tooltip title="Manual/Tubular Raso">
-                <Radio sx={{
-                  '& .MuiSvgIcon-root': {
-                    fontSize: 20,
-                  },
-                }} color="secondary" />
-              </Tooltip>
-            } label="Manual" />
-            <FormControlLabel value="2" sx={{ '& .MuiFormControlLabel-label': { fontSize: 14 } }} control={
-              <Tooltip title="Tubular Profundo">
-                <Radio sx={{
-                  '& .MuiSvgIcon-root': {
-                    fontSize: 20,
-                  },
-                }} color="secondary" />
-              </Tooltip>} label="Tubular" />
-
-          </FormGroup>
-        </fieldset>
-
-      </RadioGroup>
+        {wellType.map((option) => (
+          <MenuItem key={option.value} value={option.value}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
+      </TextField>
     </Box>
 
   );

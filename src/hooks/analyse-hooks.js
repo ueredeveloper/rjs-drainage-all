@@ -30,7 +30,7 @@ export const DataProvider = ({ children }) => {
   const [overlays, setOverlays] = useState(initialsStates.overlays);
 
   // Estado para o sistema fraturado e poroso
-  const [system, setSystem] = useState(initialsStates.system);
+  const [subsystem, setSubsystem] = useState(initialsStates.subsystem);
 
   // Estado para os marcadores por tabelas (subterrânea, superficial...)
   const [shapesState, setShapesState] = useState([]);
@@ -38,19 +38,27 @@ export const DataProvider = ({ children }) => {
   const [radius, setRadius] = useState(600);
   
 
-
   useEffect(()=>{
 
     if(map){
       let latLng = {lat: parseFloat(marker.int_latitude), lng: parseFloat(marker.int_longitude)}
       map.setCenter(latLng)
     }
+    console.log(marker)
    
   }, [marker])
 
   return (
     // Fornece o estado 'selectedsCharts' para os componentes filhos
-    <DataContext.Provider value={{ selectedsCharts, setSelectedsCharts, map, setMap, marker, setMarker, overlays, setOverlays, shapesState, setShapesState, radius, setRadius }}>
+    <DataContext.Provider value={{ 
+      selectedsCharts, setSelectedsCharts, 
+      map, setMap, 
+      marker, setMarker,
+      subsystem, setSubsystem,
+      overlays, setOverlays, 
+      shapesState, setShapesState, 
+      radius, setRadius 
+      }}>
       {children}
     </DataContext.Provider>
   );
