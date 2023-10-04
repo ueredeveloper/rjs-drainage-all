@@ -11,7 +11,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
 import { findAllPointsInCircle } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
-import RadiusSelector from "./RadiusSelector";
+import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
 import { initialsStates } from "../../initials-states";
 
@@ -101,12 +101,13 @@ function SearchCoords({ value }) {
             <Paper elevation={3} sx={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
                 <Box id="sc-container" sx={{ display: 'flex', flexFlow: 'row wrap' }}>
-                    <Box id="sc-text-fields" sx={{  display: "flex", flex: 1, flexDirection: "row" }}>
+                    <Box id="sc-text-fields" sx={{ backgroundColor: "red", display: "flex", flex: 4, flexDirection: "row" }}>
                         <TextField
                             sx={{
                                 my: 1,
                                 mx: 1,
-                                minWidth: '1rem'
+                                minWidth: '2rem',
+                                flex: 1
                             }}
                             label="Latitude"
                             color="secondary"
@@ -119,7 +120,8 @@ function SearchCoords({ value }) {
                             sx={{
                                 my: 1,
                                 mx: 1,
-                                minWidth: '1rem'
+                                minWidth: '2rem',
+                                flex: 1
 
                             }}
                           
@@ -133,7 +135,7 @@ function SearchCoords({ value }) {
                     </Box>
                     <Box id="sc-controls" sx={{display: "flex", flex: 1, flexDirection: "row", alignItems: "center"}}>
                         <Box id="sc-selector" sx={{display: "flex", flex: 1, alignItems:"center", justifyContent: "center" }}>
-                            {value === 0 ? <RadiusSelector /> : <WellTypeSelector />}
+                            {value === 0 ? <CircleRadiusSelector /> : value===1? <WellTypeSelector />: null}
                         </Box>
                         <Box id="sc-search-copy-controls" sx={{ minWidth: 100}}>
                             {

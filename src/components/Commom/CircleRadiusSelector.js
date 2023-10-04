@@ -8,7 +8,7 @@ import { useData } from "../../hooks/analyse-hooks";
  * @component
  * @returns {JSX.Element} O elemento React que representa o componente.
  */
-function RadiusSelector() {
+function CircleRadiusSelector() {
 
     // Obtém o estado do raio e a função para definir o raio do contexto compartilhado
     const { radius, setRadius } = useData();
@@ -45,4 +45,4 @@ function RadiusSelector() {
     );
 }
 
-export default RadiusSelector;
+export default CircleRadiusSelector;
