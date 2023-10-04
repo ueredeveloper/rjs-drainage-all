@@ -16,6 +16,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 
 /**
  * Renderiza a aplicação principal (App.js).
+ * @component
  */
 root.render(
   <React.StrictMode>
