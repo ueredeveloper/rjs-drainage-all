@@ -2,11 +2,23 @@ import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { FormControl, FormLabel, Paper } from '@mui/material';
 
+/**
+ * Componente para renderizar um gráfico de análise de dados usando ECharts.
+ * @component
+ */
 const DataAnalyseChart = () => {
 
+     /**
+     * Estado para armazenar a instância do gráfico ECharts.
+     * @type {echarts.ECharts | null}
+     */
     const [myChart, setMyChart] = useState(null)
 
     useEffect(() => {
+         /**
+         * Inicializa uma instância do gráfico ECharts no elemento com ID 'chart-container'.
+         * @type {echarts.ECharts}
+         */
         let myChart = echarts.init(document.getElementById('chart-container'));
 
         // Your ECharts options here...
@@ -18,6 +30,11 @@ const DataAnalyseChart = () => {
                 shadowColor: 'rgba(0,0,0,0.3)',
             },
         };
+
+        /**
+         * Configuração das opções do gráfico ECharts.
+         * @type {echarts.EChartOption}
+         */
 
         const option = {
             legend: {
@@ -84,6 +101,7 @@ const DataAnalyseChart = () => {
 
         myChart.setOption(option);
 
+        // manipulação das opções no gráfico 
         myChart.on('brushSelected', function (params) {
             var brushed = [];
             var brushComponent = params.batch[0];
@@ -105,7 +123,7 @@ const DataAnalyseChart = () => {
                 },
             });
         });
-
+        // Define a instância do gráfico no estado
         setMyChart(myChart)
     }, []);
 
