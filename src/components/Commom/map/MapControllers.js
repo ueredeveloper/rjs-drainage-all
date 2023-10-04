@@ -1,7 +1,4 @@
-/**
- * @file Componente MapControllers para gerenciar camadas de mapa e caixas de seleção.
- * @module MapControllers
- */
+
 
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@mui/material';
@@ -12,6 +9,11 @@ import { converterPostgresToGmaps } from '../../../tools';
 import { useData } from '../../../hooks/analyse-hooks';
 /**
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
+ * @component
+ * @requires converterPostgresToGmaps
+ * @requires useData
+ * @requires fetchShape
+ * @requires initialsStates
  * @returns {JSX.Element} JSX do componente MapControllers.
  */
 function MapControllers({ updateCheckBoxState }) {

@@ -17,7 +17,7 @@ import MenuIcon from '@mui/icons-material/Menu';
  * 
  * @returns {JSX.Element} O elemento JSX que representa a barra de navegação.
  */
-export default function MenuAppBar() {
+function MenuAppBar() {
   return (
     <Box>
       <AppBar position="static">
@@ -40,3 +40,5 @@ export default function MenuAppBar() {
     </Box>
   );
 }
+
+export default MenuAppBar;

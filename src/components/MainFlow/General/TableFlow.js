@@ -16,7 +16,7 @@ const rows = [
  
 ];
 
-export default function TableFlow() {
+function TableFlow() {
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -49,3 +49,5 @@ export default function TableFlow() {
     </TableContainer>
   );
 }
+
+export default TableFlow;

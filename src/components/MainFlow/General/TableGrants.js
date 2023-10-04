@@ -19,7 +19,7 @@ const rows = [
     createData("Gingerbread", 356, 16.0, 49, 3.9),
 ];
 
-export default function TableGrants() {
+function TableGrants() {
     return (
         <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -52,3 +52,5 @@ export default function TableGrants() {
         </TableContainer>
     );
 }
+
+export default TableGrants;

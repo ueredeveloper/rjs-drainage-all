@@ -1,19 +1,14 @@
-/**
- * Módulo responsável pelo componente ElemMarker.
- * @module ElemMarker
- * @requires useEffect
- * @requires useState
- * @requires setInfoMarkerIcon
- * @requires ElemMarkerInfoWindow
- */
-
 import { useEffect, useState } from 'react';
 import { setInfoMarkerIcon } from '../../../tools';
 import ElemMarkerInfoWindow from './infowindow/ElemMarkerInfoWindow';
 
 /**
+ * 
+ * 
  * Componente ElemMarker que representa um marcador no mapa.
- * @function
+ * @component
+ * @requires setInfoMarkerIcon
+ * @requires ElemMarkerInfoWindow
  * @param {object} props - As propriedades do componente.
  * @param {object} props.info - As informações do marcador.
  * @param {object} props.map - O objeto de mapa do Google Maps.
