@@ -6,9 +6,9 @@ import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/material";
-import SearchIcon from '@mui/icons-material/Search';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import IconButton from '@mui/material/IconButton';
+import SearchIcon from "@mui/icons-material/Search";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import IconButton from "@mui/material/IconButton";
 import { findAllPointsInCircle } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
@@ -23,11 +23,9 @@ import { initialsStates } from "../../initials-states";
 function SearchCoords({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
-    // const [, , , setOverlays] = useContext(AnalyseContext);
-    // Estado para o marcador inicial
-    const [marker, setMarker] = useState(initialsStates.marker);
-    const { setOverlays, radius } = useData();
-
+    // Estado para o marcador (marker) e desenhos no map (overlays)
+    const { marker, setMarker, setOverlays, radius } = useData();
+    // posição a ser analisada
     const [position, setPosition] = useState(marker);
 
     useEffect(() => {
@@ -60,7 +58,7 @@ function SearchCoords({ value }) {
         // salvar uma shape, polígono, com o raio solicitado.
         let shape = {
             id: Date.now(),
-            type: 'circle',
+            type: "circle",
             position: { lat: position.int_latitude, lng: position.int_longitude },
             map: null,
             draw: null,
@@ -96,17 +94,17 @@ function SearchCoords({ value }) {
     }
 
     return (
-        <FormControl style={{ display: "flex", flexDirection: 'column' }}>
+        <FormControl style={{ display: "flex", flexDirection: "column" }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas</FormLabel>
             <Paper elevation={3} sx={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
-                <Box id="sc-container" sx={{ display: 'flex', flexFlow: 'row wrap' }}>
-                    <Box id="sc-text-fields" sx={{ backgroundColor: "red", display: "flex", flex: 4, flexDirection: "row" }}>
+                <Box id="sc-container" sx={{ display: "flex", flexFlow: "row wrap" }}>
+                    <Box id="sc-text-fields" sx={{ display: "flex", flex: 4, flexDirection: "row" }}>
                         <TextField
                             sx={{
                                 my: 1,
                                 mx: 1,
-                                minWidth: '2rem',
+                                minWidth: "3rem",
                                 flex: 1
                             }}
                             label="Latitude"
@@ -120,11 +118,11 @@ function SearchCoords({ value }) {
                             sx={{
                                 my: 1,
                                 mx: 1,
-                                minWidth: '2rem',
+                                minWidth: "3rem",
                                 flex: 1
 
                             }}
-                          
+
                             color="secondary"
                             label="Longitude"
                             name="int_longitude"
@@ -133,32 +131,38 @@ function SearchCoords({ value }) {
                             size="small"
                         />
                     </Box>
-                    <Box id="sc-controls" sx={{display: "flex", flex: 1, flexDirection: "row", alignItems: "center"}}>
-                        <Box id="sc-selector" sx={{display: "flex", flex: 1, alignItems:"center", justifyContent: "center" }}>
-                            {value === 0 ? <CircleRadiusSelector /> : value===1? <WellTypeSelector />: null}
+                    {value === 0 ?
+                        <Box id="sc-controls" sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
+                            <CircleRadiusSelector />
                         </Box>
-                        <Box id="sc-search-copy-controls" sx={{ minWidth: 100}}>
-                            {
-                                loading ?
-                                    <Fade
-                                        sx={{ color: "secondary.main" }}
-                                        in={loading}
-                                        style={{
-                                            transitionDelay: loading ? '800ms' : '0ms',
-                                        }}
-                                        unmountOnExit
-                                    >
-                                        <CircularProgress size={25} />
-                                    </Fade>
-                                    :
-                                    <IconButton color="secondary" size="large" onClick={() => { handleClick().then(() => { setLoading(false); }); }}>
-                                        <SearchIcon />
-                                    </IconButton>
-                            }
-                            <IconButton color="secondary" size="large">
-                                <ContentCopyIcon />
-                            </IconButton>
-                        </Box>
+                        : value === 1 ?
+                            <Box id="sc-controls" sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
+                                <WellTypeSelector />
+                            </Box>
+                            :
+                            null}
+
+                    <Box id="sc-search-copy-controls" sx={{ minWidth: 100 }}>
+                        {
+                            loading ?
+                                <Fade
+                                    sx={{ color: "secondary.main" }}
+                                    in={loading}
+                                    style={{
+                                        transitionDelay: loading ? "800ms" : "0ms",
+                                    }}
+                                    unmountOnExit
+                                >
+                                    <CircularProgress size={25} />
+                                </Fade>
+                                :
+                                <IconButton color="secondary" size="large" onClick={() => { handleClick().then(() => { setLoading(false); }); }}>
+                                    <SearchIcon />
+                                </IconButton>
+                        }
+                        <IconButton color="secondary" size="large">
+                            <ContentCopyIcon />
+                        </IconButton>
                     </Box>
                 </Box>
             </Paper>
