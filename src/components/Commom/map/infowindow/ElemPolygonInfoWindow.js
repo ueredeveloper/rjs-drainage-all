@@ -1,17 +1,17 @@
-/**
- * Componente para exibir informações em uma janela de informações associada a um marcador no mapa.
- *
- * @param {object} props - Propriedades do componente.
- * @param {google.maps.Polygon} props.marker - O polígono ao qual a janela de informações está associada.
- * @param {object} props.shape - As informações a serem exibidas na janela.
- * @param {google.maps.Map} props.map - O mapa ao qual o polígono e a janela de informações pertencem.
- * @returns {null} Retorna null, pois este componente não possui renderização visível.
- */
+
 import { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import HTMLPolygonContent from './html-polygon-content';
 import { useData } from '../../../../hooks/analyse-hooks';
 
+/**
+ * Componente para exibir informações em uma janela de informações associada a um polígono no mapa.
+ * @component
+ * @param {object} props - Propriedades do componente.
+ * @param {google.maps.Polygon} props.marker - O polígono ao qual a janela de informações está associada.
+ * @param {object} props.shape - As informações a serem exibidas na janela.
+ * @param {google.maps.Map} props.map - O mapa ao qual o polígono e a janela de informações pertencem.
+ */
 const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
 
     /**

@@ -1,5 +1,14 @@
 import { fetchGrantsInsideShape } from "../../../../services/shapes";
 
+/**
+ * Conteúdo do InfoWindow do Polígono.
+ * @component
+ * @param {*} polygon 
+ * @param {*} shape 
+ * @param {*} map 
+ * @param {*} setOverlays 
+ * @param {*} color
+ */
 const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 
     /**
@@ -12,7 +21,6 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
   * @param {string} shape.uh_codigo - Código da unidade hidrográfica (se aplicável).
   * @param {string} shape.cod_plan - Código da sistema fraturado ou poroso (se aplicável).
   * @param {google.maps.Map} map - Instância do mapa onde as concessões serão adicionadas.
-  * @returns {Promise<void>} - Uma Promise que resolve quando as concessões são adicionadas ao mapa.
   */
     const obtainGrants = async (shape, map) => {
         let shapeCode;

@@ -1,16 +1,16 @@
-/**
- * Componente para exibir informações em uma janela de informações associada a um marcador no mapa.
- *
- * @param {object} props - Propriedades do componente.
- * @param {google.maps.Marker} props.marker - O marcador ao qual a janela de informações está associada.
- * @param {object} props.info - As informações a serem exibidas na janela.
- * @param {google.maps.Map} props.map - O mapa ao qual o marcador e a janela de informações pertencem.
- * @returns {null} Retorna null, pois este componente não possui renderização visível.
- */
+
 import { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import HTMLMarkerContent from './html-marker-content';
 
+/**
+ * Componente para exibir informações em uma janela de informações associada a um marcador no mapa.
+ * @component
+ * @param {object} props - Propriedades do componente.
+ * @param {google.maps.Marker} props.marker - O marcador ao qual a janela de informações está associada.
+ * @param {object} props.info - As informações a serem exibidas na janela.
+ * @param {google.maps.Map} props.map - O mapa ao qual o marcador e a janela de informações pertencem.
+ */
 const ElemMarkerInfoWindow = ({ marker, info, map }) => {
 
     /**

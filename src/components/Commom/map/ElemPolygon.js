@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
 
+/**
+ * Elemento de renderização de polígonos no mapa.
+ * @component
+ * @param {*} param0
+ */
 const ElemPolygon = ({ shape, map }) => {
 
   const [polygon, setPolygon] = useState();

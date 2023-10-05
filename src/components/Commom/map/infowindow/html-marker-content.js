@@ -1,6 +1,14 @@
 import { setInfoMarkerIcon } from "../../../../tools";
 
+/**
+ * Conteúdo da Infowindow (ElemMarkerInfoWindow).
+ * @component
+ * @param {string} color Cor em formato rex color, ex: #ffffff.
+ * @param {object} info Informações do marcador. 
+ */
 const HTMLMarkerContent = (color, info) => {
+
+    console.log(color, info)
 
     // Obtém os dados do ícone para a janela de informações.
     let svgData = setInfoMarkerIcon(info.id, info.ti_id, info.tp_id).iw;

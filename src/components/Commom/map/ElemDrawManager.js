@@ -5,7 +5,8 @@ import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, cal
 import redIcon from '../../../assets/png/red-icon.png';
 import { useData } from '../../../hooks/analyse-hooks';
 /**
-* Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
+  * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
+  * @component
   * @param {Object} map Map inicializado gmaps api.
   * @param {function} setData Função de adição de objectos geométricos à variável `data`.
   */

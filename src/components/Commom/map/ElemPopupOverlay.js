@@ -1,6 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import { numberWithCommas } from '../../../tools';
 
+/**
+ * Elemento de renderização de um popup com informações de polígonos, retângulos etc.
+ * @param {*} param0
+ */
 const ElemPopupOverlay = ({ map, position, content, draw }) => {
     const overlayRef = useRef(null);
 

@@ -10,7 +10,7 @@ import { useData } from '../../../hooks/analyse-hooks';
 
 /**
  * Componente que representa o conteúdo do mapa.
- *
+ * @component
  * @param {Object} props - As propriedades do componente.
  * @param {boolean} props.checkBoxState - O estado das caixas de seleção.
  * @returns {JSX.Element} O componente de conteúdo do mapa.
