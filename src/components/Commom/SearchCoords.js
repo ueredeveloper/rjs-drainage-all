@@ -13,12 +13,11 @@ import { findAllPointsInASubsystem, findAllPointsInCircle } from "../../services
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { initialsStates } from "../../initials-states";
 
 /**
- * Componente SearchCoords.
+ * Busca outorgas por uma coordenada indicada pelo usário.
  * @component
- * @returns {JSX.Element} O elemento React que representa o componente SearchCoords.
+ * @returns {JSX.Element} Retorn elemento React que representa o componente SearchCoords.
  */
 function SearchCoords({ value }) {
     // Variável de estado para controlar o status de carregamento
@@ -38,7 +37,7 @@ function SearchCoords({ value }) {
      * e adiciona uma forma de cículo ou polígono ao objeto overlays.
      * @async
      */
-    async function handleClick() {
+    async function handleOnClick() {
 
         setMarker(prev => {
             return {
@@ -113,7 +112,7 @@ function SearchCoords({ value }) {
      * Manipula a alteração de valores nos campos de entrada de coordenadas.
      * @param {Object} event - O evento de alteração.
      */
-    function handleChange(event) {
+    function handleOnTextFieldChange(event) {
         let { name, value } = event.target;
 
         setPosition(prev => {
@@ -143,7 +142,7 @@ function SearchCoords({ value }) {
                             color="secondary"
                             name="int_latitude"
                             value={position.int_latitude}
-                            onChange={handleChange}
+                            onChange={handleOnTextFieldChange}
                             size="small"
                         />
                         <TextField
@@ -159,7 +158,7 @@ function SearchCoords({ value }) {
                             label="Longitude"
                             name="int_longitude"
                             value={position.int_longitude}
-                            onChange={handleChange}
+                            onChange={handleOnTextFieldChange}
                             size="small"
                         />
                     </Box>
@@ -188,7 +187,7 @@ function SearchCoords({ value }) {
                                     <CircularProgress size={25} />
                                 </Fade>
                                 :
-                                <IconButton color="secondary" size="large" onClick={() => { handleClick().then(() => { setLoading(false); }); }}>
+                                <IconButton color="secondary" size="large" onClick={() => { handleOnClick().then(() => { setLoading(false); }); }}>
                                     <SearchIcon />
                                 </IconButton>
                         }

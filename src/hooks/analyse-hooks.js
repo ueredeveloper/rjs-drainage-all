@@ -20,7 +20,7 @@ const DataContext = createContext();
 export const DataProvider = ({ children }) => {
   // Inicializa o estado 'selectedsCharts' com valores padrão
   const [selectedsCharts, setSelectedsCharts] = useState(initialsStates.selectedsCharts);
-
+  // inicialização do mapa
   const [map, setMap] = useState();
 
   // Estado para o marcador inicial
