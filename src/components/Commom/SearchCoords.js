@@ -9,7 +9,7 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
-import { findAllPointsInCircle } from "../../services/geolocation";
+import { findAllPointsInASubsystem, findAllPointsInCircle } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
@@ -24,7 +24,7 @@ function SearchCoords({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
     // Estado para o marcador (marker) e desenhos no map (overlays)
-    const { marker, setMarker, setOverlays, radius } = useData();
+    const { marker, setMarker, setSubsystem, setOverlays, radius } = useData();
     // posição a ser analisada
     const [position, setPosition] = useState(marker);
 
@@ -35,7 +35,7 @@ function SearchCoords({ value }) {
     /**
      * Manipula o clique no botão de pesquisa.
      * Atualiza o marcador com as coordenadas atuais, pesquisa marcadores no raio especificado
-     * e adiciona uma forma de círculo aos overlays.
+     * e adiciona uma forma de cículo ou polígono ao objeto overlays.
      * @async
      */
     async function handleClick() {
@@ -47,33 +47,65 @@ function SearchCoords({ value }) {
                 int_longitude: position.int_longitude
             }
         });
-        // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
-        let markers = await findAllPointsInCircle(
-            {
-                center: { lng: position.int_longitude, lat: position.int_latitude },
-                radius: parseInt(radius)
+
+        if (value === 0) {
+            // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
+            let markers = await findAllPointsInCircle(
+                {
+                    center: { lng: position.int_longitude, lat: position.int_latitude },
+                    radius: parseInt(radius)
+                }
+            );
+            let id = Date.now();
+            // salvar uma shape, polígono, com o raio solicitado.
+            let shape = {
+                id: Date.now(),
+                type: "circle",
+                position: { lat: position.int_latitude, lng: position.int_longitude },
+                map: null,
+                draw: null,
+                markers: markers,
+                radius: radius,
+                area: null
+
             }
-        );
-        let id = Date.now();
-        // salvar uma shape, polígono, com o raio solicitado.
-        let shape = {
-            id: Date.now(),
-            type: "circle",
-            position: { lat: position.int_latitude, lng: position.int_longitude },
-            map: null,
-            draw: null,
-            markers: markers,
-            radius: radius,
-            area: null
+
+            setOverlays(prev => {
+                return {
+                    ...prev,
+                    shapes: [...prev.shapes, shape]
+                }
+            });
+
+        } else if (value == 1) {
+
+            let { tp_id, int_latitude, int_longitude } = marker;
+
+            // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
+            let markers = await findAllPointsInASubsystem(tp_id, int_latitude, int_longitude);
+
+            let id = Date.now();
+            // salvar uma shape, polígono, com o raio solicitado.
+            let shape = {
+                id: Date.now(),
+                type: "polygon",
+                position: { lat: position.int_latitude, lng: position.int_longitude },
+                map: null,
+                draw: null,
+                markers: markers,
+                radius: radius,
+                area: null
+
+            }
+
+            setOverlays(prev => {
+                return {
+                    ...prev,
+                    shapes: [...prev.shapes, shape]
+                }
+            });
 
         }
-
-        setOverlays(prev => {
-            return {
-                ...prev,
-                shapes: [...prev.shapes, shape]
-            }
-        });
 
     }
 

@@ -76,6 +76,26 @@ async function findPointsInASystem(tp_id, lat, lng) {
   return response;
 }
 
+async function findAllPointsInASubsystem(tp_id, lat, lng) {
+
+  try {
+    const response = await fetch(url + `/findAllPointsInASubsystem?tp_id=${tp_id}&lat=${lat}&lng=${lng}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    const data = await response.json();
+    // obter primeiro índice da matriz
+    return data[0];
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 /**
  * Encontra todos os pontos dentro de um retângulo especificado pelas coordenadas.
  *
@@ -86,7 +106,7 @@ async function findPointsInASystem(tp_id, lat, lng) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findAllPointsInRectangle(xmin, ymin, xmax, ymax) {
- 
+
   try {
     const response = await fetch(url + '/findAllPointsInRectangle', {
       method: 'POST',
@@ -134,7 +154,7 @@ async function findAllPointsInPolygon(polygon) {
     }
 
     const data = await response.json();
-    
+
     // obter primeiro índice da matriz
     return data[0];
   } catch (error) {
@@ -172,7 +192,10 @@ async function findAllPointsInCircle(circle) {
   }
 }
 
+
+
 export {
+  findAllPointsInASubsystem,
   findAllPointsInRectangle,
   findAllPointsInPolygon,
   findAllPointsInCircle,

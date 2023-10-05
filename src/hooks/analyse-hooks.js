@@ -36,29 +36,26 @@ export const DataProvider = ({ children }) => {
   const [shapesState, setShapesState] = useState([]);
 
   const [radius, setRadius] = useState(600);
-  
 
-  useEffect(()=>{
-
-    if(map){
-      let latLng = {lat: parseFloat(marker.int_latitude), lng: parseFloat(marker.int_longitude)}
+  // atualiza a posição do marcador no mapa
+  useEffect(() => {
+    if (map) {
+      let latLng = { lat: parseFloat(marker.int_latitude), lng: parseFloat(marker.int_longitude) }
       map.setCenter(latLng)
     }
-    console.log(marker)
-   
   }, [marker])
 
   return (
     // Fornece o estado 'selectedsCharts' para os componentes filhos
-    <DataContext.Provider value={{ 
-      selectedsCharts, setSelectedsCharts, 
-      map, setMap, 
+    <DataContext.Provider value={{
+      selectedsCharts, setSelectedsCharts,
+      map, setMap,
       marker, setMarker,
       subsystem, setSubsystem,
-      overlays, setOverlays, 
-      shapesState, setShapesState, 
-      radius, setRadius 
-      }}>
+      overlays, setOverlays,
+      shapesState, setShapesState,
+      radius, setRadius
+    }}>
       {children}
     </DataContext.Provider>
   );
