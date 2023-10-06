@@ -33,7 +33,7 @@ function MapControllers({ updateCheckBoxState }) {
     };
 
     const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
-    const { overlays, setOverlays, shapesState, setShapesState } = useData();
+    const { overlays, setOverlays, shapesFetched, setShapesFetched } = useData();
 
     /**
      * Cria um objeto de propriedades para a caixa de seleção.
@@ -62,27 +62,28 @@ function MapControllers({ updateCheckBoxState }) {
 
         checkBoxState.map(async cbState => {
             if (cbState.checked === true) {
-                // verificar se shapesState está vazio
-                if (shapesState.length === 0) {
-                    const shape = await fetchShape(cbState.name).then(shape => {
+                // verificar se shapesFetched está vazio
+                if (shapesFetched.length === 0) {
+                    const _shape = await fetchShape(cbState.name).then(__shape => {
                         // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
-                        return shape.map(sh => {
+                        return __shape.map(sh => {
                             return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
                         })
                     });
-                    setShapesState(prev => [...prev, { name: cbState.name, shape: shape }]);
+                    setShapesFetched(prev => [...prev, { name: cbState.name, shape: _shape }]);
                 } else {
-                    let searchShapeState = shapesState.find(st => st.name === cbState.name);
+                    // verifica se a shape está presente na array shapesFetched
+                    let searchShapesFetched = shapesFetched.find(st => st.name === cbState.name);
                     // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
                     // Assim, não se repete solicitação de camada no servidor.]
-                    if (searchShapeState === undefined) {
-                        const shape = await fetchShape(cbState.name).then(shape => {
-                            return shape.map(sh => {
+                    if (searchShapesFetched === undefined) {
+                        const _shape = await fetchShape(cbState.name).then(__shape => {
+                            return __shape.map(sh => {
 
                                 return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
                             })
                         });
-                        setShapesState(prev => [...prev, { name: cbState.name, shape: shape }]);
+                        setShapesFetched(prev => [...prev, { name: cbState.name, shape: _shape }]);
                     }
                 }
             }

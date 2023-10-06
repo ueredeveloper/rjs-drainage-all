@@ -32,8 +32,10 @@ export const DataProvider = ({ children }) => {
   // Estado para o sistema fraturado e poroso
   const [subsystem, setSubsystem] = useState(initialsStates.subsystem);
 
-  // Estado para os marcadores por tabelas (subterrânea, superficial...)
-  const [shapesState, setShapesState] = useState([]);
+  /*Shapes (polígonos) buscados no servidor (Bacias Hidrográficas, Unidades Hidrográficas...) e que ficarão guardados
+  em um hooks para utilização sem precisar buscar novamente.
+  */
+  const [shapesFetched, setShapesFetched] = useState([]);
 
   const [radius, setRadius] = useState(600);
 
@@ -53,7 +55,7 @@ export const DataProvider = ({ children }) => {
       marker, setMarker,
       subsystem, setSubsystem,
       overlays, setOverlays,
-      shapesState, setShapesState,
+      shapesFetched, setShapesFetched,
       radius, setRadius
     }}>
       {children}

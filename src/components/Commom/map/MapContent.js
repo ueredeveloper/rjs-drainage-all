@@ -7,6 +7,7 @@ import ElemMarker from './ElemMarker';
 import ElemPopupOverlay from './ElemPopupOverlay';
 import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
+import ElemPolyline from './ElemPolyline';
 
 /**
  * Componente que representa o conteúdo do mapa.
@@ -22,7 +23,7 @@ function MapContent({ checkBoxState }) {
   
 
   // Obtém os estados do contexto de análise
-  const { map, setMap, marker, overlays, setOverlays, shapesState } = useData();
+  const { map, setMap, marker, overlays, setOverlays, shapesFetched } = useData();
 
   /**
      * Função para converter um nome de dado em um nome de forma.
@@ -71,6 +72,21 @@ function MapContent({ checkBoxState }) {
     });
   }, [selectedsCharts]);
 
+  const RenderPolylines = (polylines)=>{
+    if (polylines[0].shape.type === 'MultiPolygon') {
+      return polylines[0].shape.coordinates.map((coord, i) => {
+        return coord.map((_coord, ii) => {
+          return (<ElemPolyline key={ii} coord={_coord} map={map} />)
+        })
+      })
+    }
+    else {
+      return polylines[0].shape.coordinates.map((coord, i) => {
+        return (<ElemPolyline key={i} coord={coord} map={map} />)
+      })
+    }
+  }
+
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
@@ -103,9 +119,8 @@ function MapContent({ checkBoxState }) {
           return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />;
         })}
 
-        {/* Renderização dos polígonos */}
-        {shapesState}
-        {shapesState.map((shape) => {
+        {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
+        {shapesFetched.map((shape) => {
           return checkBoxState.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
               return shape.shape.map((sh, ii) => {
@@ -115,7 +130,12 @@ function MapContent({ checkBoxState }) {
             }
           });
         })}
-        {}
+        {overlays.shapes.map(sh=>{
+            if (sh.markers.hidrogeo!==undefined){
+              return RenderPolylines(sh.markers.hidrogeo)
+            }
+        })}
+     
       </Wrapper>
     </Box>
   );
