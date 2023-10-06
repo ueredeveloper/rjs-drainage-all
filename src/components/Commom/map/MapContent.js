@@ -104,6 +104,7 @@ function MapContent({ checkBoxState }) {
         })}
 
         {/* Renderização dos polígonos */}
+        {shapesState}
         {shapesState.map((shape) => {
           return checkBoxState.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
@@ -114,6 +115,7 @@ function MapContent({ checkBoxState }) {
             }
           });
         })}
+        {}
       </Wrapper>
     </Box>
   );

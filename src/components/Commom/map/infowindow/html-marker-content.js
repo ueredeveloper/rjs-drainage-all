@@ -8,8 +8,6 @@ import { setInfoMarkerIcon } from "../../../../tools";
  */
 const HTMLMarkerContent = (color, info) => {
 
-    console.log(color, info)
-
     // Obtém os dados do ícone para a janela de informações.
     let svgData = setInfoMarkerIcon(info.id, info.ti_id, info.tp_id).iw;
 

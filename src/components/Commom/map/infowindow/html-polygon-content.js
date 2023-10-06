@@ -66,7 +66,6 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 
     // Verifica qual shape está sendo solicitada e seu código específico.
     if (shape.shapeName === 'bacias_hidrograficas') {
-        console.log('sh name = bacia')
         title1 = `Nome da Bacia: ${shape.bacia_nome}`;
         title2 = `Bacia Código: ${shape.bacia_cod}`
     } else if (shape.shapeName === 'unidades_hidrograficas') {
