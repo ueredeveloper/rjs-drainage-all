@@ -8,17 +8,17 @@ import { FormControl, FormLabel, Paper } from '@mui/material';
  */
 const DataAnalyseChart = () => {
 
-     /**
-     * Estado para armazenar a instância do gráfico ECharts.
-     * @type {echarts.ECharts | null}
-     */
+    /**
+    * Estado para armazenar a instância do gráfico ECharts.
+    * @type {echarts.ECharts | null}
+    */
     const [myChart, setMyChart] = useState(null)
 
     useEffect(() => {
-         /**
-         * Inicializa uma instância do gráfico ECharts no elemento com ID 'chart-container'.
-         * @type {echarts.ECharts}
-         */
+        /**
+        * Inicializa uma instância do gráfico ECharts no elemento com ID 'chart-container'.
+        * @type {echarts.ECharts}
+        */
         let myChart = echarts.init(document.getElementById('chart-container'));
 
         // Your ECharts options here...
@@ -128,10 +128,10 @@ const DataAnalyseChart = () => {
     }, []);
 
     return (
-        <FormControl sx={{ display: "flex", flex: 1, height: 200 }}>
+        <FormControl sx={{ display: "flex", flex: 1 }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
             <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
-                <div id="chart-container" style={{width: '100%', height: '100%' }}></div>
+                <div id="chart-container" style={{ margin: 10, width: '100%', height: '9rem' }}></div>
             </Paper>
         </FormControl>
 

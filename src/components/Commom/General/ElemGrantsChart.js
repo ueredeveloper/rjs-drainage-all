@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { useData } from '../../../hooks/analyse-hooks';
+import { FormControl, FormLabel, Paper } from '@mui/material';
 
 /**
  * Componente que exibe um gráfico com contagem de concessões de outorga por tipo.
@@ -137,7 +138,14 @@ function ElemGrantsChart() {
   }, [overlays]);
 
   return (
-    <div id="myChart" style={{ marginTop: 20, width: '100%', height: '300px' }}></div>
+
+    <FormControl sx={{ display: "flex", flex: 1 }}>
+      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
+      <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
+        <div id="myChart" style={{ margin: 10, width: '100%', height: '16rem' }}></div>
+      </Paper>
+    </FormControl>
+
   );
 }
 
