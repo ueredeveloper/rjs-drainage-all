@@ -13,6 +13,7 @@ import { findAllPointsInASubsystem, findAllPointsInCircle } from "../../services
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
+import { analyseItsAvaiable } from "../../tools";
 
 /**
  * Busca outorgas por uma coordenada indicada pelo usário.
@@ -23,7 +24,7 @@ function SearchCoords({ value }) {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
     // Estado para o marcador (marker) e desenhos no map (overlays)
-    const { marker, setMarker, setSubsystem, setOverlays, radius } = useData();
+    const { marker, setMarker, setOverlays, radius, setHgAnalyse } = useData();
     // posição a ser analisada
     const [position, setPosition] = useState(marker);
 
@@ -83,8 +84,15 @@ function SearchCoords({ value }) {
             // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
             let markers = await findAllPointsInASubsystem(tp_id, int_latitude, int_longitude);
 
+            // Analisar disponibilidade, se é possível outorgar.
+            let hidrogeoInfo = markers.hidrogeo[0].info;
+            let subMarkers = markers.subterranea;
+            let hgAnalyse = analyseItsAvaiable(hidrogeoInfo, subMarkers);
+            // setar Valor que será utilzado no componente DataAnalyseTable.js e DataAnalyseChart.js
+            setHgAnalyse (hgAnalyse)
+
             let id = Date.now();
-            // salvar uma shape, polígono, com o raio solicitado.
+            // Setar polígono solicitado.
             let shape = {
                 id: Date.now(),
                 type: "polygon",

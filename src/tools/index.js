@@ -74,43 +74,43 @@ function nFormatter(num, digits) {
 }
 /**
  * Analisa se é possível outorgar a partir da vazão requerida, vazões outorgadas etc.
- * @param {object} _info - Informações sobre a outorga.
- * @param {object[]} _points - Pontos de análise.
+ * @param {object} hgInfo - Informações o subsistema pesquisado (hidrogeo fraturado ou poroso).
+ * @param {object[]} subterraneanPoints - Pontos subterrâneos de análise.
  * @returns {object} - Resultado da análise.
  */
-function analyseItsAvaiable(_info, _points) {
-  let _Q = 0;
-  _points.map((_point) => {
-    if (typeof _point.dt_demanda.vol_anual_ma === 'undefined') {
-      return _Q += 0;
+function analyseItsAvaiable(hgInfo, subterraneanPoints) {
+  // Somatório de vazão anual
+  let qTotalAnnual = 0;
+  subterraneanPoints.map((subPoint) => {
+    if (typeof subPoint.dt_demanda.vol_anual_ma === 'undefined') {
+      return qTotalAnnual += 0;
     } else {
-      return _Q += parseFloat(_point.dt_demanda.vol_anual_ma);
+      return qTotalAnnual += parseFloat(subPoint.dt_demanda.vol_anual_ma);
     }
   });
 
   // Vazão explotável/ano
-  let _q_ex = _info.re_cm_ano;
+  let qExploitable = hgInfo.re_cm_ano;
   // Número de pontos
-  let _n_points = _points.length;
-  // Somatório de vazão anual
-  let _q_points = _Q;
+  let numberOfPoints = subterraneanPoints.length;
   // Percentual de vazão utilizada
-  let _q_points_per = (Number(_Q) * 100 / Number(_q_ex)).toFixed(4);
-  if (isNaN(_q_points_per)) {
-    _q_points_per = 0;
+  let qPointsPercentage = (Number(qTotalAnnual) * 100 / Number(qExploitable)).toFixed(4);
+  // Se nulo, zerar valor
+  if (isNaN(qPointsPercentage)) {
+    qPointsPercentage = 0;
   }
 
   return {
-    bacia_nome: _info.bacia_nome, // Nome da bacia
-    uh_label: _info.uh_label, // Unidade Hidrográfica
-    uh_nome: _info.uh_nome, // Nome da Unidade Hidrográfica
-    sistema: _info.sistema, // Sistema (R3, P1)
-    cod_plan: _info.cod_plan, // Código do Sistema
-    q_ex: _q_ex, // Vazão explotável
-    n_points: _n_points, // Número de pontos
-    q_points: _q_points, // Vazão outorgada
-    q_points_per: _q_points_per, // Percentual de vazão utilizada
-    vol_avaiable: (Number(_q_ex) - Number(_q_points)).toFixed(4) // Volume disponível
+    basinName: hgInfo.bacia_nome, // Nome da bacia
+    uhNameLabel: hgInfo.uh_label, // Unidade Hidrográfica (Label)
+    uhName: hgInfo.uh_nome, // Nome da Unidade Hidrográfica
+    subsystem: hgInfo.sistema, // Sistema (R3, P1)
+    codPlan: hgInfo.cod_plan, // Código do Sistema
+    qExploitable: Number(qExploitable), // Vazão explotável
+    numberOfPoints: Number(numberOfPoints), // Número de pontos
+    qTotalAnnual: Number(qTotalAnnual), // Vazão outorgada
+    qPointsPercentage: Number(qPointsPercentage), // Percentual de vazão utilizada
+    volAvaiable: Number((Number(qExploitable) - Number(qTotalAnnual)).toFixed(4)) // Volume disponível
   };
 }
 

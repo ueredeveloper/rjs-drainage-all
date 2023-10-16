@@ -39,6 +39,20 @@ export const DataProvider = ({ children }) => {
 
   const [radius, setRadius] = useState(600);
 
+  const [hgAnalyse, setHgAnalyse] = useState({
+    "basinName": "",
+    "uhNameLabel": "",
+    "uhName": "",
+    "subsystem": "",
+    "codPlan": "",
+    "qExploitable": 10,
+    "numberOfPoints": 15,
+    "qTotalAnnual": 20,
+    "qPointsPercentage": 30,
+    "volAvaiable": 40
+})
+
+
   // atualiza a posição do marcador no mapa
   useEffect(() => {
     if (map) {
@@ -56,7 +70,8 @@ export const DataProvider = ({ children }) => {
       subsystem, setSubsystem,
       overlays, setOverlays,
       shapesFetched, setShapesFetched,
-      radius, setRadius
+      radius, setRadius,
+      hgAnalyse, setHgAnalyse
     }}>
       {children}
     </DataContext.Provider>

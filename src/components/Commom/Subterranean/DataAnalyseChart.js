@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { FormControl, FormLabel, Paper } from '@mui/material';
+import { useData } from '../../../hooks/analyse-hooks';
 
 /**
  * Componente para renderizar um gráfico de análise de dados usando ECharts.
@@ -12,7 +13,83 @@ const DataAnalyseChart = () => {
     * Estado para armazenar a instância do gráfico ECharts.
     * @type {echarts.ECharts | null}
     */
-    const [myChart, setMyChart] = useState(null)
+    const [myChart, setMyChart] = useState(null);
+
+    const { hgAnalyse } = useData();
+
+    const emphasisStyle = {
+        itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0,0,0,0.3)',
+        },
+    };
+
+    const options = {
+        legend: {
+            data: ['Q explotável', 'Q outorgada', 'Q Disponível', 'Q Usuário'],
+            left: '5%',
+        },
+        brush: {
+            // toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+            //xAxisIndex: 0,
+        },
+        toolbox: {
+            feature: {
+              /*  magicType: {
+                    type: ['stack'],
+                },*/
+                dataView: {},
+            },
+        },
+        tooltip: {},
+        xAxis: {
+            data: [],
+            name: 'Vazões',
+            axisLine: { onZero: true },
+            splitLine: { show: false },
+            splitArea: { show: false },
+        },
+        yAxis: {},
+        grid: {
+            left: 30,
+            top: 150,
+            bottom: 110,
+        },
+        series: [
+            {
+                name: 'Q explotável',
+                type: 'bar',
+                stack: '1',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qExploitable],
+            },
+            {
+                name: 'Q outorgada',
+                type: 'bar',
+                stack: '2',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qTotalAnnual],
+            },
+            {
+                name: 'Q Disponível',
+                type: 'bar',
+                stack: '3',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qExploitable - hgAnalyse.qTotalAnnual],
+            },
+            {
+                name: 'Q Usuário',
+                type: 'bar',
+                stack: '4',
+                emphasis: emphasisStyle,
+                data: [5000],
+            },
+        ]
+    };
+
+    useEffect(() => {
+        console.log('hgAnalyse', hgAnalyse)
+    }, [hgAnalyse])
 
     useEffect(() => {
         /**
@@ -21,85 +98,7 @@ const DataAnalyseChart = () => {
         */
         let myChart = echarts.init(document.getElementById('chart-container'));
 
-        // Your ECharts options here...
-        const xAxisData = [];
-
-        const emphasisStyle = {
-            itemStyle: {
-                shadowBlur: 10,
-                shadowColor: 'rgba(0,0,0,0.3)',
-            },
-        };
-
-        /**
-         * Configuração das opções do gráfico ECharts.
-         * @type {echarts.EChartOption}
-         */
-
-        const option = {
-            legend: {
-                data: ['Q explotável', 'Q Explotável', 'Q Disponível', 'Q Usuário'],
-                left: '10%',
-            },
-            brush: {
-                toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-                xAxisIndex: 0,
-            },
-            toolbox: {
-                feature: {
-                    magicType: {
-                        type: ['stack'],
-                    },
-                    dataView: {},
-                },
-            },
-            tooltip: {},
-            xAxis: {
-                data: xAxisData,
-                name: 'Vazões',
-                axisLine: { onZero: true },
-                splitLine: { show: false },
-                splitArea: { show: false },
-            },
-            yAxis: {},
-            grid: {
-                left: 30,
-                top: 150,
-                bottom: 110,
-            },
-            series: [
-                {
-                    name: 'Q explotável',
-                    type: 'bar',
-                    stack: '1',
-                    emphasis: emphasisStyle,
-                    data: [10],
-                },
-                {
-                    name: 'Q Explotável',
-                    type: 'bar',
-                    stack: '2',
-                    emphasis: emphasisStyle,
-                    data: [2],
-                },
-                {
-                    name: 'Q Disponível',
-                    type: 'bar',
-                    stack: '3',
-                    emphasis: emphasisStyle,
-                    data: [4],
-                },
-                {
-                    name: 'Q Usuário',
-                    type: 'bar',
-                    stack: '4',
-                    emphasis: emphasisStyle,
-                    data: [5],
-                },
-            ],
-        };
-
-        myChart.setOption(option);
+        myChart.setOption(options);
 
         // manipulação das opções no gráfico 
         myChart.on('brushSelected', function (params) {
@@ -112,7 +111,7 @@ const DataAnalyseChart = () => {
             myChart.setOption({
                 title: {
                     backgroundColor: '#333',
-                    text: 'SELECTED DATA INDICES: \n' + brushed.join('\n'),
+                    // text: 'SELECTED DATA INDICES: \n' + brushed.join('\n'),
                     bottom: 0,
                     right: '10%',
                     width: 100,
@@ -126,6 +125,51 @@ const DataAnalyseChart = () => {
         // Define a instância do gráfico no estado
         setMyChart(myChart)
     }, []);
+
+    useEffect(() => {
+
+        let newOptions = { ...options };
+        let series = [
+            {
+                name: 'Q explotável',
+                type: 'bar',
+                stack: '1',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qExploitable],
+            },
+            {
+                name: 'Q outorgada',
+                type: 'bar',
+                stack: '2',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qTotalAnnual],
+            },
+            {
+                name: 'Q Disponível',
+                type: 'bar',
+                stack: '3',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qExploitable - hgAnalyse.qTotalAnnual],
+            },
+            {
+                name: 'Q Usuário',
+                type: 'bar',
+                stack: '4',
+                emphasis: emphasisStyle,
+                // resolver quando inserir a busca de items cadastrados no outro sistema
+                data: [0],
+            },
+        ];
+
+        newOptions.series = series;
+
+
+        if (myChart) {
+
+            myChart.setOption(newOptions)
+        }
+
+    }, [hgAnalyse])
 
     return (
         <FormControl sx={{ display: "flex", flex: 1 }}>

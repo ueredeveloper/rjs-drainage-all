@@ -7,7 +7,7 @@ import { FormControl, FormLabel, Paper } from '@mui/material';
  * Componente que exibe um gráfico com contagem de concessões de outorga por tipo.
  * @component
  */
-function ElemGrantsChart() {
+function NumberOfGrantsChart() {
   // Estado para armazenar informações do contexto de análise.
   const { overlays, setSelectedsCharts } = useData();
 
@@ -90,7 +90,7 @@ function ElemGrantsChart() {
 
   useEffect(() => {
     // Cria uma instância do ECharts
-    let myChart = echarts.init(document.getElementById('myChart'));
+    let myChart = echarts.init(document.getElementById('e-grants-chart'));
 
     // Define as opções para o gráfico
     myChart.setOption(options);
@@ -140,13 +140,13 @@ function ElemGrantsChart() {
   return (
 
     <FormControl sx={{ display: "flex", flex: 1 }}>
-      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
+      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico (Número de Outorgas)</FormLabel>
       <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
-        <div id="myChart" style={{ margin: 10, width: '100%', height: '16rem' }}></div>
+        <div id="e-grants-chart" style={{ margin: 10, width: '100%', height: '16rem' }}></div>
       </Paper>
     </FormControl>
 
   );
 }
 
-export default ElemGrantsChart;
+export default NumberOfGrantsChart;
