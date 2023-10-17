@@ -35,9 +35,9 @@ const DataAnalyseChart = () => {
         },
         toolbox: {
             feature: {
-              /*  magicType: {
-                    type: ['stack'],
-                },*/
+                /*  magicType: {
+                      type: ['stack'],
+                  },*/
                 dataView: {},
             },
         },
@@ -49,7 +49,9 @@ const DataAnalyseChart = () => {
             splitLine: { show: false },
             splitArea: { show: false },
         },
-        yAxis: {},
+        yAxis: {
+            type: 'log' 
+        },
         grid: {
             left: 30,
             top: 150,
@@ -75,21 +77,17 @@ const DataAnalyseChart = () => {
                 type: 'bar',
                 stack: '3',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.qExploitable - hgAnalyse.qTotalAnnual],
+                data: [hgAnalyse.volAvailable],
             },
             {
                 name: 'Q Usuário',
                 type: 'bar',
                 stack: '4',
                 emphasis: emphasisStyle,
-                data: [5000],
+                data: [hgAnalyse.qUserAnnual],
             },
         ]
     };
-
-    useEffect(() => {
-        console.log('hgAnalyse', hgAnalyse)
-    }, [hgAnalyse])
 
     useEffect(() => {
         /**
@@ -149,7 +147,7 @@ const DataAnalyseChart = () => {
                 type: 'bar',
                 stack: '3',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.qExploitable - hgAnalyse.qTotalAnnual],
+                data: [hgAnalyse.volAvailable],
             },
             {
                 name: 'Q Usuário',
@@ -157,7 +155,7 @@ const DataAnalyseChart = () => {
                 stack: '4',
                 emphasis: emphasisStyle,
                 // resolver quando inserir a busca de items cadastrados no outro sistema
-                data: [0],
+                data: [hgAnalyse.qUserAnnual],
             },
         ];
 

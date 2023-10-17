@@ -13,7 +13,7 @@ import { findAllPointsInASubsystem, findAllPointsInCircle } from "../../services
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyseItsAvaiable } from "../../tools";
+import { analyzeAvailability } from "../../tools";
 
 /**
  * Busca outorgas por uma coordenada indicada pelo usário.
@@ -82,35 +82,45 @@ function SearchCoords({ value }) {
             let { tp_id, int_latitude, int_longitude } = marker;
 
             // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
-            let markers = await findAllPointsInASubsystem(tp_id, int_latitude, int_longitude);
+            await findAllPointsInASubsystem(tp_id, int_latitude, int_longitude).then(markers => {
+                // Analisar disponibilidade, se é possível outorgar.
+                let hidrogeoInfo = markers.hidrogeo[0].info;
+                // Adiciona o primeiro marcador com vazão nula, pois só se está buscando por coordenadas, sem se tratar de vazão.
+                let subterraneanMarkers = [
+                    {
+                        int_latitude: position.int_latitude,
+                        int_longitude: position.int_longitude,
+                        dt_demanda: { demandas: [], vol_anual_ma: 5000000.4585 }
+                    }, ...markers.subterranea
+                ];
 
-            // Analisar disponibilidade, se é possível outorgar.
-            let hidrogeoInfo = markers.hidrogeo[0].info;
-            let subMarkers = markers.subterranea;
-            let hgAnalyse = analyseItsAvaiable(hidrogeoInfo, subMarkers);
-            // setar Valor que será utilzado no componente DataAnalyseTable.js e DataAnalyseChart.js
-            setHgAnalyse (hgAnalyse)
+                let hgAnalyse = analyzeAvailability(hidrogeoInfo, subterraneanMarkers);
+                // setar Valor que será utilzado no componente DataAnalyseTable.js e DataAnalyseChart.js
+                setHgAnalyse(hgAnalyse)
 
-            let id = Date.now();
-            // Setar polígono solicitado.
-            let shape = {
-                id: Date.now(),
-                type: "polygon",
-                position: { lat: position.int_latitude, lng: position.int_longitude },
-                map: null,
-                draw: null,
-                markers: markers,
-                radius: radius,
-                area: null
+                let id = Date.now();
+                // Setar polígono solicitado.
+                let shape = {
+                    id: Date.now(),
+                    type: "polygon",
+                    position: { lat: position.int_latitude, lng: position.int_longitude },
+                    map: null,
+                    draw: null,
+                    markers: markers,
+                    radius: radius,
+                    area: null
 
-            }
-
-            setOverlays(prev => {
-                return {
-                    ...prev,
-                    shapes: [...prev.shapes, shape]
                 }
-            });
+
+                setOverlays(prev => {
+                    return {
+                        ...prev,
+                        shapes: [...prev.shapes, shape]
+                    }
+                });
+            })
+
+
 
         }
 

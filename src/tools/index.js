@@ -75,19 +75,22 @@ function nFormatter(num, digits) {
 /**
  * Analisa se é possível outorgar a partir da vazão requerida, vazões outorgadas etc.
  * @param {object} hgInfo - Informações o subsistema pesquisado (hidrogeo fraturado ou poroso).
- * @param {object[]} subterraneanPoints - Pontos subterrâneos de análise.
+ * @param {object[]} subterraneanMarkers - Pontos subterrâneos de análise.
  * @returns {object} - Resultado da análise.
  */
-function analyseItsAvaiable(hgInfo, subterraneanPoints) {
+/*
+function analyseItsAvaiable(hgInfo, subterraneanMarkers) {
   // Somatório de vazão anual
   let qTotalAnnual = 0;
-  subterraneanPoints.map((subPoint) => {
-    if (typeof subPoint.dt_demanda.vol_anual_ma === 'undefined') {
+  subterraneanMarkers.map((sMarker) => {
+    if (typeof sMarker.dt_demanda.vol_anual_ma === 'undefined') {
       return qTotalAnnual += 0;
     } else {
-      return qTotalAnnual += parseFloat(subPoint.dt_demanda.vol_anual_ma);
+      return qTotalAnnual += parseFloat(sMarker.dt_demanda.vol_anual_ma);
     }
   });
+
+  let qUserAnnual = subterraneanMarkers[0].dt_demanda.vol_anual_ma === 'undefined' ? 0 : subterraneanMarkers[0].dt_demanda.vol_anual_ma
 
   // Vazão explotável/ano
   let qExploitable = hgInfo.re_cm_ano;
@@ -101,16 +104,76 @@ function analyseItsAvaiable(hgInfo, subterraneanPoints) {
   }
 
   return {
-    basinName: hgInfo.bacia_nome, // Nome da bacia
-    uhNameLabel: hgInfo.uh_label, // Unidade Hidrográfica (Label)
-    uhName: hgInfo.uh_nome, // Nome da Unidade Hidrográfica
-    subsystem: hgInfo.sistema, // Sistema (R3, P1)
-    codPlan: hgInfo.cod_plan, // Código do Sistema
-    qExploitable: Number(qExploitable), // Vazão explotável
-    numberOfPoints: Number(numberOfPoints), // Número de pontos
-    qTotalAnnual: Number(qTotalAnnual), // Vazão outorgada
-    qPointsPercentage: Number(qPointsPercentage), // Percentual de vazão utilizada
-    volAvaiable: Number((Number(qExploitable) - Number(qTotalAnnual)).toFixed(4)) // Volume disponível
+    // Nome da bacia
+    basinName: hgInfo.bacia_nome,
+    // Unidade Hidrográfica (Label)
+    uhNameLabel: hgInfo.uh_label,
+    // Nome da Unidade Hidrográfica
+    uhName: hgInfo.uh_nome,
+    // Sistema (R3, P1)
+    subsystem: hgInfo.sistema,
+    // Código do Sistema
+    codPlan: hgInfo.cod_plan,
+    // Vazão explotável
+    qExploitable: Number(qExploitable),
+    // Número de pontos
+    numberOfPoints: Number(numberOfPoints),
+    // Vazão outorgada
+    qUserAnnual: qUserAnnual,
+    // Vazão total anual (Todos os pontos)
+    qTotalAnnual: Number(qTotalAnnual),
+    // Percentual de vazão utilizada
+    qPointsPercentage: Number(qPointsPercentage),
+    // Volume disponível
+    volAvaiable: Number((Number(qExploitable) - Number(qTotalAnnual)).toFixed(4))
+  };
+}*/
+function analyzeAvailability(hgInfo, subterraneanMarkers) {
+  // Somatório de vazão anual
+  let qTotalAnnual = 0;
+  subterraneanMarkers.map((sMarker) => {
+    if (typeof sMarker.dt_demanda.vol_anual_ma === 'undefined') {
+      return qTotalAnnual += 0;
+    } else {
+      return qTotalAnnual += parseFloat(sMarker.dt_demanda.vol_anual_ma);
+    }
+  });
+
+  // Calculate the annual user flow
+  let qUserAnnual = parseFloat(subterraneanMarkers[0].dt_demanda.vol_anual_ma).toFixed(4) || 0;
+
+  // Extract relevant data
+  let {
+    bacia_nome: basinName,
+    uh_label: uhNameLabel,
+    uh_nome: uhName,
+    sistema: subsystem,
+    cod_plan: codPlan,
+    re_cm_ano: qExploitable,
+  } = hgInfo;
+
+  // Calculate the number of points
+  let numberOfPoints = subterraneanMarkers.length;
+
+  // Calculate the percentage of flow used
+  let qPointsPercentage = ((qTotalAnnual * 100) / qExploitable) || 0;
+
+  // Calculate the available volume
+  console.log(qExploitable , qTotalAnnual)
+  let volAvailable = (qExploitable - qTotalAnnual);
+
+  return {
+    basinName,
+    uhNameLabel,
+    uhName,
+    subsystem,
+    codPlan,
+    qExploitable,
+    numberOfPoints,
+    qUserAnnual,
+    qTotalAnnual: parseFloat(qTotalAnnual).toFixed(4),
+    qPointsPercentage,
+    volAvailable: parseFloat(volAvailable).toFixed(4),
   };
 }
 
@@ -228,7 +291,7 @@ function setInfoMarkerIcon(id, ti_id, tp_id) {
 export {
   createCircleRings,
   converterPostgresToGmaps, nFormatter,
-  analyseItsAvaiable, numberWithCommas,
+  analyzeAvailability, numberWithCommas,
   calculateCircleArea, calculateRectangleArea,
   calculatePolylineLength, calculatePolygonArea,
   setInfoMarkerIcon

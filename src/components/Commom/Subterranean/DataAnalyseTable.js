@@ -76,7 +76,7 @@ function DataAnalyseTable() {
                 <TableCell align="center" sx={{ p: 2 }}>{hgAnalyse.numberOfPoints}</TableCell>
                 <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.qTotalAnnual)}</TableCell>
                 <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.qPointsPercentage)}</TableCell>
-                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.volAvaiable)}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.volAvailable)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
