@@ -80,7 +80,19 @@ barragem: {
 
 ## Outubro/2023
 
-1. Melhorar a exposição das tabelas, no caso da tab subterrânea só mostrar a tabela subterrânea. 
+1. Subterrâneo - Exposição nas Tabelas
+    - Melhorar a exposição das tabelas, no caso da tab subterrânea só mostrar a tabela subterrânea. 
+        - 17/10/2023
+            - É possível deixar mostrar todas as outorgas nas tabelas, porém no mapa mostrar apenas as outorgas subterrâneas. Por este motivo não vou mexer agora no sentido de mostrar apenas a tabela subterrânea.
+2. Subterrâneo - Somente Resultados Subterrâneos
+    - Verificar a possibilidade de trazer somente os resultados específicos no caso da tab subterrânea e se o usuário solicitar trazer as demais outorgas, como superficial, barragens etc...
+        - 17/10/2023
+            - Deixarei paralisado no momento.
 
-2. Verificar a possibilidade de trazer somente os resultados específicos no caso da tab subterrânea e se o usuário solicitar trazer as demais outorgas, como superficial, barragens etc...
+3. Subterrâneo - Marcador Inicial e Vazão 
+    - Adicionar um marcador inicial, sendo este a busca do usuário pelas coordenadas, que gera uma vazão nula, ou a busca no cadastro do banco de dados azure que dá uma vazão específica.
+    17/10/2023
+        Iniciando hoje este trabalho.
+
+
 
