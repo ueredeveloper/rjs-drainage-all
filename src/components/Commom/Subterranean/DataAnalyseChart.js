@@ -173,7 +173,7 @@ const DataAnalyseChart = () => {
         <FormControl sx={{ display: "flex", flex: 1 }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
             <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
-                <div id="chart-container" style={{ margin: 10, width: '100%', height: '9rem' }}></div>
+                <div id="chart-container" style={{ margin: 10, width: '100%', height: '10rem' }}></div>
             </Paper>
         </FormControl>
 
