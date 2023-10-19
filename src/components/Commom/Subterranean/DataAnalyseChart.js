@@ -156,6 +156,7 @@ const DataAnalyseChart = () => {
                 emphasis: emphasisStyle,
                 // resolver quando inserir a busca de items cadastrados no outro sistema
                 data: [hgAnalyse.qUserAnnual],
+
             },
         ];
 
