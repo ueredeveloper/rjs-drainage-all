@@ -52,9 +52,9 @@ function DataAnalyseTable() {
 
         <Paper elevation={3} sx={{ margin: 0, overflow: 'auto' }}>
           <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', my: 1 }}>
-            <Typography sx={{ fontSize: 14 }}>Bacia Hidrográfica: {hgAnalyse.bacia_nome}</Typography>
-            <Typography sx={{ fontSize: 14 }}>Unidade Hidrográfica: {hgAnalyse.uh_nome} </Typography>
-            <Typography sx={{ fontSize: 14 }}>{hgAnalyse.uh_label} </Typography>
+            <Typography sx={{ fontSize: 14 }}>Bacia Hidrográfica: {hgAnalyse.basinName}</Typography>
+            <Typography sx={{ fontSize: 14 }}>Unidade Hidrográfica: {hgAnalyse.uhName} </Typography>
+            <Typography sx={{ fontSize: 14 }}>{hgAnalyse.uhNameLabel} </Typography>
           </Box>
           <Table sx={{ minWidth: 100, width: "100%" }} aria-label="simple table" size="small">
             <TableHead>

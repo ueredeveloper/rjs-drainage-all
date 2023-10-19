@@ -73,61 +73,12 @@ function nFormatter(num, digits) {
   return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 /**
- * Analisa se é possível outorgar a partir da vazão requerida, vazões outorgadas etc.
- * @param {object} hgInfo - Informações o subsistema pesquisado (hidrogeo fraturado ou poroso).
- * @param {object[]} subterraneanMarkers - Pontos subterrâneos de análise.
- * @returns {object} - Resultado da análise.
+ * Analisa a disponibilidade de recursos hídricos com base em informações e marcadores subterrâneos.
+ *
+ * @param {object} hgInfo - Informações sobre a shape (hidrogeo) fraturado ou poroso.
+ * @param {array} subterraneanMarkers - Marcadores de outorgas subterrâneas (manual ou tubular).
+ * @returns {object} - Um objeto contendo informações analisadas.
  */
-/*
-function analyseItsAvaiable(hgInfo, subterraneanMarkers) {
-  // Somatório de vazão anual
-  let qTotalAnnual = 0;
-  subterraneanMarkers.map((sMarker) => {
-    if (typeof sMarker.dt_demanda.vol_anual_ma === 'undefined') {
-      return qTotalAnnual += 0;
-    } else {
-      return qTotalAnnual += parseFloat(sMarker.dt_demanda.vol_anual_ma);
-    }
-  });
-
-  let qUserAnnual = subterraneanMarkers[0].dt_demanda.vol_anual_ma === 'undefined' ? 0 : subterraneanMarkers[0].dt_demanda.vol_anual_ma
-
-  // Vazão explotável/ano
-  let qExploitable = hgInfo.re_cm_ano;
-  // Número de pontos
-  let numberOfPoints = subterraneanPoints.length;
-  // Percentual de vazão utilizada
-  let qPointsPercentage = (Number(qTotalAnnual) * 100 / Number(qExploitable)).toFixed(4);
-  // Se nulo, zerar valor
-  if (isNaN(qPointsPercentage)) {
-    qPointsPercentage = 0;
-  }
-
-  return {
-    // Nome da bacia
-    basinName: hgInfo.bacia_nome,
-    // Unidade Hidrográfica (Label)
-    uhNameLabel: hgInfo.uh_label,
-    // Nome da Unidade Hidrográfica
-    uhName: hgInfo.uh_nome,
-    // Sistema (R3, P1)
-    subsystem: hgInfo.sistema,
-    // Código do Sistema
-    codPlan: hgInfo.cod_plan,
-    // Vazão explotável
-    qExploitable: Number(qExploitable),
-    // Número de pontos
-    numberOfPoints: Number(numberOfPoints),
-    // Vazão outorgada
-    qUserAnnual: qUserAnnual,
-    // Vazão total anual (Todos os pontos)
-    qTotalAnnual: Number(qTotalAnnual),
-    // Percentual de vazão utilizada
-    qPointsPercentage: Number(qPointsPercentage),
-    // Volume disponível
-    volAvaiable: Number((Number(qExploitable) - Number(qTotalAnnual)).toFixed(4))
-  };
-}*/
 function analyzeAvailability(hgInfo, subterraneanMarkers) {
   // Somatório de vazão anual
   let qTotalAnnual = 0;
@@ -139,10 +90,10 @@ function analyzeAvailability(hgInfo, subterraneanMarkers) {
     }
   });
 
-  // Calculate the annual user flow
+  // Cálculo de vazão anual do usuário solicitado
   let qUserAnnual = parseFloat(subterraneanMarkers[0].dt_demanda.vol_anual_ma).toFixed(4) || 0;
 
-  // Extract relevant data
+  // Extração de valores da tabela hidrogeo (fraturado ou poroso)
   let {
     bacia_nome: basinName,
     uh_label: uhNameLabel,
@@ -152,14 +103,13 @@ function analyzeAvailability(hgInfo, subterraneanMarkers) {
     re_cm_ano: qExploitable,
   } = hgInfo;
 
-  // Calculate the number of points
+  // Cálculo do números de pontos no polígono
   let numberOfPoints = subterraneanMarkers.length;
 
-  // Calculate the percentage of flow used
+  // Porcentagem de uso da vazão disponível
   let qPointsPercentage = ((qTotalAnnual * 100) / qExploitable) || 0;
 
-  // Calculate the available volume
-  console.log(qExploitable , qTotalAnnual)
+  // Cálculo de disponibilidade do subsistema
   let volAvailable = (qExploitable - qTotalAnnual);
 
   return {

@@ -33,6 +33,9 @@ subterranea: [{…}]
 superficial: null
 
 ```
+### Resumo
 
+No arquivo `tools/index.js`, o método `analyzeAvailability` foi aprimorado adicionando a vazão anual do usuário `qUserAnnual`, além de outros melhoramentos.
 
+No arquivo `/components/Commom/SearchCoords.js` foi aprimorado a solicitação de outorgas e subsistema a partir de uma coordenada.
 

@@ -40,17 +40,18 @@ export const DataProvider = ({ children }) => {
   const [radius, setRadius] = useState(600);
 
   const [hgAnalyse, setHgAnalyse] = useState({
-    "basinName": "",
-    "uhNameLabel": "",
-    "uhName": "",
-    "subsystem": "",
-    "codPlan": "",
-    "qExploitable": 10,
-    "numberOfPoints": 15,
-    "qTotalAnnual": 20,
-    "qPointsPercentage": 30,
-    "volAvaiable": 40
-})
+    basinName: "",
+    uhNameLabel: "",
+    uhName: "",
+    subsystem: "",
+    codPlan: "",
+    qExploitable: 0,
+    numberOfPoints: 0,
+    qUserAnnual: 0,
+    qTotalAnnual: 0,
+    qPointsPercentage: 0,
+    volAvailable: 0,
+  })
 
 
   // atualiza a posição do marcador no mapa

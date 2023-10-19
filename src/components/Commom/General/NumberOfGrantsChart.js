@@ -140,7 +140,7 @@ function NumberOfGrantsChart() {
   return (
 
     <FormControl sx={{ display: "flex", flex: 1 }}>
-      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico (Número de Outorgas)</FormLabel>
+      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
       <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
         <div id="e-grants-chart" style={{ margin: 10, width: '100%', height: '16rem' }}></div>
       </Paper>
