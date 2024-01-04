@@ -1,6 +1,6 @@
 {
   "name": "rjs-drainage-all",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -8,7 +8,11 @@
     "@googlemaps/react-wrapper": "^1.1.35",
     "@mui/icons-material": "^5.13.7",
     "@mui/material": "^5.13.7",
+    "@mui/utils": "^5.14.7",
+    "@testing-library/jest-dom": "^6.1.2",
+    "@testing-library/react": "^14.0.0",
     "echarts": "^5.4.3",
+    "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",

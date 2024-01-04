@@ -45,7 +45,8 @@ async function findUsers(us_nome, us_cpf_cnpj, doc_sei, proc_sei) {
     return response;
   }
 
-  const njs_drainage_url = 'https://njs-drainage.ueredeveloper.repl.co';
+  //const njs_drainage_url = 'https://njs-drainage.ueredeveloper.repl.co';
+  const njs_drainage_url = 'https://ec96a2d0-8ba3-41ec-9211-9dbcf7faee95-00-1dq8pdj62qrea.hacker.replit.dev'
 
   async function findByColumn (searchQuery) {
 
