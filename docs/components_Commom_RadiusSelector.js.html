@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/RadiusSelector.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/RadiusSelector.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useState } from "react";
+import { Slider } from "@mui/material";
+import { useData } from "../../hooks/analyse-hooks";
+
+/**
+ 
+ * Componente para ajustar o raio de pesquisa em metros.
+ * @component
+ * @returns {JSX.Element} O elemento React que representa o componente.
+ */
+function RadiusSelector() {
+
+    // Obtém o estado do raio e a função para definir o raio do contexto compartilhado
+    const { radius, setRadius } = useData();
+
+    /**
+     * Manipula a mudança no valor do Slider.
+     * @param {Object} event - O evento de mudança.
+     */
+    function handleChange(event) {
+        setRadius(event.target.value)
+    }
+
+    /**
+     * Formata o valor do Slider para exibir em metros.
+     * @param {number} value - O valor do Slider.
+     * @returns {string} O valor formatado com a unidade "metros".
+     */
+    function valueLabelFormat(value) {
+        return `${value} metros`;
+    }
+
+    return (
+        &lt;Slider sx={{ minWidth: 100, py: 3, mx: 2 }}
+            size="small"
+            getAriaValueText={valueLabelFormat}
+            valueLabelFormat={valueLabelFormat}
+            valueLabelDisplay="on"
+            step={100}
+            min={100}
+            max={2000}
+            value={radius}
+            onChange={handleChange}
+        />
+    );
+}
+
+export default RadiusSelector;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemGrantsChart.html">ElemGrantsChart</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="RadiusSelector.html">RadiusSelector</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemDrawManager">ElemDrawManager</a></li><li><a href="global.html#ElemMap">ElemMap</a></li><li><a href="global.html#MapContent">MapContent</a></li><li><a href="global.html#analyseItsAvaiable">analyseItsAvaiable</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Wed Oct 04 2023 12:50:27 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/map/ElemDrawManager.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/map/ElemDrawManager.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useContext, useEffect } from 'react';
+import { findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle } from '../../../services/geolocation';
+import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea, numberWithCommas } from '../../../tools';
+
+import redIcon from '../../../assets/png/red-icon.png';
+import { useData } from '../../../hooks/analyse-hooks';
+/**
+  * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
+  * @component
+  * @param {Object} map Map inicializado gmaps api.
+  * @param {function} setData Função de adição de objectos geométricos à variável `data`.
+  */
+const ElemDrawManager = ({ map }) => {
+
+  //const [, setMarker, , , , setOverlays] = useContext(AnalyseContext);
+  const { setMarker, setOverlays } = useData();
+
+  useEffect(() => {
+
+    let draw = new window.google.maps.drawing.DrawingManager({
+      //drawingMode: window.google.maps.drawing.OverlayType.MARKER,
+      drawingControl: true,
+      drawingControlOptions: {
+        position: window.google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: [
+          window.google.maps.drawing.OverlayType.MARKER,
+          window.google.maps.drawing.OverlayType.CIRCLE,
+          window.google.maps.drawing.OverlayType.POLYGON,
+          window.google.maps.drawing.OverlayType.RECTANGLE,
+          window.google.maps.drawing.OverlayType.POLYLINE
+        ],
+      },
+      markerOptions: {
+        // icon: "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png",
+      },
+      circleOptions: {
+        fillColor: "#ffff00",
+        fillOpacity: 0.2,
+        strokeWeight: 1,
+        clickable: false,
+        editable: true,
+        zIndex: 1,
+      },
+    });
+
+    let marker;
+
+    window.google.maps.event.addListener(draw, 'overlaycomplete', async function (event) {
+
+      if (event.type === 'marker') {
+
+        if (marker) {
+          marker.setMap(null);
+        }
+        // obter o marcador a partir do ponto clicado
+        marker = event.overlay;
+        // obter posição do marcador
+        let position = marker.position;
+        // retirar o marcador do mapa
+        marker.setMap(null);
+        // editar posição do marcador, este sim será mostrado no mapa
+        setMarker(prev => {
+          return {
+            ...prev,
+            int_latitude: position.lat(),
+            int_longitude: position.lng()
+          }
+        })
+
+      }
+      if (event.type === 'circle') {
+
+        let circle = event.overlay;
+        const { center, radius } = circle;
+        // adicionar o infowindow na parte superior do cículo
+        let bounds = circle.getBounds();
+        var lat = bounds.getNorthEast().lat();
+        var lng = circle.getCenter().lng();
+
+        let markers = await findAllPointsInCircle(
+          {
+            center: { lng: center.lng(), lat: center.lat() },
+            radius: parseInt(radius)
+          }
+        );
+        let id = Date.now();
+
+        let shape = {
+          id: Date.now(),
+          type: 'circle',
+          position: { lat: lat, lng: lng },
+          map: map,
+          draw: event.overlay,
+          markers: markers,
+          radius: radius,
+          area: calculateCircleArea(radius)
+
+        }
+
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
+      }
+
+      if (event.type === 'polygon') {
+
+        let polygon = event.overlay;
+        // retorna array de coordenada no formato gmaps para busca no servidor. Ex: [{lat: -15, lng: -47}, ...]   
+        let serverPolygon = [];
+        polygon.getPath().getArray().forEach(p => {
+          serverPolygon.push([p.lng(), p.lat()])
+        });
+        serverPolygon = [...serverPolygon, serverPolygon[0]];
+
+        // Pega as coordenadas do polígono
+        let paths = polygon.getPaths();
+
+        // Inicialização das variáveis
+        let lat = null;
+        let lng = null;
+
+        // Itera para buscar a coordenada mais alta no polígono para que o infowindow fique sempre acima do polígono.
+        paths.forEach(function (path) {
+          path.forEach(function (point) {
+            var latitude = point.lat();
+            var longitude = point.lng();
+
+            // Checar a coordenada mais alta
+            if (lat === null || latitude > lat) {
+              lat = latitude;
+              lng = longitude;
+            }
+          });
+        });
+
+        let shape = {
+          id: Date.now(),
+          type: 'polygon',
+          position: { lat: lat, lng: lng },
+          map: map,
+          draw: event.overlay,
+          markers: await findAllPointsInPolygon(serverPolygon),
+          area: calculatePolygonArea(event.overlay)
+        }
+        /*
+        let infowindow = new window.google.maps.InfoWindow({
+          content: setContent(shape),
+          map
+        });
+        infowindow.setPosition({ lat: lat, lng: lng });
+        infowindow.setMap(map);*/
+
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
+
+      }
+      /* Criação de um polígono a partir de um retângulo gmaps api
+      */
+      if (event.type === 'rectangle') {
+
+        let bounds = event.overlay.getBounds();
+        let NE = bounds.getNorthEast();
+        let SW = bounds.getSouthWest();
+        // adicionar infowindow na parte superior direita do retângulo
+        let lat = NE.lat();
+        let lng = NE.lng();
+
+        let shape = {
+          id: Date.now(),
+          type: 'rectangle',
+          position: { lat: lat, lng: lng },
+          map: map,
+          draw: event.overlay,
+          NE: NE,
+          SW: SW,
+          area: calculateRectangleArea(event.overlay.getBounds()),
+          markers: await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
+        }
+
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
+
+      }
+      if (event.type === 'polyline') {
+
+        let polyline = event.overlay;
+        let path = polyline.getPath();
+
+        // Obtenha o índice do último ponto
+        var lastPointIndex = path.getLength() - 1;
+
+        // Obtenha as coordenadas do último ponto
+        var lat = path.getAt(lastPointIndex).lat();
+        var lng = path.getAt(lastPointIndex).lng();
+
+        let shape = {
+          id: Date.now(),
+          type: 'polyline',
+          position: { lat: lat, lng: lng },
+          map: map,
+          markers: {
+            "subterranea": [],
+            "superficial": [],
+            "barragem": [],
+            "lancamento_efluentes": [],
+            "lancamento_pluviais": []
+          },
+          draw: polyline,
+
+          meters: calculatePolylineLength(polyline)
+
+        }
+
+        setOverlays(prev => {
+          return {
+            ...prev,
+            shapes: [...prev.shapes, shape]
+          }
+        });
+      }
+    })
+
+    draw.setMap(map);
+
+  }, [map]);
+
+  return null;
+
+};
+
+export default ElemDrawManager;
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

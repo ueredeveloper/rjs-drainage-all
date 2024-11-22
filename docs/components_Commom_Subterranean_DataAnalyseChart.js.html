@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/Subterranean/DataAnalyseChart.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/Subterranean/DataAnalyseChart.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useEffect, useState } from 'react';
+import * as echarts from 'echarts';
+import { FormControl, FormLabel, Paper } from '@mui/material';
+import { useData } from '../../../hooks/analyse-hooks';
+
+/**
+ * Componente para renderizar um gráfico de análise de dados usando ECharts.
+ * @component
+ */
+const DataAnalyseChart = () => {
+
+    /**
+    * Estado para armazenar a instância do gráfico ECharts.
+    * @type {echarts.ECharts | null}
+    */
+    const [myChart, setMyChart] = useState(null);
+
+    const { hgAnalyse } = useData();
+
+    const emphasisStyle = {
+        itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0,0,0,0.3)',
+        },
+    };
+
+    const options = {
+        legend: {
+            data: ['Q explotável', 'Q outorgada', 'Q Disponível', 'Q Usuário'],
+            left: '5%',
+        },
+        brush: {
+            // toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+            //xAxisIndex: 0,
+        },
+        toolbox: {
+            feature: {
+                /*  magicType: {
+                      type: ['stack'],
+                  },*/
+                dataView: {},
+            },
+        },
+        tooltip: {},
+        xAxis: {
+            data: [],
+            name: 'Vazões',
+            axisLine: { onZero: true },
+            splitLine: { show: false },
+            splitArea: { show: false },
+        },
+        yAxis: {
+            type: 'log' 
+        },
+        grid: {
+            left: 30,
+            top: 150,
+            bottom: 110,
+        },
+        series: [
+            {
+                name: 'Q explotável',
+                type: 'bar',
+                stack: '1',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qExploitable],
+            },
+            {
+                name: 'Q outorgada',
+                type: 'bar',
+                stack: '2',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qTotalAnnual],
+            },
+            {
+                name: 'Q Disponível',
+                type: 'bar',
+                stack: '3',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.volAvailable],
+            },
+            {
+                name: 'Q Usuário',
+                type: 'bar',
+                stack: '4',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qUserAnnual],
+            },
+        ]
+    };
+
+    useEffect(() => {
+        /**
+        * Inicializa uma instância do gráfico ECharts no elemento com ID 'chart-container'.
+        * @type {echarts.ECharts}
+        */
+        let myChart = echarts.init(document.getElementById('chart-container'));
+
+        myChart.setOption(options);
+
+        // manipulação das opções no gráfico 
+        myChart.on('brushSelected', function (params) {
+            var brushed = [];
+            var brushComponent = params.batch[0];
+            for (var sIdx = 0; sIdx &lt; brushComponent.selected.length; sIdx++) {
+                var rawIndices = brushComponent.selected[sIdx].dataIndex;
+                brushed.push('[Series ' + sIdx + '] ' + rawIndices.join(', '));
+            }
+            myChart.setOption({
+                title: {
+                    backgroundColor: '#333',
+                    // text: 'SELECTED DATA INDICES: \n' + brushed.join('\n'),
+                    bottom: 0,
+                    right: '10%',
+                    width: 100,
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#fff',
+                    },
+                },
+            });
+        });
+        // Define a instância do gráfico no estado
+        setMyChart(myChart)
+    }, []);
+
+    useEffect(() => {
+
+        let newOptions = { ...options };
+        let series = [
+            {
+                name: 'Q explotável',
+                type: 'bar',
+                stack: '1',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qExploitable],
+            },
+            {
+                name: 'Q outorgada',
+                type: 'bar',
+                stack: '2',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.qTotalAnnual],
+            },
+            {
+                name: 'Q Disponível',
+                type: 'bar',
+                stack: '3',
+                emphasis: emphasisStyle,
+                data: [hgAnalyse.volAvailable],
+            },
+            {
+                name: 'Q Usuário',
+                type: 'bar',
+                stack: '4',
+                emphasis: emphasisStyle,
+                // resolver quando inserir a busca de items cadastrados no outro sistema
+                data: [hgAnalyse.qUserAnnual],
+            },
+        ];
+
+        newOptions.series = series;
+
+
+        if (myChart) {
+
+            myChart.setOption(newOptions)
+        }
+
+    }, [hgAnalyse])
+
+    return (
+        &lt;FormControl sx={{ display: "flex", flex: 1 }}>
+            &lt;FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico&lt;/FormLabel>
+            &lt;Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
+                &lt;div id="chart-container" style={{ margin: 10, width: '100%', height: '9rem' }}>&lt;/div>
+            &lt;/Paper>
+        &lt;/FormControl>
+
+    );
+};
+
+export default DataAnalyseChart;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

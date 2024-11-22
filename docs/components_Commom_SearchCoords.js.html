@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/SearchCoords.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/SearchCoords.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Componente para entrada e manipulação de coordenadas.
+ * @returns {JSX.Element} O elemento React que representa o componente.
+ */
+import React, { useState, useEffect } from "react";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
+import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import IconButton from "@mui/material/IconButton";
+import { findAllPointsInASubsystem, findAllPointsInCircle } from "../../services/geolocation";
+import { useData } from "../../hooks/analyse-hooks";
+import CircleRadiusSelector from "./CircleRadiusSelector";
+import WellTypeSelector from "./Subterranean/WellTypeSelector";
+import { analyzeAvailability } from "../../tools";
+
+/**
+ * Busca outorgas por uma coordenada indicada pelo usário.
+ * @component
+ * @returns {JSX.Element} Retorn elemento React que representa o componente SearchCoords.
+ */
+function SearchCoords({ value }) {
+    // Variável de estado para controlar o status de carregamento
+    const [loading, setLoading] = useState(false);
+    // Estado para o marcador (marker) e desenhos no map (overlays)
+    const { marker, setMarker, setOverlays, radius, setHgAnalyse } = useData();
+    // posição a ser analisada
+    const [position, setPosition] = useState(marker);
+
+    useEffect(() => {
+        setPosition(marker);
+    }, [marker]);
+
+    /**
+     * Manipula o clique no botão de pesquisa.
+     * Atualiza o marcador com as coordenadas atuais, pesquisa marcadores no raio especificado
+     * e adiciona uma forma de cículo ou polígono ao objeto overlays.
+     * @async
+     */
+    async function handleOnClick() {
+
+        setMarker(prev => {
+            return {
+                ...prev,
+                int_latitude: position.int_latitude,
+                int_longitude: position.int_longitude
+            }
+        });
+
+        if (value === 0) {
+            // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
+            let markers = await findAllPointsInCircle(
+                {
+                    center: { lng: position.int_longitude, lat: position.int_latitude },
+                    radius: parseInt(radius)
+                }
+            );
+            let id = Date.now();
+            // salvar uma shape, polígono, com o raio solicitado.
+            let shape = {
+                id: Date.now(),
+                type: "circle",
+                position: { lat: position.int_latitude, lng: position.int_longitude },
+                map: null,
+                draw: null,
+                markers: markers,
+                radius: radius,
+                area: null
+
+            }
+
+            setOverlays(prev => {
+                return {
+                    ...prev,
+                    shapes: [...prev.shapes, shape]
+                }
+            });
+
+        } else if (value == 1) {
+
+            let { tp_id, int_latitude, int_longitude } = marker;
+
+            // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
+            await findAllPointsInASubsystem(tp_id, int_latitude, int_longitude).then(markers => {
+                // Analisar disponibilidade, se é possível outorgar.
+                let hidrogeoInfo = markers.hidrogeo[0].info;
+                // Adiciona o primeiro marcador com vazão nula, pois só se está buscando por coordenadas, sem se tratar de vazão.
+                let subterraneanMarkers = [
+                    {
+                        int_latitude: position.int_latitude,
+                        int_longitude: position.int_longitude,
+                        dt_demanda: { demandas: [], vol_anual_ma: 5000000.4585 }
+                    }, ...markers.subterranea
+                ];
+
+                let hgAnalyse = analyzeAvailability(hidrogeoInfo, subterraneanMarkers);
+                // setar Valor que será utilzado no componente DataAnalyseTable.js e DataAnalyseChart.js
+                setHgAnalyse(hgAnalyse)
+
+                let id = Date.now();
+                // Setar polígono solicitado.
+                let shape = {
+                    id: Date.now(),
+                    type: "polygon",
+                    position: { lat: position.int_latitude, lng: position.int_longitude },
+                    map: null,
+                    draw: null,
+                    markers: markers,
+                    radius: radius,
+                    area: null
+
+                }
+
+                setOverlays(prev => {
+                    return {
+                        ...prev,
+                        shapes: [...prev.shapes, shape]
+                    }
+                });
+            })
+
+
+
+        }
+
+    }
+
+    /**
+     * Manipula a alteração de valores nos campos de entrada de coordenadas.
+     * @param {Object} event - O evento de alteração.
+     */
+    function handleOnTextFieldChange(event) {
+        let { name, value } = event.target;
+
+        setPosition(prev => {
+            return {
+                ...prev,
+                [name]: value
+            }
+        })
+
+    }
+
+    return (
+        &lt;FormControl style={{ display: "flex", flexDirection: "column" }}>
+            &lt;FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas&lt;/FormLabel>
+            &lt;Paper elevation={3} sx={{ margin: 0 }}>
+                {/* Caixas de entrada: latitude e longitude */}
+                &lt;Box id="sc-container" sx={{ display: "flex", flexFlow: "row wrap" }}>
+                    &lt;Box id="sc-text-fields" sx={{ display: "flex", flex: 4, flexDirection: "row" }}>
+                        &lt;TextField
+                            sx={{
+                                my: 1,
+                                mx: 1,
+                                minWidth: "3rem",
+                                flex: 1
+                            }}
+                            label="Latitude"
+                            color="secondary"
+                            name="int_latitude"
+                            value={position.int_latitude}
+                            onChange={handleOnTextFieldChange}
+                            size="small"
+                        />
+                        &lt;TextField
+                            sx={{
+                                my: 1,
+                                mx: 1,
+                                minWidth: "3rem",
+                                flex: 1
+
+                            }}
+
+                            color="secondary"
+                            label="Longitude"
+                            name="int_longitude"
+                            value={position.int_longitude}
+                            onChange={handleOnTextFieldChange}
+                            size="small"
+                        />
+                    &lt;/Box>
+                    {value === 0 ?
+                        &lt;Box id="sc-controls" sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
+                            &lt;CircleRadiusSelector />
+                        &lt;/Box>
+                        : value === 1 ?
+                            &lt;Box id="sc-controls" sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
+                                &lt;WellTypeSelector />
+                            &lt;/Box>
+                            :
+                            null}
+
+                    &lt;Box id="sc-search-copy-controls" sx={{ minWidth: 100 }}>
+                        {
+                            loading ?
+                                &lt;Fade
+                                    sx={{ color: "secondary.main" }}
+                                    in={loading}
+                                    style={{
+                                        transitionDelay: loading ? "800ms" : "0ms",
+                                    }}
+                                    unmountOnExit
+                                >
+                                    &lt;CircularProgress size={25} />
+                                &lt;/Fade>
+                                :
+                                &lt;IconButton color="secondary" size="large" onClick={() => { handleOnClick().then(() => { setLoading(false); }); }}>
+                                    &lt;SearchIcon />
+                                &lt;/IconButton>
+                        }
+                        &lt;IconButton color="secondary" size="large">
+                            &lt;ContentCopyIcon />
+                        &lt;/IconButton>
+                    &lt;/Box>
+                &lt;/Box>
+            &lt;/Paper>
+        &lt;/FormControl>
+    );
+}
+
+export default SearchCoords;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

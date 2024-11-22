@@ -1,5 +1,5 @@
 //const url = 'https://njs-drainage.ueredeveloper.repl.co';
-const url = 'https://ec96a2d0-8ba3-41ec-9211-9dbcf7faee95-00-1dq8pdj62qrea.hacker.replit.dev'
+const url = 'https://njs-drainage-ueredeveloper.replit.app';
 /**
  * Encontra pontos dentro de um polígono.
  *
