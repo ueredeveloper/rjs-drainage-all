@@ -1,4 +1,4 @@
-import { mkrBlueIcon, mkrBrownIcon, mkrGreenIcon, mkrOrangeIcon, mkrPinkIcon, mkrPurpleIcon, mkrRedIcon, mkrYellowIcon } from "../assets";
+import { mkrBlueIcon, mkrGreenIcon, mkrOrangeIcon, mkrPinkIcon, mkrPurpleIcon, mkrRedIcon } from "../assets";
 import { iwBarragemIcon, iwEfluenteIcon, iwManualIcon, iwPluvialIcon, iwSuperficialIcon, iwTubularIcon } from "../assets/svg/svgs-icons";
 
 /**

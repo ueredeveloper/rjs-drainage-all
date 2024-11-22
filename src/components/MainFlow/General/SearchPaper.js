@@ -30,9 +30,7 @@ function SearchPaper() {
 
     async function findByColumnHandler() {
 
-
         let markers = await findByColumn(searchQuery);
-        let id = Date.now();
 
         let shape = {
             id: Date.now(),

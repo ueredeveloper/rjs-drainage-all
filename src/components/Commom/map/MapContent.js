@@ -18,9 +18,7 @@ import ElemPolyline from './ElemPolyline';
  */
 function MapContent({ checkBoxState }) {
   // Estados do componente
-  const [mode, setMode] = useState('light');
-  
-  
+  const [mode] = useState('light');
 
   // Obtém os estados do contexto de análise
   const { map, setMap, marker, overlays, setOverlays, shapesFetched } = useData();
@@ -42,10 +40,12 @@ function MapContent({ checkBoxState }) {
         return 'lancamento_efluentes';
       case 'Barragens':
         return 'barragem';
+      default:
+        return 'Desconhecido'
     }
   }
 
-  const { selectedsCharts, setSelectedsCharts } = useData();
+  const { selectedsCharts } = useData();
 
   // Estado para formas selecionadas. Renderizar marcadores de acordo com o que o usuário escolho no chart.
   const [selectedsShapes, setSelectedsShapes] = useState(['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem']);
@@ -72,7 +72,7 @@ function MapContent({ checkBoxState }) {
     });
   }, [selectedsCharts]);
 
-  const RenderPolylines = (polylines)=>{
+  const RenderPolylines = (polylines) => {
     if (polylines[0].shape.type === 'MultiPolygon') {
       return polylines[0].shape.coordinates.map((coord, i) => {
         return coord.map((_coord, ii) => {
@@ -130,12 +130,12 @@ function MapContent({ checkBoxState }) {
             }
           });
         })}
-        {overlays.shapes.map(sh=>{
-            if (sh.markers.hidrogeo!==undefined){
-              return RenderPolylines(sh.markers.hidrogeo)
-            }
+        {overlays.shapes.map(sh => {
+          if (sh.markers.hidrogeo !== undefined) {
+            return RenderPolylines(sh.markers.hidrogeo)
+          }
         })}
-     
+
       </Wrapper>
     </Box>
   );

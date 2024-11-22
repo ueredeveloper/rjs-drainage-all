@@ -7,7 +7,5 @@ import mkrPinkIcon from './png/pink-icon.png'
 import mkrPurpleIcon from './png/purple-icon.png'
 import mkrYellowIcon from './png/yellow-icon.png';
 
-import iwManualIcon from './svg/svgs-icons'
-
 export {
     mkrRedIcon, mkrBlueIcon, mkrBrownIcon, mkrGreenIcon, mkrOrangeIcon, mkrPinkIcon, mkrPurpleIcon, mkrYellowIcon}

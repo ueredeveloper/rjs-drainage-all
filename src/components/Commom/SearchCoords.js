@@ -56,7 +56,7 @@ function SearchCoords({ value }) {
                     radius: parseInt(radius)
                 }
             );
-            let id = Date.now();
+
             // salvar uma shape, polígono, com o raio solicitado.
             let shape = {
                 id: Date.now(),
@@ -77,7 +77,7 @@ function SearchCoords({ value }) {
                 }
             });
 
-        } else if (value == 1) {
+        } else if (value === 1) {
 
             let { tp_id, int_latitude, int_longitude } = marker;
 
@@ -98,7 +98,6 @@ function SearchCoords({ value }) {
                 // setar Valor que será utilzado no componente DataAnalyseTable.js e DataAnalyseChart.js
                 setHgAnalyse(hgAnalyse)
 
-                let id = Date.now();
                 // Setar polígono solicitado.
                 let shape = {
                     id: Date.now(),
@@ -118,10 +117,7 @@ function SearchCoords({ value }) {
                         shapes: [...prev.shapes, shape]
                     }
                 });
-            })
-
-
-
+            });
         }
 
     }

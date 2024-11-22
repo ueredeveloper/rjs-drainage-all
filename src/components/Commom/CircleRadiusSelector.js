@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Slider } from "@mui/material";
 import { useData } from "../../hooks/analyse-hooks";
 

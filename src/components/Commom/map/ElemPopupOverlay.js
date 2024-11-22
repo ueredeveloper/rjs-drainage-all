@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { numberWithCommas } from '../../../tools';
 
 /**
@@ -176,12 +176,14 @@ const setContent = (draw) => {
     }
 
     if (draw.type === 'polyline') {
+
         let coordinates = [];
         let htmlCoords = '';
 
         draw.draw.getPath().forEach((latLng) => {
             coordinates.push({ lat: latLng.lat(), lng: latLng.lng() });
         });
+
         coordinates.forEach((coordinate, index) => {
             htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}<br>`;
         });
@@ -210,7 +212,7 @@ const setContent = (draw) => {
     }
     if (draw.type === 'polygon') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
-    
+
         let areaM2 = draw.area.toFixed(2)
         let formatAreaM2 = numberWithCommas(areaM2)
         let areakKm2 = draw.area / 1000000

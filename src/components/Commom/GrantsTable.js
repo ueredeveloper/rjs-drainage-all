@@ -322,23 +322,6 @@ function GrantsTable({ markers }) {
 
   }, [markers]);
 
-  useEffect(() => {
-
-    let _sel_markers = markers.filter(r => {
-      return selected.includes(r.id)
-    });
-
-    //let _hg_analyse = analyseItsAvaiable(hg_info, _sel_markers);
-    /*
-        setContext((prev) => {
-          return {
-            ...prev,
-            sel_markers: _sel_markers,
-            hg_analyse: _hg_analyse,
-          };
-        });*/
-
-  }, [selected])
 
   const handleRequestSort = useCallback(
     (event, newOrderBy) => {
@@ -442,9 +425,6 @@ function GrantsTable({ markers }) {
     [order, orderBy]
   );
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
 
   const isSelected = (id) => selected.indexOf(id) !== -1;
 

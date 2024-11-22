@@ -1,8 +1,7 @@
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle } from '../../../services/geolocation';
-import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea, numberWithCommas } from '../../../tools';
+import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea } from '../../../tools';
 
-import redIcon from '../../../assets/png/red-icon.png';
 import { useData } from '../../../hooks/analyse-hooks';
 /**
   * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
@@ -83,7 +82,6 @@ const ElemDrawManager = ({ map }) => {
             radius: parseInt(radius)
           }
         );
-        let id = Date.now();
 
         let shape = {
           id: Date.now(),
@@ -201,8 +199,8 @@ const ElemDrawManager = ({ map }) => {
         var lastPointIndex = path.getLength() - 1;
 
         // Obtenha as coordenadas do último ponto
-        var lat = path.getAt(lastPointIndex).lat();
-        var lng = path.getAt(lastPointIndex).lng();
+        let lat = path.getAt(lastPointIndex).lat();
+        let lng = path.getAt(lastPointIndex).lng();
 
         let shape = {
           id: Date.now(),

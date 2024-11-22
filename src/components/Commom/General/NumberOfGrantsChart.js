@@ -33,6 +33,9 @@ function NumberOfGrantsChart() {
 
       case 'barragem':
         return 'Barragens';
+     
+      default:
+        return 'Desconhecido';
     }
   }
 
