@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/General/ElemGrantsChart.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/General/ElemGrantsChart.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useEffect, useState } from 'react';
+import * as echarts from 'echarts';
+import { useData } from '../../../hooks/analyse-hooks';
+import { FormControl, FormLabel, Paper } from '@mui/material';
+
+/**
+ * Componente que exibe um gráfico com contagem de concessões de outorga por tipo.
+ * @component
+ */
+function ElemGrantsChart() {
+  // Estado para armazenar informações do contexto de análise.
+  const { overlays, setSelectedsCharts } = useData();
+
+  /**
+   * Converte o nome de uma forma (shape) em um nome mais legível.
+   *
+   * @param {string} shapeName - O nome da forma a ser convertido.
+   * @returns {string} O nome legível da forma.
+   */
+  function convertOptionsDataName(shapeName) {
+    switch (shapeName) {
+      case 'subterranea':
+        return 'Subterrâneas';
+
+      case 'superficial':
+        return 'Superficiais';
+
+      case 'lancamento_pluviais':
+        return 'Pluviais';
+
+      case 'lancamento_efluentes':
+        return 'Efluentes';
+
+      case 'barragem':
+        return 'Barragens';
+    }
+  }
+
+  // Opções iniciais para o gráfico.
+  let options = {
+    color: [
+      "#5470c6", // azul -> subterrânea
+      "#91cc75", // verde -> superficial
+      "#fac858", // laranja -> pluviais
+      "#BD1A8E", // vermelho -> efluentes
+      "#9a60b4", // roxo -> barragem
+      "#3ba272",
+      "#fc8452",
+      "#9a60b4",
+      "#ea7ccc",
+    ],
+    legend: {
+      top: 'top',
+    },
+    toolbox: {
+      show: true,
+      feature: {
+        mark: { show: true },
+        dataView: { show: true, readOnly: false },
+        restore: { show: false },
+        saveAsImage: { show: false }
+      }
+    },
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [
+      {
+        name: '',
+        type: 'pie',
+        radius: [50, 100],
+        center: ['50%', '50%'],
+        roseType: 'area',
+        itemStyle: {
+          borderRadius: 8
+        },
+        data: [
+          { value: 0, name: 'Subterrâneas' },
+          { value: 0, name: 'Superficiais' },
+          { value: 0, name: 'Pluviais' },
+          { value: 0, name: 'Efluentes' },
+          { value: 0, name: 'Barragens' }
+        ]
+
+      }
+    ]
+  };
+
+  const [myChart, setMyChart] = useState(null)
+
+  useEffect(() => {
+    // Cria uma instância do ECharts
+    let myChart = echarts.init(document.getElementById('myChart'));
+
+    // Define as opções para o gráfico
+    myChart.setOption(options);
+
+    myChart.on('legendselectchanged', function (event) {
+
+      setSelectedsCharts(event.selected)
+
+    });
+
+    setMyChart(myChart)
+
+    // Limpa a instância do gráfico quando o componente é desmontado
+    return () => {
+      myChart.dispose();
+    };
+  }, []);
+
+  // Efeito para atualizar o gráfico com base no estado das caixas de seleção.
+  useEffect(() => {
+
+    const newOptions = { ...options }; // Cria uma cópia das opções
+    let newOptionsData = [];
+
+    overlays.shapes.map((shape, i) => {
+
+      let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
+        let _data = options.series[0].data.find(item => item.name === convertOptionsDataName(shapeName))
+        if (shape.markers[shapeName] !== null) {
+          return { ..._data, value: shape.markers[shapeName].length };
+        }
+        return { ..._data, value: 0 };
+      });
+
+      newData.forEach(data => {
+        newOptionsData.push(data)
+      })
+      newOptions.series[0].data = newOptionsData;
+    });
+
+    if (myChart) {
+      myChart.setOption(newOptions)
+    }
+
+  }, [overlays]);
+
+  return (
+
+    &lt;FormControl sx={{ display: "flex", flex: 1 }}>
+      &lt;FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico&lt;/FormLabel>
+      &lt;Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
+        &lt;div id="myChart" style={{ margin: 10, width: '100%', height: '16rem' }}>&lt;/div>
+      &lt;/Paper>
+    &lt;/FormControl>
+
+  );
+}
+
+export default ElemGrantsChart;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemGrantsChart.html">ElemGrantsChart</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyseItsAvaiable">analyseItsAvaiable</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Mon Oct 16 2023 10:06:18 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

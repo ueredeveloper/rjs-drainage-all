@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/map/MapContent.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/map/MapContent.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useEffect, useState } from 'react';
+import { Wrapper } from "@googlemaps/react-wrapper";
+import { Box } from '@mui/material';
+import ElemMap from './ElemMap';
+import ElemDrawManager from './ElemDrawManager';
+import ElemMarker from './ElemMarker';
+import ElemPopupOverlay from './ElemPopupOverlay';
+import ElemPolygon from './ElemPolygon';
+import { useData } from '../../../hooks/analyse-hooks';
+import ElemPolyline from './ElemPolyline';
+
+/**
+ * Componente que representa o conteúdo do mapa.
+ * @component
+ * @param {Object} props - As propriedades do componente.
+ * @param {boolean} props.checkBoxState - O estado das caixas de seleção.
+ * @returns {JSX.Element} O componente de conteúdo do mapa.
+ */
+function MapContent({ checkBoxState }) {
+  // Estados do componente
+  const [mode, setMode] = useState('light');
+  
+  
+
+  // Obtém os estados do contexto de análise
+  const { map, setMap, marker, overlays, setOverlays, shapesFetched } = useData();
+
+  /**
+     * Função para converter um nome de dado em um nome de forma.
+     * @param {string} dataName - O nome do dado.
+     * @returns {string} O nome da forma correspondente.
+     */
+  function convertToShapeName(dataName) {
+    switch (dataName) {
+      case 'Subterrâneas':
+        return 'subterranea';
+      case 'Superficiais':
+        return 'superficial';
+      case 'Pluviais':
+        return 'lancamento_pluviais';
+      case 'Efluentes':
+        return 'lancamento_efluentes';
+      case 'Barragens':
+        return 'barragem';
+    }
+  }
+
+  const { selectedsCharts, setSelectedsCharts } = useData();
+
+  // Estado para formas selecionadas. Renderizar marcadores de acordo com o que o usuário escolho no chart.
+  const [selectedsShapes, setSelectedsShapes] = useState(['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem']);
+
+
+  useEffect(() => {
+
+    let keys = Object.keys(selectedsCharts)
+    keys.forEach((key) => {
+      let tableName = convertToShapeName(key);
+      if (selectedsCharts[key] === true) {
+        setSelectedsShapes(prev => {
+          // Verifica se existe o nome selecionado, se existir retira
+          const selecteds = prev.filter(s => s !== tableName)
+          // Inclui o nome selecionado
+          return [...selecteds, tableName]
+        })
+      } else {
+        setSelectedsShapes(prev => {
+          // Filtra para retirar nome não selecionado
+          return [...prev.filter(prev => prev != tableName)]
+        })
+      }
+    });
+  }, [selectedsCharts]);
+
+  const RenderPolylines = (polylines)=>{
+    if (polylines[0].shape.type === 'MultiPolygon') {
+      return polylines[0].shape.coordinates.map((coord, i) => {
+        return coord.map((_coord, ii) => {
+          return (&lt;ElemPolyline key={ii} coord={_coord} map={map} />)
+        })
+      })
+    }
+    else {
+      return polylines[0].shape.coordinates.map((coord, i) => {
+        return (&lt;ElemPolyline key={i} coord={coord} map={map} />)
+      })
+    }
+  }
+
+
+  return (
+    &lt;Box id="map-box" sx={{ height: '100%', width: '100%' }}>
+      &lt;Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
+        {/* Componentes relacionados ao mapa */}
+        &lt;ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
+        &lt;ElemDrawManager map={map} />
+        &lt;ElemMarker
+          info={marker}
+          map={map}
+        />
+
+        {/* Renderização dos marcadores */}
+        {overlays.shapes.map(shape => {
+          return selectedsShapes.map(type => {
+            if (shape.markers[type] !== null) {
+              return shape.markers[type].map((marker, i) => {
+                return &lt;ElemMarker
+                  key={'marker-' + i}
+                  info={marker}
+                  map={map}
+                />;
+              });
+            } else { return null }
+          });
+        })}
+
+        {/* Renderização das sobreposições */}
+        {overlays.shapes.map((shape, i) => {
+          return &lt;ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />;
+        })}
+
+        {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
+        {shapesFetched.map((shape) => {
+          return checkBoxState.map(cbState => {
+            if (cbState.checked === true &amp;&amp; cbState.name === shape.name) {
+              return shape.shape.map((sh, ii) => {
+
+                return &lt;ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+              });
+            }
+          });
+        })}
+        {overlays.shapes.map(sh=>{
+            if (sh.markers.hidrogeo!==undefined){
+              return RenderPolylines(sh.markers.hidrogeo)
+            }
+        })}
+     
+      &lt;/Wrapper>
+    &lt;/Box>
+  );
+}
+
+export default MapContent;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/map/MapControllers.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/map/MapControllers.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>
+
+import React, { useEffect, useState } from 'react';
+import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@mui/material';
+import LayersClearIcon from '@mui/icons-material/LayersClear';
+import { initialsStates } from '../../../initials-states';
+import { fetchShape } from '../../../services/shapes';
+import { converterPostgresToGmaps } from '../../../tools';
+import { useData } from '../../../hooks/analyse-hooks';
+/**
+ * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
+ * @component
+ * @requires converterPostgresToGmaps
+ * @requires useData
+ * @requires fetchShape
+ * @requires initialsStates
+ * @returns {JSX.Element} JSX do componente MapControllers.
+ */
+function MapControllers({ updateCheckBoxState }) {
+
+    /**
+     * Inicializa o estado das caixas de seleção com base nos dados.
+     * @param {Object} data - Dados para inicialização das caixas de seleção.
+     * @returns {Array} Estado inicial das caixas de seleção.
+     */
+    const initializeCheckBoxState = (data) => {
+        const initialState = [];
+        for (const propertyName in data) {
+            initialState.push({ name: propertyName, checked: data[propertyName] });
+        }
+
+        return initialState;
+    };
+
+    const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
+    const { overlays, setOverlays, shapesFetched, setShapesFetched } = useData();
+
+    /**
+     * Cria um objeto de propriedades para a caixa de seleção.
+     * @param {Object} elem - Elemento da caixa de seleção.
+     * @returns {Object} Propriedades da caixa de seleção.
+     */
+    const createCheckboxProps = (elem) => {
+        let chBoxProperties = {
+            name: elem.name,
+            checked: elem.checked,
+            onChange: () => { handleChange(elem) },
+        };
+        return chBoxProperties;
+    };
+
+    /**
+     * Obtém o texto do rótulo com base no índice dos elementos da interface do usuário.
+     * @param {number} index - Índice do elemento.
+     * @returns {string} Texto do rótulo.
+     */
+    const createLabelText = (index) => {
+        return mapControllersSchema.uischema.elements[index].label;
+    }
+
+    useEffect(() => {
+
+        checkBoxState.map(async cbState => {
+            if (cbState.checked === true) {
+                // verificar se shapesFetched está vazio
+                if (shapesFetched.length === 0) {
+                    const _shape = await fetchShape(cbState.name).then(__shape => {
+                        // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
+                        return __shape.map(sh => {
+                            return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
+                        })
+                    });
+                    setShapesFetched(prev => [...prev, { name: cbState.name, shape: _shape }]);
+                } else {
+                    // verifica se a shape está presente na array shapesFetched
+                    let searchShapesFetched = shapesFetched.find(st => st.name === cbState.name);
+                    // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
+                    // Assim, não se repete solicitação de camada no servidor.]
+                    if (searchShapesFetched === undefined) {
+                        const _shape = await fetchShape(cbState.name).then(__shape => {
+                            return __shape.map(sh => {
+
+                                return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
+                            })
+                        });
+                        setShapesFetched(prev => [...prev, { name: cbState.name, shape: _shape }]);
+                    }
+                }
+            }
+        });
+
+    }, [checkBoxState]);
+
+    /**
+     * Manipula o evento de mudança da caixa de seleção.
+     * @param {Object} elem - Elemento da caixa de seleção.
+     */
+    const handleChange = (elem) => {
+        let _checkBoxState = checkBoxState.map((ch, i) => {
+            if (ch.name === elem.name) {
+                return { name: ch.name, checked: !ch.checked };
+            } else {
+                return ch;
+            }
+        });
+        setCheckBoxState(_checkBoxState);
+        updateCheckBoxState(_checkBoxState)
+    };
+
+    /**
+     * Limpa o mapa e o estado da caixa de seleção.
+     * @param {Event} event - Evento de clique.
+     */
+    const clearMapHandler = (event) => {
+        // let _checkBoxState = checkBoxState.map(ch => ch = false)
+        setCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
+        updateCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
+        overlays.shapes.map(shape => {
+            if (shape.draw !== null)
+                shape.draw.setMap(null)
+        });
+        setOverlays(initialsStates.overlays);
+    };
+
+    return (
+        &lt;FormControl style={{ display: "flex", flex: 1, flexDirection: 'column' }}>
+            &lt;FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Camadas&lt;/FormLabel>
+            &lt;Paper elevation={3} style={{ padding: 5, margin: 1 }}>
+                &lt;Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    {checkBoxState.map((elem, index) =>
+                        &lt;Box key={'map-contr-ch-box-' + index}>
+                            &lt;Checkbox color="secondary"  {...createCheckboxProps(elem)} />
+                            &lt;FormLabel style={{ wordBreak: "break-all" }} color="secondary" id="demo-controlled-radio-buttons-group">{
+                                createLabelText(index)
+                            }&lt;/FormLabel>
+                        &lt;/Box>
+                    )}
+                    &lt;Tooltip title="Limpar Mapa">
+                        &lt;Button sx={{ mx: '0rem' }} onClick={clearMapHandler}>&lt;LayersClearIcon color="secondary" />&lt;/Button>
+                    &lt;/Tooltip>
+                &lt;/Box>
+            &lt;/Paper>
+        &lt;/FormControl>
+    );
+}
+
+/**
+ * Esquema de configuração para MapControllers.
+ * @type {Object}
+ */
+const mapControllersSchema = {
+    schema: {
+        "type": "object",
+        "properties": {
+            "hidrogeo_fraturado": {
+                "type": "boolean",
+                "default": false
+            },
+            "hidrogeo_poroso": {
+                "type": "boolean",
+                "default": false
+            },
+            "bacias_hidrograficas": {
+                "type": "boolean",
+                "default": false
+            },
+            "unidades_hidrograficas": {
+                "type": "boolean",
+                "default": false
+            },
+        }
+    },
+    uischema: {
+        "type": "HorizontalLayout",
+        "elements": [
+            {
+                "type": "Control",
+                "label": "Fraturado",
+                "scope": "#/properties/hidrogeo_fraturado"
+            },
+            {
+                "type": "Control",
+                "label": "Poroso",
+                "scope": "#/properties/hidrogeo_poroso"
+            },
+            {
+                "type": "Control",
+                "label": "Bacia Hidrográfica",
+                "scope": "#/properties/bacias_hidrograficas"
+            },
+            {
+                "type": "Control",
+                "label": "Unidade Hidrográfica",
+                "scope": "#/properties/unidades_hidrograficas"
+            },
+        ]
+    },
+    data: {
+        hidrogeo_fraturado: false,
+        hidrogeo_poroso: false,
+        bacias_hidrograficas: false,
+        unidades_hidrograficas: false
+    }
+}
+
+export default MapControllers;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

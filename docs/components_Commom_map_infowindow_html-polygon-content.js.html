@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/map/infowindow/html-polygon-content.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/map/infowindow/html-polygon-content.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { fetchGrantsInsideShape } from "../../../../services/shapes";
+
+/**
+ * Conteúdo do InfoWindow do Polígono.
+ * @component
+ * @param {*} polygon 
+ * @param {*} shape 
+ * @param {*} map 
+ * @param {*} setOverlays 
+ * @param {*} color
+ */
+const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
+
+    /**
+  * Obtém concessões dentro de uma forma geográfica e as adiciona ao mapa.
+  *
+  * @async
+  * @param {Object} shape - Informações sobre a forma geográfica.
+  * @param {string} shape.shapeName - Nome da forma geográfica.
+  * @param {string} shape.bacia_cod - Código da bacia hidrográfica (se aplicável).
+  * @param {string} shape.uh_codigo - Código da unidade hidrográfica (se aplicável).
+  * @param {string} shape.cod_plan - Código da sistema fraturado ou poroso (se aplicável).
+  * @param {google.maps.Map} map - Instância do mapa onde as concessões serão adicionadas.
+  */
+    const obtainGrants = async (shape, map) => {
+        let shapeCode;
+        let shapeName = shape.shapeName;
+
+        // Verifica qual shape está sendo solicitada e seu código específico.
+        if (shape.shapeName === 'bacias_hidrograficas') {
+            shapeCode = shape.bacia_cod;
+        } else if (shape.shapeName === 'unidades_hidrograficas') {
+            shapeCode = shape.uh_codigo;
+        } else {
+            shapeCode = shape.cod_plan;
+        }
+
+        let _shape = {
+            id: Date.now(),
+            type: 'polygon',
+            position: null,
+            map: map,
+            draw: polygon,
+            markers: await fetchGrantsInsideShape(shapeName, shapeCode),
+            area: null
+        };
+
+        setOverlays(prev => {
+            return {
+                ...prev,
+                shapes: [...prev.shapes, _shape]
+            };
+        });
+    }
+
+
+    // Cria o elemento div para o container da janela de informações.
+    const containerDiv = document.createElement('div');
+    containerDiv.id = 'wi-container';
+
+    // Cria o elemento div para o título.
+    const titleDiv = document.createElement('div');
+    titleDiv.id = 'wi-title';
+
+    let title1, title2;
+
+    // Verifica qual shape está sendo solicitada e seu código específico.
+    if (shape.shapeName === 'bacias_hidrograficas') {
+        title1 = `Nome da Bacia: ${shape.bacia_nome}`;
+        title2 = `Bacia Código: ${shape.bacia_cod}`
+    } else if (shape.shapeName === 'unidades_hidrograficas') {
+        title1 = `Nome da UH: ${shape.uh_nome}`;
+        title2 = `${shape.uh_label}`
+    } else if (shape.shapeName === 'hidrogeo_poroso') {
+        title1 = `Sistema: ${shape.sistema}`;
+        title2 = `Código: ${shape.cod_plan}`;
+    } else {
+        title1 = `Sistema: ${shape.sistema}, Subsistema: ${shape.subsistema}`;
+        title2 = `Código: ${shape.cod_plan}`;
+    }
+
+    // Cria os elementos div para exibir o tipo e descrição.
+    const titleDiv1 = document.createElement('div');
+    // bacia
+    titleDiv1.textContent = `${title1}`;
+    // Cria os elementos div para exibir o tipo e descrição.
+    const titleDiv2 = document.createElement('div');
+    // bacia
+    titleDiv2.textContent = `${title2}`;
+
+    titleDiv.appendChild(titleDiv1);
+    titleDiv.appendChild(titleDiv2);
+
+    // Cria um elemento &lt;style> para definir os estilos CSS.
+    const styleElement = document.createElement('style');
+
+    // Set the CSS styles
+
+    const setStyles = (bgColor) => {
+        return `
+          #wi-container {
+                width: 100%;
+                min-width: 300px;
+                height: 300px;
+            }
+          #wi-title {
+              font-family: 'Open Sans Condensed', sans-serif;
+              font-size: 22px;
+              font-weight: 400;
+              padding: 10px;
+              background-color: ${bgColor};
+              color: white;
+              margin: 0;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
+          }
+          #wi-overflow {
+              overflow-y: auto;
+              overflow-x: hidden;
+          }
+          #wi-subtitle {
+              font-size: 16px;
+              font-weight: 700;
+              padding: 5px 0;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-around;
+              align-items: center;
+              padding: 10px;
+          }
+          #wi-info {
+              font-size: 13px;
+              line-height: 18px;
+              font-weight: 400;
+              padding: 15px;
+              max-height: 140px;
+          },
+          .custom-button {
+              background-color: ${bgColor};
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 5px;
+              cursor: pointer;
+}
+        `;
+    };
+
+    styleElement.textContent = setStyles(color);
+
+    // Adiciona o &lt;style> ao &lt;head> do documento.
+    document.head.appendChild(styleElement);
+
+    // Cria o elemento div para o conteúdo rolável.
+    const overlflowDiv = document.createElement('div');
+    overlflowDiv.id = 'wi-overflow';
+
+    // Cria o elemento div para o subtítulo.
+    const subtitleDiv = document.createElement('div');
+    subtitleDiv.id = 'wi-subtitle';
+    //subtitleDiv.textContent = `${'subtitle'}`;
+
+    // Cria o primeiro div interno do subtítulo.
+    const infoDiv = document.createElement('div');
+    infoDiv.textContent = 'Informações';
+
+    // Adiciona os elementos div ao subtítulo.
+    subtitleDiv.appendChild(infoDiv);
+    //subtitleDiv.appendChild(image);
+
+    // Cria o elemento div para o conteúdo das informações.
+    const infoContentDiv = document.createElement('div');
+    infoContentDiv.id = 'wi-info';
+    const infoTextDiv = document.createElement('div');
+
+    // Cria os elementos &lt;p> para cada propriedade e define o conteúdo de texto.
+    const pInfo1 = document.createElement('p');
+    pInfo1.textContent = `${title1}`;
+
+    const pInfo2 = document.createElement('p');
+    pInfo2.textContent = `${title2}`;
+
+    const btnSearch = document.createElement('button');
+    btnSearch.innerHTML = 'Buscar Outorgas';
+    btnSearch.className = 'custom-button'
+    btnSearch.addEventListener("click", function () {
+        obtainGrants(shape, map)
+    }, false);
+
+    infoTextDiv.appendChild(pInfo1);
+    infoTextDiv.appendChild(pInfo2);
+    infoTextDiv.appendChild(btnSearch);
+
+    // Adiciona o div de texto das informações ao div de conteúdo.
+    infoContentDiv.appendChild(infoTextDiv);
+
+    // Adiciona todos os elementos ao div do container.
+    containerDiv.appendChild(titleDiv);
+    overlflowDiv.appendChild(subtitleDiv);
+    overlflowDiv.appendChild(infoContentDiv);
+    containerDiv.appendChild(overlflowDiv);
+
+    // Retorna o elemento div completo.
+    return containerDiv;
+}
+
+export default HTMLPolygonContent;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

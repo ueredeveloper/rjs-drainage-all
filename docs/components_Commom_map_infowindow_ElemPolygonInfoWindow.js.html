@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/map/infowindow/ElemPolygonInfoWindow.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/map/infowindow/ElemPolygonInfoWindow.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>
+import { useEffect, useState } from 'react';
+import { useTheme } from '@mui/material/styles';
+import HTMLPolygonContent from './html-polygon-content';
+import { useData } from '../../../../hooks/analyse-hooks';
+
+/**
+ * Componente para exibir informações em uma janela de informações associada a um polígono no mapa.
+ * @component
+ * @param {object} props - Propriedades do componente.
+ * @param {google.maps.Polygon} props.marker - O polígono ao qual a janela de informações está associada.
+ * @param {object} props.shape - As informações a serem exibidas na janela.
+ * @param {google.maps.Map} props.map - O mapa ao qual o polígono e a janela de informações pertencem.
+ */
+const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
+
+    /**
+     * Estado que controla a instância da janela de informações.
+     * @type {google.maps.InfoWindow}
+     */
+    const [infowindow, setInfowindow] = useState();
+   // const [, , , , , setOverlays] = useContext(AnalyseContext)
+   const {setOverlays} = useData()
+
+
+
+    /**
+     * O tema do Material-UI sendo utilizado no componente.
+     */
+    const theme = useTheme();
+
+    function updateInfoWindowContent(myInfowindow, newContent) {
+        myInfowindow.setContent(newContent);
+    }
+
+    useEffect(() => {
+        // Cria a instância da janela de informações caso ainda não exista.
+        if (!infowindow) {
+            let _infowindow = new window.google.maps.InfoWindow({});
+            // Sobrepor a janela de informações ao popup do polígono, retângulo, etc...
+            _infowindow.setZIndex(10);
+
+            setInfowindow(_infowindow);
+        }
+
+        // Atualiza a posição da janela de informações ao marcador.
+        if (map &amp;&amp; polygon &amp;&amp; infowindow) {
+            // Adiciona um listener para abrir a janela de informações quando o marcador for clicado.
+            if (polygon) {
+                polygon.addListener("click", function (event) {
+                    infowindow.setPosition(event.latLng);
+                    infowindow.open(map);
+                });
+                updateInfoWindowContent(infowindow, HTMLPolygonContent(polygon, shape, map, setOverlays, theme.palette.primary.main))
+            }
+        }
+    }, [map, polygon, infowindow]);
+
+    // Retorna null, pois este componente não possui renderização visível.
+    return null;
+};
+
+export default ElemPolygonInfoWindow;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

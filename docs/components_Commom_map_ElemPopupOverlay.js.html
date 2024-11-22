@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/Commom/map/ElemPopupOverlay.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/Commom/map/ElemPopupOverlay.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useRef, useEffect } from 'react';
+import { numberWithCommas } from '../../../tools';
+
+/**
+ * Elemento de renderização de um popup com informações de polígonos, retângulos etc.
+ * @param {*} param0
+ */
+const ElemPopupOverlay = ({ map, position, content, draw }) => {
+    const overlayRef = useRef(null);
+
+    useEffect(() => {
+        if (!map || !position || !content) return;
+
+        class PopupOverlay extends window.google.maps.OverlayView {
+            constructor() {
+                super();
+
+                const styleElement = document.createElement('style');
+                document.head.appendChild(styleElement);
+                const cssRule1 = `
+                    .popup-bubble {
+                       
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        transform: translate(-50%, -100%);
+                        background-color: white;
+                        padding: 5px;
+                        border-radius: 5px;
+                        font-family: sans-serif;
+                        overflow-y: auto;
+                        max-height: 60px;
+                        box-shadow: 0px 2px 10px 1px rgba(0, 0, 0, 0.5);
+                       
+                    }`;
+                const cssRule2 = `
+                    .popup-bubble-anchor {  
+                      
+                        position: absolute;
+                        width: 100%;
+                        bottom: 8px;
+                        left: 0;
+                        
+                    }`;
+                const cssRule3 = `
+                    .popup-bubble-anchor::after {
+                        content: "";
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        transform: translate(-50%, 0);
+                        width: 0;
+                        height: 0;
+                        border-left: 6px solid transparent;
+                        border-right: 6px solid transparent;
+                        border-top: 8px solid #000;
+                    }`;
+                const cssRule4 = `
+                    .popup-container {
+                        cursor: auto;
+                        height: 0;
+                        position: absolute;
+                        width: 200px;
+                        
+                    }`;
+
+                styleElement.sheet.insertRule(cssRule1);
+                styleElement.sheet.insertRule(cssRule2);
+                styleElement.sheet.insertRule(cssRule3);
+                styleElement.sheet.insertRule(cssRule4);
+
+                const bubbleAnchor = document.createElement("div");
+
+                bubbleAnchor.classList.add("popup-bubble-anchor");
+                this.containerDiv = document.createElement("div");
+                this.containerDiv.classList.add("popup-container");
+                this.containerDiv.appendChild(bubbleAnchor);
+
+
+                bubbleAnchor.appendChild(setContent(draw));
+
+            }
+
+            onAdd() {
+                const panes = this.getPanes();
+                panes.floatPane.appendChild(this.containerDiv);
+            }
+
+            onRemove() {
+                this.containerDiv.parentNode.removeChild(this.containerDiv);
+            }
+
+            draw() {
+                if (!this.containerDiv || !map || !position) return;
+
+                const projection = this.getProjection();
+                if (!projection) return;
+
+                const positionLatLng = new window.google.maps.LatLng(position.lat, position.lng);
+                const positionPixel = projection.fromLatLngToDivPixel(positionLatLng);
+
+                this.containerDiv.style.left = positionPixel.x + 'px';
+                this.containerDiv.style.top = positionPixel.y + 'px';
+            }
+        }
+
+        const popupOverlay = new PopupOverlay();
+
+        popupOverlay.setMap(map);
+
+        overlayRef.current = popupOverlay;
+
+        return () => {
+            popupOverlay.setMap(null);
+        };
+    }, [map, position, content]);
+
+    useEffect(() => {
+        if (!overlayRef.current || !content) return;
+
+        const containerDiv = overlayRef.current.containerDiv;
+
+        containerDiv.style.display = 'block';
+    }, [content]);
+
+    return null;
+};
+
+
+const setContent = (draw) => {
+
+    const thumbStyle = document.createElement('style');
+    thumbStyle.innerHTML = `
+        .overlay-info {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            overflow-y: scroll;
+            font-size: 12px;
+            width: 17rem;
+            min-height: 5rem;
+            background-color: #000;
+            color: #fff;
+            opacity: 0.8;
+        }
+        .overlay-info::-webkit-scrollbar {
+            width: 10px;
+            }
+        
+        .overlay-info::-webkit-scrollbar-thumb {
+        
+            background: red;
+        }
+    `;
+    document.head.appendChild(thumbStyle);
+
+    function createContentDiv(type, content) {
+
+        const divElement = document.createElement('div');
+        divElement.classList.add("popup-bubble");
+
+
+        const h3Element = document.createElement('h4');
+        h3Element.textContent = `Informações do ${type}`;
+        const innerDivElement = document.createElement('div');
+        const bElement = document.createElement('b');
+        bElement.textContent = content;
+
+        innerDivElement.appendChild(bElement);
+        divElement.appendChild(h3Element);
+        divElement.appendChild(innerDivElement);
+        divElement.classList.add('overlay-info');
+
+        return divElement;
+
+    }
+
+    if (draw.type === 'polyline') {
+        let coordinates = [];
+        let htmlCoords = '';
+
+        draw.draw.getPath().forEach((latLng) => {
+            coordinates.push({ lat: latLng.lat(), lng: latLng.lng() });
+        });
+        coordinates.forEach((coordinate, index) => {
+            htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}&lt;br>`;
+        });
+        /* conversão: 1000 metros = 1km */
+        let meters = draw.meters.toFixed(3);
+        let formatMeters = numberWithCommas(meters)
+        let km = draw.meters / 1000;
+        let formatKm = numberWithCommas(km)
+
+        let content = `${formatMeters} metros = ${formatKm} km.`
+        let type = `Polilinha`;
+        return createContentDiv(type, content);
+    }
+    if (draw.type === 'rectangle') {
+        /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
+
+        let areaM2 = draw.area.toFixed(2)
+        let formatAreaM2 = numberWithCommas(areaM2)
+        let areakKm2 = draw.area / 1000000
+        let formatAreaKm2 = numberWithCommas(areakKm2)
+
+        let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
+        let type = `Retângulo`;
+        return createContentDiv(type, content);
+
+    }
+    if (draw.type === 'polygon') {
+        /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
+    
+        let areaM2 = draw.area.toFixed(2)
+        let formatAreaM2 = numberWithCommas(areaM2)
+        let areakKm2 = draw.area / 1000000
+        let formatAreaKm2 = numberWithCommas(areakKm2)
+
+        let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
+        let type = `Polígono`;
+        return createContentDiv(type, content);
+    }
+    if (draw.type === 'circle') {
+        /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
+
+        let formatAreaM2 = numberWithCommas(draw.area)
+        let km2 = draw.area / 1000000
+        let formatAreaKm2 = numberWithCommas(km2)
+        let formatRadius = numberWithCommas(draw.radius)
+
+        let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km², Raio: ${formatRadius} metros`;
+        let type = `Círculo`;
+        return createContentDiv(type, content);
+    }
+
+    return `&lt;div>&lt;/div>`
+}
+
+
+export default ElemPopupOverlay;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CircleRadiusSelector.html">CircleRadiusSelector</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Oct 19 2023 09:50:40 GMT-0300 (GMT-03:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
