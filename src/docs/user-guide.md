@@ -94,13 +94,14 @@ barragem: {
     17/10/2023
         Iniciando hoje este trabalho.
 
-4. Atualizar variáveis ao limpar o mapa.
-    Ao limpar o mapa o gráfico está ficando com os valores antigos.
+4. Subterrâneo - Atualizar variáveis ao limpar o mapa.
+    Ao limpar o mapa o gráfico de disponibilidade subterrânea está ficando com os valores antigos.
 
 5. Ícone de Progresso de Atividade
     Ao buscar uma  coordenada adicionar ícone de espera `CircularProgress` da biblioteca Material UI.
 
 6. Tabela de Usuários e Paginação
-    Adicionar paginação para que cada momento que o técnico pesquisar um polígono abrir uma paginação com as outorgas específicas daquele polígono. 
+    Adicionar paginação para que cada momento que o técnico pesquisar um polígono abrir uma paginação com as outorgas específicas daquele polígono.
+    23/10/2023 - Resolvido.
     
-
+7. Adicionar a busca por usuário no outro banco (Azure).
