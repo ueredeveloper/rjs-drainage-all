@@ -66,7 +66,7 @@ function MapContent({ checkBoxState }) {
       } else {
         setSelectedsShapes(prev => {
           // Filtra para retirar nome não selecionado
-          return [...prev.filter(prev => prev != tableName)]
+          return [...prev.filter(prev => prev !== tableName)]
         })
       }
     });
