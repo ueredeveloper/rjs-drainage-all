@@ -24,3 +24,5 @@ yarn-error.log*
 
 # documentação
 /docs
+# variaveis
+.env
