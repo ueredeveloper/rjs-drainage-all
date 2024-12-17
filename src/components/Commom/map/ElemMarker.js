@@ -32,6 +32,8 @@ const ElemMarker = ({ info, map }) => {
 
     let { id, ti_id, tp_id, int_latitude, int_longitude } = info;
 
+    console.log(id, ti_id, tp_id, int_latitude, int_longitude )
+
     if (marker) {
       marker.setOptions({
         icon: { url: setInfoMarkerIcon(id, ti_id, tp_id).mkr, scaledSize: new window.google.maps.Size(30, 30) },

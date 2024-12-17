@@ -1,13 +1,14 @@
 //const url = 'https://njs-drainage.ueredeveloper.repl.co';
-const url = 'https://njs-drainage-ueredeveloper.replit.app';
+//const url = 'https://njs-drainage-ueredeveloper.replit.app';
+const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 /**
 * Buscar a shape solicitada no servidor
 * @param shapeName Pode ser os valores 'hidrogeo_fraturado' ou 'hidrogeo_poroso'
 *
   */
-async function fetchShape(shapeName) {
+async function fetchShape(shape_name) {
 
-  let response = await fetch(url + `/getShape?shape=${shapeName}`, {
+  let response = await fetch(url + `/find-shape-by-name?shape_name=${shape_name}`, {
     method: 'GET',
     headers: {
       Accept: 'application/JSON',
@@ -17,6 +18,8 @@ async function fetchShape(shapeName) {
   }).then(res => {
     return res.json();
   })
+
+  console.log(response)
 
   return response;
 }
@@ -30,8 +33,9 @@ async function fetchShape(shapeName) {
  * @throws {Error} Se ocorrer algum erro durante a busca.
  */
 async function fetchGrantsInsideShape (shapeName, shapeCode) {
+
   try {
-    const response = await fetch(url + `/findGrantsInsideShape?shapeName=${shapeName}&shapeCode=${shapeCode}`, {
+    const response = await fetch(url + `/find_points-inside-shape?shapeName=${shapeName}&shapeCode=${shapeCode}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'

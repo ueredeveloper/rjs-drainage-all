@@ -1,86 +1,11 @@
 //const url = 'https://njs-drainage.ueredeveloper.repl.co';
-const url = 'https://njs-drainage-ueredeveloper.replit.app';
-/**
- * Encontra pontos dentro de um polígono.
- *
- * @param {object} polygon O polígono para o qual se deseja encontrar pontos.
- * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
- */
-async function findPointsInsidePolygon(polygon) {
-  let points = await fetch(url + '/findPointsInsidePolygon', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(polygon)
-  }).then(response => {
-    return response.json();
-  });
-
-  return points;
-}
-
-/**
- * Encontra pontos dentro de um círculo.
- *
- * @param {object} circle O círculo para o qual se deseja encontrar pontos.
- * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
- */
-async function findPointsInsideCircle(circle) {
-
-  let points = await fetch(url + '/findPointsInsideCircle', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(circle)
-  }).then(response => {
-    return response.json();
-  });
-
-  return points;
-}
-
-/**
- * Encontra pontos dentro de um retângulo.
- *
- * @param {object} rectangle O retângulo para o qual se deseja encontrar pontos.
- * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
- */
-async function findPointsInsideRectangle(rectangle) {
-  let points = await fetch(url + '/findPointsInsideRectangle', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(rectangle)
-  }).then(response => {
-    return response.json();
-  });
-
-  return points;
-}
-
-/**
- * Encontra pontos em um sistema com base no tipo, latitude e longitude fornecidos.
- *
- * @param {integer} tp_id O tipo de poço em análise, tubular ou manual.
- * @param {float} lat A latitude.
- * @param {float} lng A longitude.
- * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
- */
-async function findPointsInASystem(tp_id, lat, lng) {
-  let response = await fetch(url + `/findPointsInASystem?tp_id=${tp_id}&lat=${lat}&lng=${lng}`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/JSON',
-      'Content-Type': 'application/JSON',
-    }
-  }).then(res => {
-    return res.json();
-  });
-
-  return response;
-}
+//const url = 'https://njs-drainage-ueredeveloper.replit.app';
+const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
 async function findAllPointsInASubsystem(tp_id, lat, lng) {
 
   try {
-    const response = await fetch(url + `/findAllPointsInASubsystem?tp_id=${tp_id}&lat=${lat}&lng=${lng}`, {
+    const response = await fetch(url + `/find-points-inside-subsystem?tp_id=${tp_id}&lat=${lat}&lng=${lng}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -106,19 +31,19 @@ async function findAllPointsInASubsystem(tp_id, lat, lng) {
  * @param {number} ymax A coordenada Y máxima do retângulo.
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
-async function findAllPointsInRectangle(xmin, ymin, xmax, ymax) {
+async function findAllPointsInRectangle(nex,ney, swx, swy) {
 
   try {
-    const response = await fetch(url + '/findAllPointsInRectangle', {
+    const response = await fetch(url + '/find-points-inside-rectangle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        xmin,
-        ymin,
-        xmax,
-        ymax
+        nex,
+        ney,
+        swx,
+        swy
       })
     });
 
@@ -127,6 +52,7 @@ async function findAllPointsInRectangle(xmin, ymin, xmax, ymax) {
     }
 
     const data = await response.json();
+
     // obter primeiro índice da matriz
     return data[0];
   } catch (error) {
@@ -141,8 +67,9 @@ async function findAllPointsInRectangle(xmin, ymin, xmax, ymax) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findAllPointsInPolygon(polygon) {
+
   try {
-    const response = await fetch(url + '/findAllPointsInPolygon', {
+    const response = await fetch(url + '/find-points-inside-polygon', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -172,7 +99,7 @@ async function findAllPointsInPolygon(polygon) {
 async function findAllPointsInCircle(circle) {
 
   try {
-    const response = await fetch(url + '/findAllPointsInCircle', {
+    const response = await fetch(url + '/find-points-inside-circle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -193,15 +120,9 @@ async function findAllPointsInCircle(circle) {
   }
 }
 
-
-
 export {
   findAllPointsInASubsystem,
   findAllPointsInRectangle,
   findAllPointsInPolygon,
   findAllPointsInCircle,
-  findPointsInsidePolygon,
-  findPointsInsideRectangle,
-  findPointsInsideCircle,
-  findPointsInASystem
 };
