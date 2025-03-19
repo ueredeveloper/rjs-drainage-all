@@ -123,11 +123,16 @@ function SearchCoords({ value }) {
     }
 
     /**
-     * Manipula a alteração de valores nos campos de entrada de coordenadas.
-     * @param {Object} event - O evento de alteração.
-     */
+    * Manipula a alteração de valores nos campos de entrada de coordenadas.
+    * @param {Object} event - O evento de alteração.
+    */
+
     function handleOnTextFieldChange(event) {
         let { name, value } = event.target;
+
+        // Substituir vírgulas por pontos para aceitar valores com vírgulas
+        value = value.replace(",", ".").trim();
+
 
         setPosition(prev => {
             return {
