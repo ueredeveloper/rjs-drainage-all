@@ -80,3 +80,7 @@ start = "typescript-language-server --stdio"
 run = ["sh", "-c", "npm run start"]
 deploymentTarget = "gce"
 ignorePorts = false
+
+[[ports]]
+localPort = 3000
+externalPort = 80

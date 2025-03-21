@@ -9,12 +9,6 @@ import { useData } from "../../hooks/analyse-hooks";
 import RadiusPaper from "./RadiusPaper";
 import AlertCommom from "./AlertCommom";
 
-/**
- * Componente que gera um formulário para entrada de coordenadas e exibe um alerta caso as coordenadas sejam inválidas.
- * 
- * @component
- * @returns {JSX.Element} O componente JSX para o formulário de coordenadas.
- */
 export default function CoordPaper() {
     const [loading, setLoading] = useState(false);
     const { marker, setMarker, setOverlays, radius } = useData();
@@ -35,12 +29,6 @@ export default function CoordPaper() {
         }
     }, [openAlert]);
 
-    /**
-     * Função que lida com o clique no botão de busca, validando coordenadas e atualizando os marcadores.
-     * @async
-     * @function
-     * @returns {Promise<void>}
-     */
     async function handleClick() {
         const lat = parseFloat(position.int_latitude);
         const lng = parseFloat(position.int_longitude);
@@ -79,12 +67,6 @@ export default function CoordPaper() {
         setLoading(false);
     }
 
-    /**
-     * Função que lida com mudanças nos campos de entrada de coordenadas.
-     * @function
-     * @param {Object} event - O evento de alteração do campo.
-     * @returns {void}
-     */
     function handleChange(event) {
         let { name, value } = event.target;
         value = value.replace(",", ".").trim();
