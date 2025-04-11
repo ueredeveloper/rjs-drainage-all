@@ -184,6 +184,14 @@ function SearchCoords({ value }) {
 
   }
 
+  function handlekeydown(event) {
+    const { key } = event;
+    if (key === "Enter") {
+      event.preventDefault(); // evita que a pagina recarregue ao pressionar Enter
+      handleOnClick();
+    }
+  }
+
   return (
     <>
       {/* Componente de alerta exibido quando necessário */}
@@ -196,6 +204,7 @@ function SearchCoords({ value }) {
             {/* Campos de entrada de latitude e longitude */}
             <Box sx={{ display: "flex", flex: 4, flexDirection: "row" }}>
               <TextField
+                onKeyDown={handlekeydown}
                 sx={{ my: 1, mx: 1, minWidth: "3rem", flex: 1 }}
                 label="Latitude"
                 color="secondary"
@@ -205,6 +214,7 @@ function SearchCoords({ value }) {
                 size="small"
               />
               <TextField
+                onKeyDown={handlekeydown}
                 sx={{ my: 1, mx: 1, minWidth: "3rem", flex: 1 }}
                 color="secondary"
                 label="Longitude"
