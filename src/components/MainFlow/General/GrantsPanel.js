@@ -49,6 +49,7 @@ function a11yProps(index) {
  * @returns {JSX.Element} O elemento JSX que representa os painéis de guias.
  */
 function GrantsPanel() {
+    
     const [value, setValue] = React.useState(0);
 
     const handleChange = (event, newValue) => {

@@ -17,6 +17,7 @@ import ElemPolyline from './ElemPolyline';
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
 function MapContent({ checkBoxState }) {
+  
   // Estados do componente
   const [mode] = useState('light');
 
