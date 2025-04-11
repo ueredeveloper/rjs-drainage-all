@@ -122,7 +122,8 @@ function NumberOfGrantsChart() {
 
       let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
         let _data = options.series[0].data.find(item => item.name === convertOptionsDataName(shapeName))
-        if (shape.markers[shapeName] !== null) {
+        console.log(shape.markers)
+        if (shape.markers !== undefined && shape.markers[shapeName] !== null) {
           return { ..._data, value: shape.markers[shapeName].length };
         }
         return { ..._data, value: 0 };

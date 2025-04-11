@@ -153,8 +153,11 @@ function SearchCoords({ value }) {
      * @param {React.ChangeEvent<HTMLInputElement>} event - Evento do input.
      */
     function handleOnTextFieldChange(event) {
+
       let { name, value } = event.target;
+
       value = value.replace(",", ".").trim();
+      
       setPosition(prev => ({ ...prev, [name]: value }));
     }
   
