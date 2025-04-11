@@ -17,6 +17,8 @@ import ElemPolyline from './ElemPolyline';
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
 function MapContent({ checkBoxState }) {
+  
+  
   // Estados do componente
   const [mode] = useState('light');
 
@@ -102,7 +104,8 @@ function MapContent({ checkBoxState }) {
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
           return selectedsShapes.map(type => {
-            if (shape.markers[type] !== null) {
+            
+            if (shape.markers !== undefined && shape.markers[type] !== null   ) {
               return shape.markers[type].map((marker, i) => {
                 return <ElemMarker
                   key={'marker-' + i}
@@ -131,7 +134,7 @@ function MapContent({ checkBoxState }) {
           });
         })}
         {overlays.shapes.map(sh => {
-          if (sh.markers.hidrogeo !== undefined) {
+          if (sh.markers !== undefined && sh.markers.hidrogeo !== undefined) {
             return RenderPolylines(sh.markers.hidrogeo)
           }
         })}
