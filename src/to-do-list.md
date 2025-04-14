@@ -59,3 +59,15 @@ Criar um alerta para as coordenadas, caso sejam inseridas incorretamente
 
 - [x] Fechar alerta automaticamente após alguns segundos 
 
+--------------------------------------------------------------------------------------------------------------------------------------------------
+
+📅 Data: 14 de abril de 2025
+👨‍💻 Responsável: [Luan Carvalho]
+
+✅ Objetivo
+Alterar a cor da borda dos polígonos para vermelho.
+
+🔹 Tarefas
+1️⃣ Alterar a cor da borda dos polígonos
+ Alterar a cor da borda dos polígonos para vermelho.
+

@@ -13,6 +13,8 @@ import { Alert, Collapse } from "@mui/material";
  * @returns {JSX.Element} O componente JSX do alerta.
  */
 export default function AlertCommom({ openAlert, alertMessage, setOpen }) {
+  
+
   return (
     <Box
       sx={{

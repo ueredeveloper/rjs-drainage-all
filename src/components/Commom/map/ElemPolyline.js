@@ -39,7 +39,7 @@ const ElemPolyline = ({ coord, map }) => {
       {
         path:_path,
         geodesic: true,
-        strokeColor: "#FF0000",
+        strokeColor: "#ff0000",
         strokeOpacity: 1.0,
         strokeWeight: 1,
         map: map

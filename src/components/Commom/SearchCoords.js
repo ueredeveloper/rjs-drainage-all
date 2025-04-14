@@ -28,6 +28,7 @@ import AlertCommom from "./AlertCommom";
  */
 
 function SearchCoords({ value }) {
+
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
   const { marker, setMarker, setOverlays, radius, setHgAnalyse } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
@@ -184,6 +185,11 @@ function SearchCoords({ value }) {
 
   }
 
+  /**
+   * Chama a função `handleOnClick` através da tecla enter.
+   *
+   * @param {KeyboardEvent} event - O evento de teclado disparado.
+   */
   function handlekeydown(event) {
     const { key } = event;
     if (key === "Enter") {
@@ -270,3 +276,4 @@ function SearchCoords({ value }) {
 }
 
 export default SearchCoords;
+
