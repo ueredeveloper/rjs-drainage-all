@@ -14,7 +14,7 @@ import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
 import { analyzeAvailability } from "../../tools";
-import AlertCommom from "./AlertCommom";
+import AlertCommon from "./AlertCommon";
 
 /**
  * Componente que permite a busca de outorgas a partir de coordenadas geográficas informadas pelo usuário.
@@ -201,7 +201,7 @@ function SearchCoords({ value }) {
   return (
     <>
       {/* Componente de alerta exibido quando necessário */}
-      <AlertCommom openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
+      <AlertCommon openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
 
       <FormControl style={{ display: "flex", flexDirection: "column" }}>
         <FormLabel sx={{ my: 1 }}>Coordenadas</FormLabel>
