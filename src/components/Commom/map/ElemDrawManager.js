@@ -3,21 +3,23 @@ import { findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle
 import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea } from '../../../tools';
 
 import { useData } from '../../../hooks/analyse-hooks';
+
+
 /**
-  * Adiciona marcador, círculo, polígono, poliline e retângulo ao mapa.
-  * @component
-  * @param {Object} map Map inicializado gmaps api.
-  * @param {function} setData Função de adição de objectos geométricos à variável `data`.
-  */
+ * Componente para gerenciar a adição de formas geométricas no mapa (marcadores, círculos, polígonos, retângulos, polilinhas).
+ * 
+ * @component
+ * @param {Object} map - Instância do mapa do Google Maps onde as formas serão desenhadas.
+ * @param {function} setData - Função para adicionar objetos geométricos à variável `data`.
+ */
 const ElemDrawManager = ({ map }) => {
 
-  //const [, setMarker, , , , setOverlays] = useContext(AnalyseContext);
   const { setMarker, setOverlays } = useData();
 
   useEffect(() => {
 
+    // Inicializa o DrawingManager do Google Maps para permitir o desenho de várias formas geométricas no mapa.
     let draw = new window.google.maps.drawing.DrawingManager({
-      //drawingMode: window.google.maps.drawing.OverlayType.MARKER,
       drawingControl: true,
       drawingControlOptions: {
         position: window.google.maps.ControlPosition.TOP_CENTER,
@@ -29,59 +31,64 @@ const ElemDrawManager = ({ map }) => {
           window.google.maps.drawing.OverlayType.POLYLINE
         ],
       },
-      markerOptions: {
-        // icon: "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png",
-      },
       circleOptions: {
         fillColor: "#ffff00",
         fillOpacity: 0.2,
+        strokeColor: "#ff0000",
         strokeWeight: 1,
         clickable: false,
         editable: true,
         zIndex: 1,
       },
+      polygonOptions: {
+        strokeColor: "#ff0000",
+      },
+      rectangleOptions: {
+        strokeColor: "#ff0000",
+      },
+      polylineOptions: {
+        strokeColor: "#ff0000",
+      },
     });
 
     let marker;
 
+    /**
+     * Função de callback que é chamada quando o evento de desenho de uma forma é completado.
+     * Dependendo do tipo de forma desenhada (marcador, círculo, polígono, retângulo, polilinha), 
+     * as respectivas ações são realizadas, como cálculo da área ou comprimento e adição de formas no mapa.
+     * 
+     * @param {Object} event - O evento que contém a informação sobre o tipo de forma desenhada e as coordenadas.
+     */
     window.google.maps.event.addListener(draw, 'overlaycomplete', async function (event) {
 
       if (event.type === 'marker') {
-
+        // Caso seja um marcador, a posição do marcador é obtida e atualizada no estado global
         if (marker) {
-          marker.setMap(null);
+          marker.setMap(null); // Remove o marcador anterior
         }
-        // obter o marcador a partir do ponto clicado
         marker = event.overlay;
-        // obter posição do marcador
         let position = marker.position;
-        // retirar o marcador do mapa
-        marker.setMap(null);
-        // editar posição do marcador, este sim será mostrado no mapa
-        setMarker(prev => {
-          return {
-            ...prev,
-            int_latitude: position.lat(),
-            int_longitude: position.lng()
-          }
-        })
-
+        marker.setMap(null); // Remove o marcador do mapa temporariamente
+        setMarker(prev => ({
+          ...prev,
+          int_latitude: position.lat(),
+          int_longitude: position.lng()
+        }));
       }
-      if (event.type === 'circle') {
 
+      if (event.type === 'circle') {
+        // Caso seja um círculo, obtém a área e os pontos dentro do círculo
         let circle = event.overlay;
         const { center, radius } = circle;
-        // adicionar o infowindow na parte superior do cículo
         let bounds = circle.getBounds();
         var lat = bounds.getNorthEast().lat();
         var lng = circle.getCenter().lng();
 
-        let markers = await findAllPointsInCircle(
-          {
-            center: { lng: center.lng(), lat: center.lat() },
-            radius: parseInt(radius)
-          }
-        );
+        let markers = await findAllPointsInCircle({
+          center: { lng: center.lng(), lat: center.lat() },
+          radius: parseInt(radius)
+        });
 
         let shape = {
           id: Date.now(),
@@ -92,31 +99,24 @@ const ElemDrawManager = ({ map }) => {
           markers: markers,
           radius: radius,
           area: calculateCircleArea(radius)
+        };
 
-        }
-
-        setOverlays(prev => {
-          return {
-            ...prev,
-            shapes: [...prev.shapes, shape]
-          }
-        });
+        setOverlays(prev => ({
+          ...prev,
+          shapes: [...prev.shapes, shape]
+        }));
       }
 
       if (event.type === 'polygon') {
-
+        // Caso seja um polígono, obtém as coordenadas do polígono e busca os pontos dentro dele
         let polygon = event.overlay;
-        // retorna array de coordenada no formato gmaps para busca no servidor. Ex: [{lat: -15, lng: -47}, ...]   
         let serverPolygon = [];
         polygon.getPath().getArray().forEach(p => {
           serverPolygon.push([p.lng(), p.lat()])
         });
         serverPolygon = [...serverPolygon, serverPolygon[0]];
 
-        // Pega as coordenadas do polígono
         let paths = polygon.getPaths();
-
-        // Inicialização das variáveis
         let lat = null;
         let lng = null;
 
@@ -125,8 +125,6 @@ const ElemDrawManager = ({ map }) => {
           path.forEach(function (point) {
             var latitude = point.lat();
             var longitude = point.lng();
-
-            // Checar a coordenada mais alta
             if (lat === null || latitude > lat) {
               lat = latitude;
               lng = longitude;
@@ -142,31 +140,19 @@ const ElemDrawManager = ({ map }) => {
           draw: event.overlay,
           markers: await findAllPointsInPolygon(serverPolygon),
           area: calculatePolygonArea(event.overlay)
-        }
-        /*
-        let infowindow = new window.google.maps.InfoWindow({
-          content: setContent(shape),
-          map
-        });
-        infowindow.setPosition({ lat: lat, lng: lng });
-        infowindow.setMap(map);*/
+        };
 
-        setOverlays(prev => {
-          return {
-            ...prev,
-            shapes: [...prev.shapes, shape]
-          }
-        });
-
+        setOverlays(prev => ({
+          ...prev,
+          shapes: [...prev.shapes, shape]
+        }));
       }
-      /* Criação de um polígono a partir de um retângulo gmaps api
-      */
-      if (event.type === 'rectangle') {
 
+      if (event.type === 'rectangle') {
+        // Caso seja um retângulo, obtém as coordenadas das extremidades e calcula a área
         let bounds = event.overlay.getBounds();
         let NE = bounds.getNorthEast();
         let SW = bounds.getSouthWest();
-        // adicionar infowindow na parte superior direita do retângulo
         let lat = NE.lat();
         let lng = NE.lng();
 
@@ -180,25 +166,19 @@ const ElemDrawManager = ({ map }) => {
           SW: SW,
           area: calculateRectangleArea(event.overlay.getBounds()),
           markers: await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
-        }
+        };
 
-        setOverlays(prev => {
-          return {
-            ...prev,
-            shapes: [...prev.shapes, shape]
-          }
-        });
-
+        setOverlays(prev => ({
+          ...prev,
+          shapes: [...prev.shapes, shape]
+        }));
       }
-      if (event.type === 'polyline') {
 
+      if (event.type === 'polyline') {
+        // Caso seja uma polilinha, obtém o comprimento da linha desenhada
         let polyline = event.overlay;
         let path = polyline.getPath();
-
-        // Obtenha o índice do último ponto
         var lastPointIndex = path.getLength() - 1;
-
-        // Obtenha as coordenadas do último ponto
         let lat = path.getAt(lastPointIndex).lat();
         let lng = path.getAt(lastPointIndex).lng();
 
@@ -215,27 +195,21 @@ const ElemDrawManager = ({ map }) => {
             "lancamento_pluviais": []
           },
           draw: polyline,
-
           meters: calculatePolylineLength(polyline)
+        };
 
-        }
-
-        setOverlays(prev => {
-          return {
-            ...prev,
-            shapes: [...prev.shapes, shape]
-          }
-        });
+        setOverlays(prev => ({
+          ...prev,
+          shapes: [...prev.shapes, shape]
+        }));
       }
-    })
+    });
 
-    draw.setMap(map);
+    draw.setMap(map); // Inicializa o DrawingManager no mapa
 
   }, [map]);
 
   return null;
-
 };
 
 export default ElemDrawManager;
-

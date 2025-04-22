@@ -9,6 +9,8 @@ import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
 
+
+
 /**
  * Componente que representa o conteúdo do mapa.
  * @component

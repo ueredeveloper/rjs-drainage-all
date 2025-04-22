@@ -8,6 +8,7 @@ import { useData } from "../../../hooks/analyse-hooks";
 import { Stack } from "@mui/system";
 import { Pagination } from "@mui/material";
 
+
 function TabPanel(props) {
     
     const { children, value, index, ...other } = props;

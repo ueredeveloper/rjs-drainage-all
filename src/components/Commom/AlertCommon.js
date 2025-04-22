@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import { Alert, Collapse } from "@mui/material";
 
+
 /**
  * Componente de alerta comum.
  * Exibe uma mensagem de erro dentro de um alerta colapsável.
@@ -14,7 +15,6 @@ import { Alert, Collapse } from "@mui/material";
  */
 export default function AlertCommom({ openAlert, alertMessage, setOpen }) {
   
-
   return (
     <Box
       sx={{

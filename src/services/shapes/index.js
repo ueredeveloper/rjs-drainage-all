@@ -1,6 +1,6 @@
-//const url = 'https://njs-drainage.ueredeveloper.repl.co';
-//const url = 'https://njs-drainage-ueredeveloper.replit.app';
+
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
+
 /**
 * Buscar a shape solicitada no servidor
 * @param shapeName Pode ser os valores 'hidrogeo_fraturado' ou 'hidrogeo_poroso'

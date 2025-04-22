@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { darkMap } from './mode/dark-map'
+import { darkMap } from './mode/dark-map';
+
 /**
   * Elemento de renderização do mapa
   * @component
   */
-
 function ElemMap({ mode, map, setMap, zoom }) {
 
   const ref = useRef();

@@ -1,5 +1,6 @@
-//const njs_drainage_url = 'https://njs-drainage.ueredeveloper.repl.co';
+
 const njs_drainage_url = 'https://njs-drainage-ueredeveloper.replit.app'
+
 
 async function findByColumn(searchQuery) {
 
