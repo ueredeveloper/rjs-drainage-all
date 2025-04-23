@@ -200,9 +200,11 @@ function SearchCoords({ value }) {
     }
   }
 
+
   return (
     <>
-    
+
+
       {/* Componente de alerta exibido quando necessário */}
       <AlertCommon openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
 

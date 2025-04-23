@@ -33,7 +33,7 @@ function ElemMap({ mode, map, setMap, zoom }) {
       // centralizar
       //map.setCenter({ lat: parseFloat(center.lat), lng: parseFloat(center.lng) })
     }
-  }, [ref, map, mode, onClick]);
+  }, [ref, map, mode]);
 
   return (
     <div style={{ width: '100%', height: '100%', minHeight: '25rem', }} ref={ref} id="map" />

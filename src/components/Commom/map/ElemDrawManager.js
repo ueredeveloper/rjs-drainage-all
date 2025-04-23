@@ -18,6 +18,7 @@ const ElemDrawManager = ({ map }) => {
 
 
   useEffect(() => {
+    
 
     // Inicializa o DrawingManager do Google Maps para permitir o desenho de várias formas geométricas no mapa.
     let draw = new window.google.maps.drawing.DrawingManager({

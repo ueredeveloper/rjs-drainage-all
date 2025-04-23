@@ -26,6 +26,7 @@ export default function AlertCommom({ openAlert, alertMessage, setOpen }) {
         width: "fit-content",
         zIndex: 10,
       }}
+      
     >
       <Collapse in={openAlert}>
         <Alert 
