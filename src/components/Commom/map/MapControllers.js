@@ -7,6 +7,7 @@ import { initialsStates } from '../../../initials-states';
 import { fetchShape } from '../../../services/shapes';
 import { converterPostgresToGmaps } from '../../../tools';
 import { useData } from '../../../hooks/analyse-hooks';
+
 /**
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
  * @component

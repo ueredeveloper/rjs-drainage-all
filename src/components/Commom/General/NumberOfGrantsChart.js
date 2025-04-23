@@ -8,6 +8,7 @@ import { FormControl, FormLabel, Paper } from '@mui/material';
  * @component
  */
 function NumberOfGrantsChart() {
+  
 
   
   // Estado para armazenar informações do contexto de análise.

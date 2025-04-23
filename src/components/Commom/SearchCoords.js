@@ -28,6 +28,7 @@ import AlertCommon from "./AlertCommon";
  * @returns {JSX.Element} Elemento JSX que representa o componente SearchCoords.
  */
 
+
 function SearchCoords({ value }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
@@ -201,6 +202,7 @@ function SearchCoords({ value }) {
 
   return (
     <>
+    
       {/* Componente de alerta exibido quando necessário */}
       <AlertCommon openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
 

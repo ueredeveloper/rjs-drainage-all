@@ -10,10 +10,6 @@ function ElemMap({ mode, map, setMap, zoom }) {
   const ref = useRef();
   const center = { lat: -15.764514558482336, lng: -47.76491209127806 }
 
-  function onClick() {
-    console.log('on click')
-  }
-
   useEffect(() => {
 
     if (ref.current && !map) {

@@ -11,6 +11,7 @@ import ElemPolyline from './ElemPolyline';
 
 
 
+
 /**
  * Componente que representa o conteúdo do mapa.
  * @component

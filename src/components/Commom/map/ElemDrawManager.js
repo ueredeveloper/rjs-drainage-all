@@ -16,6 +16,7 @@ const ElemDrawManager = ({ map }) => {
 
   const { setMarker, setOverlays } = useData();
 
+
   useEffect(() => {
 
     // Inicializa o DrawingManager do Google Maps para permitir o desenho de várias formas geométricas no mapa.
@@ -31,6 +32,7 @@ const ElemDrawManager = ({ map }) => {
           window.google.maps.drawing.OverlayType.POLYLINE
         ],
       },
+      
       circleOptions: {
         fillColor: "#ffff00",
         fillOpacity: 0.2,
@@ -40,15 +42,19 @@ const ElemDrawManager = ({ map }) => {
         editable: true,
         zIndex: 1,
       },
+
       polygonOptions: {
         strokeColor: "#ff0000",
       },
+
       rectangleOptions: {
         strokeColor: "#ff0000",
       },
+
       polylineOptions: {
         strokeColor: "#ff0000",
       },
+
     });
 
     let marker;

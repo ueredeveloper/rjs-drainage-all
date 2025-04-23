@@ -1,6 +1,6 @@
 {
   "name": "rjs-drainage-all",
-  "version": "1.14.0",
+  "version": "1.14.1",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",

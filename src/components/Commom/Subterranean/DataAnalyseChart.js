@@ -8,6 +8,7 @@ import { useData } from '../../../hooks/analyse-hooks';
  * @component
  */
 const DataAnalyseChart = () => {
+    
 
     /**
     * Estado para armazenar a instância do gráfico ECharts.

@@ -13,6 +13,7 @@ import { Alert, Collapse } from "@mui/material";
  * @param {function} props.setOpen - Função para atualizar o estado do alerta.
  * @returns {JSX.Element} O componente JSX do alerta.
  */
+
 export default function AlertCommom({ openAlert, alertMessage, setOpen }) {
   
   return (
