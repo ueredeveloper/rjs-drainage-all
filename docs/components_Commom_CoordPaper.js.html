@@ -26,170 +26,167 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Componente para entrada e manipulação de coordenadas.
- * @returns {JSX.Element} O elemento React que representa o componente.
- */
-import React, { useState, useEffect } from "react";
+            <pre class="prettyprint source linenums"><code>import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
-import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/material";
+import { CircularProgress, Fade, FormControl, FormLabel, TextField, IconButton } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import IconButton from '@mui/material/IconButton';
 import { findAllPointsInCircle } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import RadiusPaper from "./RadiusPaper";
+import AlertCommom from './AlertCommom';
+
 
 /**
- * Componente CoordPaper.
+ * @description Componente que gera um formulário para entrada de coordenadas e exibe um alerta caso as coordenadas sejam inválidas.
+ * 
  * @component
- * @returns {JSX.Element} O elemento React que representa o componente CoordPaper.
+ * @returns {JSX.Element} O componente JSX para o formulário de coordenadas.
  */
-function CoordPaper() {
-    // Variável de estado para controlar o status de carregamento
+export default function CoordPaper() {
     const [loading, setLoading] = useState(false);
-    // const [, , , setOverlays] = useContext(AnalyseContext);
     const { marker, setMarker, setOverlays, radius } = useData();
-
     const [position, setPosition] = useState(marker);
+    const [openAlert, setOpenAlert] = useState(false);
+    const [alertMessage, setAlertMessage] = useState("");
 
     useEffect(() => {
         setPosition(marker);
     }, [marker]);
 
+    useEffect(() => {
+
+        if (openAlert) {
+            const timer = setTimeout(() => {
+                setOpenAlert(false);
+            }, 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [openAlert]);
+
     /**
-     * Manipula o clique no botão de pesquisa.
-     * Atualiza o marcador com as coordenadas atuais, pesquisa marcadores no raio especificado
-     * e adiciona uma forma de círculo aos overlays.
+     * Função que lida com o clique no botão de busca, validando coordenadas e atualizando os marcadores.
      * @async
+     * @function
+     * @returns {Promise&lt;void>}
      */
     async function handleClick() {
 
-        setMarker(prev => {
-            return {
-                ...prev,
-                int_latitude: position.int_latitude,
-                int_longitude: position.int_longitude
-            }
+        console.log('handle click ')
+        const lat = parseFloat(position.int_latitude);
+        const lng = parseFloat(position.int_longitude);
+
+        if (isNaN(lat) || isNaN(lng) || lat &lt; -90 || lat > 90 || lng &lt; -180 || lng > 180) {
+            setAlertMessage("Coordenadas inválidas. Verifique a latitude e longitude.");
+            setOpenAlert(true);
+            return;
+        }
+
+        setMarker(prev => ({
+            ...prev,
+            int_latitude: position.int_latitude,
+            int_longitude: position.int_longitude
+        }));
+        setLoading(true);
+
+        let markers = await findAllPointsInCircle({
+            center: { lng: position.int_longitude, lat: position.int_latitude },
+            radius: parseInt(radius)
         });
-        // Buscar pontos próximos à coordenada desejada, a proximidade é avaliada pelo raio solicitado pelo usuário.
-        let markers = await findAllPointsInCircle(
-            {
-                center: { lng: position.int_longitude, lat: position.int_latitude },
-                radius: parseInt(radius)
-            }
-        );
-        let id = Date.now();
-        // salvar uma shape, polígono, com o raio solicitado.
+
         let shape = {
             id: Date.now(),
             type: 'circle',
             position: { lat: position.int_latitude, lng: position.int_longitude },
-            map: null,
-            draw: null,
             markers: markers,
             radius: radius,
-            area: null
+        };
 
-        }
+        setOverlays(prev => ({
+            ...prev,
+            shapes: [...prev.shapes, shape]
+        }));
 
-        setOverlays(prev => {
-            return {
-                ...prev,
-                shapes: [...prev.shapes, shape]
-            }
-        });
-
+        setLoading(false);
     }
 
     /**
-     * Manipula a alteração de valores nos campos de entrada de coordenadas.
-     * @param {Object} event - O evento de alteração.
+     * Função que lida com mudanças nos campos de entrada de coordenadas.
+     * @function
+     * @param {Object} event - O evento de alteração do campo.
+     * @returns {void}
      */
     function handleChange(event) {
+
+
+        console.log('input handle change ')
+
+
+
         let { name, value } = event.target;
 
-        setPosition(prev => {
-            return {
-                ...prev,
-                [name]: value
-            }
-        })
+        value = value.replace(",", ".").trim();
 
+
+
+        setPosition(prev => ({
+            ...prev,
+            [name]: value
+        }));
     }
 
     return (
-        &lt;FormControl style={{ display: "flex", flexDirection: 'column' }}>
-            &lt;FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas&lt;/FormLabel>
-            &lt;Paper elevation={3} style={{ margin: 0 }}>
-                {/* Caixas de entrada: latitude e longitude */}
-                &lt;Box sx={{ display: 'flex', flexFlow: 'row wrap' }}>
-                    &lt;Box sx={{ display: 'flex', flex: 4, flexDirection: 'row' }}>
-                        &lt;TextField
-                            sx={{
-                                my: 1,
-                                mx: 1,
-                                display: 'flex',
-                                flexGrow: 1,
-                                minWidth: '5rem'
-                            }}
-                            label="Latitude"
-                            color="secondary"
-                            name="int_latitude"
-                            value={position.int_latitude}
-                            onChange={handleChange}
-                            size="small"
-                        />
-                        &lt;TextField
-                            sx={{
-                                my: 1,
-                                mx: 1,
-                                display: 'flex',
-                                flexGrow: 1,
-                                minWidth: '5rem'
+        &lt;>
+            &lt;AlertCommom openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
 
-                            }}
-                            color="secondary"
-                            label="Longitude"
-                            name="int_longitude"
-                            value={position.int_longitude}
-                            onChange={handleChange}
-                            size="small"
-                        />
-                    &lt;/Box>
-                    {/* Botões de Manipulação */}
-                    &lt;Box sx={{ display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        &lt;RadiusPaper />
-                        {
-                            loading ?
-                                &lt;Fade
-                                    sx={{ color: "secondary.main" }}
-                                    in={loading}
-                                    style={{
-                                        transitionDelay: loading ? '800ms' : '0ms',
-                                    }}
-                                    unmountOnExit
-                                >
-                                    &lt;CircularProgress size={25} />
-                                &lt;/Fade>
-                                :
-                                &lt;IconButton color="secondary" size="large" onClick={() => { handleClick().then(() => { setLoading(false); }); }}>
-                                    &lt;SearchIcon />
+            &lt;Box sx={{ position: 'relative', width: '100%' }}>
+                &lt;FormControl style={{ display: "flex", flexDirection: 'column' }}>
+                    &lt;FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Coordenadas&lt;/FormLabel>
+                    &lt;Paper elevation={3}>
+                        &lt;Box sx={{ display: 'flex', flexFlow: 'row wrap' }}>
+                            &lt;Box sx={{ display: 'flex', flex: 4, flexDirection: 'row' }}>
+                                &lt;TextField
+                                    sx={{ my: 1, mx: 1, display: 'flex', flexGrow: 1, minWidth: '5rem' }}
+                                    label="Latitude"
+                                    color="secondary"
+                                    name="int_latitude"
+                                    value={position.int_latitude}
+                                    onChange={handleChange}
+                                    size="small"
+                                />
+                                &lt;TextField
+                                    sx={{ my: 1, mx: 1, display: 'flex', flexGrow: 1, minWidth: '5rem' }}
+                                    color="secondary"
+                                    label="Longitude"
+                                    name="int_longitude"
+                                    value={position.int_longitude}
+                                    onChange={handleChange}
+                                    size="small"
+                                />
+                            &lt;/Box>
+                            &lt;Box sx={{ display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                &lt;RadiusPaper />
+                                {loading ? (
+                                    &lt;Fade in={loading} style={{ transitionDelay: loading ? '800ms' : '0ms' }} unmountOnExit>
+                                        &lt;CircularProgress size={25} />
+                                    &lt;/Fade>
+                                ) : (
+                                    &lt;IconButton color="secondary" size="large" onClick={handleClick}>
+                                        &lt;SearchIcon />
+                                    &lt;/IconButton>
+                                )}
+                                &lt;IconButton color="secondary" size="large">
+                                    &lt;ContentCopyIcon />
                                 &lt;/IconButton>
-                        }
-                        &lt;IconButton color="secondary" size="large">
-                            &lt;ContentCopyIcon />
-                        &lt;/IconButton>
-                    &lt;/Box>
-                &lt;/Box>
-            &lt;/Paper>
-        &lt;/FormControl>
+                            &lt;/Box>
+                        &lt;/Box>
+                    &lt;/Paper>
+                &lt;/FormControl>
+            &lt;/Box>
+        &lt;/>
     );
-}
-
-export default CoordPaper;
-</code></pre>
+}</code></pre>
         </article>
     </section>
 
@@ -199,13 +196,13 @@ export default CoordPaper;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-ElemMarker.html">ElemMarker</a></li><li><a href="module-MapControllers.html">MapControllers</a></li><li><a href="module-hooks_analyse-hooks.html">hooks/analyse-hooks</a></li></ul><h3>Classes</h3><ul><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="CoordPaper.html">CoordPaper</a></li><li><a href="ElemGrantsChart.html">ElemGrantsChart</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ElemDrawManager">ElemDrawManager</a></li><li><a href="global.html#ElemMap">ElemMap</a></li><li><a href="global.html#MapContent">MapContent</a></li><li><a href="global.html#analyseItsAvaiable">analyseItsAvaiable</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#findPointsInsideCircle">findPointsInsideCircle</a></li><li><a href="global.html#findPointsInsidePolygon">findPointsInsidePolygon</a></li><li><a href="global.html#findPointsInsideRectangle">findPointsInsideRectangle</a></li><li><a href="global.html#findUsers">findUsers</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Fri Sep 29 2023 11:35:35 GMT-0300 (GMT-03:00)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Apr 25 2025 08:33:05 GMT-0300 (Horário Padrão de Brasília)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -19,6 +19,8 @@ async function fetchShape(shape_name) {
     return res.json();
   })
 
+
+  console.log(response)
   return response;
 }
 

@@ -12,10 +12,15 @@ import { initialsStates } from '../initials-states';
 const DataContext = createContext();
 
 /**
- * Módulo que fornece o estados utilizados no component Analyse.js.
- * @module
+ * @function DataProvider
+ * @description
+ * Componente responsável por fornecer variáveis de contexto global da análise (Analyse.js).
+ * Ele encapsula os filhos com `DataContext.Provider`, tornando
+ * o estado compartilhado acessível por toda a árvore de componentes.
+ * 
  * @param {Object} props - Propriedades do componente.
- * @param {ReactNode} props.children - Os componentes filhos que terão acesso ao estado compartilhado.
+ * @param {React.ReactNode} props.children - Componentes filhos que terão acesso ao contexto.
+ * @returns {JSX.Element} O componente provider encapsulando os filhos.
  */
 export const DataProvider = ({ children }) => {
   // Inicializa o estado 'selectedsCharts' com valores padrão

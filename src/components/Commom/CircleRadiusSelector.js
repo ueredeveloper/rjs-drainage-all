@@ -3,8 +3,8 @@ import { Slider } from "@mui/material";
 import { useData } from "../../hooks/analyse-hooks";
 
 /**
- 
- * Componente para ajustar o raio de pesquisa em metros.
+ * @name AlertCommom
+ * @description Componente para ajustar o raio de pesquisa em metros.
  * @component
  * @returns {JSX.Element} O elemento React que representa o componente.
  */

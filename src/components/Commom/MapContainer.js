@@ -5,7 +5,7 @@ import MapContent from "./map/MapContent";
 import MapControllers from "./map/MapControllers";
 
 /**
- * Organiza a renderização do mapa.
+ * @description Organiza a renderização do mapa.
  * @component
  * @requires MapContent
  * @requires MapControllers

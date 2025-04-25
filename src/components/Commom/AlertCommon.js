@@ -3,7 +3,8 @@ import { Alert, Collapse } from "@mui/material";
 
 
 /**
- * Componente de alerta comum.
+
+   Componente de alerta comum a vários componentes.
  * Exibe uma mensagem de erro dentro de um alerta colapsável.
  * 
  * @component
@@ -14,7 +15,7 @@ import { Alert, Collapse } from "@mui/material";
  * @returns {JSX.Element} O componente JSX do alerta.
  */
 
-export default function AlertCommom({ openAlert, alertMessage, setOpen }) {
+function AlertCommom({ openAlert, alertMessage, setOpen }) {
   
   return (
     <Box
@@ -41,3 +42,5 @@ export default function AlertCommom({ openAlert, alertMessage, setOpen }) {
     </Box>
   );
 }
+
+export default AlertCommom;

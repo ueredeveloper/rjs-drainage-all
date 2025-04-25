@@ -11,7 +11,7 @@ import AlertCommom from './AlertCommom';
 
 
 /**
- * Componente que gera um formulário para entrada de coordenadas e exibe um alerta caso as coordenadas sejam inválidas.
+ * @description Componente que gera um formulário para entrada de coordenadas e exibe um alerta caso as coordenadas sejam inválidas.
  * 
  * @component
  * @returns {JSX.Element} O componente JSX para o formulário de coordenadas.
