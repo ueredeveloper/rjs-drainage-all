@@ -21,6 +21,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "postinstall": "npm install --production",
     "build": "cross-env CI=false react-scripts build",
     "test": "echo \"Tests are skipped during deployment\"",
     "eject": "react-scripts eject",

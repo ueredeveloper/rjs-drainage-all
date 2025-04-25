@@ -8,6 +8,21 @@ Este projeto utiliza o [JSDoc](https://jsdoc.app/) com o template [`better-docs`
 
 ### ▶️ Atualizar Documentação
 
+Adicione better docs quando precisar atualizar a documentação nod dev dependencies e instale com pois ela necessita do React 17, é preciso
+forçar a instalação no React 18.
+
+```
+npm install better-docs --save-dev --legacy-peer-deps
+```
+Como fica o package.json:
+```
+ "devDependencies": {
+    "better-docs": "^2.7.3",
+    "cross-env": "^7.0.3",
+    "jsdoc": "^4.0.4"
+  }
+```
+Para dar run na documentação e atualizá-la:
 ```
 npm run docs
 ```
