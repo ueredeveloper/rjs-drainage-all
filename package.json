@@ -21,7 +21,6 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "postinstall": "npm install --production",
     "build": "cross-env CI=false react-scripts build",
     "test": "echo \"Tests are skipped during deployment\"",
     "eject": "react-scripts eject",
@@ -46,7 +45,7 @@
     ]
   },
   "devDependencies": {
-    "better-docs": "^2.7.3",
+    
     "cross-env": "^7.0.3",
     "jsdoc": "^4.0.4"
   }
