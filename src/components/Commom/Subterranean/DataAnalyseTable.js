@@ -37,7 +37,6 @@ function DataAnalyseTable() {
 
   const {hgAnalyse} = useData();
 
-
   return (
     <Box sx={{ display: "flex", flexDirection: 'column' }}>
       <FormControl >
@@ -52,9 +51,9 @@ function DataAnalyseTable() {
 
         <Paper elevation={3} sx={{ margin: 0, overflow: 'auto' }}>
           <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', my: 1 }}>
-            <Typography sx={{ fontSize: 14 }}>Bacia Hidrográfica: {hgAnalyse.basinName}</Typography>
-            <Typography sx={{ fontSize: 14 }}>Unidade Hidrográfica: {hgAnalyse.uhName} </Typography>
-            <Typography sx={{ fontSize: 14 }}>{hgAnalyse.uhNameLabel} </Typography>
+            <Typography sx={{ fontSize: 14 }}>Bacia Hidrográfica: {hgAnalyse.bacia_nome}</Typography>
+            <Typography sx={{ fontSize: 14 }}>Unidade Hidrográfica: {hgAnalyse.uh_nome} </Typography>
+            <Typography sx={{ fontSize: 14 }}>{hgAnalyse.uh_label} </Typography>
           </Box>
           <Table sx={{ minWidth: 100, width: "100%" }} aria-label="simple table" size="small">
             <TableHead>
@@ -70,13 +69,13 @@ function DataAnalyseTable() {
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell align="center" sx={{ p: 2 }}>{hgAnalyse.subsystem}</TableCell>
-                <TableCell align="center" sx={{ p: 2 }}>{hgAnalyse.codPlan}</TableCell>
-                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.qExploitable)}</TableCell>
-                <TableCell align="center" sx={{ p: 2 }}>{hgAnalyse.numberOfPoints}</TableCell>
-                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.qTotalAnnual)}</TableCell>
-                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.qPointsPercentage)}</TableCell>
-                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.volAvailable)}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{hgAnalyse.sistema}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{hgAnalyse.cod_plan}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.q_ex)}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{hgAnalyse.n_points}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.q_points)}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.q_points_per)}</TableCell>
+                <TableCell align="center" sx={{ p: 2 }}>{numberWithCommas(hgAnalyse.vol_avaiable)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

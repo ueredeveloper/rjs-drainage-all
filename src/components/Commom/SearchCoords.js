@@ -9,11 +9,11 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
-import { findAllPointsInASubsystem, findAllPointsInCircle } from "../../services/geolocation";
+import { findAllPointsInASubsystem, findAllPointsInCircle, findPointsInASystem } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyzeAvailability } from "../../tools";
+import { analyzeAvailability, converterPostgresToGmaps } from "../../tools";
 import AlertCommon from "./AlertCommon";
 
 
@@ -32,7 +32,7 @@ import AlertCommon from "./AlertCommon";
 function SearchCoords({ value }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
-  const { marker, setMarker, setOverlays, radius, setHgAnalyse } = useData(); // Hook para estado global
+  const { map, marker, setMarker, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem, setShapesFetched } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
 
   // Estados para o controle do alerta
@@ -95,7 +95,7 @@ function SearchCoords({ value }) {
         type: "circle",
         position: { lat: position.int_latitude, lng: position.int_longitude },
         map: null,
-        draw: null,
+        draw: { area: subsystem.area },
         markers: markers,
         radius: radius,
         area: null
@@ -111,38 +111,34 @@ function SearchCoords({ value }) {
     else if (value === 1) {
       let { tp_id, int_latitude, int_longitude } = marker;
 
-      await findAllPointsInASubsystem(tp_id, int_latitude, int_longitude).then(markers => {
-        let hidrogeoInfo = markers.hidrogeo[0].info;
+      await findPointsInASystem(tp_id, int_latitude, int_longitude).then(markers => {
 
-        let subterraneanMarkers = [
-          {
-            int_latitude: position.int_latitude,
-            int_longitude: position.int_longitude,
-            dt_demanda: { demandas: [], vol_anual_ma: 5000000.4585 }
-          },
-          ...markers.subterranea
+        let hidrogeoInfo = markers._hg_info;
+
+        // Cria um primeiro marcador com dados vazios, pois não foi buscado usuário específico
+        let _markers = [
+          { id: 0, tp_id: tp_id, ti_id: 2, int_latitude: lat, int_longitude: lng, dt_demanda: { demandas: [] } },
+          ...markers._points || []
         ];
 
-        // Realiza análise de disponibilidade hídrica
-        let hgAnalyse = analyzeAvailability(hidrogeoInfo, subterraneanMarkers);
-        setHgAnalyse(hgAnalyse);
+        // Realiza análise de disponibilidade hídrica.
+        let hgAnalyse = analyzeAvailability(hidrogeoInfo, _markers);
 
-        // Cria uma forma de polígono com os marcadores encontrados
-        let shape = {
-          id: Date.now(),
-          type: "polygon",
-          position: { lat: position.int_latitude, lng: position.int_longitude },
-          map: null,
-          draw: null,
-          markers: markers,
-          radius: radius,
-          area: null
-        };
+        setHgAnalyse(hgAnalyse)
 
-        setOverlays(prev => ({
+        // Preenche subsistema com dados dos usuários etc.
+        setSubsystem((prev) => ({
           ...prev,
-          shapes: [...prev.shapes, shape]
+          markers: _markers,
+          hg_shape: markers._hg_shape,
+          hg_info: markers._hg_info,
+          hg_analyse: hgAnalyse,
         }));
+
+        let _shape = [{ ...markers._hg_info, ...markers._hg_shape, shapeName: markers._hg_info.sistema, shape: { coordinates: converterPostgresToGmaps({ shape: markers._hg_shape }) } }]
+
+        setShapesFetched(prev => [...prev, { name: markers._hg_info.sistema, shape: _shape }]);
+
       });
     }
 

@@ -82,11 +82,15 @@ const ElemDrawManager = ({ map }) => {
           int_latitude: position.lat(),
           int_longitude: position.lng()
         }));
+
+
+
       }
 
       if (event.type === 'circle') {
         // Caso seja um círculo, obtém a área e os pontos dentro do círculo
         let circle = event.overlay;
+        
         const { center, radius } = circle;
         let bounds = circle.getBounds();
         var lat = bounds.getNorthEast().lat();
@@ -112,6 +116,7 @@ const ElemDrawManager = ({ map }) => {
           ...prev,
           shapes: [...prev.shapes, shape]
         }));
+        
       }
 
       if (event.type === 'polygon') {
@@ -148,6 +153,8 @@ const ElemDrawManager = ({ map }) => {
           markers: await findAllPointsInPolygon(serverPolygon),
           area: calculatePolygonArea(event.overlay)
         };
+
+        console.log(shape)
 
         setOverlays(prev => ({
           ...prev,

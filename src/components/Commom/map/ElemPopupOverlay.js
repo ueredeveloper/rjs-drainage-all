@@ -212,15 +212,22 @@ const setContent = (draw) => {
     }
     if (draw.type === 'polygon') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
+        if (draw.area != null) {
+            let areaM2 = draw.area.toFixed(2)
+            let formatAreaM2 = numberWithCommas(areaM2)
+            let areakKm2 = draw.area / 1000000
+            let formatAreaKm2 = numberWithCommas(areakKm2)
 
-        let areaM2 = draw.area.toFixed(2)
-        let formatAreaM2 = numberWithCommas(areaM2)
-        let areakKm2 = draw.area / 1000000
-        let formatAreaKm2 = numberWithCommas(areakKm2)
+            let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
+            let type = `Polígono`;
+            return createContentDiv(type, content);
+        }
 
-        let content = `Área: ${formatAreaM2} m² = ${formatAreaKm2} km²`;
-        let type = `Polígono`;
-        return createContentDiv(type, content);
+        let content = `Área: ${"COMPLETAR"} m² = ${"COMPLETAR"} km²`;
+        let type = `Subsistema`;
+
+        return createContentDiv(content, type);
+
     }
     if (draw.type === 'circle') {
         /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */

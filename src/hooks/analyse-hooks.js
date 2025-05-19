@@ -45,17 +45,14 @@ export const DataProvider = ({ children }) => {
   const [radius, setRadius] = useState(600);
 
   const [hgAnalyse, setHgAnalyse] = useState({
-    basinName: "",
-    uhNameLabel: "",
-    uhName: "",
-    subsystem: "",
-    codPlan: "",
-    qExploitable: 0,
-    numberOfPoints: 0,
-    qUserAnnual: 0,
-    qTotalAnnual: 0,
-    qPointsPercentage: 0,
-    volAvailable: 0,
+    "uh": "",
+    "sistema": "",
+    "cod_plan": "",
+    "q_ex": 0,
+    "n_points": 0,
+    "q_points": 0,
+    "q_points_per": 0,
+    "vol_avaiable": 0
   })
 
 

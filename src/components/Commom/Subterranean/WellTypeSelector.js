@@ -15,7 +15,7 @@ const wellType = [
     label: 'Manual/Tubular Raso',
   },
   {
-    value: "2",
+    value: "3",
     label: 'Tubular Profundo',
   }
 ];

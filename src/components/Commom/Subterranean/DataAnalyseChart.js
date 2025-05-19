@@ -16,7 +16,7 @@ const DataAnalyseChart = () => {
     */
     const [myChart, setMyChart] = useState(null);
 
-    const { hgAnalyse } = useData();
+    const { subsystem } = useData();
 
     const emphasisStyle = {
         itemStyle: {
@@ -64,28 +64,28 @@ const DataAnalyseChart = () => {
                 type: 'bar',
                 stack: '1',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.qExploitable],
+                data: [subsystem.hg_analyse.q_ex],
             },
             {
                 name: 'Q outorgada',
                 type: 'bar',
                 stack: '2',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.qTotalAnnual],
+                data: [subsystem.hg_analyse.q_points],
             },
             {
                 name: 'Q Disponível',
                 type: 'bar',
                 stack: '3',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.volAvailable],
+               data: [subsystem.hg_analyse.q_ex - subsystem.hg_analyse.q_points],
             },
             {
                 name: 'Q Usuário',
                 type: 'bar',
                 stack: '4',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.qUserAnnual],
+                 data: [subsystem.markers.length!==0? subsystem.markers[0].dt_demanda.vol_anual_ma: 0],
             },
         ]
     };
@@ -134,21 +134,21 @@ const DataAnalyseChart = () => {
                 type: 'bar',
                 stack: '1',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.qExploitable],
+                data: [subsystem.hg_analyse.q_ex],
             },
             {
                 name: 'Q outorgada',
                 type: 'bar',
                 stack: '2',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.qTotalAnnual],
+                   data: [subsystem.hg_analyse.q_points],
             },
             {
                 name: 'Q Disponível',
                 type: 'bar',
                 stack: '3',
                 emphasis: emphasisStyle,
-                data: [hgAnalyse.volAvailable],
+                data: [subsystem.hg_analyse.q_ex - subsystem.hg_analyse.q_points],
             },
             {
                 name: 'Q Usuário',
@@ -156,7 +156,7 @@ const DataAnalyseChart = () => {
                 stack: '4',
                 emphasis: emphasisStyle,
                 // resolver quando inserir a busca de items cadastrados no outro sistema
-                data: [hgAnalyse.qUserAnnual],
+                data: [subsystem.markers.length!==0? subsystem.markers[0].dt_demanda.vol_anual_ma: 0],
 
             },
         ];
@@ -169,7 +169,7 @@ const DataAnalyseChart = () => {
             myChart.setOption(newOptions)
         }
 
-    }, [hgAnalyse])
+    }, [subsystem])
 
     return (
         <FormControl sx={{ display: "flex", flex: 1 }}>

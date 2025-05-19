@@ -15,14 +15,21 @@ const initialsStates = {
     },
     /* cálculos no subsistema (poroso, fraturado) */
     "subsystem": {
+         "point": {
+            tp_id: 1,
+            
+            lat: -15.775139,
+            lng: -47.939599
+        },
         "markers": [{
             int_latitude: -15.775139,
             int_longitude: -47.939599,
             tp_id: 1,
             dt_demanda: { demandas: [] }
         }],
+        
         // selected markers
-        "selectedMarkers": [],
+        "sel_markers": [],
         "hg_shape": {
             "type": null,
             "coordinates": []

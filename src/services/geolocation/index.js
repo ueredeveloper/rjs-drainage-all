@@ -31,7 +31,7 @@ async function findAllPointsInASubsystem(tp_id, lat, lng) {
  * @param {number} ymax A coordenada Y máxima do retângulo.
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
-async function findAllPointsInRectangle(nex,ney, swx, swy) {
+async function findAllPointsInRectangle(nex, ney, swx, swy) {
 
   try {
     const response = await fetch(url + '/find-points-inside-rectangle', {
@@ -116,9 +116,44 @@ async function findAllPointsInCircle(circle) {
     // obter primeiro índice da matriz
     return data[0];
   } catch (error) {
-    
+
     console.error(error);
   }
+}
+
+
+/**
+* Através de uma coordenada buscar todos os pontos no sistema (fraturado ou poroso) ao qual pertence a coordenada. 
+* @param {integer} tp_id Tipo de poço em análise, se tubular ou manual.
+* @param {float} lat Latitude.
+* @para {float} lng Longitue.
+*
+  */
+
+
+async function findPointsInASystem(tp_id, lat, lng) {
+
+  //  Tipo de poço na forma antiga 1 - Manual e 2 - Tubular
+  //      opções neste sistema
+  //          1 - Manual e (antigo 1)
+  //          2 - Tubular Raso (antigo 1)
+  //          3 - Tubular Profundo (antito 2)
+  let _tp_id = (tp_id === 1 || tp_id === 2) ? 1 : 2;
+
+  let url = 'https://njs-drainage-ueredeveloper.replit.app';
+
+  let response = await fetch(url + `/findPointsInASystem?tp_id=${_tp_id}&lat=${lat}&lng=${lng}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/JSON',
+      'Content-Type': 'application/JSON',
+    }
+
+  }).then(res => {
+    return res.json();
+  })
+
+  return response;
 }
 
 export {
@@ -126,4 +161,5 @@ export {
   findAllPointsInRectangle,
   findAllPointsInPolygon,
   findAllPointsInCircle,
+  findPointsInASystem
 };

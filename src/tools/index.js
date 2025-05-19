@@ -79,51 +79,52 @@ function nFormatter(num, digits) {
  * @param {array} subterraneanMarkers - Marcadores de outorgas subterrâneas (manual ou tubular).
  * @returns {object} - Um objeto contendo informações analisadas.
  */
-function analyzeAvailability(hgInfo, subterraneanMarkers) {
-  // Somatório de vazão anual
-  let qTotalAnnual = 0;
-  subterraneanMarkers.map((sMarker) => {
-    if (typeof sMarker.dt_demanda.vol_anual_ma === 'undefined') {
-      return qTotalAnnual += 0;
+
+function analyzeAvailability(_info, _points) {
+
+  let _Q = 0;
+  _points.map((_point) => {
+
+    if (typeof _point.dt_demanda.vol_anual_ma === 'undefined') {
+      return _Q += 0;
     } else {
-      return qTotalAnnual += parseFloat(sMarker.dt_demanda.vol_anual_ma);
+      return _Q += parseFloat(_point.dt_demanda.vol_anual_ma);
     }
   });
-
-  // Cálculo de vazão anual do usuário solicitado
-  let qUserAnnual = parseFloat(subterraneanMarkers[0].dt_demanda.vol_anual_ma).toFixed(4) || 0;
-
-  // Extração de valores da tabela hidrogeo (fraturado ou poroso)
-  let {
-    bacia_nome: basinName,
-    uh_label: uhNameLabel,
-    uh_nome: uhName,
-    sistema: subsystem,
-    cod_plan: codPlan,
-    re_cm_ano: qExploitable,
-  } = hgInfo;
-
-  // Cálculo do números de pontos no polígono
-  let numberOfPoints = subterraneanMarkers.length;
-
-  // Porcentagem de uso da vazão disponível
-  let qPointsPercentage = ((qTotalAnnual * 100) / qExploitable) || 0;
-
-  // Cálculo de disponibilidade do subsistema
-  let volAvailable = (qExploitable - qTotalAnnual);
+  
+  // vazão explotável/ ano
+  let _q_ex = _info.re_cm_ano;
+  // nº de pontos
+  let _n_points = _points.length;
+  // somatório de vazão anual
+  let _q_points = _Q;
+  // percentual de vazão utilizada
+  let _q_points_per = (Number(_Q) * 100 / Number(_q_ex)).toFixed(4);
+  if (isNaN(_q_points_per)) {
+    console.log('análise, porcentagem, NaN')
+    _q_points_per = 0;
+  }
 
   return {
-    basinName,
-    uhNameLabel,
-    uhName,
-    subsystem,
-    codPlan,
-    qExploitable,
-    numberOfPoints,
-    qUserAnnual,
-    qTotalAnnual: parseFloat(qTotalAnnual).toFixed(4),
-    qPointsPercentage,
-    volAvailable: parseFloat(volAvailable).toFixed(4),
+    bacia_nome: _info.bacia_nome,
+    // Unidade Hidrográfica
+    uh_label: _info.uh_label,
+    // Nome da UH
+    uh_nome: _info.uh_nome,
+    // Sitema (R3, P1)
+    sistema: _info.sistema,
+    // Código do Sitema
+    cod_plan: _info.cod_plan,
+    // Q explotável
+    q_ex: _q_ex,
+    // nº pontos
+    n_points: _n_points,
+    // Q outorgada
+    q_points: _q_points,
+    // % utilizada
+    q_points_per: _q_points_per,
+    // vol disponível
+    vol_avaiable: (Number(_q_ex) - Number(_q_points)).toFixed(4)
   };
 }
 
