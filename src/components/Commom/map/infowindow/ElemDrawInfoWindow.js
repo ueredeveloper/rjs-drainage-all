@@ -1,5 +1,12 @@
 // src/components/Commom/map/infowindow/ElemDrawInfoWindow.js
 
+/**
+ * Gera o conteúdo HTML do InfoWindow com base nas propriedades da shape fornecida.
+ * Permite configurar cor da borda, preenchimento, opacidade e ativar/desativar cálculo de área.
+ *
+ * @param {google.maps.Polygon|google.maps.Rectangle|google.maps.Circle|google.maps.Polyline} shape - A forma desenhada no mapa (shape) cujas propriedades serão utilizadas.
+ * @returns {string} HTML a ser inserido no InfoWindow.
+ */
 export function getDrawInfoWindowHtmlWithState(shape) {
   // Obtém propriedades atuais da shape para inicializar controles
   const strokeColor = shape.get('strokeColor') || '#ff0000';
@@ -49,12 +56,17 @@ export function getDrawInfoWindowHtmlWithState(shape) {
   `;
 }
 
-// Função para adicionar os listeners e atualizar a shape com as interações no popup
+/**
+ * Adiciona os listeners aos elementos da interface de InfoWindow,
+ * permitindo ao usuário modificar dinamicamente as propriedades da shape desenhada.
+ *
+ * @param {google.maps.Polygon|google.maps.Rectangle|google.maps.Circle|google.maps.Polyline} shape - A forma desenhada no mapa a ser manipulada.
+ */
 export function attachDrawInfoListeners(shape) {
   const container = document.querySelector('.info-content');
   if (!container) return;
 
-  // Bordas
+  // === Listeners para cor da borda ===
   const borderButtons = container.querySelectorAll('#borderColors .color-button');
   borderButtons.forEach(btn => {
     btn.onclick = () => {
@@ -65,7 +77,7 @@ export function attachDrawInfoListeners(shape) {
     };
   });
 
-  // Preenchimento
+  // === Listeners para cor de preenchimento ===
   const fillButtons = container.querySelectorAll('#fillColors .color-button');
   fillButtons.forEach(btn => {
     btn.onclick = () => {
@@ -76,7 +88,7 @@ export function attachDrawInfoListeners(shape) {
     };
   });
 
-  // Opacidade
+  // === Listener para controle de opacidade ===
   const opacitySlider = container.querySelector('#opacitySlider');
   if (opacitySlider) {
     opacitySlider.oninput = () => {
@@ -85,13 +97,13 @@ export function attachDrawInfoListeners(shape) {
     };
   }
 
-  // Checkbox cálculo área
+  // === Listener para checkbox de cálculo de área ===
   const calcularAreaCheckbox = container.querySelector('#calcularArea');
   if (calcularAreaCheckbox) {
     calcularAreaCheckbox.onchange = () => {
       shape.calculoAreaAtivo = calcularAreaCheckbox.checked;
-      // Aqui você pode disparar lógica para mostrar/esconder popup de cálculo de área, se tiver
-      // Exemplo:
+
+      // Dispara lógica opcional para mostrar ou esconder popup de cálculo de área
       if (window.showCalcAreaPopup) {
         if (shape.calculoAreaAtivo) window.showCalcAreaPopup(shape);
         else window.hideCalcAreaPopup && window.hideCalcAreaPopup();

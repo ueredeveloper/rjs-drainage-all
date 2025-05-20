@@ -71,3 +71,17 @@ Alterar a cor da borda dos polígonos para vermelho.
 1️⃣ Alterar a cor da borda dos polígonos
  Alterar a cor da borda dos polígonos para vermelho.
 
+-----------------------------------------------------------------------------------------------------
+
+🗓️ Data: 20 de abril de 2025👨‍💻 Responsável: [Luan Carvalho]
+
+✅ ObjetivoExibir InfoWindow personalizada ao clicar nas shapes desenhadas no mapa (polígono, retângulo, círculo e linha), permitindo personalizações e cálculo de área.
+
+🔹 Tarefas
+
+1️⃣ Criar componente ElemDrawInfoWindow
+
+ - Integrar InfoWindow ao mapa
+ - Gerenciar abertura/fechamento da InfoWindow
+ - altera as cores das bordas e do preenchimento dos polígonos criados
+

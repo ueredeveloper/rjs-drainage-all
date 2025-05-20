@@ -1,8 +1,30 @@
+/**
+ * Componente ElemDrawManager
+ * Gerencia a criação de formas desenhadas no mapa do Google Maps, escuta eventos de desenho
+ * e interage com InfoWindows para personalização visual das formas.
+ *
+ * @param {Object} props - Propriedades do componente.
+ * @param {google.maps.Map} props.map - Instância do mapa Google Maps onde os desenhos ocorrerão.
+ * @returns {null} Componente não renderiza elementos visuais diretamente.
+ */
+
 import { useEffect } from 'react';
-import { findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle } from '../../../services/geolocation';
-import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea } from '../../../tools';
+import {
+  findAllPointsInRectangle,
+  findAllPointsInPolygon,
+  findAllPointsInCircle
+} from '../../../services/geolocation';
+import {
+  calculateCircleArea,
+  calculatePolygonArea,
+  calculatePolylineLength,
+  calculateRectangleArea
+} from '../../../tools';
 import { useData } from '../../../hooks/analyse-hooks';
-import { getDrawInfoWindowHtmlWithState, attachDrawInfoListeners } from './infowindow/ElemDrawInfoWindow';
+import {
+  getDrawInfoWindowHtmlWithState,
+  attachDrawInfoListeners
+} from './infowindow/ElemDrawInfoWindow';
 
 const ElemDrawManager = ({ map }) => {
   const { setMarker, setOverlays } = useData();
@@ -10,6 +32,7 @@ const ElemDrawManager = ({ map }) => {
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
 
+    // === Inicializa o DrawingManager com opções de estilo e modos de desenho disponíveis ===
     const draw = new window.google.maps.drawing.DrawingManager({
       drawingControl: true,
       drawingControlOptions: {
@@ -31,40 +54,61 @@ const ElemDrawManager = ({ map }) => {
         editable: true,
         zIndex: 1,
       },
-      polygonOptions: { strokeColor: "#ff0000", editable: true, clickable: true },
-      rectangleOptions: { strokeColor: "#ff0000", editable: true, clickable: true },
-      polylineOptions: { strokeColor: "#ff0000", editable: true, clickable: true }
+      polygonOptions: {
+        strokeColor: "#ff0000",
+        editable: true,
+        clickable: true
+      },
+      rectangleOptions: {
+        strokeColor: "#ff0000",
+        editable: true,
+        clickable: true
+      },
+      polylineOptions: {
+        strokeColor: "#ff0000",
+        editable: true,
+        clickable: true
+      }
     });
 
     let marker;
     let currentInfoWindow = null;
 
+    /**
+     * Abre o InfoWindow customizado para a shape clicada ou recém-criada
+     * @param {google.maps.OverlayView} shape - A forma desenhada no mapa.
+     * @param {google.maps.LatLng} position - A posição onde o InfoWindow será exibido.
+     */
     const openInfoWindow = (shape, position) => {
       if (currentInfoWindow) {
         currentInfoWindow.close();
       }
 
       const content = getDrawInfoWindowHtmlWithState(shape);
-
       const infoWindow = new window.google.maps.InfoWindow({
         content,
         position,
       });
 
+      // Espera o DOM estar pronto para adicionar listeners nos botões e sliders do InfoWindow
       window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
         attachDrawInfoListeners(shape);
       });
 
       infoWindow.open(map);
-
       shape.infoWindow = infoWindow;
       currentInfoWindow = infoWindow;
     };
 
+    /**
+     * Adiciona listener de clique a uma shape para abrir o InfoWindow personalizado
+     * @param {Object} shapeObj - Objeto contendo dados da shape, incluindo a instância desenhada.
+     */
     const addClickListenerToShape = (shapeObj) => {
       const overlay = shapeObj.draw;
       if (!overlay) return;
 
+      // Remove listener anterior, se houver
       if (shapeObj.listenerClick) {
         window.google.maps.event.removeListener(shapeObj.listenerClick);
       }
@@ -75,10 +119,14 @@ const ElemDrawManager = ({ map }) => {
       });
     };
 
+    /**
+     * Handler para quando uma forma é desenhada no mapa
+     */
     window.google.maps.event.addListener(draw, 'overlaycomplete', async function (event) {
       const overlay = event.overlay;
       const type = event.type;
 
+      // Se for marcador, salva coordenadas e remove do mapa (controle externo)
       if (type === 'marker') {
         if (marker) marker.setMap(null);
         marker = overlay;
@@ -92,6 +140,7 @@ const ElemDrawManager = ({ map }) => {
         return;
       }
 
+      // Define objeto shape base
       let shape = {
         id: Date.now(),
         type,
@@ -103,6 +152,7 @@ const ElemDrawManager = ({ map }) => {
         markers: [],
       };
 
+      // === Círculo ===
       if (type === 'circle') {
         const center = overlay.getCenter();
         const radius = overlay.getRadius();
@@ -115,11 +165,13 @@ const ElemDrawManager = ({ map }) => {
         });
       }
 
+      // === Polígono ===
       if (type === 'polygon') {
         const serverPolygon = overlay.getPath().getArray().map(p => [p.lng(), p.lat()]);
         const paths = overlay.getPaths();
         let lat = null, lng = null;
 
+        // Busca a coordenada mais ao norte para posicionar o InfoWindow
         paths.forEach(path => {
           path.forEach(point => {
             const latitude = point.lat();
@@ -136,6 +188,7 @@ const ElemDrawManager = ({ map }) => {
         shape.markers = await findAllPointsInPolygon([...serverPolygon, serverPolygon[0]]);
       }
 
+      // === Retângulo ===
       if (type === 'rectangle') {
         const bounds = overlay.getBounds();
         const NE = bounds.getNorthEast();
@@ -147,6 +200,7 @@ const ElemDrawManager = ({ map }) => {
         shape.markers = await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat());
       }
 
+      // === Linha (Polyline) ===
       if (type === 'polyline') {
         const path = overlay.getPath();
         const lastPoint = path.getAt(path.getLength() - 1);
@@ -161,10 +215,13 @@ const ElemDrawManager = ({ map }) => {
         };
       }
 
+      // Adiciona clique para abrir InfoWindow no futuro
       addClickListenerToShape(shape);
 
+      // Abre InfoWindow assim que a shape for criada
       openInfoWindow(overlay, shape.position);
 
+      // Armazena nova shape no estado global
       setOverlays(prev => ({
         ...prev,
         shapes: [...prev.shapes, shape]
@@ -174,6 +231,7 @@ const ElemDrawManager = ({ map }) => {
     draw.setMap(map);
 
     return () => {
+      // Remove todos os listeners ao desmontar componente
       window.google.maps.event.clearInstanceListeners(draw);
     };
   }, [map, setMarker, setOverlays]);
