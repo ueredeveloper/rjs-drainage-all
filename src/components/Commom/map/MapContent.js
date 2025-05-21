@@ -25,6 +25,8 @@ function MapContent({ checkBoxState }) {
   // Estados do componente
   const [mode] = useState('light');
 
+  const [popups, setPopups] = useState([]);
+
   // Obtém os estados do contexto de análise
   const { map, setMap, marker, overlays, setOverlays, shapesFetched } = useData();
 
@@ -92,7 +94,6 @@ function MapContent({ checkBoxState }) {
     }
   }
 
-
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
@@ -120,10 +121,15 @@ function MapContent({ checkBoxState }) {
           });
         })}
 
-        {/* Renderização das sobreposições */}
+        {/* Renderização das sobreposições */ }
         {overlays.shapes.map((shape, i) => {
-          return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />;
-        })}
+          return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} setPopups={setPopups} />;
+        })
+
+        
+        }
+
+        {/*popups.forEach(popup=> popup.setMap(null))*/}
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
         {shapesFetched.map((shape) => {

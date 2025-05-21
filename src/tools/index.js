@@ -1,5 +1,5 @@
 import { mkrBlueIcon, mkrGreenIcon, mkrOrangeIcon, mkrPinkIcon, mkrPurpleIcon, mkrRedIcon } from "../assets";
-import { iwBarragemIcon, iwEfluenteIcon, iwManualIcon, iwPluvialIcon, iwSuperficialIcon, iwTubularIcon } from "../assets/svg/svgs-icons";
+import { iwBarragemIcon, iwDefaultIcon, iwEfluenteIcon, iwManualIcon, iwPluvialIcon, iwSuperficialIcon, iwTubularIcon } from "../assets/svg/svgs-icons";
 
 /**
  * Cria anéis para cada ângulo do círculo (0 a 360º) e constrói um polígono em formato circular para buscas de outorgas.
@@ -85,7 +85,7 @@ function analyzeAvailability(_info, _points) {
   let _Q = 0;
   _points.map((_point) => {
 
-    if (typeof _point.dt_demanda.vol_anual_ma === 'undefined') {
+    if (typeof _point.dt_demanda?.vol_anual_ma === 'undefined') {
       return _Q += 0;
     } else {
       return _Q += parseFloat(_point.dt_demanda.vol_anual_ma);
@@ -214,8 +214,9 @@ function calculatePolylineLength(polyline) {
 
 
 function setInfoMarkerIcon(id, ti_id, tp_id) {
+
   if (id === 0) {
-    return { mkr: mkrRedIcon, color: '#9D0404' };
+    return { mkr: mkrRedIcon, color: '#9D0404', iw: iwDefaultIcon() };
   } else {
     switch (ti_id) {
       case 1:

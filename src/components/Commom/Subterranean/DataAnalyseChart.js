@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { FormControl, FormLabel, Paper } from '@mui/material';
 import { useData } from '../../../hooks/analyse-hooks';
+import ElemGrant from '../../Connection/elem-grant';
 
 /**
  * Componente para renderizar um gráfico de análise de dados usando ECharts.
@@ -14,7 +15,7 @@ const DataAnalyseChart = () => {
     * Estado para armazenar a instância do gráfico ECharts.
     * @type {echarts.ECharts | null}
     */
-    const [myChart, setMyChart] = useState(null);
+    const [subChart, setsubChart] = useState(null);
 
     const { subsystem } = useData();
 
@@ -92,22 +93,22 @@ const DataAnalyseChart = () => {
 
     useEffect(() => {
         /**
-        * Inicializa uma instância do gráfico ECharts no elemento com ID 'chart-container'.
+        * Inicializa uma instância do gráfico ECharts no elemento com ID 'e-grants-sub-chart'.
         * @type {echarts.ECharts}
         */
-        let myChart = echarts.init(document.getElementById('chart-container'));
+        let subChart = echarts.init(document.getElementById('e-grants-sub-chart'));
 
-        myChart.setOption(options);
+        subChart.setOption(options);
 
         // manipulação das opções no gráfico 
-        myChart.on('brushSelected', function (params) {
+        subChart.on('brushSelected', function (params) {
             var brushed = [];
             var brushComponent = params.batch[0];
             for (var sIdx = 0; sIdx < brushComponent.selected.length; sIdx++) {
                 var rawIndices = brushComponent.selected[sIdx].dataIndex;
                 brushed.push('[Series ' + sIdx + '] ' + rawIndices.join(', '));
             }
-            myChart.setOption({
+            subChart.setOption({
                 title: {
                     backgroundColor: '#333',
                     // text: 'SELECTED DATA INDICES: \n' + brushed.join('\n'),
@@ -122,7 +123,7 @@ const DataAnalyseChart = () => {
             });
         });
         // Define a instância do gráfico no estado
-        setMyChart(myChart)
+        setsubChart(subChart)
     }, []);
 
     useEffect(() => {
@@ -164,18 +165,20 @@ const DataAnalyseChart = () => {
         newOptions.series = series;
 
 
-        if (myChart) {
+        if (subChart) {
 
-            myChart.setOption(newOptions)
+            subChart.setOption(newOptions)
         }
 
     }, [subsystem])
 
     return (
         <FormControl sx={{ display: "flex", flex: 1 }}>
+
+            <ElemGrant/>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
             <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
-                <div id="chart-container" style={{ margin: 10, width: '100%', height: '10rem' }}></div>
+                <div id="e-grants-sub-chart" style={{ margin: 10, width: '100%', height: '10rem' }}></div>
             </Paper>
         </FormControl>
 

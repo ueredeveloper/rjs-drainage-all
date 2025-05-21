@@ -9,12 +9,13 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
-import { findAllPointsInASubsystem, findAllPointsInCircle, findPointsInASystem } from "../../services/geolocation";
+import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
 import { analyzeAvailability, converterPostgresToGmaps } from "../../tools";
 import AlertCommon from "./AlertCommon";
+import { initialsStates } from "../../initials-states";
 
 
 /**
@@ -32,7 +33,7 @@ import AlertCommon from "./AlertCommon";
 function SearchCoords({ value }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
-  const { map, marker, setMarker, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem, setShapesFetched } = useData(); // Hook para estado global
+  const { map, marker, setMarker, overlays, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
 
   // Estados para o controle do alerta
@@ -63,6 +64,7 @@ function SearchCoords({ value }) {
    * @returns {Promise<void>}
    */
   async function handleOnClick() {
+
     const lat = parseFloat(position.int_latitude);
     const lng = parseFloat(position.int_longitude);
 
@@ -109,7 +111,18 @@ function SearchCoords({ value }) {
 
     // Busca por subsistema
     else if (value === 1) {
+
+      // limpa o mapa
+
+      overlays.shapes.forEach(shape => {
+        shape.draw?.setMap(null)
+      });
+      setOverlays(initialsStates.overlays);
+
+
       let { tp_id, int_latitude, int_longitude } = marker;
+
+
 
       await findPointsInASystem(tp_id, int_latitude, int_longitude).then(markers => {
 
@@ -117,7 +130,14 @@ function SearchCoords({ value }) {
 
         // Cria um primeiro marcador com dados vazios, pois não foi buscado usuário específico
         let _markers = [
-          { id: 0, tp_id: tp_id, ti_id: 2, int_latitude: lat, int_longitude: lng, dt_demanda: { demandas: [] } },
+          {
+            id: 0,
+            tp_id: tp_id,
+            ti_id: 2,
+            int_latitude: lat,
+            int_longitude: lng,
+            dt_demanda: { demandas: [] }
+          },
           ...markers._points || []
         ];
 
@@ -135,9 +155,37 @@ function SearchCoords({ value }) {
           hg_analyse: hgAnalyse,
         }));
 
-        let _shape = [{ ...markers._hg_info, ...markers._hg_shape, shapeName: markers._hg_info.sistema, shape: { coordinates: converterPostgresToGmaps({ shape: markers._hg_shape }) } }]
 
-        setShapesFetched(prev => [...prev, { name: markers._hg_info.sistema, shape: _shape }]);
+        let coordinates = { shape: { coordinates: converterPostgresToGmaps({ shape: markers._hg_shape }) } }
+
+        let shape = {
+          id: Date.now(),
+          type: 'polygon',
+          position: null,
+          map: map,
+          draw: new window.google.maps.Polygon({
+            paths: coordinates.shape.coordinates,
+            strokeColor: 'red',
+            strokeOpacity: 0.8,
+            strokeWeight: 1,
+            fillColor: 'red',
+            fillOpacity: 0.35,
+            map: map
+          }),
+          markers: {
+            subterranea: _markers,
+            superficial: null,
+            barragem: null,
+            lancamento_efluentes: null,
+            lancamento_pluviais: null
+          },
+          area: null
+        };
+
+        setOverlays(prev => ({
+          ...prev,
+          shapes: [...prev.shapes, shape]
+        }));
 
       });
     }
@@ -152,6 +200,7 @@ function SearchCoords({ value }) {
    * @param {React.ChangeEvent<HTMLInputElement>} event - Evento do input.
    */
   function handleOnTextFieldChange(event) {
+
     let { name, value } = event.target;
 
     // Remove tudo que não for número, ponto, vírgula ou hífen
@@ -189,6 +238,7 @@ function SearchCoords({ value }) {
    * @param {KeyboardEvent} event - O evento de teclado disparado.
    */
   function handlekeydown(event) {
+
     const { key } = event;
     if (key === "Enter") {
       event.preventDefault(); // evita que a pagina recarregue ao pressionar Enter

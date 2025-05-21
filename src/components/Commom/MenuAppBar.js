@@ -32,7 +32,7 @@ function MenuAppBar() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            SAD-DF
+            Sistema de Apoio à Decisão - SAD/DF
           </Typography>
           <Button color="inherit">Login</Button>
         </Toolbar>

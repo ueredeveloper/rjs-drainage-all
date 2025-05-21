@@ -27,11 +27,8 @@ const wellType = [
  */
 function WellTypeSelector() {
 
-  // Especifica o tipo de poço (TpId), onde 1 representa Poço Manual/Tubular Raso e 2 representa Poço Tubular Profundo.
-  const [tpId, setTpId] = useState(1);
-
   // Obtém a função setMarker do hook useData.
-  const { setMarker } = useData();
+  const { setMarker, tpId, setTpId } = useData();
 
   /**
    * Manipula o evento de alteração do input select e atualiza o estado tpId.
@@ -52,6 +49,8 @@ function WellTypeSelector() {
         tp_id: tpId
       }
     })
+
+
   }, [tpId])
 
   return (
@@ -67,7 +66,8 @@ function WellTypeSelector() {
         sx={{ width: '100%' }}
         select
         label="Tipo de Poço"
-        defaultValue="1"
+        // Muda de acordo com a variável (tpId)
+        value={tpId?.toString() || ''} // convert to string for compatibility
         onChange={onHandleChange}
       >
         {wellType.map((option) => (

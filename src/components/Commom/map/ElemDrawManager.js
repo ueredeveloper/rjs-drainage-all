@@ -154,8 +154,6 @@ const ElemDrawManager = ({ map }) => {
           area: calculatePolygonArea(event.overlay)
         };
 
-        console.log(shape)
-
         setOverlays(prev => ({
           ...prev,
           shapes: [...prev.shapes, shape]

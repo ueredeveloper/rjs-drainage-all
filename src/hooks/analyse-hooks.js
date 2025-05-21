@@ -37,6 +37,10 @@ export const DataProvider = ({ children }) => {
   // Estado para o sistema fraturado e poroso
   const [subsystem, setSubsystem] = useState(initialsStates.subsystem);
 
+  // Especifica o tipo de poço (TpId), onde 1 representa Poço Manual/Tubular Raso e 2 representa Poço Tubular Profundo.
+  const [tpId, setTpId] = useState(1);
+
+
   /*Shapes (polígonos) buscados no servidor (Bacias Hidrográficas, Unidades Hidrográficas...) e que ficarão guardados
   em um hooks para utilização sem precisar buscar novamente.
   */
@@ -74,7 +78,8 @@ export const DataProvider = ({ children }) => {
       overlays, setOverlays,
       shapesFetched, setShapesFetched,
       radius, setRadius,
-      hgAnalyse, setHgAnalyse
+      hgAnalyse, setHgAnalyse,
+      tpId, setTpId
     }}>
       {children}
     </DataContext.Provider>

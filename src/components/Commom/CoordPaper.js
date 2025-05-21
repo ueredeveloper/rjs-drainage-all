@@ -16,7 +16,7 @@ import AlertCommom from './AlertCommom';
  * @component
  * @returns {JSX.Element} O componente JSX para o formulário de coordenadas.
  */
-export default function CoordPaper() {
+export default function CoordPaper2() {
     const [loading, setLoading] = useState(false);
     const { marker, setMarker, setOverlays, radius } = useData();
     const [position, setPosition] = useState(marker);
@@ -45,7 +45,6 @@ export default function CoordPaper() {
      */
     async function handleClick() {
 
-        console.log('handle click ')
         const lat = parseFloat(position.int_latitude);
         const lng = parseFloat(position.int_longitude);
 
@@ -90,11 +89,6 @@ export default function CoordPaper() {
      * @returns {void}
      */
     function handleChange(event) {
-
-
-        console.log('input handle change ')
-
-
 
         let { name, value } = event.target;
 

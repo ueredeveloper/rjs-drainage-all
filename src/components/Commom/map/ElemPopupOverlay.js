@@ -5,7 +5,8 @@ import { numberWithCommas } from '../../../tools';
  * Elemento de renderização de um popup com informações de polígonos, retângulos etc.
  * @param {*} param0
  */
-const ElemPopupOverlay = ({ map, position, content, draw }) => {
+const ElemPopupOverlay = ({ map, position, content, draw, setPopups }) => {
+
     const overlayRef = useRef(null);
 
     useEffect(() => {
@@ -107,6 +108,8 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
         const popupOverlay = new PopupOverlay();
 
         popupOverlay.setMap(map);
+
+        setPopups(prev => [...prev, popupOverlay])
 
         overlayRef.current = popupOverlay;
 

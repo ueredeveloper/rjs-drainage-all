@@ -23,6 +23,8 @@ import { visuallyHidden } from "@mui/utils";
 import GetAppIcon from '@mui/icons-material/GetApp';
 // Exportar javascript para excel
 import * as XLSX from 'xlsx';
+import { analyzeAvailability } from "../../tools";
+import { useData } from "../../hooks/analyse-hooks";
 
 
 function descendingComparator(a, b, orderBy) {
@@ -294,16 +296,20 @@ EnhancedTableToolbar.propTypes = {
 };
 
 function GrantsTable({ markers }) {
+
+  const { setHgAnalyse, subsystem, setSubsystem } = useData(); // Hook para estado global
+
   const [order, setOrder] = useState(DEFAULT_ORDER);
   const [orderBy, setOrderBy] = useState(DEFAULT_ORDER_BY);
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
-  const [dense, setDense] = useState(false);
+  const [dense] = useState(false);
   const [visibleRows, setVisibleRows] = useState(null);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [paddingHeight, setPaddingHeight] = useState(0);
 
   useEffect(() => {
+
     let rowsOnMount = stableSort(
       markers,
       getComparator(DEFAULT_ORDER, DEFAULT_ORDER_BY)
@@ -318,10 +324,39 @@ function GrantsTable({ markers }) {
 
     // primeira renderização da tabela com todas as outorgas selecionadas
     const newSelected = markers.map((n) => n.id);
+
     setSelected(newSelected);
 
   }, [markers]);
 
+  /** É preciso para o caso de querer remover todos as outorgas do cálculo */
+  useEffect(() => {
+
+    let newSelected = markers.filter(r => {
+      return selected.includes(r.id)
+    });
+
+    let { hg_shape, hg_info } = subsystem;
+
+    // Só fazer os cálculos se for outorga subterrânea
+    if (markers[0]?.ti_id == 2) {
+
+      let hgAnalyse = analyzeAvailability(hg_info, newSelected);
+
+      setHgAnalyse(hgAnalyse)
+
+      // Preenche subsistema com dados dos usuários etc.
+      setSubsystem((prev) => ({
+        ...prev,
+        markers: newSelected,
+        hg_shape: hg_shape,
+        hg_info: hg_info,
+        hg_analyse: hgAnalyse,
+      }));
+
+    }
+
+  }, [selected]);
 
   const handleRequestSort = useCallback(
     (event, newOrderBy) => {
@@ -354,7 +389,9 @@ function GrantsTable({ markers }) {
     setSelected([]);
   };
 
+  /** Remove ou adiciona outorgas no cálculo de acordo com o click do usuário, removendo uma outorga da lista ou adicionando. */
   const handleClick = (event, id) => {
+
     const selectedIndex = selected.indexOf(id);
 
     let newSelected = [];
@@ -377,6 +414,25 @@ function GrantsTable({ markers }) {
     }
 
     setSelected(newSelected);
+
+    let selectedMarkers = markers.filter(r => {
+      return newSelected.includes(r.id)
+    });
+
+    let { hg_shape, hg_info } = subsystem;
+
+    let hgAnalyse = analyzeAvailability(hg_info, selectedMarkers);
+
+    setHgAnalyse(hgAnalyse)
+
+    // Preenche subsistema com dados dos usuários etc.
+    setSubsystem((prev) => ({
+      ...prev,
+      markers: selectedMarkers,
+      hg_shape: hg_shape,
+      hg_info: hg_info,
+      hg_analyse: hgAnalyse,
+    }));
 
   };
 
@@ -425,9 +481,7 @@ function GrantsTable({ markers }) {
     [order, orderBy]
   );
 
-
   const isSelected = (id) => selected.indexOf(id) !== -1;
-
 
   return (
     <Box>
@@ -477,18 +531,25 @@ function GrantsTable({ markers }) {
                           />
                         </TableCell>
                         <TableCell component="th" id={labelId} scope="row" padding="none">{row.us_nome}</TableCell>
-                        <TableCell align="right">{row.us_cpf_cnpj}</TableCell>
-                        <TableCell align="right">{row.int_processo}</TableCell>
-                        <TableCell align="right">{row.emp_endereco}</TableCell>
+                        <TableCell align="right">{row?.us_cpf_cnpj}</TableCell>
+                        <TableCell align="right">{row?.int_processo}</TableCell>
+                        <TableCell align="right">{row?.emp_endereco}</TableCell>
+
                         {
-                          /* row.dt_demanda.demandas.map((dem, i) => {
-                             return (
-                               <TableCell key={i}>
-                                 {parseFloat(dem.vol_mensal_mm).toFixed(2)}
-                               </TableCell>
-                             );
-                           })*/
-                        }
+
+
+                          // Verifica se o valor é nulo
+                          row.dt_demanda && row.dt_demanda.demandas !== undefined
+                            ?
+                            row.dt_demanda?.demandas?.map((dem, i) => {
+                              return (
+                                <TableCell key={i}>
+                                  {dem.vol_mensal_mm !== undefined ? parseFloat(dem.vol_mensal_mm).toFixed(2) : dem.vazao}
+                                </TableCell>
+                              );
+                            })
+                            : null}
+
                       </TableRow>
                     );
                   })

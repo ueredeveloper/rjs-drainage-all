@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@mui/material';
 import LayersClearIcon from '@mui/icons-material/LayersClear';
 import { initialsStates } from '../../../initials-states';
@@ -34,7 +34,7 @@ function MapControllers({ updateCheckBoxState }) {
     };
 
     const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
-    const { overlays, setOverlays, shapesFetched, setShapesFetched } = useData();
+    const { overlays, setOverlays, shapesFetched, setShapesFetched, setSubsystem, setHgAnalyse } = useData();
 
     /**
      * Cria um objeto de propriedades para a caixa de seleção.
@@ -116,9 +116,11 @@ function MapControllers({ updateCheckBoxState }) {
         // let _checkBoxState = checkBoxState.map(ch => ch = false)
         setCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
         updateCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
-        overlays.shapes.map(shape => {
-            if (shape.draw !== null)
-                shape.draw.setMap(null)
+
+        setSubsystem(initialsStates.subsystem);
+        setHgAnalyse(initialsStates.subsystem.hg_analyse);
+        overlays.shapes.forEach(shape => {
+            shape.draw?.setMap(null)
         });
         setOverlays(initialsStates.overlays);
     };

@@ -48,7 +48,7 @@ const ElemMarkerInfoWindow = ({ marker, info, map }) => {
                 });
             }
         }
-    }, [map, marker, infowindow]);
+    }, [map, marker, infowindow, info]);
 
     // Retorna null, pois este componente não possui renderização visível.
     return null;
