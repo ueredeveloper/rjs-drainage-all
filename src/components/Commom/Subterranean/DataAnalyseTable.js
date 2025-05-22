@@ -35,18 +35,13 @@ function DataAnalyseTable() {
     "vol_avaiable": "36323832.5000"
   })*/
 
-  const {hgAnalyse} = useData();
+  const { hgAnalyse } = useData();
 
   return (
     <Box sx={{ display: "flex", flexDirection: 'column' }}>
       <FormControl >
         <Box sx={{ display: 'flex', flexDirection: 'flex-row', justifyContent: 'space-between' }}>
           <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Análise</FormLabel>
-          
-            {/*
-            chama painel com outorgas cadastradas no sistema java
-            <ElemGrant/>*/ }
-          
         </Box>
 
         <Paper elevation={3} sx={{ margin: 0, overflow: 'auto' }}>

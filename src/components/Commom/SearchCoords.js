@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
-import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/material";
+import { CircularProgress, Fade, FormControl, FormLabel, TextField, Tooltip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
@@ -16,6 +16,7 @@ import WellTypeSelector from "./Subterranean/WellTypeSelector";
 import { analyzeAvailability, converterPostgresToGmaps } from "../../tools";
 import AlertCommon from "./AlertCommon";
 import { initialsStates } from "../../initials-states";
+import ElemGrant from '../Connection/elem-grant';
 
 
 /**
@@ -246,6 +247,13 @@ function SearchCoords({ value }) {
     }
   }
 
+  const handleCopy = () => {
+   
+    navigator.clipboard.writeText(`${position.int_latitude}, ${position.int_longitude}`).then(() => {
+      console.log(`${position.int_latitude}, ${position.int_longitude}`);
+    });
+  };
+
 
   return (
     <>
@@ -294,7 +302,7 @@ function SearchCoords({ value }) {
             ) : null}
 
             {/* Botões de busca e cópia */}
-            <Box sx={{ minWidth: 100 }}>
+            <Box sx={{ display: "flex", minWidth: 100 }}>
               {loading ? (
                 <Fade
                   sx={{ color: "secondary.main" }}
@@ -305,6 +313,7 @@ function SearchCoords({ value }) {
                   <CircularProgress size={25} />
                 </Fade>
               ) : (
+                <Tooltip title="Buscar por coordenada">
                 <IconButton
                   color="secondary"
                   size="large"
@@ -314,11 +323,27 @@ function SearchCoords({ value }) {
                 >
                   <SearchIcon />
                 </IconButton>
+                </Tooltip>
               )}
-              <IconButton color="secondary" size="large">
+
+              {value === 1 ? <ElemGrant /> : null}
+
+              <Tooltip title="Copiar coordenada">
+              <IconButton
+                color="secondary"
+                size="large"
+                onClick={handleCopy}>
+                  
+               
                 <ContentCopyIcon />
               </IconButton>
+              </Tooltip>
+             
+
             </Box>
+
+
+
           </Box>
         </Paper>
       </FormControl>

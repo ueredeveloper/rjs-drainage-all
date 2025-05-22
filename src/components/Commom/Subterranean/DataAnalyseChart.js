@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
-import { FormControl, FormLabel, Paper } from '@mui/material';
+import { FormControl, FormLabel, Paper, Switch, Tooltip } from '@mui/material';
 import { useData } from '../../../hooks/analyse-hooks';
-import ElemGrant from '../../Connection/elem-grant';
 
 /**
  * Componente para renderizar um gráfico de análise de dados usando ECharts.
  * @component
  */
 const DataAnalyseChart = () => {
-    
+
 
     /**
     * Estado para armazenar a instância do gráfico ECharts.
@@ -18,6 +17,8 @@ const DataAnalyseChart = () => {
     const [subChart, setsubChart] = useState(null);
 
     const { subsystem } = useData();
+
+    const [checked, setChecked] = useState(false);
 
     const emphasisStyle = {
         itemStyle: {
@@ -35,14 +36,7 @@ const DataAnalyseChart = () => {
             // toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
             //xAxisIndex: 0,
         },
-        toolbox: {
-            feature: {
-                /*  magicType: {
-                      type: ['stack'],
-                  },*/
-                dataView: {},
-            },
-        },
+        
         tooltip: {},
         xAxis: {
             data: [],
@@ -52,7 +46,7 @@ const DataAnalyseChart = () => {
             splitArea: { show: false },
         },
         yAxis: {
-            type: 'log' 
+            type: 'value'
         },
         grid: {
             left: 30,
@@ -79,19 +73,32 @@ const DataAnalyseChart = () => {
                 type: 'bar',
                 stack: '3',
                 emphasis: emphasisStyle,
-               data: [subsystem.hg_analyse.q_ex - subsystem.hg_analyse.q_points],
+                data: [subsystem.hg_analyse.q_ex - subsystem.hg_analyse.q_points],
             },
             {
                 name: 'Q Usuário',
                 type: 'bar',
                 stack: '4',
                 emphasis: emphasisStyle,
-                 data: [subsystem.markers.length!==0? subsystem.markers[0].dt_demanda.vol_anual_ma: 0],
+                data: [subsystem.markers.length !== 0 ? subsystem.markers[0].dt_demanda.vol_anual_ma : 0],
             },
         ]
     };
 
     useEffect(() => {
+        if (subChart) {
+            subChart.setOption({
+                yAxis: {
+                    type: checked ? 'log' : 'value'
+                }
+            });
+        }
+    }, [checked, subChart]);
+
+
+    useEffect(() => {
+
+        console.log('chart use eff 1')
         /**
         * Inicializa uma instância do gráfico ECharts no elemento com ID 'e-grants-sub-chart'.
         * @type {echarts.ECharts}
@@ -128,6 +135,8 @@ const DataAnalyseChart = () => {
 
     useEffect(() => {
 
+        setChecked(false)
+
         let newOptions = { ...options };
         let series = [
             {
@@ -142,7 +151,7 @@ const DataAnalyseChart = () => {
                 type: 'bar',
                 stack: '2',
                 emphasis: emphasisStyle,
-                   data: [subsystem.hg_analyse.q_points],
+                data: [subsystem.hg_analyse.q_points],
             },
             {
                 name: 'Q Disponível',
@@ -157,7 +166,7 @@ const DataAnalyseChart = () => {
                 stack: '4',
                 emphasis: emphasisStyle,
                 // resolver quando inserir a busca de items cadastrados no outro sistema
-                data: [subsystem.markers.length!==0? subsystem.markers[0].dt_demanda.vol_anual_ma: 0],
+                data: [subsystem.markers.length !== 0 ? subsystem.markers[0].dt_demanda.vol_anual_ma : 0],
 
             },
         ];
@@ -170,16 +179,35 @@ const DataAnalyseChart = () => {
             subChart.setOption(newOptions)
         }
 
-    }, [subsystem])
+    }, [subsystem]);
+
+    /**
+   * Função chamada quando o valor do Switch é alterado.
+   *
+   * @param {Object} event - Objeto do evento de alteração.
+   */
+  const handleChange = (event) => {
+    setChecked(event.target.checked);
+  };
 
     return (
-        <FormControl sx={{ display: "flex", flex: 1 }}>
+        <FormControl sx={{ display: "flex", flex: 1 , m:0}}>
 
-            <ElemGrant/>
+           
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
-            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1 }}>
+            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1}}>
                 <div id="e-grants-sub-chart" style={{ margin: 10, width: '100%', height: '10rem' }}></div>
+                
             </Paper>
+            <Tooltip title="Escala logarítimica">
+                    <Switch
+                        checked={checked}
+                        size="small"
+                        onChange={handleChange}
+                        color="secondary"
+                        inputProps={{ 'aria-label': 'controlled' }}
+                    />
+                </Tooltip>
         </FormControl>
 
     );

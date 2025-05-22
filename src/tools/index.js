@@ -82,6 +82,8 @@ function nFormatter(num, digits) {
 
 function analyzeAvailability(_info, _points) {
 
+  console.log("analyse avaiability")
+
   let _Q = 0;
   _points.map((_point) => {
 

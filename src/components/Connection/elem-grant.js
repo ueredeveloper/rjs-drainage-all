@@ -93,9 +93,9 @@ function ElemGrant() {
         });
 
     return (
-        <Box>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }} >
-                <Tooltip title="Buscar usuário">
+                <Tooltip title="Buscar usuário de água subterrânea">
                     <Button color="secondary" onClick={handleOpen}><PersonAddAltIcon /></Button>
                 </Tooltip>
             </Box>
