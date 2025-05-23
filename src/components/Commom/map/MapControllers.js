@@ -120,7 +120,7 @@ function MapControllers({ updateCheckBoxState }) {
         setSubsystem(initialsStates.subsystem);
         setHgAnalyse(initialsStates.subsystem.hg_analyse);
         overlays.shapes.forEach(shape => {
-            shape.draw?.setMap(null)
+            shape?.draw?.setMap(null)
         });
         setOverlays(initialsStates.overlays);
     };

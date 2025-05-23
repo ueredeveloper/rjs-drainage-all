@@ -16,7 +16,7 @@ function GeneralAnalysePanel() {
 
     return (
         <Box sx={{ width: "100%" }}>
-            <SearchCoords value={0} />
+            <SearchCoords tabNumber={0} />
             <SearchPaper value={0} />
             <NumberOfGrantsChart />
         </Box>

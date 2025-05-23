@@ -13,7 +13,7 @@ import DataAnalyseChart from '../../Commom/Subterranean/DataAnalyseChart';
 function SubterraneanAnalysePanel() {
     return (
         <Box>
-            <SearchCoords value={1} />
+            <SearchCoords tabNumber={1} />
             <DataAnalyseTable />
             <DataAnalyseChart />
         </Box>

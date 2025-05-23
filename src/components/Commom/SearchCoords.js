@@ -26,12 +26,12 @@ import ElemGrant from '../Connection/elem-grant';
  * 
  * @component
  * @param {Object} props - Propriedades do componente.
- * @param {number} props.value - Define o tipo de busca: 0 para raio, 1 para subsistema.
+ * @param {number} props.tabNumber - Define o tipo de busca pela tab selecionada: 0 para raio, 1 para subsistema.
  * @returns {JSX.Element} Elemento JSX que representa o componente SearchCoords.
  */
 
 
-function SearchCoords({ value }) {
+function SearchCoords({ tabNumber }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
   const { map, marker, setMarker, overlays, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem } = useData(); // Hook para estado global
@@ -86,7 +86,7 @@ function SearchCoords({ value }) {
     }));
 
     // Busca por pontos próximos no raio especificado
-    if (value === 0) {
+    if (tabNumber === 0) {
       let markers = await findAllPointsInCircle({
         center: { lng: position.int_longitude, lat: position.int_latitude },
         radius: parseInt(radius)
@@ -111,7 +111,7 @@ function SearchCoords({ value }) {
     }
 
     // Busca por subsistema
-    else if (value === 1) {
+    else if (tabNumber === 1) {
 
       // limpa o mapa
 
@@ -122,8 +122,6 @@ function SearchCoords({ value }) {
 
 
       let { tp_id, int_latitude, int_longitude } = marker;
-
-
 
       await findPointsInASystem(tp_id, int_latitude, int_longitude).then(markers => {
 
@@ -202,6 +200,15 @@ function SearchCoords({ value }) {
    */
   function handleOnTextFieldChange(event) {
 
+    if (tabNumber === 1) {
+      overlays.shapes.forEach(shape => {
+        shape?.draw?.setMap(null)
+      });
+      setOverlays(initialsStates.overlays);
+      setSubsystem(initialsStates.subsystem);
+      setHgAnalyse(initialsStates.subsystem.hg_analyse);
+    }
+
     let { name, value } = event.target;
 
     // Remove tudo que não for número, ponto, vírgula ou hífen
@@ -231,6 +238,12 @@ function SearchCoords({ value }) {
       [name]: value.trim()
     }));
 
+    // Atualiza o marcador global
+    setMarker(prev => ({
+      ...prev,
+      [name]: value.trim()
+    }));
+
   }
 
   /**
@@ -248,7 +261,7 @@ function SearchCoords({ value }) {
   }
 
   const handleCopy = () => {
-   
+
     navigator.clipboard.writeText(`${position.int_latitude}, ${position.int_longitude}`).then(() => {
       console.log(`${position.int_latitude}, ${position.int_longitude}`);
     });
@@ -291,11 +304,11 @@ function SearchCoords({ value }) {
             </Box>
 
             {/* Renderiza o seletor de raio ou tipo de poço, dependendo do valor */}
-            {value === 0 ? (
+            {tabNumber === 0 ? (
               <Box sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
                 <CircleRadiusSelector />
               </Box>
-            ) : value === 1 ? (
+            ) : tabNumber === 1 ? (
               <Box sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
                 <WellTypeSelector />
               </Box>
@@ -314,31 +327,31 @@ function SearchCoords({ value }) {
                 </Fade>
               ) : (
                 <Tooltip title="Buscar por coordenada">
-                <IconButton
-                  color="secondary"
-                  size="large"
-                  onClick={() => {
-                    handleOnClick().then(() => setLoading(false));
-                  }}
-                >
-                  <SearchIcon />
-                </IconButton>
+                  <IconButton
+                    color="secondary"
+                    size="large"
+                    onClick={() => {
+                      handleOnClick().then(() => setLoading(false));
+                    }}
+                  >
+                    <SearchIcon />
+                  </IconButton>
                 </Tooltip>
               )}
 
-              {value === 1 ? <ElemGrant /> : null}
+              {tabNumber === 1 ? <ElemGrant /> : null}
 
               <Tooltip title="Copiar coordenada">
-              <IconButton
-                color="secondary"
-                size="large"
-                onClick={handleCopy}>
-                  
-               
-                <ContentCopyIcon />
-              </IconButton>
+                <IconButton
+                  color="secondary"
+                  size="large"
+                  onClick={handleCopy}>
+
+
+                  <ContentCopyIcon />
+                </IconButton>
               </Tooltip>
-             
+
 
             </Box>
 
