@@ -8,10 +8,10 @@
  * @returns {string} HTML a ser inserido no InfoWindow.
  */
 export function getDrawInfoWindowHtmlWithState(shape) {
-  // Obtém propriedades atuais da shape para inicializar controles
-  const strokeColor = shape.get('strokeColor') || '#ff0000';
-  const fillColor = shape.get('fillColor') || '#ffff00';
-  const fillOpacity = shape.get('fillOpacity') ?? 0.35;
+  // Use shape.draw para acessar métodos do Google Maps
+  const strokeColor = shape.draw?.get('strokeColor') || '#ff0000';
+  const fillColor = shape.draw?.get('fillColor') || '#ffff00';
+  const fillOpacity = shape.draw?.get('fillOpacity') ?? 0.35;
   const calculoAreaAtivo = shape.calculoAreaAtivo ?? true;
 
   return `
@@ -22,19 +22,19 @@ export function getDrawInfoWindowHtmlWithState(shape) {
           <fieldset style="border-radius: 10px; border: 1px solid #ccc; padding: 5px;">
             <legend style="font-size: 12px; font-weight: bold;">Borda</legend>
             <div id="borderColors" style="display: flex; gap: 5px;">
-              ${['#FF0000','#FFFF00','#0000FF','#000000'].map(c => 
-                `<button class="color-button${strokeColor === c ? ' selected' : ''}" data-color="${c}" 
+              ${['#FF0000', '#FFFF00', '#0000FF', '#000000'].map(c =>
+    `<button class="color-button${strokeColor === c ? ' selected' : ''}" data-color="${c}" 
                   style="background-color: ${c}; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #555; cursor: pointer;"></button>`
-              ).join('')}
+  ).join('')}
             </div>
           </fieldset>
           <fieldset style="border-radius: 10px; border: 1px solid #ccc; padding: 5px;">
             <legend style="font-size: 12px; font-weight: bold;">Preenchimento</legend>
             <div id="fillColors" style="display: flex; gap: 5px;">
-              ${['#FF0000','#FFFF00','#0000FF','#000000'].map(c => 
-                `<button class="color-button${fillColor === c ? ' selected' : ''}" data-color="${c}" 
+              ${['#FF0000', '#FFFF00', '#0000FF', '#000000'].map(c =>
+    `<button class="color-button${fillColor === c ? ' selected' : ''}" data-color="${c}" 
                   style="background-color: ${c}; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #555; cursor: pointer;"></button>`
-              ).join('')}
+  ).join('')}
             </div>
           </fieldset>
         </div>
@@ -62,7 +62,7 @@ export function getDrawInfoWindowHtmlWithState(shape) {
  *
  * @param {google.maps.Polygon|google.maps.Rectangle|google.maps.Circle|google.maps.Polyline} shape - A forma desenhada no mapa a ser manipulada.
  */
-export function attachDrawInfoListeners(shape) {
+export function attachDrawInfoListeners(shape, setOverlays) {
   const container = document.querySelector('.info-content');
   if (!container) return;
 
@@ -102,6 +102,16 @@ export function attachDrawInfoListeners(shape) {
   if (calcularAreaCheckbox) {
     calcularAreaCheckbox.onchange = () => {
       shape.calculoAreaAtivo = calcularAreaCheckbox.checked;
+
+      // Atualiza o estado dos overlays para forçar re-render
+      if (typeof setOverlays === 'function') {
+        setOverlays(prev => ({
+          ...prev,
+          shapes: prev.shapes.map(s =>
+            s.id === shape.id ? { ...s, calculoAreaAtivo: calcularAreaCheckbox.checked } : s
+          )
+        }));
+      }
 
       // Dispara lógica opcional para mostrar ou esconder popup de cálculo de área
       if (window.showCalcAreaPopup) {

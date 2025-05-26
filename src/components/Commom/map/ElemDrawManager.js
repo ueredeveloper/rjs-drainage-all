@@ -27,7 +27,7 @@ import {
 } from './infowindow/ElemDrawInfoWindow';
 
 const ElemDrawManager = ({ map }) => {
-  const { setMarker, setOverlays } = useData();
+  const { setMarker, setOverlays, overlays } = useData();
 
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
@@ -76,15 +76,22 @@ const ElemDrawManager = ({ map }) => {
 
     /**
      * Abre o InfoWindow customizado para a shape clicada ou recém-criada
-     * @param {google.maps.OverlayView} shape - A forma desenhada no mapa.
-     * @param {google.maps.LatLng} position - A posição onde o InfoWindow será exibido.
+     * @param {Object} shape - Objeto shape do estado, contendo .draw (overlay do Google Maps)
+     * @param {google.maps.LatLng|Object} position - A posição onde o InfoWindow será exibido.
      */
     const openInfoWindow = (shape, position) => {
       if (currentInfoWindow) {
         currentInfoWindow.close();
       }
 
-      const content = getDrawInfoWindowHtmlWithState(shape);
+      // Busca o shape atualizado do estado global, se existir
+      let shapeAtual = shape;
+      if (overlays && overlays.shapes) {
+        const found = overlays.shapes.find(s => s.id === shape.id);
+        if (found) shapeAtual = found;
+      }
+
+      const content = getDrawInfoWindowHtmlWithState(shapeAtual);
       const infoWindow = new window.google.maps.InfoWindow({
         content,
         position,
@@ -92,7 +99,7 @@ const ElemDrawManager = ({ map }) => {
 
       // Espera o DOM estar pronto para adicionar listeners nos botões e sliders do InfoWindow
       window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-        attachDrawInfoListeners(shape);
+        attachDrawInfoListeners(shapeAtual, setOverlays);
       });
 
       infoWindow.open(map);
@@ -114,8 +121,7 @@ const ElemDrawManager = ({ map }) => {
       }
 
       shapeObj.listenerClick = window.google.maps.event.addListener(overlay, 'click', (event) => {
-        console.log('Shape clicada, abrindo InfoWindow em', event.latLng.toString());
-        openInfoWindow(overlay, event.latLng);
+        openInfoWindow(shapeObj, event.latLng);
       });
     };
 
@@ -150,6 +156,7 @@ const ElemDrawManager = ({ map }) => {
         area: null,
         meters: null,
         markers: [],
+        calculoAreaAtivo: true,
       };
 
       // === Círculo ===
@@ -218,14 +225,14 @@ const ElemDrawManager = ({ map }) => {
       // Adiciona clique para abrir InfoWindow no futuro
       addClickListenerToShape(shape);
 
-      // Abre InfoWindow assim que a shape for criada
-      openInfoWindow(overlay, shape.position);
-
       // Armazena nova shape no estado global
       setOverlays(prev => ({
         ...prev,
         shapes: [...prev.shapes, shape]
       }));
+
+      // Abre o InfoWindow imediatamente após desenhar
+      openInfoWindow(shape, shape.position);
     });
 
     draw.setMap(map);
@@ -234,7 +241,7 @@ const ElemDrawManager = ({ map }) => {
       // Remove todos os listeners ao desmontar componente
       window.google.maps.event.clearInstanceListeners(draw);
     };
-  }, [map, setMarker, setOverlays]);
+  }, [map, setMarker, setOverlays, overlays]);
 
   return null;
 };

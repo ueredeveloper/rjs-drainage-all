@@ -122,7 +122,10 @@ function MapContent({ checkBoxState }) {
 
         {/* Renderização das sobreposições */}
         {overlays.shapes.map((shape, i) => {
-          return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />;
+          if (shape.calculoAreaAtivo) {
+            return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />;
+          }
+          return null;
         })}
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
