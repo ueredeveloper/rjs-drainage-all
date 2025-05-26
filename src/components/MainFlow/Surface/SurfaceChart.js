@@ -43,7 +43,7 @@ const SurfaceChart = () => {
     },
   };
 
-  return <Line data={data} options={options} style={{maxHeight: '190px'}} />;
+  return <Line data={data} options={options} style={{maxHeight: '200px'}} />;
 };
 
 export default SurfaceChart;

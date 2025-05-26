@@ -5,6 +5,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import { TextField } from '@mui/material';
 
 const rows = [
   {
@@ -185,7 +186,7 @@ export default function SufaceTable() {
 
   return (
 
-    <TableContainer id="table-container-box" component={Paper} elevation={4}  sx={{ marginLeft: '-1.5rem', paddingRight: '3rem', minWidth: "100%", maxHeight: "250px" }}>
+    <TableContainer id="table-container-box" component={Paper} elevation={4} sx={{ marginLeft: '-1.5rem', paddingRight: '3rem', minWidth: "100%", maxHeight: "200px" }}>
       <Table sx={{ minWidth: "100%", paddingLeft: "0px" }} size="small" >
         <TableHead>
           <TableRow>
@@ -204,9 +205,41 @@ export default function SufaceTable() {
               <TableCell component="th" scope="row" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", width: "100px" }}>
                 {row.name}
               </TableCell >
-              {row.values.map((value) =>
-                (<TableCell key={value} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>{formatValue(value)}</TableCell>)
-              )}
+              {
+
+                row.name !== "QSOLICITADA-SEÇÃO" ?
+                  row.values.map((value) =>
+                    (<TableCell key={value} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>{formatValue(value)}</TableCell>)
+                  ) :
+                  row.values.map((value) =>
+                  (<TableCell key={value} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>
+                    <TextField
+                      value={formatValue(value)}
+                      variant="standard" // optional: to reduce default padding
+                      InputProps={{
+                        disableUnderline: false, // optional: removes underline if variant is standard
+                        sx: {
+                          padding: 0,           // removes internal padding
+                          fontSize: '12px',     // optional: set desired font size
+                          textAlign: 'center',       // centers text in input
+                          input: {
+                            textAlign: 'center',     // ensure inner <input> is centered
+                          },
+
+                        },
+                      }}
+                      sx={{
+                        p: 0, // outer TextField padding
+                        m: 0, // remove margin if any
+                        minWidth: 0,
+
+                      }}
+                    />
+
+                  </TableCell>)
+                  )
+
+              }
             </TableRow>
           ))}
         </TableBody>
