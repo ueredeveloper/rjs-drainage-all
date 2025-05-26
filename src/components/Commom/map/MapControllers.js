@@ -128,12 +128,12 @@ function MapControllers({ updateCheckBoxState }) {
     return (
         <FormControl style={{ display: "flex", flex: 1, flexDirection: 'column' }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Camadas</FormLabel>
-            <Paper elevation={3} style={{ padding: 5, margin: 1 }}>
+            <Paper elevation={3} style={{ padding: 0, margin: 0 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     {checkBoxState.map((elem, index) =>
                         <Box key={'map-contr-ch-box-' + index}>
-                            <Checkbox color="secondary"  {...createCheckboxProps(elem)} />
-                            <FormLabel style={{ wordBreak: "break-all" }} color="secondary" id="demo-controlled-radio-buttons-group">{
+                            <Checkbox color="secondary"  {...createCheckboxProps(elem)} sx={{px:1}} />
+                            <FormLabel sx={{ wordBreak: "break-all", fontSize: "12px", px:0 }} color="secondary" id="demo-controlled-radio-buttons-group">{
                                 createLabelText(index)
                             }</FormLabel>
                         </Box>

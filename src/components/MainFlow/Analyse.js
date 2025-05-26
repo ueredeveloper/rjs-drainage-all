@@ -90,7 +90,7 @@ function Analyse() {
                     <Box sx={{ display: "flex", flex: 1, minWidth: 200 }} >
                         <MapPanel />
                     </Box>
-                    <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 200 }}>
+                    <Box sx={{ display: "flex", flex: 2, flexDirection: "column", minWidth: 200 }}>
                         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                             <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
                                 <Tab label="Geral" {...a11yProps(0)} />

@@ -2,7 +2,6 @@
  * @description Este módulo contém o componente de barra de navegação do aplicativo.
  */
 
-import React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
