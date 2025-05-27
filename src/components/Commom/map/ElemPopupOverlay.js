@@ -3,23 +3,36 @@ import { numberWithCommas } from '../../../tools';
 
 /**
  * Elemento de renderização de um popup com informações de polígonos, retângulos etc.
- * @param {*} param0
+ * @component
+ * @param {Object} props
+ * @param {Object} props.map - Instância do Google Maps.
+ * @param {Object} props.position - Posição {lat, lng} para exibir o popup.
+ * @param {any} props.content - Conteúdo a ser exibido no popup.
+ * @param {Object} props.draw - Objeto com informações do desenho (tipo, área, metros, etc).
+ * @returns {null}
  */
 const ElemPopupOverlay = ({ map, position, content, draw }) => {
     const overlayRef = useRef(null);
 
     useEffect(() => {
+        // Garante que mapa, posição e conteúdo estejam definidos antes de criar o overlay
         if (!map || !position || !content) return;
 
+        /**
+         * Classe customizada para OverlayView do Google Maps.
+         * Responsável por criar e gerenciar o popup customizado.
+         * @class
+         * @extends window.google.maps.OverlayView
+         */
         class PopupOverlay extends window.google.maps.OverlayView {
             constructor() {
                 super();
 
+                // Cria e adiciona estilos CSS para o popup
                 const styleElement = document.createElement('style');
                 document.head.appendChild(styleElement);
                 const cssRule1 = `
                     .popup-bubble {
-                       
                         position: absolute;
                         top: 0;
                         left: 0;
@@ -31,16 +44,13 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
                         overflow-y: auto;
                         max-height: 60px;
                         box-shadow: 0px 2px 10px 1px rgba(0, 0, 0, 0.5);
-                       
                     }`;
                 const cssRule2 = `
                     .popup-bubble-anchor {  
-                      
                         position: absolute;
                         width: 100%;
                         bottom: 8px;
                         left: 0;
-                        
                     }`;
                 const cssRule3 = `
                     .popup-bubble-anchor::after {
@@ -61,35 +71,46 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
                         height: 0;
                         position: absolute;
                         width: 200px;
-                        
                     }`;
 
+                // Insere as regras de estilo no documento
                 styleElement.sheet.insertRule(cssRule1);
                 styleElement.sheet.insertRule(cssRule2);
                 styleElement.sheet.insertRule(cssRule3);
                 styleElement.sheet.insertRule(cssRule4);
 
+                // Cria elementos do DOM para o popup
                 const bubbleAnchor = document.createElement("div");
-
                 bubbleAnchor.classList.add("popup-bubble-anchor");
                 this.containerDiv = document.createElement("div");
                 this.containerDiv.classList.add("popup-container");
                 this.containerDiv.appendChild(bubbleAnchor);
 
-
+                // Adiciona o conteúdo customizado ao popup
                 bubbleAnchor.appendChild(setContent(draw));
-
             }
 
+            /**
+             * Adiciona o overlay ao mapa.
+             * @override
+             */
             onAdd() {
                 const panes = this.getPanes();
                 panes.floatPane.appendChild(this.containerDiv);
             }
 
+            /**
+             * Remove o overlay do mapa.
+             * @override
+             */
             onRemove() {
                 this.containerDiv.parentNode.removeChild(this.containerDiv);
             }
 
+            /**
+             * Atualiza a posição do overlay conforme o mapa é movido.
+             * @override
+             */
             draw() {
                 if (!this.containerDiv || !map || !position) return;
 
@@ -104,18 +125,21 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
             }
         }
 
+        // Cria e adiciona o overlay ao mapa
         const popupOverlay = new PopupOverlay();
 
         popupOverlay.setMap(map);
 
         overlayRef.current = popupOverlay;
 
+        // Remove o overlay ao desmontar
         return () => {
             popupOverlay.setMap(null);
         };
     }, [map, position, content]);
 
     useEffect(() => {
+        // Garante que o overlay está criado e atualiza a exibição do conteúdo
         if (!overlayRef.current || !content) return;
 
         const containerDiv = overlayRef.current.containerDiv;
@@ -126,9 +150,13 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
     return null;
 };
 
-
+/**
+ * Função auxiliar para criar o conteúdo do popup conforme o tipo de shape desenhado.
+ * @param {Object} draw - Objeto com informações do desenho (tipo, área, metros, etc).
+ * @returns {HTMLElement|string} Elemento HTML com o conteúdo do popup ou string vazia.
+ */
 const setContent = (draw) => {
-
+    // Adiciona estilos customizados para o conteúdo do overlay
     const thumbStyle = document.createElement('style');
     thumbStyle.innerHTML = `
         .overlay-info {
@@ -145,20 +173,22 @@ const setContent = (draw) => {
         }
         .overlay-info::-webkit-scrollbar {
             width: 10px;
-            }
-        
+        }
         .overlay-info::-webkit-scrollbar-thumb {
-        
             background: red;
         }
     `;
     document.head.appendChild(thumbStyle);
 
+    /**
+     * Cria o elemento de conteúdo do popup.
+     * @param {string} type - Tipo do shape desenhado.
+     * @param {string} content - Texto a ser exibido.
+     * @returns {HTMLElement}
+     */
     function createContentDiv(type, content) {
-
         const divElement = document.createElement('div');
         divElement.classList.add("popup-bubble");
-
 
         const h3Element = document.createElement('h4');
         h3Element.textContent = `Informações do ${type}`;
@@ -172,11 +202,10 @@ const setContent = (draw) => {
         divElement.classList.add('overlay-info');
 
         return divElement;
-
     }
 
+    // Monta o conteúdo conforme o tipo de shape desenhado
     if (draw.type === 'polyline') {
-
         let coordinates = [];
         let htmlCoords = '';
 
@@ -187,7 +216,7 @@ const setContent = (draw) => {
         coordinates.forEach((coordinate, index) => {
             htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}<br>`;
         });
-        /* conversão: 1000 metros = 1km */
+        // conversão: 1000 metros = 1km
         let meters = draw.meters.toFixed(3);
         let formatMeters = numberWithCommas(meters)
         let km = draw.meters / 1000;
@@ -198,8 +227,7 @@ const setContent = (draw) => {
         return createContentDiv(type, content);
     }
     if (draw.type === 'rectangle') {
-        /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
-
+        // conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados
         let areaM2 = draw.area.toFixed(2)
         let formatAreaM2 = numberWithCommas(areaM2)
         let areakKm2 = draw.area / 1000000
@@ -211,8 +239,7 @@ const setContent = (draw) => {
 
     }
     if (draw.type === 'polygon') {
-        /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
-
+        // conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados
         let areaM2 = draw.area.toFixed(2)
         let formatAreaM2 = numberWithCommas(areaM2)
         let areakKm2 = draw.area / 1000000
@@ -223,8 +250,7 @@ const setContent = (draw) => {
         return createContentDiv(type, content);
     }
     if (draw.type === 'circle') {
-        /* conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados  */
-
+        // conversão: 1.000.000 Metros quadrados = 1 Quilômetros quadrados
         let formatAreaM2 = numberWithCommas(draw.area)
         let km2 = draw.area / 1000000
         let formatAreaKm2 = numberWithCommas(km2)
@@ -235,8 +261,8 @@ const setContent = (draw) => {
         return createContentDiv(type, content);
     }
 
+    // Caso não seja nenhum dos tipos acima, retorna um div vazio
     return `<div></div>`
 }
-
 
 export default ElemPopupOverlay;

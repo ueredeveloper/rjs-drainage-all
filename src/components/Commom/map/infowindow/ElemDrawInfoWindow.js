@@ -71,7 +71,7 @@ export function attachDrawInfoListeners(shape, setOverlays) {
   borderButtons.forEach(btn => {
     btn.onclick = () => {
       const color = btn.getAttribute('data-color');
-      shape.setOptions({ strokeColor: color });
+      shape.draw.setOptions({ strokeColor: color }); // <-- corrigido aqui
       borderButtons.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
     };
@@ -82,7 +82,7 @@ export function attachDrawInfoListeners(shape, setOverlays) {
   fillButtons.forEach(btn => {
     btn.onclick = () => {
       const color = btn.getAttribute('data-color');
-      shape.setOptions({ fillColor: color });
+      shape.draw.setOptions({ fillColor: color }); // <-- corrigido aqui
       fillButtons.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
     };
@@ -93,7 +93,7 @@ export function attachDrawInfoListeners(shape, setOverlays) {
   if (opacitySlider) {
     opacitySlider.oninput = () => {
       const opacity = parseFloat(opacitySlider.value);
-      shape.setOptions({ fillOpacity: opacity });
+      shape.draw.setOptions({ fillOpacity: opacity }); // <-- corrigido aqui
     };
   }
 
@@ -103,7 +103,6 @@ export function attachDrawInfoListeners(shape, setOverlays) {
     calcularAreaCheckbox.onchange = () => {
       shape.calculoAreaAtivo = calcularAreaCheckbox.checked;
 
-      // Atualiza o estado dos overlays para forçar re-render
       if (typeof setOverlays === 'function') {
         setOverlays(prev => ({
           ...prev,
@@ -113,7 +112,6 @@ export function attachDrawInfoListeners(shape, setOverlays) {
         }));
       }
 
-      // Dispara lógica opcional para mostrar ou esconder popup de cálculo de área
       if (window.showCalcAreaPopup) {
         if (shape.calculoAreaAtivo) window.showCalcAreaPopup(shape);
         else window.hideCalcAreaPopup && window.hideCalcAreaPopup();

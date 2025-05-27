@@ -75,7 +75,7 @@ Alterar a cor da borda dos polígonos para vermelho.
 
 🗓️ Data: 20 de abril de 2025👨‍💻 Responsável: [Luan Carvalho]
 
-✅ ObjetivoExibir InfoWindow personalizada ao clicar nas shapes desenhadas no mapa (polígono, retângulo, círculo e linha), permitindo personalizações e cálculo de área.
+✅ ObjetivoExibir InfoWindow personalizada ao clicar nas shapes desenhadas no mapa (polígono, retângulo, círculo e linha), permitindo personalizações e controle do popup de calculo de area.
 
 🔹 Tarefas
 
@@ -84,4 +84,4 @@ Alterar a cor da borda dos polígonos para vermelho.
  - Integrar InfoWindow ao mapa
  - Gerenciar abertura/fechamento da InfoWindow
  - altera as cores das bordas e do preenchimento dos polígonos criados
-
+ - gerenciar abertura e fechamento do popup de calculo de area
