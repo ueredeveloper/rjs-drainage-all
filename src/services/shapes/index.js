@@ -30,7 +30,7 @@ async function fetchShape(shape_name) {
  * @returns {Promise<any>} Uma Promise que resolve com os dados das outorgas encontradas.
  * @throws {Error} Se ocorrer algum erro durante a busca.
  */
-async function fetchGrantsInsideShape (shapeName, shapeCode) {
+async function fetchGrantsInsideShape(shapeName, shapeCode) {
 
   try {
     const response = await fetch(url + `/find_points-inside-shape?shapeName=${shapeName}&shapeCode=${shapeCode}`, {
@@ -53,5 +53,35 @@ async function fetchGrantsInsideShape (shapeName, shapeCode) {
   }
 }
 
+async function fethcOthoBacias(uhCodigo, lat, lng) {
 
-export { fetchShape, fetchGrantsInsideShape }
+  // URL para buscar as áreas de drenagem no servidor.
+  let url =
+    "https://njs-drainage-ueredeveloper.replit.app/drainage?" +
+
+    new URLSearchParams({
+      lat: lat,
+      lng: lng,
+      uh: uhCodigo, // atributo código da uh, ex: 37
+    });
+
+  //console.log(url);
+
+  /**
+   * Buscar as áreas de drenagem no servidor.
+   * @param {number} lat Latitude do ponto.
+   * @param {number} lng Longitude do ponto.
+   * @param {string} uh Unidade Hidrográfica.
+   * @returns {Promise<Array>} Uma Promise que resolve com as informações de áreas de drenagem.
+   */
+  let features = await fetch(url, { method: "GET" })
+    .then((features) => {
+      let json = features.json();
+      return json;
+    });
+
+  return features;
+}
+
+
+export { fetchShape, fetchGrantsInsideShape, fethcOthoBacias }

@@ -8,6 +8,7 @@ import ElemPopupOverlay from './ElemPopupOverlay';
 import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
+import ElemOttoPolyline from './ElemOthoPolyline';
 
 
 
@@ -96,7 +97,7 @@ function MapContent({ checkBoxState }) {
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
-      <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
+      <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
         <ElemDrawManager map={map} />
@@ -108,7 +109,6 @@ function MapContent({ checkBoxState }) {
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
           return selectedsShapes.map(type => {
-
             if (shape.markers !== undefined && shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
                 return <ElemMarker
@@ -121,18 +121,21 @@ function MapContent({ checkBoxState }) {
           });
         })}
 
-        {/* Renderização das sobreposições */ }
+        {/* Renderização das sobreposições */}
         {overlays.shapes.map((shape, i) => {
           return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} setPopups={setPopups} />;
         })
-
-        
         }
-
-        {/*popups.forEach(popup=> popup.setMap(null))*/}
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
         {shapesFetched.map((shape) => {
+          /* Renderiza ottobacias */
+          /*if (shape.name === 'otto-bacias') {
+            return shape.shape.map((_sh, ii) => {
+              return <ElemOttoPolyline key={'elem-otto'} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
+            });
+          }*/
+          /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
           return checkBoxState.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
               return shape.shape.map((sh, ii) => {
@@ -142,20 +145,15 @@ function MapContent({ checkBoxState }) {
           });
         })}
 
-        {shapesFetched.map((shape) => {
-
-          return shape.shape.map((sh, ii) => {
-           
-            if (sh.shapeName === "P1") {
-              return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
-            }
-
-          });
-
-        })}
-
 
         {overlays.shapes.map(sh => {
+          if (sh.name === 'otto-bacias') {
+            return sh.map((_sh, index) => {
+              return <ElemOttoPolyline key={`elem-otto-${index}`} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
+            });
+          }
+
+
           if (sh.markers !== undefined && sh.markers.hidrogeo !== undefined) {
             return RenderPolylines(sh.markers.hidrogeo)
           }

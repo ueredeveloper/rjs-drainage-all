@@ -65,12 +65,15 @@ function MapControllers({ updateCheckBoxState }) {
             if (cbState.checked === true) {
                 // verificar se shapesFetched está vazio
                 if (shapesFetched.length === 0) {
+
+                    console.log(cbState.name)
                     const _shape = await fetchShape(cbState.name).then(__shape => {
                         // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
                         return __shape.map(sh => {
                             return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
                         })
                     });
+
                     setShapesFetched(prev => [...prev, { name: cbState.name, shape: _shape }]);
                 } else {
                     // verifica se a shape está presente na array shapesFetched
@@ -132,8 +135,8 @@ function MapControllers({ updateCheckBoxState }) {
                 <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     {checkBoxState.map((elem, index) =>
                         <Box key={'map-contr-ch-box-' + index}>
-                            <Checkbox color="secondary"  {...createCheckboxProps(elem)} sx={{px:1}} />
-                            <FormLabel sx={{ wordBreak: "break-all", fontSize: "12px", px:0 }} color="secondary" id="demo-controlled-radio-buttons-group">{
+                            <Checkbox color="secondary"  {...createCheckboxProps(elem)} sx={{ px: 1 }} />
+                            <FormLabel sx={{ wordBreak: "break-all", fontSize: "12px", px: 0 }} color="secondary" id="demo-controlled-radio-buttons-group">{
                                 createLabelText(index)
                             }</FormLabel>
                         </Box>

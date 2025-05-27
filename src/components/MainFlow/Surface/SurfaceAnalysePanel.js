@@ -13,8 +13,8 @@ export default function SurfaceAnalysePanel() {
 
     return (
         <Box>
-            <SearchCoords value={2} />
-            <SurfaceTabs id="surface-tabs"/>
+            <SearchCoords tabNumber={2} />
+            <SurfaceTabs />
         </Box>
     )
 }

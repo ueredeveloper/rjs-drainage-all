@@ -13,10 +13,11 @@ import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolo
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyzeAvailability, converterPostgresToGmaps } from "../../tools";
+import { analyzeAvailability, converterPostgresToGmaps, convertOthoCoordToGmaps, othoToGmaps } from "../../tools";
 import AlertCommon from "./AlertCommon";
 import { initialsStates } from "../../initials-states";
 import ElemGrant from '../Connection/elem-grant';
+import { fetchShape, fethcOthoBacias } from "../../services/shapes";
 
 
 /**
@@ -34,7 +35,7 @@ import ElemGrant from '../Connection/elem-grant';
 function SearchCoords({ tabNumber }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
-  const { map, marker, setMarker, overlays, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem } = useData(); // Hook para estado global
+  const { map, marker, setMarker, overlays, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem, shapesFetched, setShapesFetched } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
 
   // Estados para o controle do alerta
@@ -85,7 +86,7 @@ function SearchCoords({ tabNumber }) {
       int_longitude: position.int_longitude
     }));
 
-    // Busca por pontos próximos no raio especificado
+    // Se selecionado a tab geral, de buscas gerais por camadas ou dados do banco de dados com cpf, nome etc...
     if (tabNumber === 0) {
       let markers = await findAllPointsInCircle({
         center: { lng: position.int_longitude, lat: position.int_latitude },
@@ -109,8 +110,7 @@ function SearchCoords({ tabNumber }) {
         shapes: [...prev.shapes, shape]
       }));
     }
-
-    // Busca por subsistema
+    // Set selecionado a tab subterrânea
     else if (tabNumber === 1) {
 
       // limpa o mapa
@@ -187,6 +187,79 @@ function SearchCoords({ tabNumber }) {
         }));
 
       });
+
+
+    }
+    // Se selecionado a tab superficial 
+    else if (tabNumber === 2) {
+
+      // Caso queira limpar todo o mapa antes da busca
+      /* overlays.shapes.forEach(shape => {
+         shape.draw?.setMap(null)
+       });
+       setOverlays(initialsStates.overlays)*/
+
+      // Unidade Hidrográfica necessária para a busca de ottobacias
+      let shapeName = "unidades_hidrograficas";
+      // Pesquisa a shape da unidade hidrofráfica, se já existente na renderização e assim buscar em qual unidade hidrográfica está a coordenada
+      let _shape = shapesFetched.find(sf => sf.name === shapeName)
+
+      // Se os polígonso das unidades ainda não estiverem sido buscados
+      if (shapesFetched.length === 0 || _shape === undefined) {
+
+        _shape = await fetchShape(shapeName).then(__shape => {
+          // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
+          return __shape.map(sh => {
+            return { ...sh, shapeName: shapeName, shape: { coordinates: converterPostgresToGmaps(sh) } }
+          })
+        });
+
+        //setShapesFetched(prev => [...prev, { name: shapeName, shape: _shape }]);
+
+        // Busca o código da Unidade Hidrográfica
+        let uhInfo = _shape.find((_sh) => {
+          let polygon = new window.google.maps.Polygon({ paths: _sh.shape.coordinates });
+          return window.google.maps.geometry.poly.containsLocation({ lat: lat, lng: lng }, polygon);
+
+        });
+
+        // Busca as ottobacias com o código da unidade hidrográfica e com as coordenadas
+        let ottoBacias = await fethcOthoBacias(uhInfo.uh_codigo, lat, lng);
+
+        // Converte as coodernadas para o padrão da biblioteca gmaps api
+        let gmaps = convertOthoCoordToGmaps(ottoBacias);
+
+        // Adiciona um nome para renderizar pelo componete correto
+        gmaps.name = 'otto-bacias';
+
+        // Seta em uma variável global para ter como limpar o mapa
+        setOverlays(prev => ({
+          ...prev,
+          shapes: [...prev.shapes, gmaps]
+        }));
+        // se já houver os polígonos das unidades hidrográficas
+      } else {
+
+        _shape = shapesFetched.find(sf => sf.name === shapeName)
+
+        let uhInfo = _shape.shape.find((_sh) => {
+          let polygon = new window.google.maps.Polygon({ paths: _sh.shape.coordinates })
+          return window.google.maps.geometry.poly.containsLocation({ lat: lat, lng: lng }, polygon);
+
+        });
+
+        let ottoBacias = await fethcOthoBacias(uhInfo.uh_codigo, lat, lng);
+        let gmaps = convertOthoCoordToGmaps(ottoBacias);
+        gmaps.name = 'otto-bacias';
+
+        setOverlays(prev => ({
+          ...prev,
+          shapes: [...prev.shapes, gmaps]
+        }));
+
+      }
+
+
     }
 
     setLoading(false);
@@ -270,8 +343,6 @@ function SearchCoords({ tabNumber }) {
 
   return (
     <>
-
-
       {/* Componente de alerta exibido quando necessário */}
       <AlertCommon openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
 

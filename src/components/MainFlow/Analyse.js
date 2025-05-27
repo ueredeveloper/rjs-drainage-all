@@ -35,7 +35,7 @@ function Analyse() {
      */
     function TabPanel(props) {
         const { children, value, index, ...other } = props;
-        
+
         return (
             <div
                 role="tabpanel"
@@ -71,8 +71,8 @@ function Analyse() {
         };
     }
 
-    // Estado para o valor selecionado
-    const [value, setValue] = React.useState(0);
+    // Estado do valor da tab selecionada (0: Geral, 1: Subterrâneo, 2: Superficial)
+    const [tabValue, setTabValue] = React.useState(2);
 
     /**
      * Função para lidar com a mudança de valor da guia.
@@ -80,7 +80,7 @@ function Analyse() {
      * @param {number} newValue - O novo valor da guia.
      */
     const handleChange = (event, newValue) => {
-        setValue(newValue);
+        setTabValue(newValue);
     };
 
     return (
@@ -92,19 +92,19 @@ function Analyse() {
                     </Box>
                     <Box sx={{ display: "flex", flex: 2, flexDirection: "column", minWidth: 200 }}>
                         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                            <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+                            <Tabs value={tabValue} onChange={handleChange} aria-label="basic tabs example">
                                 <Tab label="Geral" {...a11yProps(0)} />
                                 <Tab label="Subterrâneo" {...a11yProps(1)} />
                                 <Tab label="Superficial" {...a11yProps(2)} />
                             </Tabs>
                         </Box>
-                        <TabPanel value={value} index={0}>
+                        <TabPanel value={tabValue} index={0}>
                             <GeneralAnalysePanel />
                         </TabPanel>
-                        <TabPanel value={value} index={1}>
+                        <TabPanel value={tabValue} index={1}>
                             <SubterraneanAnalysePanel />
                         </TabPanel>
-                        <TabPanel value={value} index={2}>
+                        <TabPanel value={tabValue} index={2}>
                             <SurfaceAnalysePanel />
                         </TabPanel>
                     </Box>

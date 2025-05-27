@@ -5,7 +5,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { TextField } from '@mui/material';
+import { Box, FormControl, FormLabel, TextField } from '@mui/material';
 
 const rows = [
   {
@@ -178,16 +178,15 @@ function formatValue(value) {
   }
 }
 
-
-export default function SufaceTable() {
+export default function SurfaceTable() {
 
   const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
+  
 
   return (
-
-    <TableContainer id="table-container-box" component={Paper} elevation={4} sx={{ marginLeft: '-1.5rem', paddingRight: '3rem', minWidth: "100%", maxHeight: "200px" }}>
-      <Table sx={{ minWidth: "100%", paddingLeft: "0px" }} size="small" >
+    <Paper id="paper" elevation={3} sx={{ my: 2, height: 190, overflow: 'auto' }}>
+      <Table id="table" size="small" >
         <TableHead>
           <TableRow>
             <TableCell sx={{ padding: "0px", px: "5px", fontSize: "12px", width: "60rem", lineHeight: "1.1rem" }}>Quadro de Vazões (L/s)</TableCell>
@@ -244,7 +243,6 @@ export default function SufaceTable() {
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
-
+    </Paper>
   );
 }

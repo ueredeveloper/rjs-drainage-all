@@ -93,7 +93,7 @@ function analyzeAvailability(_info, _points) {
       return _Q += parseFloat(_point.dt_demanda.vol_anual_ma);
     }
   });
-  
+
   // vazão explotável/ ano
   let _q_ex = _info.re_cm_ano;
   // nº de pontos
@@ -242,11 +242,36 @@ function setInfoMarkerIcon(id, ti_id, tp_id) {
 }
 
 
+/**
+*  Converter o formato obtido no arcgis rest servie - [[-47,-15]] - para o formato da gmaps api - [{lat: ..., lng: ...}]
+*  @param {object[]} features  Array no formato arcgis rest service, ex:  [[[-47,-15], ...]] 
+*  @returns {object[]} gmaps Array no formato gmaps api, ex: [[{lat: ..., lng: ...}, ]]
+*/
+const convertOthoCoordToGmaps = (features) => {
+
+  let gmaps = [];
+  features.forEach(f => {
+    let attributes = f.attributes
+    let geometry = { rings: [] }
+    f.geometry.rings.forEach((rr, i) => {
+      let rings = [[]]
+      rr.forEach(r => {
+        rings[0].push({ lat: r[1], lng: r[0] });
+      });
+      geometry.rings.push(rings);
+    });
+    gmaps.push({ attributes, geometry });
+  });
+
+  return gmaps;
+}
+
 export {
   createCircleRings,
   converterPostgresToGmaps, nFormatter,
   analyzeAvailability, numberWithCommas,
   calculateCircleArea, calculateRectangleArea,
   calculatePolylineLength, calculatePolygonArea,
-  setInfoMarkerIcon
+  setInfoMarkerIcon,
+  convertOthoCoordToGmaps
 }

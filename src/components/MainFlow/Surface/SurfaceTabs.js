@@ -4,7 +4,12 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import SurfaceChart from './SurfaceChart';
-import SufaceTable from './SurfaceTable';
+import SurfaceTable from './SurfaceTable';
+import Chip from "@mui/material/Chip";
+import WavesIcon from "@mui/icons-material/Waves";
+import WallpaperIcon from '@mui/icons-material/Wallpaper';
+import LayersIcon from "@mui/icons-material/Layers";
+
 
 function CustomTabPanel(props) {
 
@@ -37,52 +42,45 @@ function a11yProps(index) {
 }
 
 export default function SurfaceTabs() {
-  const [value, setValue] = React.useState(0);
 
+  // Estado do valor da tab selecionada (0: Gráficos, 1: Tabelas, 2: Ajustes e Modulações)
+  const [tabValue, setTabValue] = React.useState("0");
+
+  // Método de mudança de tab
   const handleChange = (event, newValue) => {
-    setValue(newValue);
+    setTabValue(newValue);
   };
 
   return (
-    <Box>
-      {/* Tab Panels */}
-      <CustomTabPanel value={value} index={0} >
-        <SurfaceChart />
-        <SurfaceChart />
-      </CustomTabPanel>
-      <CustomTabPanel value={value} index={1} >
-        <SufaceTable />
-        <br />
-        <SufaceTable />
-      </CustomTabPanel>
-      <CustomTabPanel value={value} index={2}>
-        <SufaceTable />
-        <br />
-        <SufaceTable />
-      </CustomTabPanel>
-
-      {/* Tabs fixed at bottom */}
-      <Box
-        sx={{
-          width: '100%',
-          borderTop: 1,
-          borderColor: 'divider',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <Tabs
-          sx={{minHeight: 32}}
-          value={value}
-          onChange={handleChange}
-          aria-label="bottom tabs"
-          centered
-     
-        >
-          <Tab label="Gráficos" sx={{ fontSize: "12px", minHeight: 32 }} {...a11yProps(0)} />
-          <Tab label="Tabelas" sx={{ fontSize: "12px", minHeight: 32 }} {...a11yProps(1)} />
-          <Tab label="Ajustes e Modulações" sx={{ fontSize: "12px", minHeight: 32 }} {...a11yProps(2)} />
-        </Tabs>
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{ p: 0 }}>
+        {tabValue === "0" && <Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Chip avatar={<WavesIcon />} label="Rio Descoberto" sx={{ m: 1 }} />
+            <Chip avatar={<WallpaperIcon />} label="Área de Contribuição: 125km²" sx={{ m: 1 }} />
+            <Chip avatar={<LayersIcon />} label="UH 23" sx={{ m: 1 }} />
+          </Box>
+          <SurfaceChart />
+          <SurfaceChart />
+        </Box>}
+        {tabValue === "1" && <Box>
+          <SurfaceTable />
+          <SurfaceTable />
+        </Box>}
+        {tabValue === "2" && <Box>
+          <SurfaceTable />
+          <SurfaceTable />
+        </Box>}
       </Box>
+      <Tabs
+        value={tabValue}
+        onChange={handleChange}
+        aria-label="wrapped label tabs example"
+      >
+        <Tab value="0" label="Gráficos" wrapped />
+        <Tab value="1" label="Tabelas" wrapped />
+        <Tab value="2" label="Modulações" wrapped />
+      </Tabs>
     </Box>
   );
 }
