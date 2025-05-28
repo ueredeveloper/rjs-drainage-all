@@ -113,7 +113,12 @@ const ElemDrawManager = ({ map }) => {
         attachDrawInfoListeners(shapeAtual, setOverlays);
       });
 
+      // Só dispare o evento se o InfoWindow não está aberto ainda
+      if (!shape.infoWindow || !shape.infoWindow.getMap()) {
+        window.dispatchEvent(new Event('infowindow-open'));
+      }
       infoWindow.open(map);
+
       shape.infoWindow = infoWindow;
       currentInfoWindow = infoWindow;
     };
@@ -240,9 +245,6 @@ const ElemDrawManager = ({ map }) => {
         ...prev,
         shapes: [...prev.shapes, shape]
       }));
-
-      // Removido: openInfoWindow(shape, shape.position);
-      // O InfoWindow só abrirá ao clicar na shape.
     });
 
     draw.setMap(map);

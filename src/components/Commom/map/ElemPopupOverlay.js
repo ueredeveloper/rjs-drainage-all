@@ -9,13 +9,13 @@ import { numberWithCommas } from '../../../tools';
  * @param {Object} props.position - Posição {lat, lng} para exibir o popup.
  * @param {any} props.content - Conteúdo a ser exibido no popup.
  * @param {Object} props.draw - Objeto com informações do desenho (tipo, área, metros, etc).
+ * @param {Function} props.onInfoWindowOpen - Função a ser chamada quando o InfoWindow abrir.
  * @returns {null}
  */
-const ElemPopupOverlay = ({ map, position, content, draw }) => {
+const ElemPopupOverlay = ({ map, position, content, draw, onInfoWindowOpen }) => {
     const overlayRef = useRef(null);
 
     useEffect(() => {
-        // Garante que mapa, posição e conteúdo estejam definidos antes de criar o overlay
         if (!map || !position || !content) return;
 
         /**
@@ -104,7 +104,9 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
              * @override
              */
             onRemove() {
-                this.containerDiv.parentNode.removeChild(this.containerDiv);
+                if (this.containerDiv.parentNode) {
+                    this.containerDiv.parentNode.removeChild(this.containerDiv);
+                }
             }
 
             /**
@@ -127,23 +129,29 @@ const ElemPopupOverlay = ({ map, position, content, draw }) => {
 
         // Cria e adiciona o overlay ao mapa
         const popupOverlay = new PopupOverlay();
-
         popupOverlay.setMap(map);
-
         overlayRef.current = popupOverlay;
 
-        // Remove o overlay ao desmontar
-        return () => {
+        // Listener para ocultar o overlay quando o InfoWindow abrir
+
+        const handleInfoWindowOpen = () => {
             popupOverlay.setMap(null);
         };
-    }, [map, position, content]);
+
+       window.addEventListener('infowindow-open', handleInfoWindowOpen);
+
+        return () => {
+            popupOverlay.setMap(null);
+           // window.removeEventListener('infowindow-open', handleInfoWindowOpen);
+        };
+
+    }, [map, position, content, onInfoWindowOpen]);
 
     useEffect(() => {
         // Garante que o overlay está criado e atualiza a exibição do conteúdo
         if (!overlayRef.current || !content) return;
 
         const containerDiv = overlayRef.current.containerDiv;
-
         containerDiv.style.display = 'block';
     }, [content]);
 

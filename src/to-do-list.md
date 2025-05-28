@@ -85,3 +85,4 @@ Alterar a cor da borda dos polígonos para vermelho.
  - Gerenciar abertura/fechamento da InfoWindow
  - altera as cores das bordas e do preenchimento dos polígonos criados
  - gerenciar abertura e fechamento do popup de calculo de area
+ - Ao abrir o info-window o popup é fechado automaticamente 

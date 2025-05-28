@@ -20,8 +20,8 @@ import ElemPolyline from './ElemPolyline';
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
 function MapContent({ checkBoxState }) {
-  
-  
+
+
   // Estados do componente
   const [mode] = useState('light');
 
@@ -92,6 +92,24 @@ function MapContent({ checkBoxState }) {
     }
   }
 
+  function desmarcarCalculoArea() {
+    setOverlays(prev => ({
+      ...prev,
+      shapes: prev.shapes.map(s =>
+        s.calculoAreaAtivo ? { ...s, calculoAreaAtivo: false } : s
+      )
+    }));
+  }
+
+  useEffect(() => {
+    const handleInfoWindowOpen = () => {
+      desmarcarCalculoArea();
+    };
+    window.addEventListener('infowindow-open', handleInfoWindowOpen);
+    return () => {
+      window.removeEventListener('infowindow-open', handleInfoWindowOpen);
+    };
+  }, []);
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
@@ -107,8 +125,8 @@ function MapContent({ checkBoxState }) {
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
           return selectedsShapes.map(type => {
-            
-            if (shape.markers !== undefined && shape.markers[type] !== null   ) {
+
+            if (shape.markers !== undefined && shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
                 return <ElemMarker
                   key={'marker-' + i}
@@ -121,12 +139,17 @@ function MapContent({ checkBoxState }) {
         })}
 
         {/* Renderização das sobreposições */}
-        {overlays.shapes.map((shape, i) => {
-          if (shape.calculoAreaAtivo) {
-            return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />;
-          }
-          return null;
-        })}
+        {overlays.shapes.map((shape) =>
+          shape.calculoAreaAtivo && (
+            <ElemPopupOverlay
+              key={shape.id}
+              map={map}
+              position={shape.position}
+              content={'conteudo'}
+              draw={shape}
+            />
+          )
+        )}
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
         {shapesFetched.map((shape) => {

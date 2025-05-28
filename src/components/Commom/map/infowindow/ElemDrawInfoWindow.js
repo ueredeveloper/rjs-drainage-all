@@ -12,7 +12,8 @@ export function getDrawInfoWindowHtmlWithState(shape) {
   const strokeColor = shape.draw?.get('strokeColor') || '#ff0000';
   const fillColor = shape.draw?.get('fillColor') || '#ffff00';
   const fillOpacity = shape.draw?.get('fillOpacity') ?? 0.35;
-  const calculoAreaAtivo = shape.calculoAreaAtivo ?? true;
+  // Sempre inicia desmarcado
+  const calculoAreaAtivo = false;
 
   return `
     <div class="info-content" style="font-family: Arial, sans-serif; font-size: 12px; width: 280px;">
@@ -46,10 +47,13 @@ export function getDrawInfoWindowHtmlWithState(shape) {
 
       <fieldset style="border-radius: 10px; padding: 10px; margin-top: 10px; border: 1px solid #ccc;">
         <legend style="font-weight: bold; font-size: 14px;">Info</legend>
-        <label style="font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 5px;">
-          <input type="checkbox" id="calcularArea" ${calculoAreaAtivo ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <label class="switch">
+            <input type="checkbox" id="calcularArea" ${calculoAreaAtivo ? 'checked' : ''}>
+            <span class="slider"></span>
+          </label>
           Cálculo de área
-        </label>
+        </span>
         <ul id="outorga-container" style="margin-top: 10px; max-height: 120px; overflow-y: auto; padding-left: 20px; font-size: 11px; color: #333;"></ul>
       </fieldset>
     </div>
@@ -61,6 +65,7 @@ export function getDrawInfoWindowHtmlWithState(shape) {
  * permitindo ao usuário modificar dinamicamente as propriedades da shape desenhada.
  *
  * @param {google.maps.Polygon|google.maps.Rectangle|google.maps.Circle|google.maps.Polyline} shape - A forma desenhada no mapa a ser manipulada.
+ * @param {Function} setOverlays - Função para atualizar o estado dos overlays.
  */
 export function attachDrawInfoListeners(shape, setOverlays) {
   const container = document.querySelector('.info-content');
@@ -71,7 +76,7 @@ export function attachDrawInfoListeners(shape, setOverlays) {
   borderButtons.forEach(btn => {
     btn.onclick = () => {
       const color = btn.getAttribute('data-color');
-      shape.draw.setOptions({ strokeColor: color }); // <-- corrigido aqui
+      shape.draw.setOptions({ strokeColor: color });
       borderButtons.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
     };
@@ -82,7 +87,7 @@ export function attachDrawInfoListeners(shape, setOverlays) {
   fillButtons.forEach(btn => {
     btn.onclick = () => {
       const color = btn.getAttribute('data-color');
-      shape.draw.setOptions({ fillColor: color }); // <-- corrigido aqui
+      shape.draw.setOptions({ fillColor: color });
       fillButtons.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
     };
@@ -93,7 +98,7 @@ export function attachDrawInfoListeners(shape, setOverlays) {
   if (opacitySlider) {
     opacitySlider.oninput = () => {
       const opacity = parseFloat(opacitySlider.value);
-      shape.draw.setOptions({ fillOpacity: opacity }); // <-- corrigido aqui
+      shape.draw.setOptions({ fillOpacity: opacity });
     };
   }
 
@@ -101,20 +106,15 @@ export function attachDrawInfoListeners(shape, setOverlays) {
   const calcularAreaCheckbox = container.querySelector('#calcularArea');
   if (calcularAreaCheckbox) {
     calcularAreaCheckbox.onchange = () => {
-      shape.calculoAreaAtivo = calcularAreaCheckbox.checked;
-
       if (typeof setOverlays === 'function') {
         setOverlays(prev => ({
           ...prev,
           shapes: prev.shapes.map(s =>
-            s.id === shape.id ? { ...s, calculoAreaAtivo: calcularAreaCheckbox.checked } : s
+            s.id === shape.id
+              ? { ...s, calculoAreaAtivo: calcularAreaCheckbox.checked }
+              : s
           )
         }));
-      }
-
-      if (window.showCalcAreaPopup) {
-        if (shape.calculoAreaAtivo) window.showCalcAreaPopup(shape);
-        else window.hideCalcAreaPopup && window.hideCalcAreaPopup();
       }
     };
   }
