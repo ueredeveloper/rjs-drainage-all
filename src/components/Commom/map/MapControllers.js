@@ -8,6 +8,7 @@ import { fetchShape } from '../../../services/shapes';
 import { converterPostgresToGmaps } from '../../../tools';
 import { useData } from '../../../hooks/analyse-hooks';
 
+
 /**
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
  * @component
@@ -93,7 +94,7 @@ function MapControllers({ updateCheckBoxState }) {
             }
         });
 
-    }, [checkBoxState]);
+    }, [checkBoxState, setShapesFetched, shapesFetched]);
 
     /**
      * Manipula o evento de mudança da caixa de seleção.

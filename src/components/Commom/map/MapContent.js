@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Wrapper } from "@googlemaps/react-wrapper";
 import { Box } from '@mui/material';
 import ElemMap from './ElemMap';
@@ -9,8 +9,6 @@ import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
 import ElemOttoPolyline from './ElemOthoPolyline';
-
-
 
 
 /**
@@ -129,12 +127,7 @@ function MapContent({ checkBoxState }) {
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
         {shapesFetched.map((shape) => {
-          /* Renderiza ottobacias */
-          /*if (shape.name === 'otto-bacias') {
-            return shape.shape.map((_sh, ii) => {
-              return <ElemOttoPolyline key={'elem-otto'} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
-            });
-          }*/
+          
           /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
           return checkBoxState.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {

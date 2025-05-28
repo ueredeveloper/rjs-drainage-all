@@ -133,6 +133,7 @@ function analyzeAvailability(_info, _points) {
   };
 }
 
+
 /**
  * Adiciona pontos separadores nos números, ex: 37274109,255484 para 37.274.109,255484.
  * @param {*} x - O número a ser formatado.
@@ -148,6 +149,7 @@ function numberWithCommas(x) {
   // Junta novamente as partes inteira e decimal com o ponto decimal
   return parts.join(",");
 }
+
 
 /**
  * Calcula a área de um retângulo com base nos limites fornecidos.

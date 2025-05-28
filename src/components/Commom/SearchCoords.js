@@ -30,8 +30,6 @@ import { fetchShape, fethcOthoBacias } from "../../services/shapes";
  * @param {number} props.tabNumber - Define o tipo de busca pela tab selecionada: 0 para raio, 1 para subsistema.
  * @returns {JSX.Element} Elemento JSX que representa o componente SearchCoords.
  */
-
-
 function SearchCoords({ tabNumber }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
@@ -253,7 +251,7 @@ function SearchCoords({ tabNumber }) {
         // Seta em uma variável global para ter como limpar o mapa
         setOverlays(prev => ({
           ...prev,
-          shapes: [...prev.shapes, ottoBasins]
+          shapes: [...prev.shapes, ottoBasins.ottoBasinsToGmaps]
         }));
         // se já houver os polígonos das unidades hidrográficas
       } else {
@@ -296,7 +294,7 @@ function SearchCoords({ tabNumber }) {
 
         setOverlays(prev => ({
           ...prev,
-          shapes: [...prev.shapes, ottoBasins]
+          shapes: [...prev.shapes, ottoBasins.ottoBasinsToGmaps]
         }));
 
       }

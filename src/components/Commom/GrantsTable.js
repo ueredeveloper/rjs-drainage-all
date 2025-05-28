@@ -295,6 +295,7 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired
 };
 
+
 function GrantsTable({ markers }) {
 
   const { setHgAnalyse, subsystem, setSubsystem } = useData(); // Hook para estado global

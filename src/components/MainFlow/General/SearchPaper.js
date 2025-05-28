@@ -16,7 +16,7 @@ import { useData } from "../../../hooks/analyse-hooks";
  * @requires findByColumn
  * @requires useData
  */
-function SearchPaper() {
+function SearchPaper () {
     // Variável de estado para controlar o status de carregamento
     const [loading, setLoading] = useState(false);
 

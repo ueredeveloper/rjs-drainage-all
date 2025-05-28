@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import { Alert, Collapse } from "@mui/material";
 
 
+
 /**
 
    Componente de alerta comum a vários componentes.

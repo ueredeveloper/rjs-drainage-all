@@ -1,7 +1,5 @@
 import { Box } from '@mui/material'
-import React, { useEffect } from 'react'
 import SearchCoords from '../../Commom/SearchCoords'
-import LineChart from './SurfaceChart'
 import SurfaceTabs from './SurfaceTabs'
 
 /**

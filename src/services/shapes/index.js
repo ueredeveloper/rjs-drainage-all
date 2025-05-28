@@ -54,6 +54,7 @@ async function fetchGrantsInsideShape(shapeName, shapeCode) {
   }
 }
 
+
 /**
  * Busca as ottobacias e converte para o formato gmaps api.
  */

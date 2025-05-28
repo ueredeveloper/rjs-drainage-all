@@ -21,6 +21,10 @@ ChartJS.register(
   Legend
 );
 
+/**
+ * Chart Superficial
+ * @returns 
+ */
 const SurfaceChart = () => {
   const data = {
     labels: ['January', 'February', 'March', 'April'],

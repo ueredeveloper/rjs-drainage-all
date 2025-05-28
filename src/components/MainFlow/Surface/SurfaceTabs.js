@@ -6,7 +6,6 @@ import Box from '@mui/material/Box';
 import SurfaceChart from './SurfaceChart';
 import SurfaceTable from './SurfaceTable';
 import Chip from "@mui/material/Chip";
-import WavesIcon from "@mui/icons-material/Waves";
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import LayersIcon from "@mui/icons-material/Layers";
 import { useData } from '../../../hooks/analyse-hooks';
@@ -42,6 +41,10 @@ function a11yProps(index) {
   };
 }
 
+/**
+ * Tabs 
+ * @returns 
+ */
 export default function SurfaceTabs() {
 
   const { ottoBasins } = useData(); // Hook para estado global
