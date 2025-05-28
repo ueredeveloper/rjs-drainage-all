@@ -9,6 +9,7 @@ import Chip from "@mui/material/Chip";
 import WavesIcon from "@mui/icons-material/Waves";
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import LayersIcon from "@mui/icons-material/Layers";
+import { useData } from '../../../hooks/analyse-hooks';
 
 
 function CustomTabPanel(props) {
@@ -43,6 +44,8 @@ function a11yProps(index) {
 
 export default function SurfaceTabs() {
 
+  const { ottoBasins } = useData(); // Hook para estado global
+
   // Estado do valor da tab selecionada (0: Gráficos, 1: Tabelas, 2: Ajustes e Modulações)
   const [tabValue, setTabValue] = React.useState("0");
 
@@ -56,9 +59,9 @@ export default function SurfaceTabs() {
       <Box sx={{ p: 0 }}>
         {tabValue === "0" && <Box>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <Chip avatar={<WavesIcon />} label="Rio Descoberto" sx={{ m: 1 }} />
-            <Chip avatar={<WallpaperIcon />} label="Área de Contribuição: 125km²" sx={{ m: 1 }} />
-            <Chip avatar={<LayersIcon />} label="UH 23" sx={{ m: 1 }} />
+
+            <Chip avatar={<WallpaperIcon />} label={`Área de Contribuição: ${ottoBasins.area.toFixed(4)} km²`} sx={{ m: 1, fontSize: "12px" }} />
+            <Chip avatar={<LayersIcon />} label={`Unidade Hidrográfica: ${ottoBasins.uhLabel} - ${ottoBasins.unNome}`} sx={{ m: 1, fontSize: "12px" }} />
           </Box>
           <SurfaceChart />
           <SurfaceChart />

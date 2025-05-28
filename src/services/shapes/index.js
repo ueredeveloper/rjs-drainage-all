@@ -1,3 +1,4 @@
+import { calculateContributingArea, convertOthoCoordToGmaps } from "../../tools";
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
@@ -53,7 +54,10 @@ async function fetchGrantsInsideShape(shapeName, shapeCode) {
   }
 }
 
-async function fethcOthoBacias(uhCodigo, lat, lng) {
+/**
+ * Busca as ottobacias e converte para o formato gmaps api.
+ */
+async function fethcOthoBacias(uhInfo, lat, lng) {
 
   // URL para buscar as áreas de drenagem no servidor.
   let url =
@@ -62,7 +66,7 @@ async function fethcOthoBacias(uhCodigo, lat, lng) {
     new URLSearchParams({
       lat: lat,
       lng: lng,
-      uh: uhCodigo, // atributo código da uh, ex: 37
+      uh: uhInfo.uh_codigo, // atributo código da uh, ex: 37
     });
 
   //console.log(url);
@@ -76,8 +80,21 @@ async function fethcOthoBacias(uhCodigo, lat, lng) {
    */
   let features = await fetch(url, { method: "GET" })
     .then((features) => {
-      let json = features.json();
-      return json;
+      let ottoBasins = features.json();
+      return ottoBasins;
+    }).then(ottoBasins => {
+      // Converte as coodernadas para o padrão da biblioteca gmaps api
+      let ottoBasinsToGmaps = convertOthoCoordToGmaps(ottoBasins);
+
+      // Adiciona um nome para renderizar pelo componete correto
+      ottoBasinsToGmaps.name = 'otto-bacias';
+      // Seta área de contribuição
+      ottoBasinsToGmaps.area = calculateContributingArea(ottoBasinsToGmaps);
+      // Sete informações da Unidade Hidrográfica
+      ottoBasinsToGmaps.uhCodigo = uhInfo.uh_codigo;
+      ottoBasinsToGmaps.uhLabel = uhInfo.uh_label;
+      ottoBasinsToGmaps.unNome = uhInfo.uh_nome;
+      return {ottoBasins, ottoBasinsToGmaps};
     });
 
   return features;

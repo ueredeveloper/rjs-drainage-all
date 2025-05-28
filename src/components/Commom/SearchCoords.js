@@ -13,7 +13,7 @@ import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolo
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyzeAvailability, converterPostgresToGmaps, convertOthoCoordToGmaps, othoToGmaps } from "../../tools";
+import { analyzeAvailability, calculateCentroid, calculateContributingArea, converterPostgresToGmaps, convertOthoCoordToGmaps, joinPolygons, othoToGmaps, unionAndConvertPolygons } from "../../tools";
 import AlertCommon from "./AlertCommon";
 import { initialsStates } from "../../initials-states";
 import ElemGrant from '../Connection/elem-grant';
@@ -35,7 +35,7 @@ import { fetchShape, fethcOthoBacias } from "../../services/shapes";
 function SearchCoords({ tabNumber }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
-  const { map, marker, setMarker, overlays, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem, shapesFetched, setShapesFetched } = useData(); // Hook para estado global
+  const { map, marker, setMarker, overlays, setOverlays, radius, setHgAnalyse, subsystem, setSubsystem, shapesFetched, setOttoBasins } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
 
   // Estados para o controle do alerta
@@ -193,16 +193,16 @@ function SearchCoords({ tabNumber }) {
     // Se selecionado a tab superficial 
     else if (tabNumber === 2) {
 
-      // Caso queira limpar todo o mapa antes da busca
-      /* overlays.shapes.forEach(shape => {
-         shape.draw?.setMap(null)
-       });
-       setOverlays(initialsStates.overlays)*/
+      // Limpa os mapa de camadas, marcadores etc.
+      overlays.shapes.forEach(shape => {
+        shape.draw?.setMap(null)
+      });
+      setOverlays(initialsStates.overlays)
 
-      // Unidade Hidrográfica necessária para a busca de ottobacias
+      // Unidade Hidrográfica necessária para a busca de ottoBasins
       let shapeName = "unidades_hidrograficas";
       // Pesquisa a shape da unidade hidrofráfica, se já existente na renderização e assim buscar em qual unidade hidrográfica está a coordenada
-      let _shape = shapesFetched.find(sf => sf.name === shapeName)
+      let _shape = shapesFetched.find(sf => sf.name === shapeName);
 
       // Se os polígonso das unidades ainda não estiverem sido buscados
       if (shapesFetched.length === 0 || _shape === undefined) {
@@ -223,19 +223,37 @@ function SearchCoords({ tabNumber }) {
 
         });
 
-        // Busca as ottobacias com o código da unidade hidrográfica e com as coordenadas
-        let ottoBacias = await fethcOthoBacias(uhInfo.uh_codigo, lat, lng);
+        // Busca as ottoBasins com o código da unidade hidrográfica e com as coordenadas
+        let ottoBasins = await fethcOthoBacias(uhInfo, lat, lng);
 
-        // Converte as coodernadas para o padrão da biblioteca gmaps api
-        let gmaps = convertOthoCoordToGmaps(ottoBacias);
+        console.log(ottoBasins)
 
-        // Adiciona um nome para renderizar pelo componete correto
-        gmaps.name = 'otto-bacias';
+        setOttoBasins(ottoBasins.ottoBasinsToGmaps);
+
+        // Unir os polígonos para fazer uma única requisição no serviço REST.
+        let polygon = joinPolygons(ottoBasins.ottoBasins);
+
+        // verifica o polígono no mapa
+        //polygon.setMap(map)
+
+        // Calcula o centro do polígono unido
+        let centroid = calculateCentroid(polygon.getPath().getArray());
+
+        console.log(centroid)
+
+        // Verifica a posição do centroid com um marcador
+        /*new window.google.maps.Marker({
+          position: centroid,
+          map
+        });*/
+
+        // Definir o centro do mapa para as coordenadas do centroide
+        // map.setCenter(centroid);
 
         // Seta em uma variável global para ter como limpar o mapa
         setOverlays(prev => ({
           ...prev,
-          shapes: [...prev.shapes, gmaps]
+          shapes: [...prev.shapes, ottoBasins]
         }));
         // se já houver os polígonos das unidades hidrográficas
       } else {
@@ -248,13 +266,37 @@ function SearchCoords({ tabNumber }) {
 
         });
 
-        let ottoBacias = await fethcOthoBacias(uhInfo.uh_codigo, lat, lng);
-        let gmaps = convertOthoCoordToGmaps(ottoBacias);
-        gmaps.name = 'otto-bacias';
+        // Busca as ottoBasins com o código da unidade hidrográfica e com as coordenadas
+        let ottoBasins = await fethcOthoBacias(uhInfo, lat, lng);
+
+        console.log(ottoBasins)
+
+        setOttoBasins(ottoBasins.ottoBasinsToGmaps);
+
+        // Unir os polígonos para fazer uma única requisição no serviço REST.
+        let polygon = joinPolygons(ottoBasins.ottoBasins);
+
+        // verifica o polígono no mapa
+        //polygon.setMap(map)
+
+        // Calcula o centro do polígono unido
+        let centroid = calculateCentroid(polygon.getPath().getArray());
+
+        console.log(centroid)
+
+        // Definir o centro do mapa para as coordenadas do centroide
+        // map.setCenter(centroid);
+
+        // Verifica a posição do centroid com um marcador
+        /*new window.google.maps.Marker({
+          position: centroid,
+          map
+        });*/
+
 
         setOverlays(prev => ({
           ...prev,
-          shapes: [...prev.shapes, gmaps]
+          shapes: [...prev.shapes, ottoBasins]
         }));
 
       }

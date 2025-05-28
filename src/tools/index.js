@@ -1,3 +1,6 @@
+import * as turf from '@turf/turf';
+
+
 import { mkrBlueIcon, mkrGreenIcon, mkrOrangeIcon, mkrPinkIcon, mkrPurpleIcon, mkrRedIcon } from "../assets";
 import { iwBarragemIcon, iwDefaultIcon, iwEfluenteIcon, iwManualIcon, iwPluvialIcon, iwSuperficialIcon, iwTubularIcon } from "../assets/svg/svgs-icons";
 
@@ -266,6 +269,114 @@ const convertOthoCoordToGmaps = (features) => {
   return gmaps;
 }
 
+/**
+ * Calcula a área de contribuição através das áreas otto codificadas.
+ * @param {*} features Áreas geográficas otto codificadas com o atributo nuareacont.
+ * @returns {number} Total de área de contribuição.
+ */
+const calculateContributingArea = (features) => {
+  return features.reduce(function (accumulator, curValue) {
+    return accumulator + curValue.attributes.nuareacont
+  }, 0);
+}
+
+/**
+ * Criar um polígono do Google Maps a partir de um objeto GeoJSON com multipolígonos.
+ * @param {object[]} json Array de objetos GeoJSON que representam polígonos.
+ * @returns {google.maps.Polygon} Objeto Polygon do Google Maps resultante da união dos polígonos.
+ */
+const joinPolygons = (polygons) => {
+
+  // Função de união dos polígonos. Assim se faz apenas uma requisição no serviço.
+  /*function unionPolygons(polygons) {
+    // Perform union operation on the list of polygons
+    let unionResult = polygons.reduce((acc, polygon) => {
+      return turf.union(acc, polygon);
+    });
+
+    return unionResult;
+  }*/
+  // Função para unir polígonos, se não conseguir com algum continua a união.
+  function unionPolygons(polygons) {
+      if (!polygons || polygons.length === 0) {
+          throw new Error('No polygons provided for union.');
+      }
+
+      // Inicializa o acumulador com o primeiro polígono
+      let unionResult = polygons[0];
+
+      // Itera sobre os polígonos restantes
+      polygons.slice(1).forEach(polygon => {
+          try {
+              unionResult = turf.union(unionResult, polygon);
+          } catch (error) {
+              console.warn('Error uniting polygons:', error.message);
+              // Continue para o próximo polígono
+          }
+      });
+
+      return unionResult;
+  }
+
+  // Conversao de Turf Polygon em Gmaps Polygon.
+  function turfPolygonToGoogleMapsPolygon(turfPolygon) {
+    const paths = turfPolygon.geometry.coordinates[0].map(
+      (coord) => new window.google.maps.LatLng(coord[1], coord[0]),
+    );
+    const polygon = new window.google.maps.Polygon({ paths: paths });
+    return polygon;
+  }
+  
+
+  /* Sorteia os polígonos pelo OBJECTID, do maior para o menor. Percebi que assim une-se os polígonos melhor e resolve o problema da UH 40, em que um dos polígonos, OBJECTID 23327, deu erro de junção sem esta ordenação.
+   */
+  const polygonsSortedByObjectId = polygons.sort((a, b) => {
+    return b.attributes.OBJECTID - a.attributes.OBJECTID;
+  });
+  // Conversao para turf features.
+  const turfPolygons = polygonsSortedByObjectId.map((polygon) =>
+    turf.polygon(polygon.geometry.rings),
+  );
+
+  
+  // União dos polígonos.
+  const unionPolygon = unionPolygons(turfPolygons);
+
+  // Conversão de Turf.js polygon para Google Maps polygon.
+  const newGmapsPolygon = turfPolygonToGoogleMapsPolygon(unionPolygon);
+
+  return newGmapsPolygon;
+};
+
+
+/**
+ * Calcula o centroide de um polígono.
+ * @param {Array<object>} vertices Lista de caminhos (vértices) do polígono.
+ * @returns {object} Objeto contendo as coordenadas do centroide (lat, lng).
+ */
+const calculateCentroid = (vertices) => {
+
+  // Verifica se a lista de vertices está vazia ou nula.
+  if (!vertices || vertices.length === 0) {
+    alert("Nenhum polígono encontrado.");
+    return null;
+  }
+
+  let latSum = 0;
+  let lngSum = 0;
+  const numVertices = vertices.length;
+
+  for (const vertex of vertices) {
+    latSum += vertex.lat();
+    lngSum += vertex.lng();
+  }
+
+  const centroidLat = latSum / numVertices;
+  const centroidLng = lngSum / numVertices;
+
+  return { lat: centroidLat, lng: centroidLng };
+};
+
 export {
   createCircleRings,
   converterPostgresToGmaps, nFormatter,
@@ -273,5 +384,8 @@ export {
   calculateCircleArea, calculateRectangleArea,
   calculatePolylineLength, calculatePolygonArea,
   setInfoMarkerIcon,
-  convertOthoCoordToGmaps
+  convertOthoCoordToGmaps,
+  calculateContributingArea,
+  joinPolygons, 
+  calculateCentroid
 }

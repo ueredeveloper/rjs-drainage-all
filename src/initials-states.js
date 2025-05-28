@@ -77,6 +77,14 @@ const initialsStates = {
         "Superficiais": true,
         "Efluentes": true,
         "Barragens": true
+    },
+    ottoBasins: {
+        name: "otto-basins",
+        area: 0,
+        uhCodigo: "",
+        uhLabel: "",
+        unNome: ""
+
     }
 }
 
