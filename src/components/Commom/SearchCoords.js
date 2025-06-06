@@ -236,9 +236,6 @@ function SearchCoords({ tabNumber }) {
 
         let sectionGrants = await getMarkersInsideOttoBasinsJoined(joinedPolygons, uhGrants)
 
-        console.log(sectionGrants)
-
-
         let hydrographicBasin = await searchHydrograficUnit(fetchShape, shapesFetched, setShapesFetched, uhRotulo)
 
         let ottoBasinArea = ottoBasins.ottoBasinsToGmaps.area;
@@ -347,22 +344,9 @@ function SearchCoords({ tabNumber }) {
 
         let sectionGrants = await getMarkersInsideOttoBasinsJoined(joinedPolygons, uhGrants)
 
-        // uh markers
-        //ottoBasins.ottoBasinsToGmaps.markers = uhGrants[0];
-        // section markers
-
-        console.log(sectionGrants)
-
-
         let hydrographicBasin = await searchHydrograficUnit(fetchShape, shapesFetched, setShapesFetched, uhRotulo)
 
-
-        console.log(hydrographicBasin)
-
         let ottoBasinArea = ottoBasins.ottoBasinsToGmaps.area;
-
-        console.log(ottoBasinArea)
-
 
         let q_outorgada_secao = calculateQOutorgadaSecao(sectionGrants);
         let q_referencia_secao = calculateQReferenciaSecao(hydrographicBasin, ottoBasinArea);
@@ -434,10 +418,7 @@ function SearchCoords({ tabNumber }) {
           };
         });
 
-
         ottoBasins.ottoBasinsToGmaps.markers = sectionGrants;
-
-
 
         setOverlays(prev => ({
           ...prev,
@@ -445,7 +426,6 @@ function SearchCoords({ tabNumber }) {
         }));
 
       }
-
 
     }
 
@@ -491,7 +471,6 @@ function SearchCoords({ tabNumber }) {
     // Limita para no máximo 12 caracteres
     value = value.slice(0, 12);
 
-
     // Atualiza estado
     setPosition(prev => ({
       ...prev,
@@ -534,7 +513,6 @@ function SearchCoords({ tabNumber }) {
       <AlertCommon openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
 
       <FormControl style={{ display: "flex", flexDirection: "column" }}>
-        {console.log(surfaceAnalyse)}
         <FormLabel sx={{ my: 1 }}>Coordenadas</FormLabel>
         <Paper elevation={3} sx={{ margin: 0 }}>
           <Box sx={{ display: "flex", flexFlow: "row wrap" }}>
