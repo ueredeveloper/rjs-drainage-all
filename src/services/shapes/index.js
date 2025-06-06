@@ -58,19 +58,12 @@ async function fetchGrantsInsideShape(shapeName, shapeCode) {
 /**
  * Busca as ottobacias e converte para o formato gmaps api.
  */
-async function fethcOthoBacias(uhInfo, lat, lng) {
+async function fetchOttoBasins(lat, lng) {
 
-  // URL para buscar as áreas de drenagem no servidor.
-  let url =
-    "https://njs-drainage-ueredeveloper.replit.app/drainage?" +
-
-    new URLSearchParams({
-      lat: lat,
-      lng: lng,
-      uh: uhInfo.uh_codigo, // atributo código da uh, ex: 37
-    });
-
-  //console.log(url);
+  let params = new URLSearchParams({
+    lat: lat,
+    lng: lng
+  });
 
   /**
    * Buscar as áreas de drenagem no servidor.
@@ -79,11 +72,16 @@ async function fethcOthoBacias(uhInfo, lat, lng) {
    * @param {string} uh Unidade Hidrográfica.
    * @returns {Promise<Array>} Uma Promise que resolve com as informações de áreas de drenagem.
    */
-  let features = await fetch(url, { method: "GET" })
+  let features = await fetch(`${url}/find-otto-basins-by-lat-lng?${params}`,
+    {
+      method: "GET"
+    })
     .then((features) => {
       let ottoBasins = features.json();
       return ottoBasins;
     }).then(ottoBasins => {
+
+      ottoBasins.forEach(otto => console.log(otto.geometry.coordinates.length))
       // Converte as coodernadas para o padrão da biblioteca gmaps api
       let ottoBasinsToGmaps = convertOthoCoordToGmaps(ottoBasins);
 
@@ -91,15 +89,40 @@ async function fethcOthoBacias(uhInfo, lat, lng) {
       ottoBasinsToGmaps.name = 'otto-bacias';
       // Seta área de contribuição
       ottoBasinsToGmaps.area = calculateContributingArea(ottoBasinsToGmaps);
-      // Sete informações da Unidade Hidrográfica
-      ottoBasinsToGmaps.uhCodigo = uhInfo.uh_codigo;
-      ottoBasinsToGmaps.uhLabel = uhInfo.uh_label;
-      ottoBasinsToGmaps.unNome = uhInfo.uh_nome;
-      return {ottoBasins, ottoBasinsToGmaps};
+
+      // Seta informações da Unidade Hidrográfica
+      ottoBasinsToGmaps.uhNome = ottoBasins[0]?.attributes.uh_nome;
+      ottoBasinsToGmaps.uhRotulo = ottoBasins[0]?.attributes.uh_rotulo;
+
+      return { ottoBasins, ottoBasinsToGmaps };
     });
 
   return features;
 }
 
+/**
+ * Busca pontos superficiais outorgados pela Unidade Hidrográfica
+ * @param {*} uh_codigo 
+ * @returns 
+ */
+async function fetchMarkersByUH(uh_codigo) {
 
-export { fetchShape, fetchGrantsInsideShape, fethcOthoBacias }
+  let points = await fetch(`${url}/find-surface-pointos-inside-uh?uh_codigo=${uh_codigo}`,
+    {
+      method: 'GET',
+      headers: {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+      },
+
+    }).then(response => {
+      return response.json();
+    })
+
+  return points;
+
+}
+
+
+
+export { fetchShape, fetchGrantsInsideShape, fetchOttoBasins, fetchMarkersByUH }

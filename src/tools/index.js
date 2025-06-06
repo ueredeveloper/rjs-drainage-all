@@ -218,8 +218,6 @@ function calculatePolylineLength(polyline) {
   return lengthInMeters;
 }
 
-
-
 function setInfoMarkerIcon(id, ti_id, tp_id) {
 
   if (id === 0) {
@@ -246,6 +244,16 @@ function setInfoMarkerIcon(id, ti_id, tp_id) {
   }
 }
 
+/**
+ * Calcula a área de contribuição através das áreas otto codificadas.
+ * @param {*} features Áreas geográficas otto codificadas com o atributo nuareacont.
+ * @returns {number} Total de área de contribuição.
+ */
+const calculateContributingArea = (features) => {
+  return features.reduce(function (accumulator, curValue) {
+    return accumulator + curValue.attributes.nuareacont
+  }, 0);
+}
 
 /**
 *  Converter o formato obtido no arcgis rest servie - [[-47,-15]] - para o formato da gmaps api - [{lat: ..., lng: ...}]
@@ -258,7 +266,8 @@ const convertOthoCoordToGmaps = (features) => {
   features.forEach(f => {
     let attributes = f.attributes
     let geometry = { rings: [] }
-    f.geometry.rings.forEach((rr, i) => {
+    // Nao banco o atributo vem como coordinates, aqui é convertido para rings
+    f.geometry.coordinates.forEach((rr, i) => {
       let rings = [[]]
       rr.forEach(r => {
         rings[0].push({ lat: r[1], lng: r[0] });
@@ -272,52 +281,32 @@ const convertOthoCoordToGmaps = (features) => {
 }
 
 /**
- * Calcula a área de contribuição através das áreas otto codificadas.
- * @param {*} features Áreas geográficas otto codificadas com o atributo nuareacont.
- * @returns {number} Total de área de contribuição.
- */
-const calculateContributingArea = (features) => {
-  return features.reduce(function (accumulator, curValue) {
-    return accumulator + curValue.attributes.nuareacont
-  }, 0);
-}
-
-/**
  * Criar um polígono do Google Maps a partir de um objeto GeoJSON com multipolígonos.
  * @param {object[]} json Array de objetos GeoJSON que representam polígonos.
  * @returns {google.maps.Polygon} Objeto Polygon do Google Maps resultante da união dos polígonos.
  */
-const joinPolygons = (polygons) => {
+const joinOttoBasins = (polygons) => {
 
-  // Função de união dos polígonos. Assim se faz apenas uma requisição no serviço.
-  /*function unionPolygons(polygons) {
-    // Perform union operation on the list of polygons
-    let unionResult = polygons.reduce((acc, polygon) => {
-      return turf.union(acc, polygon);
+  // Função para unir polígonos, se não conseguir com algum continua a união.
+  function unionPolygons(polygons) {
+    if (!polygons || polygons.length === 0) {
+      throw new Error('No polygons provided for union.');
+    }
+
+    // Inicializa o acumulador com o primeiro polígono
+    let unionResult = polygons[0];
+
+    // Itera sobre os polígonos restantes
+    polygons.slice(1).forEach(polygon => {
+      try {
+        unionResult = turf.union(unionResult, polygon);
+      } catch (error) {
+        console.warn('Error uniting polygons:', error.message);
+        // Continue para o próximo polígono
+      }
     });
 
     return unionResult;
-  }*/
-  // Função para unir polígonos, se não conseguir com algum continua a união.
-  function unionPolygons(polygons) {
-      if (!polygons || polygons.length === 0) {
-          throw new Error('No polygons provided for union.');
-      }
-
-      // Inicializa o acumulador com o primeiro polígono
-      let unionResult = polygons[0];
-
-      // Itera sobre os polígonos restantes
-      polygons.slice(1).forEach(polygon => {
-          try {
-              unionResult = turf.union(unionResult, polygon);
-          } catch (error) {
-              console.warn('Error uniting polygons:', error.message);
-              // Continue para o próximo polígono
-          }
-      });
-
-      return unionResult;
   }
 
   // Conversao de Turf Polygon em Gmaps Polygon.
@@ -328,27 +317,43 @@ const joinPolygons = (polygons) => {
     const polygon = new window.google.maps.Polygon({ paths: paths });
     return polygon;
   }
-  
 
   /* Sorteia os polígonos pelo OBJECTID, do maior para o menor. Percebi que assim une-se os polígonos melhor e resolve o problema da UH 40, em que um dos polígonos, OBJECTID 23327, deu erro de junção sem esta ordenação.
    */
   const polygonsSortedByObjectId = polygons.sort((a, b) => {
-    return b.attributes.OBJECTID - a.attributes.OBJECTID;
+    return b.attributes.objectid - a.attributes.objectid;
   });
   // Conversao para turf features.
   const turfPolygons = polygonsSortedByObjectId.map((polygon) =>
-    turf.polygon(polygon.geometry.rings),
+    turf.polygon(polygon.geometry.coordinates),
   );
 
-  
   // União dos polígonos.
   const unionPolygon = unionPolygons(turfPolygons);
 
   // Conversão de Turf.js polygon para Google Maps polygon.
-  const newGmapsPolygon = turfPolygonToGoogleMapsPolygon(unionPolygon);
+  const unionGmapsPolygon = turfPolygonToGoogleMapsPolygon(unionPolygon);
 
-  return newGmapsPolygon;
+  return unionGmapsPolygon;
 };
+
+const getMarkersInsideOttoBasinsJoined = (polygon, markers) => {
+
+  // Busca se o marcador superficial está dentro do polígono solicitado, sendo assim pertencente à seção
+  let surfaceSectionMarkers = markers[0].superficial
+    .filter(marker => window.google.maps.geometry.poly.containsLocation(
+      new window.google.maps.LatLng(marker.int_latitude, marker.int_longitude),
+      polygon));
+
+  return {
+    "subterranea": null,
+    "superficial": surfaceSectionMarkers,
+    "barragem": null,
+    "lancamento_efluentes": null,
+    "lancamento_pluviais": null
+  }
+
+}
 
 
 /**
@@ -379,6 +384,53 @@ const calculateCentroid = (vertices) => {
   return { lat: centroidLat, lng: centroidLng };
 };
 
+/**
+ * Busca uma unidade hidrográfica com base no código informado (`uhCodigo`).
+ * 
+ * A função verifica se os shapes já foram previamente buscados e armazenados em `shapesFetched`.
+ * Caso contrário, realiza o fetch dos dados da camada `unidades_hidrograficas`, formata os dados
+ * e atualiza o estado através de `setShapesFetched`.
+ * 
+ * @async
+ * @function
+ * @param {Function} fetchShape - Função assíncrona que realiza o fetch dos dados da camada (ex: via API).
+ * @param {Array<Object>} shapesFetched - Lista de objetos com shapes já buscados.
+ * @param {Function} setShapesFetched - Função para atualizar o estado dos shapes (ex: setState do React).
+ * @param {number|string} uhCodigo - Código da unidade hidrográfica a ser localizada.
+ * @returns {Promise<Object|undefined>} Retorna a unidade hidrográfica correspondente ou `undefined` se não encontrada.
+ */
+const searchHydrograficUnit = async (fetchShape, shapesFetched, setShapesFetched, uhCodigo) => {
+  let hydrographicBasins = shapesFetched.find(shape => shape.name === 'unidades_hidrograficas');
+
+  let hydrographicBasin;
+
+  if (hydrographicBasins !== undefined) {
+
+    console.log(hydrographicBasins)
+
+    hydrographicBasin = hydrographicBasins.find(hb => hb.uh_codigo === Number(uhCodigo))
+
+  } else {
+
+    hydrographicBasins = await fetchShape('unidades_hidrograficas').then(__shape => {
+      // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
+      return __shape.map(sh => {
+        return { ...sh, shapeName: 'unidades_hidrograficas', shape: { coordinates: converterPostgresToGmaps(sh) } }
+      })
+    });
+
+    setShapesFetched(prev => [...prev, { name: 'unidades_hidrograficas', shape: hydrographicBasins }]);
+
+    hydrographicBasin = hydrographicBasins.find(hb => hb.uh_codigo === Number(uhCodigo))
+
+
+    return hydrographicBasin;
+
+  }
+}
+
+
+
 export {
   createCircleRings,
   converterPostgresToGmaps, nFormatter,
@@ -388,6 +440,8 @@ export {
   setInfoMarkerIcon,
   convertOthoCoordToGmaps,
   calculateContributingArea,
-  joinPolygons, 
-  calculateCentroid
+  calculateCentroid,
+  joinOttoBasins,
+  getMarkersInsideOttoBasinsJoined,
+  searchHydrograficUnit
 }

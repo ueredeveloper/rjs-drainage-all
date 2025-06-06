@@ -40,6 +40,7 @@ export const DataProvider = ({ children }) => {
   // Estado das bacias otto
   const [ottoBasins, setOttoBasins] = useState(initialsStates.ottoBasins);
 
+  const [surfaceAnalyse, setSurfaceAnalyse] = useState(initialsStates.surfaceAnalyse)
 
   // Especifica o tipo de poço (TpId), onde 1 representa Poço Manual/Tubular Raso e 2 representa Poço Tubular Profundo.
   const [tpId, setTpId] = useState(1);
@@ -84,7 +85,8 @@ export const DataProvider = ({ children }) => {
       radius, setRadius,
       hgAnalyse, setHgAnalyse,
       tpId, setTpId,
-      ottoBasins, setOttoBasins
+      ottoBasins, setOttoBasins,
+      surfaceAnalyse, setSurfaceAnalyse
     }}>
       {children}
     </DataContext.Provider>

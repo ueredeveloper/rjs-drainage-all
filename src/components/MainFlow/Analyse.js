@@ -72,7 +72,7 @@ function Analyse() {
     }
 
     // Estado do valor da tab selecionada (0: Geral, 1: Subterrâneo, 2: Superficial)
-    const [tabValue, setTabValue] = React.useState(0);
+    const [tabValue, setTabValue] = React.useState(2);
 
     /**
      * Função para lidar com a mudança de valor da guia.
