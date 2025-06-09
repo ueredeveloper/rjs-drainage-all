@@ -88,7 +88,6 @@ function calculateQDisponivelSecao(q_outorgavel_secao, q_outorgada_secao) {
 
 function calculateQOutorgadaUH(markers) {
 
-  console.log(markers)
   const monthlySum = new Array(12).fill(0);
 
   if (markers.superficial && Array.isArray(markers.superficial)) {
@@ -162,13 +161,91 @@ function calcularQDisponivelUH(q_outorgavel_80, q_outorgada) {
 }
 
 
+/***
+ * Calcula se a vazão solicitada (vs) é maior que a vazão disponível (vd)
+ *
+ */
+function calculateQSolicitadaMenorQDisponivel(q_solicitada, q_disponivel_secao) {
+
+  let q_sol_q_dis = q_solicitada.map((_qs, i) => {
+    return (Number(_qs) <= Number(q_disponivel_secao[i]))
+  });
+  return q_sol_q_dis;
+
+}
+
+/**
+  * Calcula se a vazão solicitada (vs) é maior que a vazão individual (v_20)
+  */
+function calculateQSolicitadaMenorQIndividual(q_solicitada, q_individual_secao) {
+  let q_sol_q_ind = q_solicitada.map((_qs, i) => {
+    return Number(_qs) <= Number(q_individual_secao[i])
+  })
+  return q_sol_q_ind;
+}
+
+/**
+  * Calcula se a vazão solicitada é menor ou igual à vazão disponível na Unidade Hidrográfica - UH.
+  * @param {Object} q_solicitada Vazão solicitada pelo usuário mês a mês.
+  * @param {Object} q_disponivel_uh Vazão disponível na UH.
+  */
+function calculateSolicitataMenorDisponivel(q_solicitada, uh_q_disponivel) {
+  let q_sol_dis = q_solicitada.map((_qs, i) => {
+    return Number(_qs) <= Number(uh_q_disponivel[i])
+  })
+  return q_sol_dis;
+
+}
+
+/**
+* Calcular se há disponibilidade hídrica.
+* @param
+* @param
+* @param
+* @param
+*/
+function calculateDisponibilidadeHidrica(secao_q_sol_q_dis, secao_q_sol_q_ind, uh_q_sol_q_dis) {
+  let q_disponibilidade = secao_q_sol_q_dis.map((_qs_qd, i) => {
+    return _qs_qd === true && secao_q_sol_q_ind[i] === true && uh_q_sol_q_dis[i] === true
+  })
+  console.log(q_disponibilidade)
+  return q_disponibilidade;
+
+
+}
+
+
+/**
+* Ajustar demanda
+* @param
+* @param
+* @param
+* @param
+*/
+
+function calculateDemandaAjustada(q_solicitada, uh_disponivel, secao_q_disponivel, secao_q_individual) {
+  let _dem_ajus = q_solicitada.map((q_sol, i) => {
+    let _disp = Math.min(
+      Number(q_sol),
+      Number(uh_disponivel[i]),
+      Number(secao_q_disponivel[i]),
+      Number(secao_q_individual[i]));
+    return _disp > 0 ? _disp : 0;
+  })
+  return _dem_ajus;
+}
+
 
 
 export {
   // Seção
   calculateQOutorgadaSecao, calculateQReferenciaSecao, calculateQOutorgavelSecao,
   calculateQIndividualSecao, calculateQDisponivelSecao,
+  // Seção - Cálculos
+  calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual,
   // Unidade Hidrográfica
   calculateQOutorgadaUH, calculateQReferenciaUH, calculateQRemanescenteUH,
-  calculateQOutorgavelUH, calcularQDisponivelUH
+  calculateQOutorgavelUH, calcularQDisponivelUH,
+  // UH - Cálculos
+  calculateSolicitataMenorDisponivel, calculateDisponibilidadeHidrica, calculateDemandaAjustada
 }

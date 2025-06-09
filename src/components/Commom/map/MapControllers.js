@@ -9,6 +9,7 @@ import { converterPostgresToGmaps } from '../../../tools';
 import { useData } from '../../../hooks/analyse-hooks';
 
 
+
 /**
  * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
  * @component
@@ -66,8 +67,6 @@ function MapControllers({ updateCheckBoxState }) {
             if (cbState.checked === true) {
                 // verificar se shapesFetched está vazio
                 if (shapesFetched.length === 0) {
-
-                    console.log(cbState.name)
                     const _shape = await fetchShape(cbState.name).then(__shape => {
                         // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
                         return __shape.map(sh => {
@@ -93,6 +92,7 @@ function MapControllers({ updateCheckBoxState }) {
                 }
             }
         });
+
 
     }, [checkBoxState, setShapesFetched, shapesFetched]);
 
@@ -131,6 +131,7 @@ function MapControllers({ updateCheckBoxState }) {
 
     return (
         <FormControl style={{ display: "flex", flex: 1, flexDirection: 'column' }}>
+      
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Camadas</FormLabel>
             <Paper elevation={3} style={{ padding: 0, margin: 0 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>

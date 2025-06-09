@@ -16,6 +16,7 @@ import SubterraneanAnalysePanel from "./Subterranean/SubterraneanAnalysePanel";
 import SurfaceAnalysePanel from "./Surface/SurfaceAnalysePanel";
 import { DataProvider } from "../../hooks/analyse-hooks";
 
+
 /**
  * Elemento para análise dos dados renderizados no mapa.
  * @component

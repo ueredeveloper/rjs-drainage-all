@@ -11,6 +11,7 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 
 
+
 /**
  * Componente funcional que representa a barra de navegação do aplicativo.
  * @component

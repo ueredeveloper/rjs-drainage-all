@@ -6,52 +6,32 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { useData } from '../../../hooks/analyse-hooks';
+import { calculateDemandaAjustada, calculateDisponibilidadeHidrica, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual, calculateSolicitataMenorDisponivel } from '../../../tools/surface-tools';
 
 
 
-function formatValue(value) {
-  if (value === true) {
-    return "SIM";
-  } else if (value === false) {
-    return "NÃO";
-  } else if (typeof value === "number") {
-    return value;
-  } else if (typeof value === "string") {
-    return value;
-  } else {
-    return "";
-  }
-}
+
+
 /**
  * 
  * @returns Tabela de Dados Superificial
  */
-export default function SurfaceTable({ analyse }) {
+export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse }) {
 
   const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
   const [rows, setRows] = useState([]);
 
+
   useEffect(() => {
 
     if (analyse.alias === 'Análise na Seção de Captação') {
+
       let _rows = [
         {
           alias: "QSOLICITADA-SEÇÃO",
-          values: [
-            50,
-            50,
-            50,
-            50,
-            50,
-            50,
-            50,
-            50,
-            50,
-            50,
-            50,
-            50
-          ]
+          values: q_solicitada.values
         },
         {
           alias: analyse.q_outorgada.alias,
@@ -148,14 +128,143 @@ export default function SurfaceTable({ analyse }) {
 
       setRows(_rows)
 
+
     }
-  }, [analyse]);
+  }, [analyse, q_solicitada]);
+
+  const handleOnTextFieldChange = (index, value) => {
+
+    let updateQSolicitada = [...q_solicitada.values]
+    updateQSolicitada[index] = Number(value);
+
+    // Vazão solicitada menor que a disponível
+    let q_sol_q_dis_secao = calculateQSolicitadaMenorQDisponivel(updateQSolicitada, analyse.q_disponivel.values)
+    // Vazão solicitada menor que a individual
+    let q_sol_q_ind_secao = calculateQSolicitadaMenorQIndividual(updateQSolicitada, analyse.q_individual.values)
+
+    setSurfaceAnalyse((prev) => {
+
+      let q_disponivel_uh = { ...prev.uh.q_disponivel };
+      let q_sol_q_dis_uh = { ...prev.uh.q_sol_q_dis }
+      let q_disponivel_secao = { ...prev.secao.q_disponivel };
+      let q_individual_secao = { ...prev.secao.q_individual }
+
+      return {
+        ...prev,
+        q_solicitada: {
+          ...prev.q_solicitada,
+          values: updateQSolicitada
+        },
+        secao: {
+          ...prev.secao,
+
+          q_sol_q_dis: {
+            ...prev.secao.q_sol_q_dis,
+            values: q_sol_q_dis_secao
+          },
+          q_sol_q_ind: {
+            ...prev.secao.q_sol_q_ind,
+            values: q_sol_q_ind_secao
+          }
+
+        },
+        uh: {
+          ...prev.uh,
+
+          q_sol_q_dis: {
+            ...prev.uh.q_sol_q_dis,
+            values: calculateSolicitataMenorDisponivel(q_solicitada.values, q_disponivel_uh.values)
+
+          },
+          q_disponibilidade: {
+            ...prev.uh.q_disponibilidade,
+            values: calculateDisponibilidadeHidrica(q_sol_q_dis_uh.values, q_sol_q_ind_secao, q_sol_q_dis_secao)
+          },
+          q_demanda_ajustada: {
+            ...prev.uh.q_demanda_ajustada,
+            values: calculateDemandaAjustada(updateQSolicitada, q_disponivel_uh.values, q_disponivel_secao.values, q_individual_secao.values)
+          }
+
+        }
+      }
+
+    });
+  }
+
+  const renderCells = (row) => {
+    if (row.alias === "QSOLICITADA-SEÇÃO") {
+      return row.values.map((value, index) => (
+        <TableCell
+          key={row.alias.substring(0, 5) + index}
+          align="right"
+          sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+        >
+          <TextField
+            key={'input' + row.alias.substring(0, 5) + index}
+            value={q_solicitada.values[index]}
+            onChange={(e) => handleOnTextFieldChange(index, e.target.value)}
+            variant="standard"
+            InputProps={{
+              disableUnderline: false,
+              sx: {
+                padding: 0,
+                fontSize: '12px',
+                textAlign: 'center',
+                input: {
+                  textAlign: 'center',
+                },
+              },
+            }}
+            sx={{
+              p: 0,
+              m: 0,
+              minWidth: 0,
+            }}
+          />
+        </TableCell>
+      ));
+    } else if (
+      [
+        'QSOLICITADA-SEÇÃO ≤ QDISPONÍVEL-SEÇÃO',
+        'QSOLICITADA-SEÇÃO ≤ QOUTORGÁVEL-INDIVIDUAL-SEÇÃO',
+        'Há disponibilidade hídrica para o usuário?',
+        'QSOLICITADA-SEÇÃO ≤ QDISPONÍVEL-UH',
+      ].includes(row.alias)
+    ) {
+      return row.values.map((value, index) => (
+        value === true ?
+          <TableCell
+
+            key={row.alias.substring(0, 5) + index}
+            align="right"
+            sx={{ backgroundColor: 'green', padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+          >
+            SIM
+          </TableCell> :
+          <TableCell
+            key={row.alias.substring(0, 5) + index}
+            align="right"
+            sx={{ backgroundColor: 'red', padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+          >
+            NÃO
+          </TableCell>
+      ));
+    } else {
+      return row.values.map((value, index) => (
+        <TableCell
+          key={row.alias.substring(0, 5) + index}
+          align="right"
+          sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+        >
+          {value}
+        </TableCell>
+      ));
+    }
+  };
+
 
   return (
     <Paper id="paper" elevation={3} sx={{ my: 2, height: 190, overflow: 'auto' }}>
-
-      {console.log(rows)}
-
       <Table id="table" size="small" >
         <TableHead>
           <TableRow>
@@ -176,37 +285,7 @@ export default function SurfaceTable({ analyse }) {
               </TableCell >
 
               {
-                row.alias !== "QSOLICITADA-SEÇÃO" ?
-                  row.values.map((value, index) =>
-                    (<TableCell key={row.alias.substring(0, 5) + index} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>{formatValue(value)}</TableCell>)
-                  ) :
-                  row.values.map((value, index) =>
-                  (<TableCell key={row.alias.substring(0, 5) + index} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>
-                    <TextField
-                      key={'input' + row.alias.substring(0, 5) + index}
-                      value={formatValue(value)}
-                      variant="standard" // optional: to reduce default padding
-                      InputProps={{
-                        disableUnderline: false, // optional: removes underline if variant is standard
-                        sx: {
-                          padding: 0,           // removes internal padding
-                          fontSize: '12px',     // optional: set desired font size
-                          textAlign: 'center',       // centers text in input
-                          input: {
-                            textAlign: 'center',     // ensure inner <input> is centered
-                          },
-
-                        },
-                      }}
-                      sx={{
-                        p: 0, // outer TextField padding
-                        m: 0, // remove margin if any
-                        minWidth: 0,
-
-                      }}
-                    />
-                  </TableCell>)
-                  )
+                renderCells(row)
               }
             </TableRow>
           ))}
@@ -215,3 +294,6 @@ export default function SurfaceTable({ analyse }) {
     </Paper>
   );
 }
+
+
+

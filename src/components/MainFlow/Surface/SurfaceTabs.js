@@ -13,6 +13,7 @@ import { Avatar, FormControl, FormLabel, Paper } from '@mui/material';
 import SurfaceTableModulations from './SurfaceTableModulations';
 
 
+
 function CustomTabPanel(props) {
 
   const { children, value, index, ...other } = props;
@@ -52,10 +53,10 @@ export default function SurfaceTabs() {
   const { ottoBasins } = useData(); // Hook para estado global
 
   // Estado do valor da tab selecionada (0: Gráficos, 1: Tabelas, 2: Ajustes e Modulações)
-  const [tabValue, setTabValue] = useState("0");
+  const [tabValue, setTabValue] = useState("1");
 
 
-  const { surfaceAnalyse } = useData(); // Hook para estado global
+  const { surfaceAnalyse, setSurfaceAnalyse} = useData(); // Hook para estado global
 
   // Método de mudança de tab
   const handleChange = (event, newValue) => {
@@ -97,14 +98,14 @@ export default function SurfaceTabs() {
 
           </Box>}
           {tabValue === "1" && <Box>
-            <SurfaceTable analyse={surfaceAnalyse.secao} />
-            <SurfaceTable analyse={surfaceAnalyse.uh} />
+            <SurfaceTable q_solicitada={surfaceAnalyse.q_solicitada} analyse={surfaceAnalyse.secao} setSurfaceAnalyse={setSurfaceAnalyse} />
+            <SurfaceTable q_solicitada={surfaceAnalyse.q_solicitada} analyse={surfaceAnalyse.uh} setSurfaceAnalyse={setSurfaceAnalyse} />
           </Box>}
           {tabValue === "2" && <Box>
             <SurfaceTableModulations analyse={surfaceAnalyse.h_ajuste} />
-             <SurfaceTableModulations analyse={surfaceAnalyse.h_modula} />
-              <SurfaceTableModulations analyse={surfaceAnalyse.q_modula} />
-           
+            <SurfaceTableModulations analyse={surfaceAnalyse.h_modula} />
+            <SurfaceTableModulations analyse={surfaceAnalyse.q_modula} />
+
           </Box>}
         </Box>
         <Tabs

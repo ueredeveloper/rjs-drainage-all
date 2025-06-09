@@ -9,19 +9,7 @@ import { useEffect, useState } from 'react';
 
 
 
-function formatValue(value) {
-    if (value === true) {
-        return "SIM";
-    } else if (value === false) {
-        return "NÃO";
-    } else if (typeof value === "number") {
-        return value;
-    } else if (typeof value === "string") {
-        return value;
-    } else {
-        return "";
-    }
-}
+
 /**
  * 
  * @returns Tabela de Dados Superificial
@@ -119,20 +107,20 @@ export default function SurfaceTableModulations({ analyse }) {
                             key={row.alias + index}
                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                         >
-                            <TableCell component="th" scope="row" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", width: "100px" }}>
+                            <TableCell component="th" scope="row" sx={{ padding: "1px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", width: "100px" }}>
                                 {row.alias}
                             </TableCell >
 
                             {
                                 row.alias !== "Horas de bombeamento (Requerimento)" ?
                                     row.values.map((value, index) =>
-                                        (<TableCell key={row.alias.substring(0, 5) + index} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>{formatValue(value)}</TableCell>)
+                                        (<TableCell key={row.alias.substring(0, 5) + index} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>{value}</TableCell>)
                                     ) :
                                     row.values.map((value, index) =>
                                     (<TableCell key={row.alias.substring(0, 5) + index} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}>
                                         <TextField
                                             key={'input' + row.alias.substring(0, 5) + index}
-                                            value={formatValue(value)}
+                                            value={value}
                                             variant="standard" // optional: to reduce default padding
                                             InputProps={{
                                                 disableUnderline: false, // optional: removes underline if variant is standard

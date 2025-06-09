@@ -3,6 +3,7 @@ import { Slider } from "@mui/material";
 import { useData } from "../../hooks/analyse-hooks";
 
 
+
 /**
  * @name AlertCommom
  * @description Componente para ajustar o raio de pesquisa em metros.
