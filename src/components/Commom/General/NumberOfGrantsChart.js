@@ -8,9 +8,9 @@ import { FormControl, FormLabel, Paper } from '@mui/material';
  * @component
  */
 function NumberOfGrantsChart() {
-  
 
-  
+
+
   // Estado para armazenar informações do contexto de análise.
   const { overlays, setSelectedsCharts } = useData();
 
@@ -36,7 +36,7 @@ function NumberOfGrantsChart() {
 
       case 'barragem':
         return 'Barragens';
-     
+
       default:
         return 'Desconhecido';
     }
@@ -122,7 +122,7 @@ function NumberOfGrantsChart() {
     let newOptionsData = [];
 
     overlays.shapes.map((shape, i) => {
-      
+
 
       let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
         let _data = options.series[0].data.find(item => item.name === convertOptionsDataName(shapeName))

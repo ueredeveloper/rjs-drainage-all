@@ -110,7 +110,7 @@ const initialsStates = {
         q_solicitada: {
             columm: 'd18',
             alias: 'QSOLICITADA-SEÇÃO',
-            values: [1000,100,100,100,100,100,100,100,100,100,100,100],
+            values: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             elements: []
         },
         /**
@@ -251,18 +251,20 @@ const initialsStates = {
             },
             q_sol_q_dis: {
                 alias: 'QSOLICITADA-SEÇÃO ≤ QDISPONÍVEL-UH',
-                values: [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+                values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+
                 elements: []
             },
             q_disponibilidade: {
                 alias: 'Há disponibilidade hídrica para o usuário?',
-                values: [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 elements: []
             },
             q_demanda_ajustada: {
                 columm: 'd33',
                 alias: 'Demanda ajustada...',
-                values: [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+
                 elements: []
             }
 
@@ -280,7 +282,7 @@ const initialsStates = {
             h_bomb_requerida: {
                 columm: 'd46',
                 alias: 'Horas de bombeamento (Requerimento)',
-                values: [0,0,0,0,0,0,0,0,0,0,0],
+                values: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                 elements: []
             },
             q_secao_m_h: {

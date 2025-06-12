@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Wrapper } from "@googlemaps/react-wrapper";
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import ElemMap from './ElemMap';
 import ElemDrawManager from './ElemDrawManager';
 import ElemMarker from './ElemMarker';
@@ -9,6 +9,7 @@ import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
 import ElemOttoPolyline from './ElemOthoPolyline';
+import MapControllers from './MapControllers';
 
 
 
@@ -16,10 +17,10 @@ import ElemOttoPolyline from './ElemOthoPolyline';
  * Componente que representa o conteúdo do mapa.
  * @component
  * @param {Object} props - As propriedades do componente.
- * @param {boolean} props.checkBoxState - O estado das caixas de seleção.
+ * @param {boolean} props.checkBox - O estado das caixas de seleção.
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
-function MapContent({ checkBoxState }) {
+function MapContent({ checkboxes, setCheckboxes }) {
 
 
   // Estados do componente
@@ -108,7 +109,7 @@ function MapContent({ checkBoxState }) {
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
           return selectedsShapes.map(type => {
-       
+
             if (shape.markers !== undefined && shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
                 return <ElemMarker
@@ -129,9 +130,17 @@ function MapContent({ checkBoxState }) {
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
         {shapesFetched.map((shape) => {
-          
+
+          let listCheckBoxes = Object.values(checkboxes).flatMap(group =>
+            Object.values(group).map(item => ({
+              name: item.name,
+              alias: item.alias,
+              checked: item.checked
+            }))
+          );
+
           /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
-          return checkBoxState.map(cbState => {
+          return listCheckBoxes.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
               return shape.shape.map((sh, ii) => {
                 return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
@@ -147,7 +156,6 @@ function MapContent({ checkBoxState }) {
               return <ElemOttoPolyline key={`elem-otto-${index}`} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
             });
           }
-
 
           if (sh.markers !== undefined && sh.markers.hidrogeo !== undefined) {
             return RenderPolylines(sh.markers.hidrogeo)

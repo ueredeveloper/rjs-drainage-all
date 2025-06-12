@@ -53,7 +53,7 @@ export default function SurfaceTabs() {
   const { ottoBasins } = useData(); // Hook para estado global
 
   // Estado do valor da tab selecionada (0: Gráficos, 1: Tabelas, 2: Ajustes e Modulações)
-  const [tabValue, setTabValue] = useState("1");
+  const [tabValue, setTabValue] = useState("0");
 
 
   const { surfaceAnalyse, setSurfaceAnalyse} = useData(); // Hook para estado global
@@ -102,9 +102,9 @@ export default function SurfaceTabs() {
             <SurfaceTable q_solicitada={surfaceAnalyse.q_solicitada} analyse={surfaceAnalyse.uh} setSurfaceAnalyse={setSurfaceAnalyse} />
           </Box>}
           {tabValue === "2" && <Box>
-            <SurfaceTableModulations analyse={surfaceAnalyse.h_ajuste} />
-            <SurfaceTableModulations analyse={surfaceAnalyse.h_modula} />
-            <SurfaceTableModulations analyse={surfaceAnalyse.q_modula} />
+            <SurfaceTableModulations analyse={surfaceAnalyse.h_ajuste} setSurfaceAnalyse={setSurfaceAnalyse} />
+            <SurfaceTableModulations analyse={surfaceAnalyse.h_modula} setSurfaceAnalyse={setSurfaceAnalyse}/>
+            <SurfaceTableModulations analyse={surfaceAnalyse.q_modula} setSurfaceAnalyse={setSurfaceAnalyse}/>
 
           </Box>}
         </Box>

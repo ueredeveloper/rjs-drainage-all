@@ -1,4 +1,5 @@
 import { calculateContributingArea, convertOthoCoordToGmaps } from "../../tools";
+import { joinPolygons } from "../../tools/surface-tools";
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
@@ -81,7 +82,6 @@ async function fetchOttoBasins(lat, lng) {
       return ottoBasins;
     }).then(ottoBasins => {
 
-      ottoBasins.forEach(otto => console.log(otto.geometry.coordinates.length))
       // Converte as coodernadas para o padrão da biblioteca gmaps api
       let ottoBasinsToGmaps = convertOthoCoordToGmaps(ottoBasins);
 
@@ -93,6 +93,7 @@ async function fetchOttoBasins(lat, lng) {
       // Seta informações da Unidade Hidrográfica
       ottoBasinsToGmaps.uhNome = ottoBasins[0]?.attributes.uh_nome;
       ottoBasinsToGmaps.uhRotulo = ottoBasins[0]?.attributes.uh_rotulo;
+
 
       return { ottoBasins, ottoBasinsToGmaps };
     });

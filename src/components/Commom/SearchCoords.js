@@ -13,12 +13,12 @@ import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolo
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyzeAvailability, calculateCentroid, calculateContributingArea, converterPostgresToGmaps, convertOthoCoordToGmaps, getMarkersInsideOttoBasinsJoined, joinOttoBasins, joinPolygons, othoToGmaps, searchHydrograficUnit, unionAndConvertPolygons } from "../../tools";
+import { analyzeAvailability, converterPostgresToGmaps, getMarkersInsideOttoBasins, searchHydrograficUnit } from "../../tools";
 import AlertCommon from "./AlertCommon";
 import { initialsStates } from "../../initials-states";
 import ElemGrant from '../Connection/elem-grant';
 import { fetchShape, fetchMarkersByUH, fetchOttoBasins } from "../../services/shapes";
-import { calculateQOutorgadaSecao, calculateQIndividualSecao, calculateQOutorgavelSecao, calculateQReferenciaSecao, calculateQDisponivelSecao, calculateQOutorgadaUH, calculateQReferenciaUH, calculateQRemanescenteUH, calculateQOutorgavelUH, calcularQDisponivelUH, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual } from "../../tools/surface-tools";
+import { calculateQOutorgadaSecao, calculateQIndividualSecao, calculateQOutorgavelSecao, calculateQReferenciaSecao, calculateQDisponivelSecao, calculateQOutorgadaUH, calculateQReferenciaUH, calculateQRemanescenteUH, calculateQOutorgavelUH, calculateQDisponivelUH, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual } from "../../tools/surface-tools";
 
 
 
@@ -93,6 +93,7 @@ function SearchCoords({ tabNumber }) {
 
     // Se selecionado a tab geral, de buscas gerais por camadas ou dados do banco de dados com cpf, nome etc...
     if (tabNumber === 0) {
+      
       let markers = await findAllPointsInCircle({
         center: { lng: position.int_longitude, lat: position.int_latitude },
         radius: parseInt(radius)
@@ -121,7 +122,7 @@ function SearchCoords({ tabNumber }) {
       // limpa o mapa
 
       overlays.shapes.forEach(shape => {
-        shape.draw?.setMap(null)
+        if (shape.draw != undefined && shape.draw.area !== undefined) shape?.draw?.setMap(null)
       });
       setOverlays(initialsStates.overlays);
 
@@ -200,7 +201,8 @@ function SearchCoords({ tabNumber }) {
 
       // Limpa os mapa de camadas, marcadores etc.
       overlays.shapes.forEach(shape => {
-        shape.draw?.setMap(null)
+        if (shape.draw != undefined && shape.draw.area !== undefined) shape?.draw?.setMap(null)
+
       });
       setOverlays(initialsStates.overlays)
 
@@ -224,18 +226,14 @@ function SearchCoords({ tabNumber }) {
 
         setOttoBasins(ottoBasins.ottoBasinsToGmaps);
 
-        // Unir os polígonos para fazer uma única requisição no serviço REST.
-        let joinedPolygons = joinOttoBasins(ottoBasins.ottoBasins);
-
-        // verifica o polígono no mapa
-        //joinedPolygons.setMap(map)
+ 
 
         // Número da UH (uh_codigo, nas shape de otto bacias: uh_rotulo)
         let uhRotulo = ottoBasins.ottoBasins[0].attributes.uh_rotulo;
 
         let uhGrants = await fetchMarkersByUH(uhRotulo);
 
-        let sectionGrants = await getMarkersInsideOttoBasinsJoined(joinedPolygons, uhGrants)
+        let sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, map)
 
         let hydrographicBasin = await searchHydrograficUnit(fetchShape, shapesFetched, setShapesFetched, uhRotulo)
 
@@ -250,15 +248,15 @@ function SearchCoords({ tabNumber }) {
 
         let q_sol_q_dis = calculateQSolicitadaMenorQDisponivel(surfaceAnalyse.q_solicitada.values, q_disponivel)
         let q_sol_q_ind = calculateQSolicitadaMenorQIndividual(surfaceAnalyse.q_solicitada.values, q_individual_secao)
-   
+
 
 
         let q_outorgada_uh = calculateQOutorgadaUH(uhGrants[0]);
         let q_referencia_uh = calculateQReferenciaUH(hydrographicBasin);
         let q_remanescente_uh = calculateQRemanescenteUH(q_referencia_uh);
         let q_outorgavel_uh = calculateQOutorgavelUH(q_referencia_uh);
-        let q_disponivel_uh = calcularQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
-    
+        let q_disponivel_uh = calculateQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
+
 
         setSurfaceAnalyse((prev) => {
           return {
@@ -285,13 +283,13 @@ function SearchCoords({ tabNumber }) {
               q_disponivel: {
                 ...prev.secao.q_disponivel,
                 values: q_disponivel
-              }, 
+              },
               q_sol_q_dis: {
-                ...prev.secao.q_sol_q_dis, 
+                ...prev.secao.q_sol_q_dis,
                 values: q_sol_q_dis
               },
               q_sol_q_ind: {
-                ...prev.secao.q_sol_q_ind, 
+                ...prev.secao.q_sol_q_ind,
                 values: q_sol_q_ind
               }
             },
@@ -339,11 +337,7 @@ function SearchCoords({ tabNumber }) {
 
         setOttoBasins(ottoBasins.ottoBasinsToGmaps);
 
-        // Unir os polígonos para fazer uma única requisição no serviço REST.
-        let joinedPolygons = joinOttoBasins(ottoBasins.ottoBasins);
 
-        // verifica o polígono no mapa
-        //joinedPolygons.setMap(map)
 
         // Número da UH (uh_codigo, nas shape de otto bacias: uh_rotulo)
         let uhRotulo = ottoBasins.ottoBasins[0].attributes.uh_rotulo;
@@ -351,7 +345,7 @@ function SearchCoords({ tabNumber }) {
 
         let uhGrants = await fetchMarkersByUH(uhRotulo);
 
-        let sectionGrants = await getMarkersInsideOttoBasinsJoined(joinedPolygons, uhGrants)
+        let sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, map)
 
         let hydrographicBasin = await searchHydrograficUnit(fetchShape, shapesFetched, setShapesFetched, uhRotulo)
 
@@ -369,7 +363,7 @@ function SearchCoords({ tabNumber }) {
         let q_referencia_uh = calculateQReferenciaUH(hydrographicBasin);
         let q_remanescente_uh = calculateQRemanescenteUH(q_referencia_uh);
         let q_outorgavel_uh = calculateQOutorgavelUH(q_referencia_uh);
-        let q_disponivel_uh = calcularQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
+        let q_disponivel_uh = calculateQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
 
         // Atualização dos Dados da Análise Superficial
         setSurfaceAnalyse((prev) => {
@@ -451,7 +445,9 @@ function SearchCoords({ tabNumber }) {
 
     if (tabNumber === 1) {
       overlays.shapes.forEach(shape => {
-        shape?.draw?.setMap(null)
+        if (shape.draw != undefined && shape.draw.area !== undefined) shape?.draw?.setMap(null)
+
+
       });
       setOverlays(initialsStates.overlays);
       setSubsystem(initialsStates.subsystem);

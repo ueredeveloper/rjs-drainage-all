@@ -1,3 +1,4 @@
+import * as turf from '@turf/turf';
 
 /**
  * Calcula o somatório mensal das vazões (em L/s) de todas as demandas 
@@ -91,6 +92,7 @@ function calculateQOutorgadaUH(markers) {
   const monthlySum = new Array(12).fill(0);
 
   if (markers.superficial && Array.isArray(markers.superficial)) {
+
     markers.superficial.forEach((interference) => {
       const demands = interference.dt_demanda?.demandas || [];
 
@@ -105,6 +107,7 @@ function calculateQOutorgadaUH(markers) {
     });
   }
   return monthlySum;
+
 };
 
 /**
@@ -152,7 +155,7 @@ function calculateQOutorgavelUH(q_referencia) {
 * @param {Object} q_outorgavel_80 80% da vazão de referência da UH. 
 * @param {Object} q_outorgada Soma das vazões outorgadas na UH.
 */
-function calcularQDisponivelUH(q_outorgavel_80, q_outorgada) {
+function calculateQDisponivelUH(q_outorgavel_80, q_outorgada) {
   let _q_disponivel = q_outorgavel_80.map((_q_80, i) => {
     return (Number(_q_80) - Number(q_outorgada[i])).toFixed(2)
   })
@@ -208,10 +211,7 @@ function calculateDisponibilidadeHidrica(secao_q_sol_q_dis, secao_q_sol_q_ind, u
   let q_disponibilidade = secao_q_sol_q_dis.map((_qs_qd, i) => {
     return _qs_qd === true && secao_q_sol_q_ind[i] === true && uh_q_sol_q_dis[i] === true
   })
-  console.log(q_disponibilidade)
   return q_disponibilidade;
-
-
 }
 
 
@@ -224,7 +224,7 @@ function calculateDisponibilidadeHidrica(secao_q_sol_q_dis, secao_q_sol_q_ind, u
 */
 
 function calculateDemandaAjustada(q_solicitada, uh_disponivel, secao_q_disponivel, secao_q_individual) {
-  let _dem_ajus = q_solicitada.map((q_sol, i) => {
+  let demanda_ajustada = q_solicitada.map((q_sol, i) => {
     let _disp = Math.min(
       Number(q_sol),
       Number(uh_disponivel[i]),
@@ -232,9 +232,82 @@ function calculateDemandaAjustada(q_solicitada, uh_disponivel, secao_q_disponive
       Number(secao_q_individual[i]));
     return _disp > 0 ? _disp : 0;
   })
-  return _dem_ajus;
+  return demanda_ajustada;
 }
 
+/**
+ * Adiciona valores no ajuste de acordo com a variável da UH, q_demanda_ajustada
+ * @param {*} q_demanda_ajustada 
+ * @returns 
+ */
+function ajustarSecaoMH(q_demanda_ajustada) {
+  return q_demanda_ajustada.values.map((_dem) => {
+    return (Number(_dem) * 3.6).toFixed(2);
+  });
+}
+/**
+* Ajusta a vazão na seção (montante).
+*
+*
+*/
+function ajustarQSecaoMD(h_ajuste) {
+  return h_ajuste.q_secao_m_h.values.map((q_mh, i) => {
+    return (Number(q_mh) * Number(h_ajuste.h_bomb_requerida.values[i])).toFixed(2);
+  });
+}
+/**
+* Ajusta as horas de bombeamento.
+*
+*
+*/
+function ajustarHoraBombAjustada(h_ajuste, q_solicitada) {
+
+  return h_ajuste.q_secao_m_d.values.map((q_md, i) => {
+    // arredondar para cima => resultado + 0.5 e round(resultado)
+    let h_bom_aju = (Number(q_md) / (Number(q_solicitada.values[i]) * 3.8)) + 0.5
+    return Math.round(h_bom_aju);
+  });
+}
+/**
+ * Não precisa desta função, mas deixarei aqui por enquanto
+ * @param {*} q_modula 
+ * @param {*} q_demanda_ajustada 
+ */
+function modularVazaoQ(q_modula, q_demanda_ajustada) {
+  // excel => =D33 => =demanda_ajustada
+  q_modula.q_outorgada.values = q_demanda_ajustada.values;
+
+
+}
+
+function modularVazaoH(q_outorgada, h_ajuste) {
+  //excel => =SE(D56=0;0;D46) 
+  return q_outorgada.values.map((_q, i) => {
+    return Number(_q) === 0 ? 0 : Number(h_ajuste.h_bomb_requerida.values[i]);
+  });
+
+}
+
+function modularHoraQ(h_ajuste, uh_q_demanda_ajustada, q_solicitada) {
+  //excel => =SE(D46=0;" ";SE(D33>0;D18;0))
+  return h_ajuste.h_bomb_requerida.values.map((hb_r, i) => {
+    return Number(hb_r) === 0 ? 0 : Number(uh_q_demanda_ajustada.values[i]) > 0 ? Number(q_solicitada.values[i]) : 0;
+  });
+
+}
+
+/**
+ * Não precisa desta função, mas deixarei aqui por enquanto
+ */
+function modularHoraH() {
+  // excel => =D49 => ah_ajuste.h_bomb_ajustada
+  this.h_modula.h_bombeamento.values = this.h_ajuste.h_bomb_ajustada.values;
+  // view //////////////////////////////////////////
+  this.h_modula.h_bombeamento.values.forEach((v, i) => {
+    this.h_modula.h_bombeamento.elements[i].innerHTML = v
+  });
+
+}
 
 
 export {
@@ -245,7 +318,10 @@ export {
   calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual,
   // Unidade Hidrográfica
   calculateQOutorgadaUH, calculateQReferenciaUH, calculateQRemanescenteUH,
-  calculateQOutorgavelUH, calcularQDisponivelUH,
+  calculateQOutorgavelUH, calculateQDisponivelUH,
   // UH - Cálculos
-  calculateSolicitataMenorDisponivel, calculateDisponibilidadeHidrica, calculateDemandaAjustada
+  calculateSolicitataMenorDisponivel, calculateDisponibilidadeHidrica, calculateDemandaAjustada,
+  // Ajustes de Modulações
+  ajustarSecaoMH, ajustarQSecaoMD, ajustarHoraBombAjustada, modularVazaoH, modularHoraQ,
+ 
 }

@@ -36,7 +36,7 @@ function ElemMap({ mode, map, setMap, zoom }) {
   }, [ref, map, mode]);
 
   return (
-    <div style={{ width: '100%', height: '100%', minHeight: '25rem', }} ref={ref} id="map" />
+    <div ref={ref} id="map" style={{ width: '100%', height: '100%', minHeight: '25rem', }} />
   );
 
 }

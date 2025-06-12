@@ -7,7 +7,8 @@ import Paper from '@mui/material/Paper';
 import { TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useData } from '../../../hooks/analyse-hooks';
-import { calculateDemandaAjustada, calculateDisponibilidadeHidrica, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual, calculateSolicitataMenorDisponivel } from '../../../tools/surface-tools';
+import { calculateDemandaAjustada, calculateDisponibilidadeHidrica, calculateQIndividualSecao, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual, calculateSolicitataMenorDisponivel } from '../../../tools/surface-tools';
+import IndividualFlowSelection from './IndividualFlowSelection';
 
 
 
@@ -85,7 +86,8 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
 
       setRows(_rows)
 
-    } else if (analyse.alias === 'Análise na Unidade Hidrográfica') {
+    }
+    else if (analyse.alias === 'Análise na Unidade Hidrográfica') {
 
       let _rows = [
 
@@ -128,7 +130,6 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
 
       setRows(_rows)
 
-
     }
   }, [analyse, q_solicitada]);
 
@@ -147,7 +148,15 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
       let q_disponivel_uh = { ...prev.uh.q_disponivel };
       let q_sol_q_dis_uh = { ...prev.uh.q_sol_q_dis }
       let q_disponivel_secao = { ...prev.secao.q_disponivel };
-      let q_individual_secao = { ...prev.secao.q_individual }
+      let q_outorgavel = {...prev.secao.q_outorgavel}
+      let q_individual_secao = {
+        ...prev.secao.q_individual,
+        values: calculateQIndividualSecao(q_outorgavel.values, 0.2)
+      };
+
+      let q_sol_q_dis = calculateSolicitataMenorDisponivel(q_solicitada.values, q_disponivel_uh.values);
+      let q_disponibilidade = calculateDisponibilidadeHidrica(q_sol_q_dis_uh.values, q_sol_q_ind_secao, q_sol_q_dis_secao)
+      let q_demanda_ajustada = calculateDemandaAjustada(updateQSolicitada, q_disponivel_uh.values, q_disponivel_secao.values, q_individual_secao.values)
 
       return {
         ...prev,
@@ -173,16 +182,16 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
 
           q_sol_q_dis: {
             ...prev.uh.q_sol_q_dis,
-            values: calculateSolicitataMenorDisponivel(q_solicitada.values, q_disponivel_uh.values)
+            values: q_sol_q_dis
 
           },
           q_disponibilidade: {
             ...prev.uh.q_disponibilidade,
-            values: calculateDisponibilidadeHidrica(q_sol_q_dis_uh.values, q_sol_q_ind_secao, q_sol_q_dis_secao)
+            values: q_disponibilidade
           },
           q_demanda_ajustada: {
             ...prev.uh.q_demanda_ajustada,
-            values: calculateDemandaAjustada(updateQSolicitada, q_disponivel_uh.values, q_disponivel_secao.values, q_individual_secao.values)
+            values: q_demanda_ajustada
           }
 
         }
@@ -197,7 +206,7 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
         <TableCell
           key={row.alias.substring(0, 5) + index}
           align="right"
-          sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+          sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", textAlign: "center" }}
         >
           <TextField
             key={'input' + row.alias.substring(0, 5) + index}
@@ -237,26 +246,27 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
 
             key={row.alias.substring(0, 5) + index}
             align="right"
-            sx={{ backgroundColor: 'green', padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+            sx={{ backgroundColor: 'green', padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", textAlign: "center" }}
           >
             SIM
           </TableCell> :
           <TableCell
             key={row.alias.substring(0, 5) + index}
             align="right"
-            sx={{ backgroundColor: 'red', padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+            sx={{ backgroundColor: 'red', padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", textAlign: "center" }}
           >
             NÃO
           </TableCell>
       ));
-    } else {
+    }
+    else {
       return row.values.map((value, index) => (
         <TableCell
           key={row.alias.substring(0, 5) + index}
           align="right"
-          sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem" }}
+          sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", textAlign: "center" }}
         >
-          {value}
+          {parseFloat(value).toFixed(2)}
         </TableCell>
       ));
     }
@@ -268,7 +278,7 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
       <Table id="table" size="small" >
         <TableHead>
           <TableRow>
-            <TableCell sx={{ padding: "0px", px: "5px", fontSize: "12px", width: "60rem", lineHeight: "1.1rem" }}>Quadro de Vazões (L/s)</TableCell>
+            <TableCell sx={{ padding: "0px", px: "5px", fontSize: "12px", width: "60rem", lineHeight: "1.1rem", textAlign: "center" }}>Quadro de Vazões (L/s)</TableCell>
             {months.map((value) => (
               <TableCell key={value} align="right" sx={{ lineHeight: "1.1rem" }}>{value}</TableCell>
             ))}
@@ -280,9 +290,12 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
               key={row.alias + index}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
-              <TableCell component="th" scope="row" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", width: "100px" }}>
-                {row.alias}
-              </TableCell >
+              {row.alias === 'QOUTORGÁVEL-INDIVIDUAL-SEÇÃO (20% QOUTORGÁVEL-SEÇÃO)' ?
+                (<IndividualFlowSelection key={row.alias.substring(0, 5) + index} setSurfaceAnalyse={setSurfaceAnalyse}/>)
+                :
+                (<TableCell  key={row.alias.substring(0, 5) + index} component="th" scope="row" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", width: "100px", textAlign: "center" }}>
+                  {row.alias}
+                </TableCell >)}
 
               {
                 renderCells(row)

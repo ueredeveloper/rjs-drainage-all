@@ -85,8 +85,6 @@ function nFormatter(num, digits) {
 
 function analyzeAvailability(_info, _points) {
 
-  console.log("analyse avaiability")
-
   let _Q = 0;
   _points.map((_point) => {
 
@@ -287,6 +285,8 @@ const convertOthoCoordToGmaps = (features) => {
  */
 const joinOttoBasins = (polygons) => {
 
+  console.log(polygons)
+
   // Função para unir polígonos, se não conseguir com algum continua a união.
   function unionPolygons(polygons) {
     if (!polygons || polygons.length === 0) {
@@ -297,7 +297,8 @@ const joinOttoBasins = (polygons) => {
     let unionResult = polygons[0];
 
     // Itera sobre os polígonos restantes
-    polygons.slice(1).forEach(polygon => {
+    // remove o slice 1
+    polygons.forEach(polygon => {
       try {
         unionResult = turf.union(unionResult, polygon);
       } catch (error) {
@@ -337,21 +338,50 @@ const joinOttoBasins = (polygons) => {
   return unionGmapsPolygon;
 };
 
-const getMarkersInsideOttoBasinsJoined = (polygon, markers) => {
+const getMarkersInsideOttoBasins = (polygons, markers, map) => {
 
-  // Busca se o marcador superficial está dentro do polígono solicitado, sendo assim pertencente à seção
-  let surfaceSectionMarkers = markers[0].superficial
-    .filter(marker => window.google.maps.geometry.poly.containsLocation(
-      new window.google.maps.LatLng(marker.int_latitude, marker.int_longitude),
-      polygon));
 
-  return {
+
+  let result = {
     "subterranea": null,
-    "superficial": surfaceSectionMarkers,
+    "superficial": [],
     "barragem": null,
     "lancamento_efluentes": null,
     "lancamento_pluviais": null
   }
+
+
+  polygons.forEach(polygon => {
+
+    const coords = polygon.geometry.rings;
+    // Apenas anel exterior (coords[0]), ignorando furos
+    const gmapsCoords = coords.map(_coords => {
+      return _coords.map(__coords => {
+        return __coords
+      });
+    });
+
+    let gmapsPolygon = new window.google.maps.Polygon({
+      paths: gmapsCoords[0],
+      fillColor: "red",
+      fillOpacity: 0,
+      // map // verificação do polígno no mapa 
+    })
+
+    // Busca se o marcador superficial está dentro do polígono solicitado, sendo assim pertencente à seção
+    let surfaceMarkers = markers[0].superficial
+      .filter(marker => window.google.maps.geometry.poly.containsLocation(
+        new window.google.maps.LatLng(marker.int_latitude, marker.int_longitude),
+        gmapsPolygon));
+
+
+    if (surfaceMarkers.length > 0) {
+      result.superficial.push(...surfaceMarkers)
+    }
+  });
+
+
+  return result;
 
 }
 
@@ -404,12 +434,9 @@ const searchHydrograficUnit = async (fetchShape, shapesFetched, setShapesFetched
 
   let hydrographicBasin;
 
-  if (hydrographicBasins !== undefined) {
-
-    console.log(hydrographicBasins)
+  if (hydrographicBasins !== undefined && hydrographicBasins.length > 0) {
 
     hydrographicBasin = hydrographicBasins.find(hb => hb.uh_codigo === Number(uhCodigo))
-
   } else {
 
     hydrographicBasins = await fetchShape('unidades_hidrograficas').then(__shape => {
@@ -429,8 +456,6 @@ const searchHydrograficUnit = async (fetchShape, shapesFetched, setShapesFetched
   }
 }
 
-
-
 export {
   createCircleRings,
   converterPostgresToGmaps, nFormatter,
@@ -442,6 +467,6 @@ export {
   calculateContributingArea,
   calculateCentroid,
   joinOttoBasins,
-  getMarkersInsideOttoBasinsJoined,
+  getMarkersInsideOttoBasins,
   searchHydrograficUnit
 }

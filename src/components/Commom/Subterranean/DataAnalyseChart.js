@@ -98,7 +98,6 @@ const DataAnalyseChart = () => {
 
     useEffect(() => {
 
-        console.log('chart use eff 1')
         /**
         * Inicializa uma instância do gráfico ECharts no elemento com ID 'e-grants-sub-chart'.
         * @type {echarts.ECharts}
@@ -192,8 +191,6 @@ const DataAnalyseChart = () => {
 
     return (
         <FormControl sx={{ display: "flex", flex: 1 , m:0}}>
-
-           
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
             <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1}}>
                 <div id="e-grants-sub-chart" style={{ margin: 10, width: '100%', height: '10rem' }}></div>
