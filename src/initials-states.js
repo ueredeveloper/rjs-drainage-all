@@ -193,16 +193,16 @@ const initialsStates = {
             */
             q_disponivel: {
                 alias: 'QDISPONÍVEL-SEÇÃO',
-                values: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], elements: []
+                values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], elements: []
             },
             q_sol_q_dis: {
                 alias: 'QSOLICITADA-SEÇÃO ≤ QDISPONÍVEL-SEÇÃO',
-                values: [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 elements: []
             },
             q_sol_q_ind: {
                 alias: 'QSOLICITADA-SEÇÃO ≤ QOUTORGÁVEL-INDIVIDUAL-SEÇÃO',
-                values: [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 elements: []
             }
 

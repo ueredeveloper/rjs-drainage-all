@@ -13,7 +13,7 @@ import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolo
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyzeAvailability, converterPostgresToGmaps, getMarkersInsideOttoBasins, searchHydrograficUnit } from "../../tools";
+import { analyzeAvailability, calculateCircleArea, converterPostgresToGmaps, getMarkersInsideOttoBasins, searchHydrograficUnit } from "../../tools";
 import AlertCommon from "./AlertCommon";
 import { initialsStates } from "../../initials-states";
 import ElemGrant from '../Connection/elem-grant';
@@ -106,10 +106,10 @@ function SearchCoords({ tabNumber }) {
         type: "circle",
         position: { lat: position.int_latitude, lng: position.int_longitude },
         map: null,
-        draw: { area: subsystem.area },
+        draw: null,
         markers: markers,
         radius: radius,
-        area: null
+        area: calculateCircleArea(radius)
       };
 
       setOverlays(prev => ({

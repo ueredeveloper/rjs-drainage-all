@@ -46,6 +46,7 @@ const checkboxOptions = {
     ],
 };
 
+
 /**
  * Componente React responsável pelos controladores do mapa.
  *
@@ -91,7 +92,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
         setSubsystem(initialsStates.subsystem);
         setHgAnalyse(initialsStates.subsystem.hg_analyse);
         overlays.shapes.forEach(shape => {
-            shape?.draw?.setMap(null)
+            if (shape.draw !== null) shape?.draw?.setMap(null)
         });
         setOverlays(initialsStates.overlays);
     };
