@@ -42,6 +42,7 @@ function a11yProps(index) {
         "aria-controls": `simple-tabpanel-${index}`,
     };
 }
+
 /**
  * Componente que exibe painéis com tabelas de concessões de outorga.
  *

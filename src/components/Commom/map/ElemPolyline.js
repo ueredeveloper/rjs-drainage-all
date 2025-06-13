@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-
 /**
  * Elemento de Polilinha para as shapes Hidrogeo_Fraturado e Hidrogeo_Poroso.
  * @component

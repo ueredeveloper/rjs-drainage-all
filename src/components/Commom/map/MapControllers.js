@@ -46,7 +46,25 @@ const checkboxOptions = {
     ],
 };
 
-
+/**
+ * Componente React responsável pelos controladores do mapa.
+ *
+ * Este componente gerencia checkboxes que representam camadas geográficas
+ * como bacias hidrográficas, entre outras, e lida com a lógica para carregar,
+ * exibir e remover os polígonos no mapa com base na seleção do usuário.
+ *
+ * - Inicializa camadas geográficas ao selecionar checkboxes.
+ * - Evita requisições duplicadas reutilizando dados já buscados.
+ * - Possui botão para limpar todos os checkboxes e remover polígonos do mapa.
+ * - Usa o hook `useData` para acessar e modificar estados globais relacionados às camadas.
+ *
+ * @component
+ * @param {Object} props - Propriedades do componente.
+ * @param {Object} props.checkboxes - Estado atual das camadas ativas, organizado por grupos e itens.
+ * @param {Function} props.setCheckboxes - Função para atualizar o estado dos checkboxes.
+ *
+ * @returns {JSX.Element} Elemento JSX que renderiza o painel de controle do mapa.
+ */
 function MapControllers({ checkboxes, setCheckboxes }) {
 
     const { shapesFetched, setShapesFetched, setSubsystem, setHgAnalyse, overlays, setOverlays } = useData();

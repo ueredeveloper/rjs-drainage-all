@@ -10,10 +10,6 @@ import { useData } from '../../../hooks/analyse-hooks';
 import { calculateDemandaAjustada, calculateDisponibilidadeHidrica, calculateQIndividualSecao, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual, calculateSolicitataMenorDisponivel } from '../../../tools/surface-tools';
 import IndividualFlowSelection from './IndividualFlowSelection';
 
-
-
-
-
 /**
  * 
  * @returns Tabela de Dados Superificial
@@ -209,10 +205,11 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
           sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", textAlign: "center" }}
         >
           <TextField
-            key={'input' + row.alias.substring(0, 5) + index}
+            key={'input-' + row.alias.substring(0, 5) + index}
             value={q_solicitada.values[index]}
             onChange={(e) => handleOnTextFieldChange(index, e.target.value)}
             variant="standard"
+            
             InputProps={{
               disableUnderline: false,
               sx: {
@@ -287,11 +284,11 @@ export default function SurfaceTable({ q_solicitada, analyse, setSurfaceAnalyse 
         <TableBody>
           {rows.map((row, index) => (
             <TableRow
-              key={row.alias + index}
+              key={'selection-'+ row.alias + index}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
               {row.alias === 'QOUTORGÁVEL-INDIVIDUAL-SEÇÃO (20% QOUTORGÁVEL-SEÇÃO)' ?
-                (<IndividualFlowSelection key={row.alias.substring(0, 5) + index} setSurfaceAnalyse={setSurfaceAnalyse}/>)
+                (<IndividualFlowSelection key={'selection-input'+ row.alias.substring(0, 5) + index} setSurfaceAnalyse={setSurfaceAnalyse}/>)
                 :
                 (<TableCell  key={row.alias.substring(0, 5) + index} component="th" scope="row" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", width: "100px", textAlign: "center" }}>
                   {row.alias}

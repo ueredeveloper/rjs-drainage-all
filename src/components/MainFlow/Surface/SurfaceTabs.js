@@ -13,7 +13,17 @@ import { Avatar, FormControl, FormLabel, Paper } from '@mui/material';
 import SurfaceTableModulations from './SurfaceTableModulations';
 
 
-
+/**
+ * Componente auxiliar para renderizar o conteúdo de uma aba (`Tab`) condicionalmente,
+ * com suporte a acessibilidade (ARIA).
+ *
+ * @component
+ * @param {Object} props - Propriedades do componente.
+ * @param {React.ReactNode} props.children - Conteúdo interno da aba.
+ * @param {number} props.value - Índice da aba atualmente selecionada.
+ * @param {number} props.index - Índice desta aba.
+ * @returns {JSX.Element} Componente que mostra ou oculta seu conteúdo com base na aba ativa.
+ */
 function CustomTabPanel(props) {
 
   const { children, value, index, ...other } = props;

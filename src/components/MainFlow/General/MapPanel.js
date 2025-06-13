@@ -39,6 +39,7 @@ function a11yProps(index) {
         "aria-controls": `simple-tabpanel-${index}`,
     };
 }
+
 /**
  * Componente que exibe um painel de mapa.
  * @component

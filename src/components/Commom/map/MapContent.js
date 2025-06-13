@@ -11,8 +11,6 @@ import ElemPolyline from './ElemPolyline';
 import ElemOttoPolyline from './ElemOthoPolyline';
 import MapControllers from './MapControllers';
 
-
-
 /**
  * Componente que representa o conteúdo do mapa.
  * @component

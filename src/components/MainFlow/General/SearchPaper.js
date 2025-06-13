@@ -9,6 +9,7 @@ import { findByColumn } from "../../../services/users";
 import { useData } from "../../../hooks/analyse-hooks";
 
 
+
 /**
  * 
  * Buscador de outorgas por coordenadas

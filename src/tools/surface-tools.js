@@ -39,6 +39,8 @@ function calculateQOutorgadaSecao(markers) {
   */
 function calculateQReferenciaSecao(uh, area_contribuicao) {
 
+  console.log(uh, area_contribuicao)
+
   let months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
   let q_referencia_secao = [];
@@ -56,10 +58,13 @@ function calculateQReferenciaSecao(uh, area_contribuicao) {
 * @param vr {number[]} Vazão de referência
 */
 function calculateQOutorgavelSecao(q_referencia_secao) {
+
   let q_outorgavel_secao = q_referencia_secao.map(_vr => { return (Number(_vr) * 0.8).toFixed(2) });
+
   return q_outorgavel_secao;
 
 }
+
 
 /**
  * Calcula a vazão outorgável individual (20% da vazão outorgável) com formatação de duas casas decimais
@@ -323,5 +328,5 @@ export {
   calculateSolicitataMenorDisponivel, calculateDisponibilidadeHidrica, calculateDemandaAjustada,
   // Ajustes de Modulações
   ajustarSecaoMH, ajustarQSecaoMD, ajustarHoraBombAjustada, modularVazaoH, modularHoraQ,
- 
+
 }

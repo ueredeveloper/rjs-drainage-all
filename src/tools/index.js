@@ -386,6 +386,7 @@ const getMarkersInsideOttoBasins = (polygons, markers, map) => {
 }
 
 
+
 /**
  * Calcula o centroide de um polígono.
  * @param {Array<object>} vertices Lista de caminhos (vértices) do polígono.

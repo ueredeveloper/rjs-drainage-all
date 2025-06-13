@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
 
-
 /**
  * Elemento de renderização de polígonos no mapa.
  * @component

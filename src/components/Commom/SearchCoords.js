@@ -22,6 +22,7 @@ import { calculateQOutorgadaSecao, calculateQIndividualSecao, calculateQOutorgav
 
 
 
+
 /**
  * Componente que permite a busca de outorgas a partir de coordenadas geográficas informadas pelo usuário.
  * Exibe inputs para latitude e longitude e realiza a busca por pontos próximos ou análise por subsistema.

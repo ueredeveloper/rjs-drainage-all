@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { darkMap } from './mode/dark-map';
 
+
 /**
   * Elemento de renderização do mapa
   * @component

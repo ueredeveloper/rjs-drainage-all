@@ -8,9 +8,6 @@ import { TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { ajustarHoraBombAjustada, ajustarQSecaoMD, ajustarSecaoMH, modularHoraQ, modularVazaoH } from '../../../tools/surface-tools';
 
-
-
-
 /**
  * 
  * @returns Tabela de Dados Superificial
@@ -163,82 +160,85 @@ export default function SurfaceTableModulations({ analyse, setSurfaceAnalyse }) 
 
 
     const handleOnTextFieldChange = (index, value) => {
-        // Atualiza valores digitados
-        let update_h_bomb_requerida = [...analyse.h_bomb_requerida.values]
+        let update_h_bomb_requerida = [...analyse.h_bomb_requerida.values];
         update_h_bomb_requerida[index] = Number(value);
 
         setSurfaceAnalyse((prev) => {
+            // Atualizar h_bomb_requerida
+            const h_bomb_requerida = {
+                ...prev.h_ajuste.h_bomb_requerida,
+                values: update_h_bomb_requerida
+            };
 
-            let h_ajuste = {
+            // Calcular variáveis auxiliares
+            const q_solicitada = { ...prev.q_solicitada };
+            const q_outorgada = { ...prev.q_modula.q_outorgada };
+            const uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
+
+            const temp_h_ajuste = {
                 ...prev.h_ajuste,
-                h_bomb_requerida: {
-                    ...prev.h_ajuste.h_bomb_requerida,
-                    // Atualiza os valores em tempo real na tabela
-                    values: update_h_bomb_requerida
+                h_bomb_requerida
+            };
+
+            const q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
+            const q_secao_m_d = ajustarQSecaoMD(temp_h_ajuste);
+            const h_bomb_ajustada = ajustarHoraBombAjustada(temp_h_ajuste, q_solicitada);
+            const h_bombeamento = modularVazaoH(q_outorgada, temp_h_ajuste);
+            const h_modula_q_outorgada = modularHoraQ(temp_h_ajuste, uh_q_demanda_ajustada, q_solicitada);
+
+            // Construir h_ajuste final
+            const h_ajuste = {
+                ...temp_h_ajuste,
+                q_secao_m_h: {
+                    ...prev.h_ajuste.q_secao_m_h,
+                    values: q_secao_m_h
+                },
+                q_secao_m_d: {
+                    ...prev.h_ajuste.q_secao_m_d,
+                    values: q_secao_m_d
+                },
+                h_bomb_ajustada: {
+                    ...prev.h_ajuste.h_bomb_ajustada,
+                    values: h_bomb_ajustada
                 }
-            }
-            let q_solicitada = { ...prev.q_solicitada }
-            let q_outorgada = { ...prev.q_modula.q_outorgada }
+            };
 
-            let uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
-            let q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
-            let q_secao_m_d = ajustarQSecaoMD(h_ajuste);
-            let h_bomb_ajustada = ajustarHoraBombAjustada(h_ajuste, q_solicitada);
+            // Construir q_modula
+            const q_modula = {
+                ...prev.q_modula,
+                q_outorgada: {
+                    ...prev.q_modula.q_outorgada,
+                    values: uh_q_demanda_ajustada.values
+                },
+                h_bombeamento: {
+                    ...prev.q_modula.h_bombeamento,
+                    values: h_bombeamento
+                }
+            };
 
-            let h_bombeamento = modularVazaoH(q_outorgada, h_ajuste);
+            // Construir h_modula
+            const h_modula = {
+                ...prev.h_modula,
+                q_outorgada: {
+                    ...prev.h_modula.q_outorgada,
+                    values: h_modula_q_outorgada
+                },
+                h_bombeamento: {
+                    ...prev.h_modula.h_bombeamento,
+                    values: h_bomb_ajustada
+                }
+            };
 
-            let h_modula_q_outorgada = modularHoraQ(h_ajuste, uh_q_demanda_ajustada, q_solicitada);
-
-
+            // Return final
             return {
                 ...prev,
-                h_ajuste: {
-                    ...prev.h_ajuste,
-                    h_bomb_requerida: {
-                        ...prev.h_ajuste.h_bomb_requerida,
-                        values: update_h_bomb_requerida
-                    },
-                    q_secao_m_h: {
-                        ...prev.h_ajuste.q_secao_m_h,
-                        values: q_secao_m_h
-                    },
-                    q_secao_m_d: {
-                        ...prev.h_ajuste.q_secao_m_d,
-                        values: q_secao_m_d
-                    },
-                    h_bomb_ajustada: {
-                        ...prev.h_ajuste.h_bomb_ajustada,
-                        values: h_bomb_ajustada
-                    }
-                },
-                q_modula: {
-                    ...prev.q_modula,
-                    q_outorgada: {
-                        ...prev.q_modula.q_outorgada,
-                        values: uh_q_demanda_ajustada.values
-                    },
-                    h_bombeamento: {
-                        ...prev.q_modula.h_bombeamento,
-                        values: h_bombeamento
-                    }
-
-                },
-                h_modula: {
-                    ...prev.h_modula,
-                    q_outorgada: {
-                        ...prev.h_modula.q_outorgada,
-                        values: h_modula_q_outorgada
-                    },
-                    h_bombeamento: {
-                        ...prev.h_modula.h_bombeamento,
-                        values: h_ajuste.h_bomb_ajustada.values
-                    }
-
-                }
-            }
+                h_ajuste,
+                q_modula,
+                h_modula
+            };
         });
+    };
 
-    }
 
     return (
         <Paper id="paper" elevation={3} sx={{ my: 2, height: 121, overflow: 'auto' }}>
@@ -285,6 +285,10 @@ export default function SurfaceTableModulations({ analyse, setSurfaceAnalyse }) 
                                                 },
                                             }}
                                             onChange={(e) => handleOnTextFieldChange(index, e.target.value)}
+                                            onKeyDown={(e) => {
+                                                handleOnTextFieldChange(index, e.target.value)
+                                            }}
+
                                             autoComplete="off"
                                             sx={{
                                                 p: 0, // outer TextField padding

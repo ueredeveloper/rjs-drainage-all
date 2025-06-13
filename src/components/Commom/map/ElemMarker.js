@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { setInfoMarkerIcon } from '../../../tools';
 import ElemMarkerInfoWindow from './infowindow/ElemMarkerInfoWindow';
 
-
 /**
  * Componente ElemMarker que representa um marcador no mapa.
  * @component
