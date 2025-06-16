@@ -112,6 +112,8 @@ function SearchCoords({ tabNumber }) {
         area: calculateCircleArea(radius)
       };
 
+      console.log(markers)
+
       setOverlays(prev => ({
         ...prev,
         shapes: [...prev.shapes, shape]
@@ -200,7 +202,7 @@ function SearchCoords({ tabNumber }) {
 
       // Limpa os mapa de camadas, marcadores etc.
       overlays.shapes.forEach(shape => {
-       if (shape.draw !== null) shape?.draw?.setMap(null)
+        if (shape.draw !== null) shape?.draw?.setMap(null)
       });
       setOverlays(initialsStates.overlays)
 
@@ -324,7 +326,7 @@ function SearchCoords({ tabNumber }) {
 
     if (tabNumber === 1) {
       overlays.shapes.forEach(shape => {
-    if (shape.draw !== null) shape?.draw?.setMap(null)
+        if (shape.draw !== null) shape?.draw?.setMap(null)
 
       });
       setOverlays(initialsStates.overlays);

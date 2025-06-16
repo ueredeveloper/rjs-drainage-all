@@ -107,6 +107,12 @@ const HTMLMarkerContent = (color, info) => {
     infoContentDiv.id = 'wi-info';
     const infoTextDiv = document.createElement('div');
 
+    const tipoOutorga = document.createElement('p');
+    tipoOutorga.textContent = `Tipo: ${info.to_descricao}`;
+
+    const situacaoProcesso = document.createElement('p');
+    situacaoProcesso.textContent = `Situação: ${info.sp_descricao}`;
+
     // Cria os elementos <p> para cada propriedade e define o conteúdo de texto.
     const nome = document.createElement('p');
     nome.textContent = `Nome: ${info.us_nome}`;
@@ -133,6 +139,8 @@ const HTMLMarkerContent = (color, info) => {
     unidade.textContent = `Unidade Hidrográfica: ${info.uh_nome}`;
 
     // Adiciona os elementos <p> ao div de texto das informações.
+    infoTextDiv.appendChild(tipoOutorga);
+    infoTextDiv.appendChild(situacaoProcesso);
     infoTextDiv.appendChild(nome);
     infoTextDiv.appendChild(cpfCnpj);
     infoTextDiv.appendChild(numAto);
