@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import HTMLMarkerContent from './html-marker-content';
 
+
 /**
  * Componente para exibir informações em uma janela de informações associada a um marcador no mapa.
  * @component

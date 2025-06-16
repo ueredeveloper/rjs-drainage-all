@@ -1,5 +1,6 @@
 import { setInfoMarkerIcon } from "../../../../tools";
 
+
 /**
  * Conteúdo da Infowindow (ElemMarkerInfoWindow).
  * @component

@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import HTMLPolygonContent from './html-polygon-content';
 import { useData } from '../../../../hooks/analyse-hooks';
 
+
 /**
  * Componente para exibir informações em uma janela de informações associada a um polígono no mapa.
  * @component

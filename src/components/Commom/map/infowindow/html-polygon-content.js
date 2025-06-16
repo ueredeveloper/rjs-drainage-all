@@ -1,5 +1,6 @@
 import { fetchGrantsInsideShape } from "../../../../services/shapes";
 
+
 /**
  * Conteúdo do InfoWindow do Polígono.
  * @component
