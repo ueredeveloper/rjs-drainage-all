@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
  * @component
  * @param {*} param0 
  */
-const ElemPolyline = ({ coord, map }) => {
+const ElemPolyline = ({ shape, map }) => {
+  
 
   const [polyline, setPolyline] = useState();
 
@@ -26,22 +27,21 @@ const ElemPolyline = ({ coord, map }) => {
     /**
     * Coverter coordenada postgres para o formato gmaps
     */
-    function convertToGmaps (coord) {
+   /* function convertToGmaps (coord) {
       let _coord = coord.map(_c=>{
         return { lat: parseFloat(_c[1]), lng: parseFloat(_c[0]) }
       })
       return _coord;
     }
     // converter postgres para gmaps
-    let _path = convertToGmaps(coord);
+    let _path = convertToGmaps(coord);*/
 
     polyline.setOptions(
       {
-        path:_path,
+        path: shape.geometry.coordinates,
         geodesic: true,
-        strokeColor: "#ff0000",
-        strokeOpacity: 1.0,
-        strokeWeight: 1,
+        strokeColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+        strokeWeight: 3,
         map: map
       }
     );

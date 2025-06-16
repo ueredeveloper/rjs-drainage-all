@@ -34,7 +34,7 @@ export default function SurfaceTableModulations({ analyse, setSurfaceAnalyse }) 
 
                 let q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
                 let q_secao_m_d = ajustarQSecaoMD(h_ajuste);
-                let h_bomb_ajustada = ajustarHoraBombAjustada(h_ajuste, q_solicitada);
+                let h_bomb_ajustada = ajustarHoraBombAjustada(q_secao_m_d, q_solicitada);
 
                 let h_bombeamento = modularVazaoH(q_outorgada, h_ajuste);
 
@@ -150,8 +150,6 @@ export default function SurfaceTableModulations({ analyse, setSurfaceAnalyse }) 
 
             ];
 
-
-
             setRows(_rows);
 
         }
@@ -175,20 +173,21 @@ export default function SurfaceTableModulations({ analyse, setSurfaceAnalyse }) 
             const q_outorgada = { ...prev.q_modula.q_outorgada };
             const uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
 
-            const temp_h_ajuste = {
+            const update_h_ajuste = {
                 ...prev.h_ajuste,
                 h_bomb_requerida
             };
 
+
             const q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
-            const q_secao_m_d = ajustarQSecaoMD(temp_h_ajuste);
-            const h_bomb_ajustada = ajustarHoraBombAjustada(temp_h_ajuste, q_solicitada);
-            const h_bombeamento = modularVazaoH(q_outorgada, temp_h_ajuste);
-            const h_modula_q_outorgada = modularHoraQ(temp_h_ajuste, uh_q_demanda_ajustada, q_solicitada);
+            const q_secao_m_d = ajustarQSecaoMD(update_h_ajuste);
+            const h_bomb_ajustada = ajustarHoraBombAjustada(q_secao_m_d, q_solicitada);
+            const h_bombeamento = modularVazaoH(q_outorgada, update_h_ajuste);
+            const h_modula_q_outorgada = modularHoraQ(update_h_ajuste, uh_q_demanda_ajustada, q_solicitada);
 
             // Construir h_ajuste final
             const h_ajuste = {
-                ...temp_h_ajuste,
+                ...update_h_ajuste,
                 q_secao_m_h: {
                     ...prev.h_ajuste.q_secao_m_h,
                     values: q_secao_m_h
@@ -285,9 +284,7 @@ export default function SurfaceTableModulations({ analyse, setSurfaceAnalyse }) 
                                                 },
                                             }}
                                             onChange={(e) => handleOnTextFieldChange(index, e.target.value)}
-                                            onKeyDown={(e) => {
-                                                handleOnTextFieldChange(index, e.target.value)
-                                            }}
+                                           
 
                                             autoComplete="off"
                                             sx={{

@@ -41,7 +41,7 @@ function SearchCoords({ tabNumber }) {
     radius, setHgAnalyse, subsystem, setSubsystem,
     setOttoBasins,
     surfaceAnalyse, setSurfaceAnalyse,
-    shapesFetched, setShapesFetched } = useData(); // Hook para estado global
+    overlaysFetched, setOverlaysFetched } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
 
   // Estados para o controle do alerta
@@ -94,7 +94,7 @@ function SearchCoords({ tabNumber }) {
 
     // Se selecionado a tab geral, de buscas gerais por camadas ou dados do banco de dados com cpf, nome etc...
     if (tabNumber === 0) {
-      
+
       let markers = await findAllPointsInCircle({
         center: { lng: position.int_longitude, lat: position.int_latitude },
         radius: parseInt(radius)
@@ -121,9 +121,8 @@ function SearchCoords({ tabNumber }) {
     else if (tabNumber === 1) {
 
       // limpa o mapa
-
       overlays.shapes.forEach(shape => {
-        if (shape.draw != undefined && shape.draw.area !== undefined) shape?.draw?.setMap(null)
+        if (shape.draw !== null) shape?.draw?.setMap(null)
       });
       setOverlays(initialsStates.overlays);
 
@@ -161,8 +160,7 @@ function SearchCoords({ tabNumber }) {
           hg_analyse: hgAnalyse,
         }));
 
-
-        let coordinates = { shape: { coordinates: converterPostgresToGmaps({ shape: markers._hg_shape }) } }
+        let coordinates = { shape: { type: markers._hg_shape.type, coordinates: converterPostgresToGmaps(markers._hg_shape) } }
 
         let shape = {
           id: Date.now(),
@@ -202,234 +200,114 @@ function SearchCoords({ tabNumber }) {
 
       // Limpa os mapa de camadas, marcadores etc.
       overlays.shapes.forEach(shape => {
-        if (shape.draw != undefined && shape.draw.area !== undefined) shape?.draw?.setMap(null)
-
+       if (shape.draw !== null) shape?.draw?.setMap(null)
       });
       setOverlays(initialsStates.overlays)
 
-      // Unidade Hidrográfica necessária para a busca de ottoBasins
-      let shapeName = "unidades_hidrograficas";
-      // Pesquisa a shape da unidade hidrofráfica, se já existente na renderização e assim buscar em qual unidade hidrográfica está a coordenada
-      let _shape = shapesFetched.find(sf => sf.name === shapeName);
+      // Busca ottobacias a partir das coordenadas (lat, lng)
+      let ottoBasins = await fetchOttoBasins(lat, lng);
 
-      // Se os polígonso das unidades ainda não estiverem sido buscados
-      if (shapesFetched.length === 0 || _shape === undefined) {
+      setOttoBasins(ottoBasins.ottoBasinsToGmaps);
 
-        _shape = await fetchShape(shapeName).then(__shape => {
-          // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
-          return __shape.map(sh => {
-            return { ...sh, shapeName: shapeName, shape: { coordinates: converterPostgresToGmaps(sh) } }
-          })
-        });
+      // Número da UH (uh_codigo, nas shape de otto bacias: uh_rotulo)
+      let uhRotulo = ottoBasins.ottoBasins[0].attributes.uh_rotulo;
 
-        // Busca ottobacias a partir das coordenadas (lat, lng)
-        let ottoBasins = await fetchOttoBasins(lat, lng);
+      let uhGrants = await fetchMarkersByUH(uhRotulo);
 
-        setOttoBasins(ottoBasins.ottoBasinsToGmaps);
+      let sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, map)
 
- 
+      let hydrographicBasin = await searchHydrograficUnit(fetchShape, overlaysFetched, setOverlaysFetched, uhRotulo)
 
-        // Número da UH (uh_codigo, nas shape de otto bacias: uh_rotulo)
-        let uhRotulo = ottoBasins.ottoBasins[0].attributes.uh_rotulo;
+      let ottoBasinArea = ottoBasins.ottoBasinsToGmaps.area;
 
-        let uhGrants = await fetchMarkersByUH(uhRotulo);
+      let q_outorgada_secao = calculateQOutorgadaSecao(sectionGrants);
+      let q_referencia_secao = calculateQReferenciaSecao(hydrographicBasin, ottoBasinArea);
+      let q_outorgavel_secao = calculateQOutorgavelSecao(q_referencia_secao);
+      // verificarum hook para o percentual desta função, no caso aqui está 20%
+      let q_individual_secao = calculateQIndividualSecao(q_outorgavel_secao, 0.2)
+      let q_disponivel = calculateQDisponivelSecao(q_outorgavel_secao, q_outorgada_secao)
 
-        let sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, map)
+      let q_sol_q_dis = calculateQSolicitadaMenorQDisponivel(surfaceAnalyse.q_solicitada.values, q_disponivel)
+      let q_sol_q_ind = calculateQSolicitadaMenorQIndividual(surfaceAnalyse.q_solicitada.values, q_individual_secao)
 
-        let hydrographicBasin = await searchHydrograficUnit(fetchShape, shapesFetched, setShapesFetched, uhRotulo)
+      let q_outorgada_uh = calculateQOutorgadaUH(uhGrants[0]);
+      let q_referencia_uh = calculateQReferenciaUH(hydrographicBasin);
+      let q_remanescente_uh = calculateQRemanescenteUH(q_referencia_uh);
+      let q_outorgavel_uh = calculateQOutorgavelUH(q_referencia_uh);
+      let q_disponivel_uh = calculateQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
 
-        let ottoBasinArea = ottoBasins.ottoBasinsToGmaps.area;
-
-        let q_outorgada_secao = calculateQOutorgadaSecao(sectionGrants);
-        let q_referencia_secao = calculateQReferenciaSecao(hydrographicBasin, ottoBasinArea);
-        let q_outorgavel_secao = calculateQOutorgavelSecao(q_referencia_secao);
-        // verificarum hook para o percentual desta função, no caso aqui está 20%
-        let q_individual_secao = calculateQIndividualSecao(q_outorgavel_secao, 0.2)
-        let q_disponivel = calculateQDisponivelSecao(q_outorgavel_secao, q_outorgada_secao)
-
-        let q_sol_q_dis = calculateQSolicitadaMenorQDisponivel(surfaceAnalyse.q_solicitada.values, q_disponivel)
-        let q_sol_q_ind = calculateQSolicitadaMenorQIndividual(surfaceAnalyse.q_solicitada.values, q_individual_secao)
-
-
-
-        let q_outorgada_uh = calculateQOutorgadaUH(uhGrants[0]);
-        let q_referencia_uh = calculateQReferenciaUH(hydrographicBasin);
-        let q_remanescente_uh = calculateQRemanescenteUH(q_referencia_uh);
-        let q_outorgavel_uh = calculateQOutorgavelUH(q_referencia_uh);
-        let q_disponivel_uh = calculateQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
-
-
-        setSurfaceAnalyse((prev) => {
-          return {
-            ...prev,
-            secao: {
-              ...prev.secao,
-              outorgas: sectionGrants,
-              q_outorgada: {
-                ...prev.secao.q_outorgada,
-                values: q_outorgada_secao
-              },
-              q_referencia: {
-                ...prev.secao.q_referencia,
-                values: q_referencia_secao
-              },
-              q_outorgavel: {
-                ...prev.secao.q_outorgavel,
-                values: q_outorgavel_secao
-              },
-              q_individual: {
-                ...prev.secao.q_individual,
-                values: q_individual_secao
-              },
-              q_disponivel: {
-                ...prev.secao.q_disponivel,
-                values: q_disponivel
-              },
-              q_sol_q_dis: {
-                ...prev.secao.q_sol_q_dis,
-                values: q_sol_q_dis
-              },
-              q_sol_q_ind: {
-                ...prev.secao.q_sol_q_ind,
-                values: q_sol_q_ind
-              }
-            },
-            uh: {
-              ...prev.uh,
-              outorgas: uhGrants,
-              attributes: hydrographicBasin.attributes,
-              q_outorgada: {
-                ...prev.uh.q_outorgada,
-                values: q_outorgada_uh
-              },
-              q_referencia: {
-                ...prev.uh.q_referencia,
-                values: q_referencia_uh
-              },
-              q_remanescente: {
-                ...prev.uh.q_remanescente,
-                values: q_remanescente_uh
-              },
-              q_outorgavel: {
-                ...prev.uh.q_outorgavel,
-                values: q_outorgavel_uh
-              },
-              q_disponivel: {
-                ...prev.uh.q_disponivel,
-                values: q_disponivel_uh
-              },
-            }
-          };
-        });
-
-        // section markers
-        ottoBasins.ottoBasinsToGmaps.markers = sectionGrants;
-
-        // Seta em uma variável global para ter como limpar o mapa
-        setOverlays(prev => ({
+      setSurfaceAnalyse((prev) => {
+        return {
           ...prev,
-          shapes: [...prev.shapes, ottoBasins.ottoBasinsToGmaps]
-        }));
-        // se já houver os polígonos das unidades hidrográficas
-      } else {
-
-        // Busca ottobacias a partir das coordenadas (lat, lng)
-        let ottoBasins = await fetchOttoBasins(lat, lng);
-
-        setOttoBasins(ottoBasins.ottoBasinsToGmaps);
-
-
-
-        // Número da UH (uh_codigo, nas shape de otto bacias: uh_rotulo)
-        let uhRotulo = ottoBasins.ottoBasins[0].attributes.uh_rotulo;
-
-
-        let uhGrants = await fetchMarkersByUH(uhRotulo);
-
-        let sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, map)
-
-        let hydrographicBasin = await searchHydrograficUnit(fetchShape, shapesFetched, setShapesFetched, uhRotulo)
-
-        let ottoBasinArea = ottoBasins.ottoBasinsToGmaps.area;
-
-        let q_outorgada_secao = calculateQOutorgadaSecao(sectionGrants);
-        let q_referencia_secao = calculateQReferenciaSecao(hydrographicBasin, ottoBasinArea);
-        let q_outorgavel_secao = calculateQOutorgavelSecao(q_referencia_secao);
-        // verificarum hook para o percentual desta função, no caso aqui está 20%
-        let q_individual_secao = calculateQIndividualSecao(q_outorgavel_secao, 0.2)
-        let q_disponivel = calculateQDisponivelSecao(q_outorgavel_secao, q_outorgada_secao)
-
-
-        let q_outorgada_uh = calculateQOutorgadaUH(uhGrants[0]);
-        let q_referencia_uh = calculateQReferenciaUH(hydrographicBasin);
-        let q_remanescente_uh = calculateQRemanescenteUH(q_referencia_uh);
-        let q_outorgavel_uh = calculateQOutorgavelUH(q_referencia_uh);
-        let q_disponivel_uh = calculateQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
-
-        // Atualização dos Dados da Análise Superficial
-        setSurfaceAnalyse((prev) => {
-          return {
-            ...prev,
-            secao: {
-              ...prev.secao,
-              outorgas: sectionGrants,
-              q_outorgada: {
-                ...prev.secao.q_outorgada,
-                values: q_outorgada_secao
-              },
-              q_referencia: {
-                ...prev.secao.q_referencia,
-                values: q_referencia_secao
-              },
-              q_outorgavel: {
-                ...prev.secao.q_outorgavel,
-                values: q_outorgavel_secao
-              },
-              q_individual: {
-                ...prev.secao.q_individual,
-                values: q_individual_secao
-              },
-              q_disponivel: {
-                ...prev.secao.q_disponivel,
-                values: q_disponivel
-              }
+          secao: {
+            ...prev.secao,
+            outorgas: sectionGrants,
+            q_outorgada: {
+              ...prev.secao.q_outorgada,
+              values: q_outorgada_secao
             },
-            uh: {
-              ...prev.uh,
-              outorgas: uhGrants,
-              attributes: hydrographicBasin.attributes,
-              q_outorgada: {
-                ...prev.uh.q_outorgada,
-                values: q_outorgada_uh
-              },
-              q_referencia: {
-                ...prev.uh.q_referencia,
-                values: q_referencia_uh
-              },
-              q_remanescente: {
-                ...prev.uh.q_remanescente,
-                values: q_remanescente_uh
-              },
-              q_outorgavel: {
-                ...prev.uh.q_outorgavel,
-                values: q_outorgavel_uh
-              },
-              q_disponivel: {
-                ...prev.uh.q_disponivel,
-                values: q_disponivel_uh
-              },
+            q_referencia: {
+              ...prev.secao.q_referencia,
+              values: q_referencia_secao
+            },
+            q_outorgavel: {
+              ...prev.secao.q_outorgavel,
+              values: q_outorgavel_secao
+            },
+            q_individual: {
+              ...prev.secao.q_individual,
+              values: q_individual_secao
+            },
+            q_disponivel: {
+              ...prev.secao.q_disponivel,
+              values: q_disponivel
+            },
+            q_sol_q_dis: {
+              ...prev.secao.q_sol_q_dis,
+              values: q_sol_q_dis
+            },
+            q_sol_q_ind: {
+              ...prev.secao.q_sol_q_ind,
+              values: q_sol_q_ind
             }
-          };
-        });
+          },
+          uh: {
+            ...prev.uh,
+            outorgas: uhGrants,
+            attributes: hydrographicBasin.attributes,
+            q_outorgada: {
+              ...prev.uh.q_outorgada,
+              values: q_outorgada_uh
+            },
+            q_referencia: {
+              ...prev.uh.q_referencia,
+              values: q_referencia_uh
+            },
+            q_remanescente: {
+              ...prev.uh.q_remanescente,
+              values: q_remanescente_uh
+            },
+            q_outorgavel: {
+              ...prev.uh.q_outorgavel,
+              values: q_outorgavel_uh
+            },
+            q_disponivel: {
+              ...prev.uh.q_disponivel,
+              values: q_disponivel_uh
+            },
+          }
+        };
+      });
 
-        ottoBasins.ottoBasinsToGmaps.markers = sectionGrants;
+      // section markers
+      ottoBasins.ottoBasinsToGmaps.markers = sectionGrants;
 
-        setOverlays(prev => ({
-          ...prev,
-          shapes: [...prev.shapes, ottoBasins.ottoBasinsToGmaps]
-        }));
+      // Seta em uma variável global para ter como limpar o mapa
+      setOverlays(prev => ({
+        ...prev,
+        shapes: [...prev.shapes, ottoBasins.ottoBasinsToGmaps]
+      }));
 
-      }
 
     }
 
@@ -446,8 +324,7 @@ function SearchCoords({ tabNumber }) {
 
     if (tabNumber === 1) {
       overlays.shapes.forEach(shape => {
-        if (shape.draw != undefined && shape.draw.area !== undefined) shape?.draw?.setMap(null)
-
+    if (shape.draw !== null) shape?.draw?.setMap(null)
 
       });
       setOverlays(initialsStates.overlays);

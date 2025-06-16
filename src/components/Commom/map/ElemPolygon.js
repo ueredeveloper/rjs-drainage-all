@@ -7,6 +7,7 @@ import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
  * @param {*} param0
  */
 const ElemPolygon = ({ shape, map }) => {
+  
 
   const [polygon, setPolygon] = useState();
 
@@ -31,7 +32,7 @@ const ElemPolygon = ({ shape, map }) => {
 
     polygon.setOptions(
       {
-        paths: shape.shape.coordinates,
+        paths: shape.geometry.coordinates,
         strokeColor: '#' + color,
         strokeOpacity: 0.8,
         strokeWeight: 1,

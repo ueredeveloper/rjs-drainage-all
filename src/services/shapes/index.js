@@ -124,6 +124,29 @@ async function fetchMarkersByUH(uh_codigo) {
 
 }
 
+/**
+ * Filtra os rios pela coordenada fornecida.
+ * @param {number} lat A latitude para o filtro.
+ * @param {number} lng A longitude para o filtro.
+ * @returns {Object} A resposta da requisição com os rios filtrados.
+ */
+async function fetchRiversByCoordinates(lat, lng) {
+
+  let url = 'https://njs-drainage-ueredeveloper.replit.app';
 
 
-export { fetchShape, fetchGrantsInsideShape, fetchOttoBasins, fetchMarkersByUH }
+  let response = await fetch(url + `/rivers/filterRiversByCoordinates?lat=${lat}&lng=${lng}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/JSON',
+      'Content-Type': 'application/JSON',
+    }
+  }).then(res => {
+    return res.json();
+  })
+  return response;
+}
+
+
+
+export { fetchShape, fetchGrantsInsideShape, fetchOttoBasins, fetchRiversByCoordinates, fetchMarkersByUH }

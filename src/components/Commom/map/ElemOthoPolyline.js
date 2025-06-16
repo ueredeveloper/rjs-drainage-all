@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
  * @param {*} param0 
  */
 const ElemOttoPolyline = ({ attributes, geometry, map }) => {
+    
 
     const [polyline, setPolyline] = useState();
 
@@ -28,8 +29,7 @@ const ElemOttoPolyline = ({ attributes, geometry, map }) => {
                 path: geometry.rings[0][0],
                 geodesic: true,
                 strokeColor: "#0000FF",
-                strokeOpacity: 0.8,
-                strokeWeight: 1,
+                strokeWeight: 3,
                 map,
             }
         );

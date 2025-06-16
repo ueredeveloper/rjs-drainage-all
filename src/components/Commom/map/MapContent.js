@@ -19,7 +19,7 @@ import MapControllers from './MapControllers';
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
 function MapContent({ checkboxes, setCheckboxes }) {
-
+  
 
   // Estados do componente
   const [mode] = useState('light');
@@ -27,7 +27,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
   const [popups, setPopups] = useState([]);
 
   // Obtém os estados do contexto de análise
-  const { map, setMap, marker, overlays, setOverlays, shapesFetched } = useData();
+  const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
 
   /**
      * Função para converter um nome de dado em um nome de forma.
@@ -127,7 +127,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
         }
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
-        {shapesFetched.map((shape) => {
+        {overlaysFetched.map((shape) => {
 
           let listCheckBoxes = Object.values(checkboxes).flatMap(group =>
             Object.values(group).map(item => ({
@@ -140,8 +140,14 @@ function MapContent({ checkboxes, setCheckboxes }) {
           /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
           return listCheckBoxes.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
-              return shape.shape.map((sh, ii) => {
-                return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+
+              return shape.geometry.map((sh, ii) => {
+
+                if (sh.geometry.type === 'LineString') {
+                  return <ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} setOverlays={setOverlays} />
+                } else {
+                  return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+                }
               });
             }
           });

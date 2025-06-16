@@ -36,6 +36,7 @@ function DataAnalyseTable() {
   })*/
 
   const { hgAnalyse } = useData();
+  
 
   return (
     <Box sx={{ display: "flex", flexDirection: 'column'}}>

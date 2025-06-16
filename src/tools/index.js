@@ -33,18 +33,28 @@ function createCircleRings(center, radius) {
  * @param {object} shape - Shape a ser convertido.
  * @returns {object[]} - Array de coordenadas no formato do Google Maps.
  */
-function converterPostgresToGmaps(shape) {
+function converterPostgresToGmaps(geometry) {
 
-  if (shape.shape.type === 'MultiPolygon') {
-    let _paths = shape.shape.coordinates.map(coord => {
+  if (geometry.type === 'MultiPolygon') {
+
+    let _paths = geometry.coordinates.map(coord => {
       return coord[0].map(c => {
         return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
       })
     })
     return _paths
+
+  } else if (geometry.type === 'LineString') {
+
+    return geometry.coordinates.map(coord => { return { lat: coord[1], lng: coord[0] } })
+
+  } else if (geometry.type === 'MultiLinestring') {
+
+    return geometry.coordinates.map(coord => { return { lat: coord[1], lng: coord[0] } })
   }
   else {
-    let _paths = shape.shape.coordinates.map(coord => {
+
+    let _paths = geometry.coordinates.map(coord => {
       return coord.map(c => {
         return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
       })
@@ -285,8 +295,6 @@ const convertOthoCoordToGmaps = (features) => {
  */
 const joinOttoBasins = (polygons) => {
 
-  console.log(polygons)
-
   // Função para unir polígonos, se não conseguir com algum continua a união.
   function unionPolygons(polygons) {
     if (!polygons || polygons.length === 0) {
@@ -340,8 +348,6 @@ const joinOttoBasins = (polygons) => {
 
 const getMarkersInsideOttoBasins = (polygons, markers, map) => {
 
-
-
   let result = {
     "subterranea": null,
     "superficial": [],
@@ -349,7 +355,6 @@ const getMarkersInsideOttoBasins = (polygons, markers, map) => {
     "lancamento_efluentes": null,
     "lancamento_pluviais": null
   }
-
 
   polygons.forEach(polygon => {
 
@@ -386,7 +391,6 @@ const getMarkersInsideOttoBasins = (polygons, markers, map) => {
 }
 
 
-
 /**
  * Calcula o centroide de um polígono.
  * @param {Array<object>} vertices Lista de caminhos (vértices) do polígono.
@@ -418,20 +422,21 @@ const calculateCentroid = (vertices) => {
 /**
  * Busca uma unidade hidrográfica com base no código informado (`uhCodigo`).
  * 
- * A função verifica se os shapes já foram previamente buscados e armazenados em `shapesFetched`.
+ * A função verifica se os shapes já foram previamente buscados e armazenados em `overlaysFetched`.
  * Caso contrário, realiza o fetch dos dados da camada `unidades_hidrograficas`, formata os dados
- * e atualiza o estado através de `setShapesFetched`.
+ * e atualiza o estado através de `setOverlaysFetched`.
  * 
  * @async
  * @function
  * @param {Function} fetchShape - Função assíncrona que realiza o fetch dos dados da camada (ex: via API).
- * @param {Array<Object>} shapesFetched - Lista de objetos com shapes já buscados.
- * @param {Function} setShapesFetched - Função para atualizar o estado dos shapes (ex: setState do React).
+ * @param {Array<Object>} overlaysFetched - Lista de objetos com shapes já buscados.
+ * @param {Function} setOverlaysFetched - Função para atualizar o estado dos shapes (ex: setState do React).
  * @param {number|string} uhCodigo - Código da unidade hidrográfica a ser localizada.
  * @returns {Promise<Object|undefined>} Retorna a unidade hidrográfica correspondente ou `undefined` se não encontrada.
  */
-const searchHydrograficUnit = async (fetchShape, shapesFetched, setShapesFetched, uhCodigo) => {
-  let hydrographicBasins = shapesFetched.find(shape => shape.name === 'unidades_hidrograficas');
+const searchHydrograficUnit = async (fetchShape, overlaysFetched, setOverlaysFetched, uhCodigo) => {
+
+  let hydrographicBasins = overlaysFetched.find(shape => shape.name === 'unidades_hidrograficas');
 
   let hydrographicBasin;
 
@@ -443,14 +448,13 @@ const searchHydrograficUnit = async (fetchShape, shapesFetched, setShapesFetched
     hydrographicBasins = await fetchShape('unidades_hidrograficas').then(__shape => {
       // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
       return __shape.map(sh => {
-        return { ...sh, shapeName: 'unidades_hidrograficas', shape: { coordinates: converterPostgresToGmaps(sh) } }
+        return { ...sh, shapeName: 'unidades_hidrograficas', geometry: { type: sh.shape.type, coordinates: converterPostgresToGmaps(sh.shape) } }
       })
     });
 
-    setShapesFetched(prev => [...prev, { name: 'unidades_hidrograficas', shape: hydrographicBasins }]);
+    setOverlaysFetched(prev => [...prev, { name: 'unidades_hidrograficas', geometry: hydrographicBasins }]);
 
     hydrographicBasin = hydrographicBasins.find(hb => hb.uh_codigo === Number(uhCodigo))
-
 
     return hydrographicBasin;
 

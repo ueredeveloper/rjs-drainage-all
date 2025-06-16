@@ -39,8 +39,6 @@ function calculateQOutorgadaSecao(markers) {
   */
 function calculateQReferenciaSecao(uh, area_contribuicao) {
 
-  console.log(uh, area_contribuicao)
-
   let months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
   let q_referencia_secao = [];
@@ -265,9 +263,9 @@ function ajustarQSecaoMD(h_ajuste) {
 *
 *
 */
-function ajustarHoraBombAjustada(h_ajuste, q_solicitada) {
+function ajustarHoraBombAjustada(q_secao_m_d, q_solicitada) {
 
-  return h_ajuste.q_secao_m_d.values.map((q_md, i) => {
+  return q_secao_m_d.map((q_md, i) => {
     // arredondar para cima => resultado + 0.5 e round(resultado)
     let h_bom_aju = (Number(q_md) / (Number(q_solicitada.values[i]) * 3.8)) + 0.5
     return Math.round(h_bom_aju);

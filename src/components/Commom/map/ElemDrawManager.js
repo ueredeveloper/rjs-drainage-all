@@ -126,6 +126,7 @@ const ElemDrawManager = ({ map }) => {
         polygon.getPath().getArray().forEach(p => {
           serverPolygon.push([p.lng(), p.lat()])
         });
+        // Fecha o polígono com a primeira coordenada da array
         serverPolygon = [...serverPolygon, serverPolygon[0]];
 
         let paths = polygon.getPaths();

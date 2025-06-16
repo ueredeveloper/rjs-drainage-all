@@ -7,6 +7,7 @@ import { numberWithCommas } from '../../../tools';
  * @param {*} param0
  */
 const ElemPopupOverlay = ({ map, position, content, draw, setPopups }) => {
+    
 
     const overlayRef = useRef(null);
 

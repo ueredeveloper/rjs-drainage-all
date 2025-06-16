@@ -13,10 +13,10 @@ import {
 } from "@mui/material";
 import LayersClearIcon from "@mui/icons-material/LayersClear";
 import LayersIcon from "@mui/icons-material/Layers";
-import { Height } from "@mui/icons-material";
+import { Height, MarkEmailReadSharp } from "@mui/icons-material";
 import { converterPostgresToGmaps } from "../../../tools";
 import { useData } from "../../../hooks/analyse-hooks";
-import { fetchShape } from "../../../services/shapes";
+import { fetchRiversByCoordinates, fetchShape } from "../../../services/shapes";
 import { initialsStates } from "../../../initials-states";
 
 const checkboxOptions = {
@@ -24,24 +24,29 @@ const checkboxOptions = {
         {
             name: "bacias_hidrograficas",
             alias: "Bacias Hidrográficas",
-            checked: false,
+            checked: false
         },
         {
             name: "unidades_hidrograficas",
             alias: "Unidades Hidrográficas",
-            checked: false,
+            checked: false
         },
+        {
+            name: "rios_df",
+            alias: "Rios do DF",
+            checked: false
+        }
     ],
     Subterrânea: [
         {
             name: "hidrogeo_fraturado",
             alias: "Fraturado",
-            checked: false,
+            checked: false
         },
         {
             name: "hidrogeo_poroso",
             alias: "Poroso",
-            checked: false,
+            checked: false
         },
     ],
 };
@@ -68,7 +73,7 @@ const checkboxOptions = {
  */
 function MapControllers({ checkboxes, setCheckboxes }) {
 
-    const { shapesFetched, setShapesFetched, setSubsystem, setHgAnalyse, overlays, setOverlays } = useData();
+    const { marker, overlaysFetched, setOverlaysFetched, setSubsystem, setHgAnalyse, overlays, setOverlays } = useData();
 
     const [openPanel, setOpenPanel] = useState(false);
 
@@ -98,8 +103,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
     };
 
     useEffect(() => {
+        
 
-
+        // Converter objeto em array com os valores name, alias e checked
         const listCheckboxes = Object.values(checkboxes).flatMap(group =>
             Object.values(group).map(item => ({
                 name: item.name,
@@ -112,38 +118,66 @@ function MapControllers({ checkboxes, setCheckboxes }) {
         listCheckboxes.forEach(async checkbox => {
             if (checkbox.checked) {
 
+                // verificar se overlaysFetched está vazio
+                if (overlaysFetched.length === 0) {
+                    // A busca dos rios é em outro método
+                    if (checkbox.name === "rios_df") {
 
-
-                // verificar se shapesFetched está vazio
-                if (shapesFetched.length === 0) {
-                    const _shape = await fetchShape(checkbox.name).then(__shape => {
-                        // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
-                        return __shape.map(sh => {
-                            return { ...sh, shapeName: checkbox.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
-                        })
-                    });
-
-                    setShapesFetched(prev => [...prev, { name: checkbox.name, shape: _shape }]);
-                } else {
-                    // verifica se a shape está presente na array shapesFetched
-                    let searchShapesFetched = shapesFetched.find(st => st.name === checkbox.name);
-                    // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
-                    // Assim, não se repete solicitação de camada no servidor.]
-                    if (searchShapesFetched === undefined) {
-                        const _shape = await fetchShape(checkbox.name).then(__shape => {
+                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
                             return __shape.map(sh => {
 
-                                return { ...sh, shapeName: checkbox.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
+                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
                             })
                         });
-                        setShapesFetched(prev => [...prev, { name: checkbox.name, shape: _shape }]);
+                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                    } else {
+
+                        const _shape = await fetchShape(checkbox.name).then(__shape => {
+                            // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
+                            return __shape.map(sh => {
+                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
+                            })
+                        });
+
+                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+
                     }
+
+                } else {
+                    // A busca dos rios é em outro método
+                    if (checkbox.name === "rios_df") {
+
+                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
+                            return __shape.map(sh => {
+
+                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
+                            })
+                        });
+                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+
+                    } else {
+                        // verifica se a shape está presente na array overlaysFetched
+                        let searchoverlaysFetched = overlaysFetched.find(st => st.name === checkbox.name);
+                        // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
+                        // Assim, não se repete solicitação de camada no servidor.]
+                        if (searchoverlaysFetched === undefined) {
+                            const _shape = await fetchShape(checkbox.name).then(__shape => {
+                                return __shape.map(sh => {
+
+                                    return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
+                                })
+                            });
+
+                            setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                        }
+                    }
+
                 }
 
             }
         })
 
-    }, [checkboxes, setShapesFetched, shapesFetched]);
+    }, [checkboxes, setOverlaysFetched, overlaysFetched]);
 
     return (
         <Box

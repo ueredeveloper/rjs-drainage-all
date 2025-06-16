@@ -71,3 +71,12 @@ Alterar a cor da borda dos polígonos para vermelho.
 1️⃣ Alterar a cor da borda dos polígonos
  Alterar a cor da borda dos polígonos para vermelho.
 
+📅 **Data:** 16 de JUNHO de 2025  
+👨‍💻 **Responsável:** [Fabrício Barrozo]  
+
+- [X] Cálculos Superficiais
+- [X] Atualização dos cálculos ao digitar um valor em todas as linhas necessárias
+- [X] Adicionar rios do DF.
+- [] Inserir infowindow nas polylines dos rios.
+
+
