@@ -47,7 +47,7 @@ export function ElemDemand({ demand, setUser }) {
 
             // Limpa o mapa para o cálculo de nova disponibilidade 
             overlays.shapes.forEach(shape => {
-                shape.draw?.setMap(null)
+                if (shape.draw !== null) shape?.draw?.setMap(null)
             });
             setOverlays(initialsStates.overlays);
 
@@ -100,7 +100,7 @@ export function ElemDemand({ demand, setUser }) {
                             }
                         });
 
-                        let coordinates = { shape: { coordinates: converterPostgresToGmaps({ shape: _hg_shape }) } }
+                        let coordinates = { shape: { type: _hg_shape.type, coordinates: converterPostgresToGmaps(_hg_shape) } }
 
                         let shape = {
                             id: Date.now(),
