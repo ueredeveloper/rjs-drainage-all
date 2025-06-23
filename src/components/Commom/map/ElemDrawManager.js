@@ -1,27 +1,50 @@
+/**
+ * Componente ElemDrawManager
+ * Gerencia a criação de formas desenhadas no mapa do Google Maps, escuta eventos de desenho
+ * e interage com InfoWindows para personalização visual das formas.
+ *
+ * @param {Object} props - Propriedades do componente.
+ * @param {google.maps.Map} props.map - Instância do mapa Google Maps onde os desenhos ocorrerão.
+ * @returns {null} Componente não renderiza elementos visuais diretamente.
+ */
+
 import { useEffect } from 'react';
-import { findAllPointsInRectangle, findAllPointsInPolygon, findAllPointsInCircle } from '../../../services/geolocation';
-import { calculateCircleArea, calculatePolygonArea, calculatePolylineLength, calculateRectangleArea } from '../../../tools';
-
+import {
+  findAllPointsInRectangle,
+  findAllPointsInPolygon,
+  findAllPointsInCircle
+} from '../../../services/geolocation';
+import {
+  calculateCircleArea,
+  calculatePolygonArea,
+  calculatePolylineLength,
+  calculateRectangleArea
+} from '../../../tools';
 import { useData } from '../../../hooks/analyse-hooks';
-
+import {
+  ElemDrawInfoWindow,
+  attachDrawInfoListeners
+} from './infowindow/ElemDrawInfoWindow';
 
 /**
- * Componente para gerenciar a adição de formas geométricas no mapa (marcadores, círculos, polígonos, retângulos, polilinhas).
- * 
+ * Gerencia o desenho de formas no mapa e a interação com InfoWindows.
+ *
  * @component
- * @param {Object} map - Instância do mapa do Google Maps onde as formas serão desenhadas.
- * @param {function} setData - Função para adicionar objetos geométricos à variável `data`.
+ * @param {Object} props - Propriedades do componente.
+ * @param {google.maps.Map} props.map - Instância do Google Maps.
+ * @returns {null}
  */
 const ElemDrawManager = ({ map }) => {
-
-  const { setMarker, setOverlays } = useData();
-
+  const { setMarker, setOverlays, overlays } = useData();
 
   useEffect(() => {
-    
+    if (!window.google || !window.google.maps) return;
 
-    // Inicializa o DrawingManager do Google Maps para permitir o desenho de várias formas geométricas no mapa.
-    let draw = new window.google.maps.drawing.DrawingManager({
+    /**
+     * Inicializa o DrawingManager do Google Maps.
+     * @type {google.maps.drawing.DrawingManager}
+     */
+    const draw = new window.google.maps.drawing.DrawingManager({
       drawingControl: true,
       drawingControlOptions: {
         position: window.google.maps.ControlPosition.TOP_CENTER,
@@ -33,111 +56,150 @@ const ElemDrawManager = ({ map }) => {
           window.google.maps.drawing.OverlayType.POLYLINE
         ],
       },
-      
       circleOptions: {
         fillColor: "#ffff00",
         fillOpacity: 0.2,
         strokeColor: "#ff0000",
         strokeWeight: 1,
-        clickable: false,
+        clickable: true,
         editable: true,
         zIndex: 1,
       },
-
       polygonOptions: {
         strokeColor: "#ff0000",
+        editable: true,
+        clickable: true
       },
-
       rectangleOptions: {
         strokeColor: "#ff0000",
+        editable: true,
+        clickable: true
       },
-
       polylineOptions: {
         strokeColor: "#ff0000",
-      },
-
+        editable: true,
+        clickable: true
+      }
     });
 
+    /** @type {google.maps.Marker | undefined} */
     let marker;
+    /** @type {google.maps.InfoWindow | null} */
+    let currentInfoWindow = null;
 
     /**
-     * Função de callback que é chamada quando o evento de desenho de uma forma é completado.
-     * Dependendo do tipo de forma desenhada (marcador, círculo, polígono, retângulo, polilinha), 
-     * as respectivas ações são realizadas, como cálculo da área ou comprimento e adição de formas no mapa.
-     * 
-     * @param {Object} event - O evento que contém a informação sobre o tipo de forma desenhada e as coordenadas.
+     * Abre o InfoWindow customizado para uma shape.
+     * @param {Object} shape - Objeto da shape desenhada.
+     * @param {google.maps.LatLng | Object} position - Posição para abrir o InfoWindow.
+     */
+    const openInfoWindow = (shape, position) => {
+      if (currentInfoWindow) {
+        currentInfoWindow.close();
+      }
+
+      let shapeAtual = shape;
+      if (overlays && overlays.shapes) {
+        const found = overlays.shapes.find(s => s.id === shape.id);
+        if (found) shapeAtual = found;
+      }
+
+      const content = ElemDrawInfoWindow(shapeAtual);
+      const infoWindow = new window.google.maps.InfoWindow({
+        content,
+        position,
+      });
+
+      window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+        attachDrawInfoListeners(shapeAtual, setOverlays);
+      });
+
+      // Só dispare o evento se o InfoWindow não está aberto ainda
+      if (!shape.infoWindow || !shape.infoWindow.getMap()) {
+        window.dispatchEvent(new Event('infowindow-open'));
+      }
+      infoWindow.open(map);
+
+      shape.infoWindow = infoWindow;
+      currentInfoWindow = infoWindow;
+    };
+
+    /**
+     * Adiciona listener de clique à shape desenhada.
+     * @param {Object} shapeObj - Objeto da shape.
+     */
+    const addClickListenerToShape = (shapeObj) => {
+      const overlay = shapeObj.draw;
+      if (!overlay) return;
+
+      if (shapeObj.listenerClick) {
+        window.google.maps.event.removeListener(shapeObj.listenerClick);
+      }
+
+      shapeObj.listenerClick = window.google.maps.event.addListener(overlay, 'click', (event) => {
+        openInfoWindow(shapeObj, event.latLng);
+      });
+    };
+
+    /**
+     * Handler para evento de desenho completo no mapa.
      */
     window.google.maps.event.addListener(draw, 'overlaycomplete', async function (event) {
+      const overlay = event.overlay;
+      const type = event.type;
 
-      if (event.type === 'marker') {
-        // Caso seja um marcador, a posição do marcador é obtida e atualizada no estado global
-        if (marker) {
-          marker.setMap(null); // Remove o marcador anterior
-        }
-        marker = event.overlay;
-        let position = marker.position;
-        marker.setMap(null); // Remove o marcador do mapa temporariamente
+      // Se for marcador, salva coordenadas e remove do mapa (controle externo)
+      if (type === 'marker') {
+        if (marker) marker.setMap(null);
+        marker = overlay;
+        const position = marker.position;
+        marker.setMap(null);
         setMarker(prev => ({
           ...prev,
           int_latitude: position.lat(),
           int_longitude: position.lng()
         }));
-
-
-
+        return;
       }
 
-      if (event.type === 'circle') {
-        // Caso seja um círculo, obtém a área e os pontos dentro do círculo
-        let circle = event.overlay;
-        
-        const { center, radius } = circle;
-        let bounds = circle.getBounds();
-        var lat = bounds.getNorthEast().lat();
-        var lng = circle.getCenter().lng();
+      /**
+       * Objeto base da shape desenhada.
+       * @type {Object}
+       */
+      let shape = {
+        id: Date.now(),
+        type,
+        map,
+        draw: overlay,
+        position: null,
+        area: null,
+        meters: null,
+        markers: [],
+        calculoAreaAtivo: true,
+      };
 
-        let markers = await findAllPointsInCircle({
-          center: { lng: center.lng(), lat: center.lat() },
+      // === Círculo ===
+      if (type === 'circle') {
+        const center = overlay.getCenter();
+        const radius = overlay.getRadius();
+        shape.position = center.toJSON();
+        shape.radius = radius;
+        shape.area = calculateCircleArea(radius);
+        shape.markers = await findAllPointsInCircle({
+          center: shape.position,
           radius: parseInt(radius)
         });
-
-        let shape = {
-          id: Date.now(),
-          type: 'circle',
-          position: { lat: lat, lng: lng },
-          map: map,
-          draw: event.overlay,
-          markers: markers,
-          radius: radius,
-          area: calculateCircleArea(radius)
-        };
-
-        setOverlays(prev => ({
-          ...prev,
-          shapes: [...prev.shapes, shape]
-        }));
-        
       }
 
-      if (event.type === 'polygon') {
-        // Caso seja um polígono, obtém as coordenadas do polígono e busca os pontos dentro dele
-        let polygon = event.overlay;
-        let serverPolygon = [];
-        polygon.getPath().getArray().forEach(p => {
-          serverPolygon.push([p.lng(), p.lat()])
-        });
-        // Fecha o polígono com a primeira coordenada da array
-        serverPolygon = [...serverPolygon, serverPolygon[0]];
+      // === Polígono ===
+      if (type === 'polygon') {
+        const serverPolygon = overlay.getPath().getArray().map(p => [p.lng(), p.lat()]);
+        const paths = overlay.getPaths();
+        let lat = null, lng = null;
 
-        let paths = polygon.getPaths();
-        let lat = null;
-        let lng = null;
-
-        // Itera para buscar a coordenada mais alta no polígono para que o infowindow fique sempre acima do polígono.
-        paths.forEach(function (path) {
-          path.forEach(function (point) {
-            var latitude = point.lat();
-            var longitude = point.lng();
+        paths.forEach(path => {
+          path.forEach(point => {
+            const latitude = point.lat();
+            const longitude = point.lng();
             if (lat === null || latitude > lat) {
               lat = latitude;
               lng = longitude;
@@ -145,84 +207,57 @@ const ElemDrawManager = ({ map }) => {
           });
         });
 
-        let shape = {
-          id: Date.now(),
-          type: 'polygon',
-          position: { lat: lat, lng: lng },
-          map: map,
-          draw: event.overlay,
-          markers: await findAllPointsInPolygon(serverPolygon),
-          area: calculatePolygonArea(event.overlay)
-        };
-
-        setOverlays(prev => ({
-          ...prev,
-          shapes: [...prev.shapes, shape]
-        }));
+        shape.position = { lat, lng };
+        shape.area = calculatePolygonArea(overlay);
+        shape.markers = await findAllPointsInPolygon([...serverPolygon, serverPolygon[0]]);
       }
 
-      if (event.type === 'rectangle') {
-        // Caso seja um retângulo, obtém as coordenadas das extremidades e calcula a área
-        let bounds = event.overlay.getBounds();
-        let NE = bounds.getNorthEast();
-        let SW = bounds.getSouthWest();
-        let lat = NE.lat();
-        let lng = NE.lng();
-
-        let shape = {
-          id: Date.now(),
-          type: 'rectangle',
-          position: { lat: lat, lng: lng },
-          map: map,
-          draw: event.overlay,
-          NE: NE,
-          SW: SW,
-          area: calculateRectangleArea(event.overlay.getBounds()),
-          markers: await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat())
-        };
-
-        setOverlays(prev => ({
-          ...prev,
-          shapes: [...prev.shapes, shape]
-        }));
+      // === Retângulo ===
+      if (type === 'rectangle') {
+        const bounds = overlay.getBounds();
+        const NE = bounds.getNorthEast();
+        const SW = bounds.getSouthWest();
+        shape.NE = NE;
+        shape.SW = SW;
+        shape.position = NE.toJSON();
+        shape.area = calculateRectangleArea(bounds);
+        shape.markers = await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat());
       }
 
-      if (event.type === 'polyline') {
-        // Caso seja uma polilinha, obtém o comprimento da linha desenhada
-        let polyline = event.overlay;
-        let path = polyline.getPath();
-        var lastPointIndex = path.getLength() - 1;
-        let lat = path.getAt(lastPointIndex).lat();
-        let lng = path.getAt(lastPointIndex).lng();
-
-        let shape = {
-          id: Date.now(),
-          type: 'polyline',
-          position: { lat: lat, lng: lng },
-          map: map,
-          markers: {
-            "subterranea": [],
-            "superficial": [],
-            "barragem": [],
-            "lancamento_efluentes": [],
-            "lancamento_pluviais": []
-          },
-          draw: polyline,
-          meters: calculatePolylineLength(polyline)
+      // === Linha (Polyline) ===
+      if (type === 'polyline') {
+        const path = overlay.getPath();
+        const lastPoint = path.getAt(path.getLength() - 1);
+        shape.position = lastPoint.toJSON();
+        shape.meters = calculatePolylineLength(overlay);
+        shape.markers = {
+          subterranea: [],
+          superficial: [],
+          barragem: [],
+          lancamento_efluentes: [],
+          lancamento_pluviais: []
         };
-
-        setOverlays(prev => ({
-          ...prev,
-          shapes: [...prev.shapes, shape]
-        }));
       }
+
+      addClickListenerToShape(shape);
+
+      setOverlays(prev => ({
+        ...prev,
+        shapes: [...prev.shapes, shape]
+      }));
     });
 
-    draw.setMap(map); // Inicializa o DrawingManager no mapa
+    draw.setMap(map);
 
-  }, [map]);
+    // Cleanup: remove barra de ferramentas e listeners ao desmontar
+    return () => {
+      draw.setMap(null);
+      window.google.maps.event.clearInstanceListeners(draw);
+    };
+  }, [map]); // Apenas map como dependência
 
   return null;
 };
 
 export default ElemDrawManager;
+

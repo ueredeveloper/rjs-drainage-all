@@ -83,4 +83,32 @@ Alterar a cor da borda dos polígonos para vermelho.
 - [] Adicionar nas informações das outorgas o tipo de uso, se prévia, direito de uso ou registro. Verificar se é possível adicionar se vendida, arquivado etc.
 
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+📅 **Data:** 23 de junho de 2025 
+👨‍💻 **Responsável:** [Luan Carvalho]
+
+✅ Objetivo
+Implementar e integrar o InfoWindow personalizado para formas desenhadas no Google Maps, com suporte completo a estilos e interações.
+
+🔹 Tarefas
+
+[x] Criar componente ElemDrawManager para gerenciar desenhos no mapa
+
+[x] Implementar lógica de detecção e captura de overlaycomplete
+
+[x] Identificar tipo de shape desenhada e calcular propriedades específicas (área, posição, marcadores)
+
+[x] Criar InfoWindow customizado com conteúdo dinâmico (ElemDrawInfoWindow)
+
+[x] Abrir InfoWindow ao clicar sobre a shape desenhada
+
+[x] Adicionar listeners interativos dentro do InfoWindow (cor, opacidade, cálculo de área)
+
+[x] Armazenar referência ao InfoWindow na shape desenhada para controle
+
+[x] Atualizar estado global de overlays após cada desenho
+
+[x] Garantir o encerramento adequado do DrawingManager no unmount do componente
+
 
