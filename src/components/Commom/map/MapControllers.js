@@ -125,7 +125,8 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             // for...of ao invés de forEach para aguardar async/await
             for (const checkbox of listCheckboxes) {
                 if (checkbox.checked) {
-                    // Para rios_df, criar chave única com coordenadas
+                    
+                    //criar chave única com coordenadas
                     const searchKey = checkbox.name === "rios_df" 
                         ? `${checkbox.name}_${marker.int_latitude}_${marker.int_longitude}`
                         : checkbox.name;
