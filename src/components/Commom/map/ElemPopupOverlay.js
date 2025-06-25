@@ -3,6 +3,8 @@ import { numberWithCommas } from '../../../tools';
 
 /**
  * Elemento de renderização de um popup com informações de polígonos, retângulos etc.
+ * Cria um OverlayView customizado do Google Maps para exibir informações sobre shapes desenhadas.
+ *
  * @component
  * @param {Object} props
  * @param {Object} props.map - Instância do Google Maps.
@@ -16,7 +18,7 @@ const ElemPopupOverlay = ({ map, position, content, draw, onInfoWindowOpen }) =>
     const overlayRef = useRef(null);
 
     useEffect(() => {
-        if (!map || !position || !content) return;
+        if (!map || !position || !content || !draw) return;
 
         /**
          * Classe customizada para OverlayView do Google Maps.
@@ -133,19 +135,19 @@ const ElemPopupOverlay = ({ map, position, content, draw, onInfoWindowOpen }) =>
         overlayRef.current = popupOverlay;
 
         // Listener para ocultar o overlay quando o InfoWindow abrir
-
         const handleInfoWindowOpen = () => {
             popupOverlay.setMap(null);
         };
-
-       window.addEventListener('infowindow-open', handleInfoWindowOpen);
+        window.addEventListener('close-all-infowindows', handleInfoWindowOpen);
+        window.addEventListener('infowindow-open', handleInfoWindowOpen);
 
         return () => {
             popupOverlay.setMap(null);
-           // window.removeEventListener('infowindow-open', handleInfoWindowOpen);
+            window.removeEventListener('close-all-infowindows', handleInfoWindowOpen);
+            window.removeEventListener('infowindow-open', handleInfoWindowOpen);
         };
 
-    }, [map, position, content, onInfoWindowOpen]);
+    }, [map, position, content, draw, onInfoWindowOpen]);
 
     useEffect(() => {
         // Garante que o overlay está criado e atualiza a exibição do conteúdo
@@ -160,6 +162,8 @@ const ElemPopupOverlay = ({ map, position, content, draw, onInfoWindowOpen }) =>
 
 /**
  * Função auxiliar para criar o conteúdo do popup conforme o tipo de shape desenhado.
+ * Retorna um elemento HTML com informações formatadas.
+ *
  * @param {Object} draw - Objeto com informações do desenho (tipo, área, metros, etc).
  * @returns {HTMLElement|string} Elemento HTML com o conteúdo do popup ou string vazia.
  */

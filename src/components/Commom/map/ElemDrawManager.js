@@ -8,23 +8,21 @@
  * @returns {null} Componente não renderiza elementos visuais diretamente.
  */
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 import {
   findAllPointsInRectangle,
   findAllPointsInPolygon,
-  findAllPointsInCircle
-} from '../../../services/geolocation';
+  findAllPointsInCircle,
+} from "../../../services/geolocation";
 import {
   calculateCircleArea,
   calculatePolygonArea,
   calculatePolylineLength,
-  calculateRectangleArea
-} from '../../../tools';
-import { useData } from '../../../hooks/analyse-hooks';
-import {
-  ElemDrawInfoWindow,
-  attachDrawInfoListeners
-} from './infowindow/ElemDrawInfoWindow';
+  calculateRectangleArea,
+} from "../../../tools";
+import { useData } from "../../../hooks/analyse-hooks";
+import HTMLDrawInfoContent from "./infowindow/html-draw-infowindow-content";
+import { ElemDrawInfoWindow } from "./infowindow/ElemDrawInfoWindow";
 
 /**
  * Gerencia o desenho de formas no mapa e a interação com InfoWindows.
@@ -35,6 +33,7 @@ import {
  * @returns {null}
  */
 const ElemDrawManager = ({ map }) => {
+  // Hooks customizados para manipular marcadores e shapes
   const { setMarker, setOverlays, overlays } = useData();
 
   useEffect(() => {
@@ -42,6 +41,7 @@ const ElemDrawManager = ({ map }) => {
 
     /**
      * Inicializa o DrawingManager do Google Maps.
+     * Permite desenhar marcadores, círculos, polígonos, retângulos e linhas.
      * @type {google.maps.drawing.DrawingManager}
      */
     const draw = new window.google.maps.drawing.DrawingManager({
@@ -53,7 +53,7 @@ const ElemDrawManager = ({ map }) => {
           window.google.maps.drawing.OverlayType.CIRCLE,
           window.google.maps.drawing.OverlayType.POLYGON,
           window.google.maps.drawing.OverlayType.RECTANGLE,
-          window.google.maps.drawing.OverlayType.POLYLINE
+          window.google.maps.drawing.OverlayType.POLYLINE,
         ],
       },
       circleOptions: {
@@ -68,18 +68,18 @@ const ElemDrawManager = ({ map }) => {
       polygonOptions: {
         strokeColor: "#ff0000",
         editable: true,
-        clickable: true
+        clickable: true,
       },
       rectangleOptions: {
         strokeColor: "#ff0000",
         editable: true,
-        clickable: true
+        clickable: true,
       },
       polylineOptions: {
         strokeColor: "#ff0000",
         editable: true,
-        clickable: true
-      }
+        clickable: true,
+      },
     });
 
     /** @type {google.maps.Marker | undefined} */
@@ -93,160 +93,179 @@ const ElemDrawManager = ({ map }) => {
      * @param {google.maps.LatLng | Object} position - Posição para abrir o InfoWindow.
      */
     const openInfoWindow = (shape, position) => {
-      if (currentInfoWindow) {
-        currentInfoWindow.close();
-      }
+      // Fecha todos os InfoWindows abertos
+      window.dispatchEvent(new Event("close-all-infowindows"));
 
-      let shapeAtual = shape;
-      if (overlays && overlays.shapes) {
-        const found = overlays.shapes.find(s => s.id === shape.id);
-        if (found) shapeAtual = found;
-      }
+      if (currentInfoWindow) currentInfoWindow.close();
 
-      const content = ElemDrawInfoWindow(shapeAtual);
+      // Cria o conteúdo customizado
+      const content = HTMLDrawInfoContent(shape);
       const infoWindow = new window.google.maps.InfoWindow({
         content,
         position,
       });
-
-      window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
-        attachDrawInfoListeners(shapeAtual, setOverlays);
-      });
-
-      // Só dispare o evento se o InfoWindow não está aberto ainda
-      if (!shape.infoWindow || !shape.infoWindow.getMap()) {
-        window.dispatchEvent(new Event('infowindow-open'));
-      }
       infoWindow.open(map);
+
+      // Conecta os controles do InfoWindow à shape
+      setTimeout(() => {
+        ElemDrawInfoWindow(shape, setOverlays, content);
+      }, 0);
 
       shape.infoWindow = infoWindow;
       currentInfoWindow = infoWindow;
     };
 
     /**
-     * Adiciona listener de clique à shape desenhada.
+     * Adiciona listener de clique à shape desenhada para abrir o InfoWindow.
      * @param {Object} shapeObj - Objeto da shape.
      */
     const addClickListenerToShape = (shapeObj) => {
       const overlay = shapeObj.draw;
       if (!overlay) return;
 
+      // Remove listener antigo, se existir
       if (shapeObj.listenerClick) {
         window.google.maps.event.removeListener(shapeObj.listenerClick);
       }
 
-      shapeObj.listenerClick = window.google.maps.event.addListener(overlay, 'click', (event) => {
-        openInfoWindow(shapeObj, event.latLng);
-      });
+      // Adiciona novo listener
+      shapeObj.listenerClick = window.google.maps.event.addListener(
+        overlay,
+        "click",
+        (event) => {
+          openInfoWindow(shapeObj, event.latLng);
+        }
+      );
     };
 
     /**
      * Handler para evento de desenho completo no mapa.
+     * Cria objeto shape, calcula área/posição e adiciona ao estado global.
      */
-    window.google.maps.event.addListener(draw, 'overlaycomplete', async function (event) {
-      const overlay = event.overlay;
-      const type = event.type;
+    window.google.maps.event.addListener(
+      draw,
+      "overlaycomplete",
+      async function (event) {
+        const overlay = event.overlay;
+        const type = event.type;
 
-      // Se for marcador, salva coordenadas e remove do mapa (controle externo)
-      if (type === 'marker') {
-        if (marker) marker.setMap(null);
-        marker = overlay;
-        const position = marker.position;
-        marker.setMap(null);
-        setMarker(prev => ({
-          ...prev,
-          int_latitude: position.lat(),
-          int_longitude: position.lng()
-        }));
-        return;
-      }
+        // Se for marcador, salva coordenadas e remove do mapa (controle externo)
+        if (type === "marker") {
+          if (marker) marker.setMap(null);
+          marker = overlay;
+          const position = marker.position;
+          marker.setMap(null);
+          setMarker((prev) => ({
+            ...prev,
+            int_latitude: position.lat(),
+            int_longitude: position.lng(),
+          }));
+          return;
+        }
 
-      /**
-       * Objeto base da shape desenhada.
-       * @type {Object}
-       */
-      let shape = {
-        id: Date.now(),
-        type,
-        map,
-        draw: overlay,
-        position: null,
-        area: null,
-        meters: null,
-        markers: [],
-        calculoAreaAtivo: true,
-      };
-
-      // === Círculo ===
-      if (type === 'circle') {
-        const center = overlay.getCenter();
-        const radius = overlay.getRadius();
-        shape.position = center.toJSON();
-        shape.radius = radius;
-        shape.area = calculateCircleArea(radius);
-        shape.markers = await findAllPointsInCircle({
-          center: shape.position,
-          radius: parseInt(radius)
-        });
-      }
-
-      // === Polígono ===
-      if (type === 'polygon') {
-        const serverPolygon = overlay.getPath().getArray().map(p => [p.lng(), p.lat()]);
-        const paths = overlay.getPaths();
-        let lat = null, lng = null;
-
-        paths.forEach(path => {
-          path.forEach(point => {
-            const latitude = point.lat();
-            const longitude = point.lng();
-            if (lat === null || latitude > lat) {
-              lat = latitude;
-              lng = longitude;
-            }
-          });
-        });
-
-        shape.position = { lat, lng };
-        shape.area = calculatePolygonArea(overlay);
-        shape.markers = await findAllPointsInPolygon([...serverPolygon, serverPolygon[0]]);
-      }
-
-      // === Retângulo ===
-      if (type === 'rectangle') {
-        const bounds = overlay.getBounds();
-        const NE = bounds.getNorthEast();
-        const SW = bounds.getSouthWest();
-        shape.NE = NE;
-        shape.SW = SW;
-        shape.position = NE.toJSON();
-        shape.area = calculateRectangleArea(bounds);
-        shape.markers = await findAllPointsInRectangle(SW.lng(), SW.lat(), NE.lng(), NE.lat());
-      }
-
-      // === Linha (Polyline) ===
-      if (type === 'polyline') {
-        const path = overlay.getPath();
-        const lastPoint = path.getAt(path.getLength() - 1);
-        shape.position = lastPoint.toJSON();
-        shape.meters = calculatePolylineLength(overlay);
-        shape.markers = {
-          subterranea: [],
-          superficial: [],
-          barragem: [],
-          lancamento_efluentes: [],
-          lancamento_pluviais: []
+        /**
+         * Objeto base da shape desenhada.
+         * @type {Object}
+         */
+        let shape = {
+          id: Date.now(),
+          type,
+          map,
+          draw: overlay,
+          position: null,
+          area: null,
+          meters: null,
+          markers: [],
+          calculoAreaAtivo: true,
         };
+
+        // === Círculo ===
+        if (type === "circle") {
+          const center = overlay.getCenter();
+          const radius = overlay.getRadius();
+          shape.position = center.toJSON();
+          shape.radius = radius;
+          shape.area = calculateCircleArea(radius);
+          shape.markers = await findAllPointsInCircle({
+            center: shape.position,
+            radius: parseInt(radius),
+          });
+        }
+
+        // === Polígono ===
+        if (type === "polygon") {
+          const serverPolygon = overlay
+            .getPath()
+            .getArray()
+            .map((p) => [p.lng(), p.lat()]);
+          const paths = overlay.getPaths();
+          let lat = null,
+            lng = null;
+
+          // Encontra o ponto mais ao norte do polígono
+          paths.forEach((path) => {
+            path.forEach((point) => {
+              const latitude = point.lat();
+              const longitude = point.lng();
+              if (lat === null || latitude > lat) {
+                lat = latitude;
+                lng = longitude;
+              }
+            });
+          });
+
+          shape.position = { lat, lng };
+          shape.area = calculatePolygonArea(overlay);
+          shape.markers = await findAllPointsInPolygon([
+            ...serverPolygon,
+            serverPolygon[0],
+          ]);
+        }
+
+        // === Retângulo ===
+        if (type === "rectangle") {
+          const bounds = overlay.getBounds();
+          const NE = bounds.getNorthEast();
+          const SW = bounds.getSouthWest();
+          shape.NE = NE;
+          shape.SW = SW;
+          shape.position = NE.toJSON();
+          shape.area = calculateRectangleArea(bounds);
+          shape.markers = await findAllPointsInRectangle(
+            SW.lng(),
+            SW.lat(),
+            NE.lng(),
+            NE.lat()
+          );
+        }
+
+        // === Linha (Polyline) ===
+        if (type === "polyline") {
+          const path = overlay.getPath();
+          const lastPoint = path.getAt(path.getLength() - 1);
+          shape.position = lastPoint.toJSON();
+          shape.meters = calculatePolylineLength(overlay);
+          shape.markers = {
+            subterranea: [],
+            superficial: [],
+            barragem: [],
+            lancamento_efluentes: [],
+            lancamento_pluviais: [],
+          };
+        }
+
+        // Adiciona listener de clique para abrir InfoWindow
+        addClickListenerToShape(shape);
+
+        // Adiciona shape ao estado global
+        setOverlays((prev) => ({
+          ...prev,
+          shapes: [...prev.shapes, shape],
+        }));
       }
+    );
 
-      addClickListenerToShape(shape);
-
-      setOverlays(prev => ({
-        ...prev,
-        shapes: [...prev.shapes, shape]
-      }));
-    });
-
+    // Adiciona DrawingManager ao mapa
     draw.setMap(map);
 
     // Cleanup: remove barra de ferramentas e listeners ao desmontar
@@ -260,4 +279,3 @@ const ElemDrawManager = ({ map }) => {
 };
 
 export default ElemDrawManager;
-

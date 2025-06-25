@@ -9,12 +9,60 @@ import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
 
+/**
+ * Formata um valor numérico para string com casas decimais seguras.
+ * @param {any} val - Valor a ser convertido.
+ * @param {number} [decimals=2] - Número de casas decimais.
+ * @returns {string} Valor formatado.
+ */
+function safeNumber(val, decimals = 2) {
+  const num = Number(val);
+  if (isNaN(num) || typeof num !== 'number' || !isFinite(num)) return '0.00';
+  return num.toFixed(decimals);
+}
+
+/**
+ * Gera o conteúdo do popup de cálculo de área/comprimento para cada tipo de shape.
+ * @param {Object} draw - Objeto da shape desenhada.
+ * @returns {string} Texto formatado para o popup.
+ */
+function setContent(draw) {
+  if (!draw) return '';
+  if (draw.type === 'polygon' || draw.type === 'rectangle') {
+    const areaM2 = safeNumber(draw.area, 2);
+    const areaKm2 = safeNumber(Number(draw.area) / 1000000, 4);
+    return `Área: ${areaM2} m² = ${areaKm2} km²`;
+  }
+  if (draw.type === 'circle') {
+    const areaM2 = safeNumber(draw.area, 2);
+    const areaKm2 = safeNumber(Number(draw.area) / 1000000, 4);
+    const radius = safeNumber(draw.radius, 2);
+    return `Área: ${areaM2} m² = ${areaKm2} km², Raio: ${radius} metros`;
+  }
+  if (draw.type === 'polyline') {
+    const meters = safeNumber(draw.meters, 2);
+    return `Comprimento: ${meters} metros`;
+  }
+  return '';
+}
+
+/**
+ * Componente principal que renderiza o conteúdo do mapa, shapes, marcadores e popups.
+ * Gerencia seleção de camadas, renderização condicional e integração com Google Maps.
+ *
+ * @component
+ * @param {Object} props
+ * @param {Array} props.checkBoxState - Estado dos checkboxes para seleção de camadas.
+ * @returns {JSX.Element}
+ */
 function MapContent({ checkBoxState }) {
 
   const [mode] = useState('light');
 
+  // Hooks customizados para manipular estado global do mapa e shapes
   const { map, setMap, marker, overlays = { shapes: [] }, setOverlays, shapesFetched = [], selectedsCharts = {} } = useData();
 
+  // Estado local para controlar quais tipos de shapes estão selecionados
   const [selectedsShapes, setSelectedsShapes] = useState([
     'subterranea',
     'superficial',
@@ -23,6 +71,11 @@ function MapContent({ checkBoxState }) {
     'barragem'
   ]);
 
+  /**
+   * Converte o nome da camada para o nome interno usado nas shapes.
+   * @param {string} dataName
+   * @returns {string}
+   */
   function convertToShapeName(dataName) {
     switch (dataName) {
       case 'Subterrâneas': return 'subterranea';
@@ -34,6 +87,7 @@ function MapContent({ checkBoxState }) {
     }
   }
 
+  // Atualiza os tipos de shapes selecionados conforme os checkboxes
   useEffect(() => {
     const keys = Object.keys(selectedsCharts);
     keys.forEach((key) => {
@@ -49,6 +103,11 @@ function MapContent({ checkBoxState }) {
     });
   }, [selectedsCharts]);
 
+  /**
+   * Renderiza polylines a partir dos dados de marcadores hidrogeológicos.
+   * @param {Array} polylines
+   * @returns {JSX.Element|null}
+   */
   const RenderPolylines = (polylines) => {
     if (!Array.isArray(polylines) || polylines.length === 0) return null;
     const poly = polylines[0];
@@ -67,6 +126,9 @@ function MapContent({ checkBoxState }) {
     }
   };
 
+  /**
+   * Desativa o cálculo de área em todas as shapes desenhadas.
+   */
   function desmarcarCalculoArea() {
     setOverlays(prev => ({
       ...prev,
@@ -78,6 +140,7 @@ function MapContent({ checkBoxState }) {
     }));
   }
 
+  // Listener global para desmarcar cálculo de área ao abrir um InfoWindow
   useEffect(() => {
     const handleInfoWindowOpen = () => {
       desmarcarCalculoArea();
@@ -111,7 +174,7 @@ function MapContent({ checkBoxState }) {
           )
         }
 
-        {/* Renderização dos Popups */}
+        {/* Renderização dos Popups de cálculo de área */}
         {Array.isArray(overlays.shapes) &&
           overlays.shapes.map(shape =>
             shape.calculoAreaAtivo && (
@@ -119,7 +182,7 @@ function MapContent({ checkBoxState }) {
                 key={shape.id}
                 map={map}
                 position={shape.position}
-                content={'conteudo'}
+                content={setContent(shape)}
                 draw={shape}
               />
             )
