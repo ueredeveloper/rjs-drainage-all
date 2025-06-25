@@ -95,7 +95,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
-      <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing", "geometry"]}>
+      <Wrapper apiKey={""} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
         <ElemDrawManager map={map} />

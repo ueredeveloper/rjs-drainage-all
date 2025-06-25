@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
     Box,
@@ -24,33 +23,32 @@ const checkboxOptions = {
         {
             name: "bacias_hidrograficas",
             alias: "Bacias Hidrográficas",
-            checked: false
+            checked: false,
         },
         {
             name: "unidades_hidrograficas",
             alias: "Unidades Hidrográficas",
-            checked: false
+            checked: false,
         },
         {
             name: "rios_df",
             alias: "Rios do DF",
-            checked: false
-        }
+            checked: false,
+        },
     ],
     Subterrânea: [
         {
             name: "hidrogeo_fraturado",
             alias: "Fraturado",
-            checked: false
+            checked: false,
         },
         {
             name: "hidrogeo_poroso",
             alias: "Poroso",
-            checked: false
+            checked: false,
         },
     ],
 };
-
 
 /**
  * Componente React responsável pelos controladores do mapa.
@@ -72,8 +70,15 @@ const checkboxOptions = {
  * @returns {JSX.Element} Elemento JSX que renderiza o painel de controle do mapa.
  */
 function MapControllers({ checkboxes, setCheckboxes }) {
-
-    const { marker, overlaysFetched, setOverlaysFetched, setSubsystem, setHgAnalyse, overlays, setOverlays } = useData();
+    const {
+        marker,
+        overlaysFetched,
+        setOverlaysFetched,
+        setSubsystem,
+        setHgAnalyse,
+        overlays,
+        setOverlays,
+    } = useData();
 
     const [openPanel, setOpenPanel] = useState(false);
 
@@ -96,103 +101,111 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
         setSubsystem(initialsStates.subsystem);
         setHgAnalyse(initialsStates.subsystem.hg_analyse);
-        overlays.shapes.forEach(shape => {
-            if (shape.draw !== null) shape?.draw?.setMap(null)
+        overlays.shapes.forEach((shape) => {
+            if (shape.draw !== null) shape?.draw?.setMap(null);
         });
         setOverlays(initialsStates.overlays);
     };
 
     useEffect(() => {
-        
+        async function fetchOverlays() {
+            console.log("Checkboxes:", checkboxes);
+            console.log("OverlaysFetched:", overlaysFetched);
 
-        // Converter objeto em array com os valores name, alias e checked
-        const listCheckboxes = Object.values(checkboxes).flatMap(group =>
-            Object.values(group).map(item => ({
-                name: item.name,
-                alias: item.alias,
-                checked: item.checked
-            }))
-        );
+            const listCheckboxes = Object.values(checkboxes).flatMap((group) =>
+                Object.values(group).map((item) => ({
+                    name: item.name,
+                    alias: item.alias,
+                    checked: item.checked,
+                })),
+            );
 
+            console.log("ListCheckboxes:", listCheckboxes);
 
-        listCheckboxes.forEach(async checkbox => {
-            if (checkbox.checked) {
+            // for...of ao invés de forEach para aguardar async/await
+            for (const checkbox of listCheckboxes) {
+                if (checkbox.checked) {
+                    let searchOverlaysFetched = overlaysFetched.find(
+                        (st) => st.name === checkbox.name,
+                    );
+                    console.log(
+                        `Checkbox "${checkbox.name}" está marcado. Já buscou?`,
+                        searchOverlaysFetched !== undefined,
+                    );
 
-                // verificar se overlaysFetched está vazio
-                if (overlaysFetched.length === 0) {
-                    // A busca dos rios é em outro método
-                    if (checkbox.name === "rios_df") {
-
-                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
-                            return __shape.map(sh => {
-
-                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
-                            })
-                        });
-                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
-                    } else {
-
-                        const _shape = await fetchShape(checkbox.name).then(__shape => {
-                            // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
-                            return __shape.map(sh => {
-                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
-                            })
-                        });
-
-                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
-
-                    }
-
-                } else {
-                    // A busca dos rios é em outro método
-                    if (checkbox.name === "rios_df") {
-
-                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
-                            return __shape.map(sh => {
-
-                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
-                            })
-                        });
-                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
-
-                    } else {
-                        // verifica se a shape está presente na array overlaysFetched
-                        let searchoverlaysFetched = overlaysFetched.find(st => st.name === checkbox.name);
-                        // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
-                        // Assim, não se repete solicitação de camada no servidor.]
-                        if (searchoverlaysFetched === undefined) {
-                            const _shape = await fetchShape(checkbox.name).then(__shape => {
-                                return __shape.map(sh => {
-
-                                    return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
-                                })
-                            });
-
-                            setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                    if (searchOverlaysFetched === undefined) {
+                        if (checkbox.name === "rios_df") {
+                            console.log("Buscando rios_df...");
+                            const _shape = await fetchRiversByCoordinates(
+                                marker.int_latitude,
+                                marker.int_longitude,
+                            ).then((__shape) =>
+                                __shape.map((sh) => ({
+                                    ...sh,
+                                    shapeName: checkbox.name,
+                                    geometry: {
+                                        type: sh.geometry.type,
+                                        coordinates: converterPostgresToGmaps(
+                                            sh.geometry,
+                                        ),
+                                    },
+                                })),
+                            );
+                            console.log("Resultado rios_df:", _shape);
+                            setOverlaysFetched((prev) => [
+                                ...prev,
+                                { name: checkbox.name, geometry: _shape },
+                            ]);
+                        } else {
+                            console.log(`Buscando shape: ${checkbox.name}`);
+                            const _shape = await fetchShape(checkbox.name).then(
+                                (__shape) =>
+                                    __shape.map((sh) => ({
+                                        ...sh,
+                                        // string corrigida
+                                        shapeName: `${checkbox.name}_${marker.int_latitude}_${marker.int_longitude}`,
+                                        geometry: {
+                                            type: sh.type,
+                                            coordinates:
+                                                converterPostgresToGmaps(
+                                                    sh.shape,
+                                                ),
+                                        },
+                                    })),
+                            );
+                            console.log(`Resultado ${checkbox.name}:`, _shape);
+                            setOverlaysFetched((prev) => [
+                                ...prev,
+                                { name: checkbox.name, geometry: _shape },
+                            ]);
                         }
+                    } else {
+                        console.log(
+                            `Shape ${checkbox.name} já foi buscada, não fará novo fetch.`,
+                        );
                     }
-
                 }
-
             }
-        })
+        }
 
-    }, [checkboxes, setOverlaysFetched, overlaysFetched]);
+        fetchOverlays();
+    }, [
+        checkboxes,
+        overlaysFetched,
+        marker.int_latitude,
+        marker.int_longitude,
+    ]);
 
     return (
         <Box
-
             sx={{
-
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "flex-end",
                 position: "absolute",
-                right: 0
-
+                right: 0,
             }}
-
         >
             <SpeedDial
                 sx={{
@@ -222,31 +235,44 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             borderRadius: 2,
                         }}
                     >
-                        {Object.entries(checkboxOptions).map(([group, items]) => (
-                            <Box key={group} sx={{ mb: 1 }}>
-                                <strong>{group}</strong>
+                        {Object.entries(checkboxOptions).map(
+                            ([group, items]) => (
+                                <Box key={group} sx={{ mb: 1 }}>
+                                    <strong>{group}</strong>
 
-                                {items.map((item) => (
-                                    <FormControlLabel
-                                        sx={{
-                                            display: "flex",
-                                            flexDirection: "row"
+                                    {items.map((item) => (
+                                        <FormControlLabel
+                                            sx={{
+                                                display: "flex",
+                                                flexDirection: "row",
+                                            }}
+                                            key={item.name}
+                                            control={
+                                                <Checkbox
+                                                    checked={
+                                                        checkboxes[group]?.[
+                                                            item.name
+                                                        ]?.checked || false
+                                                    }
+                                                    onChange={toggleCheckbox(
+                                                        group,
+                                                        item,
+                                                    )}
+                                                />
+                                            }
+                                            label={item.alias}
+                                        />
+                                    ))}
+                                </Box>
+                            ),
+                        )}
 
-                                        }}
-                                        key={item.name}
-                                        control={
-                                            <Checkbox
-                                                checked={checkboxes[group]?.[item.name]?.checked || false}
-                                                onChange={toggleCheckbox(group, item)}
-                                            />
-                                        }
-                                        label={item.alias}
-                                    />
-                                ))}
-                            </Box>
-                        ))}
+                        <Box
+                            display="flex"
+                            justifyContent="flex-end"
 
-                        <Box display="flex" justifyContent="flex-end" mt={1}></Box>
+                            mt={1}
+                        ></Box>
                     </Paper>
                 </ClickAwayListener>
             )}
@@ -264,7 +290,6 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             />
         </Box>
     );
-
 }
 
-export default MapControllers
+export default MapControllers;
