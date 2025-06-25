@@ -1,20 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 /**
  * Elemento de Polilinha para as shapes Hidrogeo_Fraturado e Hidrogeo_Poroso.
  * @component
- * @param {*} param0 
+ * @param {*} param0
  */
 const ElemPolyline = ({ shape, map }) => {
-
   const [polyline, setPolyline] = useState();
   // Para controlar a largura da linha de acordo com o zoom
   const [strokeWeight, setStrokeWeight] = useState(1.5);
 
-  useEffect(() => {
+  const [strokeColor] = useState(
+    "#" + Math.floor(Math.random() * 16777215).toString(16),
+  );
 
+  useEffect(() => {
     // Listener para capturar o zoom e mudar a largura da linha
-    let zoomListener = map.addListener('zoom_changed', () => {
+    let zoomListener = map.addListener("zoom_changed", () => {
       // captura o zom
       const zoom = map.getZoom();
 
@@ -22,7 +24,6 @@ const ElemPolyline = ({ shape, map }) => {
       const newWeight = zoom <= 12 ? 1.5 : 4;
       setStrokeWeight(newWeight);
     });
-
 
     if (!polyline) {
       setPolyline(new window.google.maps.Polyline());
@@ -38,8 +39,8 @@ const ElemPolyline = ({ shape, map }) => {
 
   if (polyline) {
     /**
-    * Coverter coordenada postgres para o formato gmaps
-    */
+     * Coverter coordenada postgres para o formato gmaps
+     */
     /* function convertToGmaps (coord) {
        let _coord = coord.map(_c=>{
          return { lat: parseFloat(_c[1]), lng: parseFloat(_c[0]) }
@@ -49,19 +50,16 @@ const ElemPolyline = ({ shape, map }) => {
      // converter postgres para gmaps
      let _path = convertToGmaps(coord);*/
 
-    polyline.setOptions(
-      {
-        path: shape.geometry.coordinates,
-        geodesic: true,
-        strokeColor: '#' + Math.floor(Math.random() * 16777215).toString(16),
-        strokeWeight: strokeWeight,
-        map: map
-      }
-    );
+    polyline.setOptions({
+      path: shape.geometry.coordinates,
+      geodesic: true,
+      strokeColor: strokeColor,
+      strokeWeight: strokeWeight,
+      map: map,
+    });
   }
 
   return null;
-
 };
 
 export default ElemPolyline;
