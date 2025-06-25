@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { Wrapper } from "@googlemaps/react-wrapper";
-import { Box, Button } from '@mui/material';
-import ElemMap from './ElemMap';
-import ElemDrawManager from './ElemDrawManager';
-import ElemMarker from './ElemMarker';
-import ElemPopupOverlay from './ElemPopupOverlay';
-import ElemPolygon from './ElemPolygon';
-import { useData } from '../../../hooks/analyse-hooks';
-import ElemPolyline from './ElemPolyline';
-import ElemOttoPolyline from './ElemOthoPolyline';
-import MapControllers from './MapControllers';
+import { Box, Button } from "@mui/material";
+import ElemMap from "./ElemMap";
+import ElemDrawManager from "./ElemDrawManager";
+import ElemMarker from "./ElemMarker";
+import ElemPopupOverlay from "./ElemPopupOverlay";
+import ElemPolygon from "./ElemPolygon";
+import { useData } from "../../../hooks/analyse-hooks";
+import ElemPolyline from "./ElemPolyline";
+import ElemOttoPolyline from "./ElemOthoPolyline";
+import MapControllers from "./MapControllers";
 
 /**
  * Componente que representa o conteúdo do mapa.
@@ -19,158 +19,181 @@ import MapControllers from './MapControllers';
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
 function MapContent({ checkboxes, setCheckboxes }) {
-  
-
   // Estados do componente
-  const [mode] = useState('light');
+  const [mode] = useState("light");
 
   const [popups, setPopups] = useState([]);
 
   // Obtém os estados do contexto de análise
-  const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
+  const { map, setMap, marker, overlays, setOverlays, overlaysFetched } =
+    useData();
 
   /**
-     * Função para converter um nome de dado em um nome de forma.
-     * @param {string} dataName - O nome do dado.
-     * @returns {string} O nome da forma correspondente.
-     */
+   * Função para converter um nome de dado em um nome de forma.
+   * @param {string} dataName - O nome do dado.
+   * @returns {string} O nome da forma correspondente.
+   */
   function convertToShapeName(dataName) {
     switch (dataName) {
-      case 'Subterrâneas':
-        return 'subterranea';
-      case 'Superficiais':
-        return 'superficial';
-      case 'Pluviais':
-        return 'lancamento_pluviais';
-      case 'Efluentes':
-        return 'lancamento_efluentes';
-      case 'Barragens':
-        return 'barragem';
+      case "Subterrâneas":
+        return "subterranea";
+      case "Superficiais":
+        return "superficial";
+      case "Pluviais":
+        return "lancamento_pluviais";
+      case "Efluentes":
+        return "lancamento_efluentes";
+      case "Barragens":
+        return "barragem";
       default:
-        return 'Desconhecido'
+        return "Desconhecido";
     }
   }
 
   const { selectedsCharts } = useData();
 
   // Estado para formas selecionadas. Renderizar marcadores de acordo com o que o usuário escolho no chart.
-  const [selectedsShapes, setSelectedsShapes] = useState(['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem']);
-
+  const [selectedsShapes, setSelectedsShapes] = useState([
+    "subterranea",
+    "superficial",
+    "lancamento_pluviais",
+    "lancamento_efluentes",
+    "barragem",
+  ]);
 
   useEffect(() => {
-
-    let keys = Object.keys(selectedsCharts)
+    let keys = Object.keys(selectedsCharts);
     keys.forEach((key) => {
       let tableName = convertToShapeName(key);
       if (selectedsCharts[key] === true) {
-        setSelectedsShapes(prev => {
+        setSelectedsShapes((prev) => {
           // Verifica se existe o nome selecionado, se existir retira
-          const selecteds = prev.filter(s => s !== tableName)
+          const selecteds = prev.filter((s) => s !== tableName);
           // Inclui o nome selecionado
-          return [...selecteds, tableName]
-        })
+          return [...selecteds, tableName];
+        });
       } else {
-        setSelectedsShapes(prev => {
+        setSelectedsShapes((prev) => {
           // Filtra para retirar nome não selecionado
-          return [...prev.filter(prev => prev !== tableName)]
-        })
+          return [...prev.filter((prev) => prev !== tableName)];
+        });
       }
     });
   }, [selectedsCharts]);
 
   const RenderPolylines = (polylines) => {
-    if (polylines[0].shape.type === 'MultiPolygon') {
+    if (polylines[0].shape.type === "MultiPolygon") {
       return polylines[0].shape.coordinates.map((coord, i) => {
         return coord.map((_coord, ii) => {
-          return (<ElemPolyline key={ii} coord={_coord} map={map} />)
-        })
-      })
-    }
-    else {
+          return <ElemPolyline key={ii} coord={_coord} map={map} />;
+        });
+      });
+    } else {
       return polylines[0].shape.coordinates.map((coord, i) => {
-        return (<ElemPolyline key={i} coord={coord} map={map} />)
-      })
+        return <ElemPolyline key={i} coord={coord} map={map} />;
+      });
     }
-  }
+  };
 
   return (
-    <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
+    <Box id="map-box" sx={{ height: "100%", width: "100%" }}>
       <Wrapper apiKey={""} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
         <ElemDrawManager map={map} />
-        <ElemMarker
-          info={marker}
-          map={map}
-        />
+        <ElemMarker info={marker} map={map} />
 
         {/* Renderização dos marcadores */}
-        {overlays.shapes.map(shape => {
-          return selectedsShapes.map(type => {
-
+        {overlays.shapes.map((shape) => {
+          return selectedsShapes.map((type) => {
             if (shape.markers !== undefined && shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
-                return <ElemMarker
-                  key={'marker-' + i}
-                  info={marker}
-                  map={map}
-                />;
+                return (
+                  <ElemMarker key={"marker-" + i} info={marker} map={map} />
+                );
               });
-            } else { return null }
+            } else {
+              return null;
+            }
           });
         })}
 
         {/* Renderização das sobreposições */}
         {overlays.shapes.map((shape, i) => {
-          return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} setPopups={setPopups} />;
-        })
-        }
+          return (
+            <ElemPopupOverlay
+              key={"popup-" + i}
+              map={shape.map}
+              position={shape.position}
+              content={"conteudo"}
+              draw={shape}
+              setPopups={setPopups}
+            />
+          );
+        })}
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
         {overlaysFetched.map((shape) => {
-
-          let listCheckBoxes = Object.values(checkboxes).flatMap(group =>
-            Object.values(group).map(item => ({
+          let listCheckBoxes = Object.values(checkboxes).flatMap((group) =>
+            Object.values(group).map((item) => ({
               name: item.name,
               alias: item.alias,
-              checked: item.checked
-            }))
+              checked: item.checked,
+            })),
           );
 
           /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
-          return listCheckBoxes.map(cbState => {
+          return listCheckBoxes.map((cbState) => {
             // Para rios_df, verificar se o shape.name começa com o nome do checkbox
-            const shouldRender = cbState.name === "rios_df" 
-              ? shape.name.startsWith("rios_df_")
-              : cbState.name === shape.name;
-              
+            const shouldRender =
+              cbState.name === "rios_df"
+                ? shape.name.startsWith("rios_df_")
+                : cbState.name === shape.name;
+
             if (cbState.checked === true && shouldRender) {
-
               return shape.geometry.map((sh, ii) => {
-
-                if (sh.geometry.type === 'LineString') {
-                  return <ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} setOverlays={setOverlays} />
+                if (sh.geometry.type === "LineString") {
+                  return (
+                    <ElemPolyline
+                      key={"elem-polyline-" + ii}
+                      shape={sh}
+                      map={map}
+                      setOverlays={setOverlays}
+                    />
+                  );
                 } else {
-                  return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+                  return (
+                    <ElemPolygon
+                      key={"elem-polygon-" + ii}
+                      shape={sh}
+                      map={map}
+                      setOverlays={setOverlays}
+                    />
+                  );
                 }
               });
             }
           });
         })}
 
-
-        {overlays.shapes.map(sh => {
-          if (sh.name === 'otto-bacias') {
+        {overlays.shapes.map((sh) => {
+          if (sh.name === "otto-bacias") {
             return sh.map((_sh, index) => {
-              return <ElemOttoPolyline key={`elem-otto-${index}`} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
+              return (
+                <ElemOttoPolyline
+                  key={`elem-otto-${index}`}
+                  attributes={_sh.attributes}
+                  geometry={_sh.geometry}
+                  map={map}
+                />
+              );
             });
           }
 
           if (sh.markers !== undefined && sh.markers.hidrogeo !== undefined) {
-            return RenderPolylines(sh.markers.hidrogeo)
+            return RenderPolylines(sh.markers.hidrogeo);
           }
         })}
-
       </Wrapper>
     </Box>
   );
