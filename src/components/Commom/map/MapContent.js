@@ -139,7 +139,12 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
           /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
           return listCheckBoxes.map(cbState => {
-            if (cbState.checked === true && cbState.name === shape.name) {
+            // Para rios_df, verificar se o shape.name começa com o nome do checkbox
+            const shouldRender = cbState.name === "rios_df" 
+              ? shape.name.startsWith("rios_df_")
+              : cbState.name === shape.name;
+              
+            if (cbState.checked === true && shouldRender) {
 
               return shape.geometry.map((sh, ii) => {
 
