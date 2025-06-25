@@ -125,9 +125,15 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             // for...of ao invés de forEach para aguardar async/await
             for (const checkbox of listCheckboxes) {
                 if (checkbox.checked) {
+                    // Para rios_df, criar chave única com coordenadas
+                    const searchKey = checkbox.name === "rios_df" 
+                        ? `${checkbox.name}_${marker.int_latitude}_${marker.int_longitude}`
+                        : checkbox.name;
+                    
                     let searchOverlaysFetched = overlaysFetched.find(
-                        (st) => st.name === checkbox.name,
+                        (st) => st.name === searchKey,
                     );
+                    
                     console.log(
                         `Checkbox "${checkbox.name}" está marcado. Já buscou?`,
                         searchOverlaysFetched !== undefined,
@@ -142,7 +148,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             ).then((__shape) =>
                                 __shape.map((sh) => ({
                                     ...sh,
-                                    shapeName: checkbox.name,
+                                    shapeName: searchKey,
                                     geometry: {
                                         type: sh.geometry.type,
                                         coordinates: converterPostgresToGmaps(
@@ -154,7 +160,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             console.log("Resultado rios_df:", _shape);
                             setOverlaysFetched((prev) => [
                                 ...prev,
-                                { name: checkbox.name, geometry: _shape },
+                                { name: searchKey, geometry: _shape },
                             ]);
                         } else {
                             console.log(`Buscando shape: ${checkbox.name}`);
