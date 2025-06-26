@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ElemPolylineInfoWindow from './infowindow/ElemPolylineInfoWindow';
+import ElemPolylineInfoWindow from "./infowindow/ElemPolylineInfoWindow";
 
 /**
  * Elemento de Polilinha para as shapes Hidrogeo_Fraturado e Hidrogeo_Poroso.
@@ -21,7 +21,6 @@ const ElemPolyline = ({ shape, map }) => {
       // captura o zoom
       const zoom = map.getZoom();
 
-      // Controle mais refinado da espessura baseado no zoom
       let newWeight;
       if (zoom <= 10) {
         newWeight = 1;
@@ -34,7 +33,7 @@ const ElemPolyline = ({ shape, map }) => {
       } else {
         newWeight = 8;
       }
-      
+
       setStrokeWeight(newWeight);
     });
 
@@ -72,7 +71,9 @@ const ElemPolyline = ({ shape, map }) => {
     });
   }
 
-  return polyline ? <ElemPolylineInfoWindow polyline={polyline} shape={shape} map={map} /> : null;
+  return polyline ? (
+    <ReactPolylineInfoWindow polyline={polyline} shape={shape} map={map} />
+  ) : null;
 };
 
 export default ElemPolyline;
