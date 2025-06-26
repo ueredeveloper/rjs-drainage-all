@@ -126,9 +126,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             for (const checkbox of listCheckboxes) {
                 if (checkbox.checked) {
                     
-                    //criar chave única com coordenadas
+                    //criar chave única com coordenadas e timestamp para rios
                     const searchKey = checkbox.name === "rios_df" 
-                        ? `${checkbox.name}_${marker.int_latitude}_${marker.int_longitude}`
+                        ? `${checkbox.name}_${marker.int_latitude.toFixed(6)}_${marker.int_longitude.toFixed(6)}_${Date.now()}`
                         : checkbox.name;
                     
                     let searchOverlaysFetched = overlaysFetched.find(
@@ -147,8 +147,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                 marker.int_latitude,
                                 marker.int_longitude,
                             ).then((__shape) =>
-                                __shape.map((sh) => ({
+                                __shape.map((sh, index) => ({
                                     ...sh,
+                                    riverUniqueId: `${sh.properties?.objectid || sh.properties?.OBJECTID_1}_${marker.int_latitude.toFixed(6)}_${marker.int_longitude.toFixed(6)}_${index}`,
                                     shapeName: searchKey,
 
                                     

@@ -43,7 +43,7 @@ const PolylineInfoContent = ({ polyline, shape }) => {
     const path = polyline?.getPath();
 
     return (
-        <Paper elevation={2} sx={{ width: '100%', minHeight: '200px' }}>
+        <Paper elevation={2} sx={{ width: '100%', minHeight: '250px' }}>
             <Box
                 sx={{
                     backgroundColor: theme.palette.primary.main,
@@ -53,30 +53,56 @@ const PolylineInfoContent = ({ polyline, shape }) => {
                 }}
             >
                 <Typography variant="h6" component="h3">
-                    {shape?.properties?.name || 'Informações da Linha'}
+                    {shape?.properties?.nome || 'Rio do DF'}
                 </Typography>
             </Box>
             
-            <Box sx={{ p: 2, maxHeight: '140px', overflowY: 'auto' }}>
+            <Box sx={{ p: 2, maxHeight: '180px', overflowY: 'auto' }}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Tipo:</strong> {shape?.properties?.type || 'Linha'}
+                    <strong>Nome:</strong> {shape?.properties?.nome || 'Não informado'}
                 </Typography>
                 
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Comprimento:</strong> {formatDistance(distance)}
+                    <strong>Afluente Esquerdo:</strong> {shape?.properties?.aflu_esq?.trim() || 'Não informado'}
                 </Typography>
                 
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Pontos:</strong> {path ? path.getLength() : 0}
+                    <strong>Afluente Direito:</strong> {shape?.properties?.aflu_dir?.trim() || 'Não informado'}
                 </Typography>
                 
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                    <strong>Descrição:</strong> {shape?.properties?.description || 'Linha geométrica'}
+                    <strong>Classe:</strong> {shape?.properties?.classe || 'Não informado'}
                 </Typography>
+                
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Região Administrativa:</strong> {shape?.properties?.ra || 'Não informado'}
+                </Typography>
+                
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Extensão:</strong> {shape?.properties?.extensao ? `${shape.properties.extensao.toLocaleString()} m` : 'Não informado'}
+                </Typography>
+                
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>É Perene:</strong> {shape?.properties?.perene || 'Não informado'}
+                </Typography>
+                
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Comprimento Calculado:</strong> {formatDistance(distance)}
+                </Typography>
+                
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Pontos no Mapa:</strong> {path ? path.getLength() : 0}
+                </Typography>
+                
+                {shape?.properties?.observacao?.trim() && (
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Observações:</strong> {shape.properties.observacao}
+                    </Typography>
+                )}
                 
                 {shape?.geometry?.coordinates && (
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Coordenadas:</strong> {shape.geometry.coordinates.length} pontos
+                    <Typography variant="body2" sx={{ mb: 1, fontSize: '0.75rem', color: 'text.secondary' }}>
+                        <strong>ID:</strong> {shape?.properties?.objectid || shape?.properties?.OBJECTID_1}
                     </Typography>
                 )}
             </Box>

@@ -155,7 +155,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
                 if (sh.geometry.type === "LineString") {
                   return (
                     <ElemPolyline
-                      key={"elem-polyline-" + ii}
+                      key={sh.riverUniqueId || `elem-polyline-${ii}-${sh.properties?.objectid || sh.properties?.OBJECTID_1}`}
                       shape={sh}
                       map={map}
                       setOverlays={setOverlays}
