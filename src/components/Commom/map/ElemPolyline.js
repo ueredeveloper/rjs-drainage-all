@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createRiverInfoWindowContent } from "./infowindow/ElemRiverInfoWindow";
 
 /**
  * Elemento de Polilinha para as shapes Hidrogeo_Fraturado e Hidrogeo_Poroso.
@@ -7,12 +8,15 @@ import { useEffect, useState } from "react";
  */
 const ElemPolyline = ({ shape, map }) => {
   const [polyline, setPolyline] = useState();
+  const [infoWindow, setInfoWindow] = useState();
   // Para controlar a largura da linha de acordo com o zoom
   const [strokeWeight, setStrokeWeight] = useState(1.5);
 
   const [strokeColor] = useState(
     "#" + Math.floor(Math.random() * 16777215).toString(16),
   );
+
+  
 
   useEffect(() => {
     // Listener para capturar o zoom e mudar a largura da linha
@@ -28,16 +32,24 @@ const ElemPolyline = ({ shape, map }) => {
     if (!polyline) {
       setPolyline(new window.google.maps.Polyline());
     }
+
+    if (!infoWindow) {
+      setInfoWindow(new window.google.maps.InfoWindow());
+    }
+
     // remove marker from map on unmount
     return () => {
       if (polyline) {
         polyline.setMap(null);
       }
+      if (infoWindow) {
+        infoWindow.close();
+      }
       window.google.maps.event.removeListener(zoomListener);
     };
-  }, [polyline, setPolyline]);
+  }, [polyline, setPolyline, infoWindow]);
 
-  if (polyline) {
+  if (polyline && infoWindow) {
     /**
      * Coverter coordenada postgres para o formato gmaps
      */
@@ -56,7 +68,30 @@ const ElemPolyline = ({ shape, map }) => {
       strokeColor: strokeColor,
       strokeWeight: strokeWeight,
       map: map,
+      clickable: true,
     });
+
+    // Adiciona listener de click para mostrar InfoWindow
+    const clickListener = polyline.addListener("click", (event) => {
+      // Calcula o ponto médio da polyline para posicionar o InfoWindow
+      const path = polyline.getPath();
+      const midIndex = Math.floor(path.getLength() / 2);
+      const position = path.getAt(midIndex);
+
+      // Define o conteúdo do InfoWindow com as informações do rio
+      const content = createRiverInfoWindowContent(shape);
+      
+      infoWindow.setContent(content);
+      infoWindow.setPosition(position || event.latLng);
+      infoWindow.open(map);
+    });
+
+    // Cleanup do listener quando o componente é desmontado
+    return () => {
+      if (clickListener) {
+        window.google.maps.event.removeListener(clickListener);
+      }
+    };
   }
 
   return null;
