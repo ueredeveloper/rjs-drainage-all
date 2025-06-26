@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 /**
  * Conteúdo do InfoWindow da Polyline.
  * @component
