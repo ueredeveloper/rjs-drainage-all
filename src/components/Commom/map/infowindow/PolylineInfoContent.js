@@ -20,9 +20,11 @@ const PolylineInfoContent = ({ polyline, shape }) => {
         
         if (path && path.getLength() > 1 && window.google?.maps?.geometry?.spherical) {
             for (let i = 0; i < path.getLength() - 1; i++) {
+
+                //calcula a distância entre dois pontos consecutivos
                 totalDistance += window.google.maps.geometry.spherical.computeDistanceBetween(
-                    path.getAt(i),
-                    path.getAt(i + 1)
+                    path.getAt(i), //ponto atual
+                    path.getAt(i + 1) //próximo ponto
                 );
             }
         }
