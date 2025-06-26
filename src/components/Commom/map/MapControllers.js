@@ -112,6 +112,15 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             console.log("Checkboxes:", checkboxes);
             console.log("OverlaysFetched:", overlaysFetched);
 
+            // Evitar fetches se não há checkboxes marcados
+            const hasCheckedBoxes = Object.values(checkboxes).some(group => 
+                Object.values(group).some(item => item.checked)
+            );
+            
+            if (!hasCheckedBoxes) {
+                return;
+            }
+
             const listCheckboxes = Object.values(checkboxes).flatMap((group) =>
                 Object.values(group).map((item) => ({
                     name: item.name,
@@ -126,9 +135,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             for (const checkbox of listCheckboxes) {
                 if (checkbox.checked) {
                     
-                    //criar chave única com coordenadas e timestamp para rios
+                    //criar chave única com coordenadas para rios
                     const searchKey = checkbox.name === "rios_df" 
-                        ? `${checkbox.name}_${marker.int_latitude.toFixed(6)}_${marker.int_longitude.toFixed(6)}_${Date.now()}`
+                        ? `${checkbox.name}_${marker.int_latitude.toFixed(6)}_${marker.int_longitude.toFixed(6)}`
                         : checkbox.name;
                     
                     let searchOverlaysFetched = overlaysFetched.find(
