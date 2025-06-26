@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ElemPolylineInfoWindow from "./infowindow/ElemPolylineInfoWindow";
+import ReactPolylineInfoWindow from "./infowindow/ReactPolylineInfoWindow";
 
 /**
  * Elemento de Polilinha para as shapes Hidrogeo_Fraturado e Hidrogeo_Poroso.
