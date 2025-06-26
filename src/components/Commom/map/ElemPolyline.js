@@ -18,11 +18,23 @@ const ElemPolyline = ({ shape, map }) => {
   useEffect(() => {
     // Listener para capturar o zoom e mudar a largura da linha
     let zoomListener = map.addListener("zoom_changed", () => {
-      // captura o zom
+      // captura o zoom
       const zoom = map.getZoom();
 
-      // Se o usuário aproximar mais o mapa, a linha cresce a largura de aocrdo com o zoom
-      const newWeight = zoom <= 12 ? 1.5 : 4;
+      // Controle mais refinado da espessura baseado no zoom
+      let newWeight;
+      if (zoom <= 10) {
+        newWeight = 1;
+      } else if (zoom <= 12) {
+        newWeight = 2;
+      } else if (zoom <= 15) {
+        newWeight = 4;
+      } else if (zoom <= 17) {
+        newWeight = 6;
+      } else {
+        newWeight = 8;
+      }
+      
       setStrokeWeight(newWeight);
     });
 
