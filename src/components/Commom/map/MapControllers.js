@@ -150,6 +150,8 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                 __shape.map((sh) => ({
                                     ...sh,
                                     shapeName: searchKey,
+
+                                    
                                     geometry: {
                                         type: sh.geometry.type,
                                         coordinates: converterPostgresToGmaps(

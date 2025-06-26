@@ -88,14 +88,23 @@ const HTMLPolylineContent = (polyline, shape, map, color) => {
     };
 
     // Criar elementos de informação
+
+    //tipo
+    
     const typeInfo = document.createElement('p');
     typeInfo.textContent = `Tipo: ${shape.properties?.type || 'Linha'}`;
+
+    //comprimento
 
     const lengthInfo = document.createElement('p');
     lengthInfo.textContent = `Comprimento: ${formatDistance(totalDistance)}`;
 
+    //pontos
+
     const pointsInfo = document.createElement('p');
     pointsInfo.textContent = `Pontos: ${path ? path.getLength() : 0}`;
+
+    //descrição
 
     const descriptionInfo = document.createElement('p');
     descriptionInfo.textContent = `Descrição: ${shape.properties?.description || 'Linha geométrica'}`;
