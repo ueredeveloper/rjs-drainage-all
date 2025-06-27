@@ -80,7 +80,7 @@ Alterar a cor da borda dos polígonos para vermelho.
 - [X] Adicionar rios do DF.
 - [] Inserir infowindow nas polylines dos rios.
 - [] Permitir números float nos inpust de tabelas e cálculos
-- [] Adicionar nas informações das outorgas o tipo de uso, se prévia, direito de uso ou registro. Verificar se é possível adicionar se vendida, arquivado etc.
+- [X] Adicionar nas informações das outorgas o tipo de uso, se prévia, direito de uso ou registro. Verificar se é possível adicionar se vendida, arquivado etc.
 
 
 
