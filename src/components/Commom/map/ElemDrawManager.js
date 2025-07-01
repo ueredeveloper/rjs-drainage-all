@@ -8,6 +8,7 @@
  * @returns {null} Componente não renderiza elementos visuais diretamente.
  */
 
+import ReactDOM from 'react-dom/client';
 import { useEffect } from "react";
 import {
   findAllPointsInRectangle,
@@ -21,8 +22,7 @@ import {
   calculateRectangleArea,
 } from "../../../tools";
 import { useData } from "../../../hooks/analyse-hooks";
-import HTMLDrawInfoContent from "./infowindow/html-draw-infowindow-content";
-import { ElemDrawInfoWindow } from "./infowindow/ElemDrawInfoWindow";
+import InfoWindowContent from "./infowindow/InfoWindowContent";
 
 /**
  * Gerencia o desenho de formas no mapa e a interação com InfoWindows.
@@ -92,25 +92,32 @@ const ElemDrawManager = ({ map }) => {
      * @param {Object} shape - Objeto da shape desenhada.
      * @param {google.maps.LatLng | Object} position - Posição para abrir o InfoWindow.
      */
+
     const openInfoWindow = (shape, position) => {
-      // Fecha todos os InfoWindows abertos
       window.dispatchEvent(new Event("close-all-infowindows"));
 
       if (currentInfoWindow) currentInfoWindow.close();
 
-      // Cria o conteúdo customizado
-      const content = HTMLDrawInfoContent(shape);
+      // Ao abrir o InfoWindow, seta calculoAreaAtivo para false
+      setOverlays(prev => ({
+        ...prev,
+        shapes: prev.shapes.map(s =>
+          s.id === shape.id ? { ...s, calculoAreaAtivo: false } : s
+        ),
+      }));
+
+      const container = document.createElement("div");
+      const root = ReactDOM.createRoot(container);
+      root.render(
+        <InfoWindowContent shape={{ ...shape, calculoAreaAtivo: false }} setOverlays={setOverlays} />
+      );
+
       const infoWindow = new window.google.maps.InfoWindow({
-        content,
+        content: container,
         position,
       });
+
       infoWindow.open(map);
-
-      // Conecta os controles do InfoWindow à shape
-      setTimeout(() => {
-        ElemDrawInfoWindow(shape, setOverlays, content);
-      }, 0);
-
       shape.infoWindow = infoWindow;
       currentInfoWindow = infoWindow;
     };
@@ -176,7 +183,7 @@ const ElemDrawManager = ({ map }) => {
           area: null,
           meters: null,
           markers: [],
-          calculoAreaAtivo: true,
+          calculoAreaAtivo: true, // inicia como true
         };
 
         // === Círculo ===
