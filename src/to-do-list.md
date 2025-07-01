@@ -111,6 +111,7 @@ Implementar e integrar o InfoWindow personalizado para formas desenhadas no Goog
 
 [x] Garantir o encerramento adequado do DrawingManager no unmount do componente
 
-[x] Padronização do código e seus componentes, separando o HTML em arquivos próprios para melhor organização
+[x] Padronização do código para react
+
 
 

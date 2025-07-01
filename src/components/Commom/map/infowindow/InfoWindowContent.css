@@ -1,9 +1,15 @@
+/**
+ * Estilos para o container principal da InfoWindow de personalização de shapes.
+ */
 #draw-container {
   font-family: Arial, sans-serif;
   font-size: 11px;
   max-width: 300px;
 }
 
+/**
+ * Estilo para o título da janela de personalização.
+ */
 #draw-title {
   font-size: 13px;
   font-weight: bold;
@@ -11,11 +17,17 @@
   color: #222;
 }
 
+/**
+ * Área de overflow para rolagem do conteúdo.
+ */
 #draw-overflow {
   overflow-y: auto;
   max-height: 180px;
 }
 
+/**
+ * Estilo dos fieldsets que agrupam opções.
+ */
 fieldset {
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -23,16 +35,25 @@ fieldset {
   margin-bottom: 10px;
 }
 
+/**
+ * Estilo para o título de cada grupo de opções.
+ */
 legend {
   font-weight: bold;
   font-size: 12px;
 }
 
+/**
+ * Container para os botões de seleção de cor.
+ */
 .color-options {
   display: flex;
   gap: 5px;
 }
 
+/**
+ * Botão circular para seleção de cor.
+ */
 .color-button {
   width: 20px;
   height: 20px;
@@ -41,10 +62,16 @@ legend {
   cursor: pointer;
 }
 
+/**
+ * Estilo para o botão de cor selecionado.
+ */
 .color-button.selected {
   box-shadow: 0 0 4px 3px rgba(51, 0, 0, 0.51);
 }
 
+/**
+ * Controle de opacidade do preenchimento.
+ */
 .opacity-control {
   margin-top: 10px;
   display: flex;
@@ -52,12 +79,18 @@ legend {
   font-size: 12px;
 }
 
+/**
+ * Linha de opções de borda e preenchimento.
+ */
 #draw-row {
   display: flex;
   gap: 10px;
   margin-bottom: 10px;
 }
 
+/**
+ * Fieldsets dentro da linha de opções.
+ */
 #draw-row fieldset {
   flex: 1;
   min-width: 0;

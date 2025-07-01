@@ -1,23 +1,56 @@
 import { useState, useEffect } from "react";
 import "./InfoWindowContent.css";
 
+/**
+ * Lista de cores disponíveis para seleção de borda e preenchimento.
+ * @type {string[]}
+ */
 const cores = ["#FF0000", "#FFFF00", "#0000FF", "#000000"];
 
+/**
+ * Componente de conteúdo da InfoWindow para personalização de shapes no mapa.
+ *
+ * Permite ao usuário alterar a cor da borda, cor do preenchimento, opacidade do preenchimento
+ * e ativar/desativar o cálculo de área de uma shape desenhada no mapa.
+ *
+ * @param {Object} props
+ * @param {Object} props.shape - Objeto da shape desenhada, contendo propriedades de estilo e controle.
+ * @param {Function} props.setOverlays - Função para atualizar o estado global das shapes no mapa.
+ * @returns {JSX.Element}
+ */
 const InfoWindowContent = ({ shape, setOverlays }) => {
+  /**
+   * Estado para cor da borda da shape.
+   * @type {[string, Function]}
+   */
   const [strokeColor, setStrokeColor] = useState(
     shape?.draw?.strokeColor || "#FF0000"
   );
+  /**
+   * Estado para cor do preenchimento da shape.
+   * @type {[string, Function]}
+   */
   const [fillColor, setFillColor] = useState(
     shape?.draw?.fillColor || "#FFFF00"
   );
+  /**
+   * Estado para opacidade do preenchimento da shape.
+   * @type {[number, Function]}
+   */
   const [fillOpacity, setFillOpacity] = useState(
     shape?.draw?.fillOpacity ?? 0.35
   );
+  /**
+   * Estado para ativação do cálculo de área.
+   * @type {[boolean, Function]}
+   */
   const [calculoAreaAtivo, setCalculoAreaAtivo] = useState(
     shape?.calculoAreaAtivo ?? false
   );
 
-  // Atualiza a shape no mapa sempre que alguma propriedade muda
+  /**
+   * Atualiza as opções de estilo da shape no mapa sempre que cor ou opacidade mudam.
+   */
   useEffect(() => {
     if (shape?.draw?.setOptions) {
       shape.draw.setOptions({
@@ -28,7 +61,9 @@ const InfoWindowContent = ({ shape, setOverlays }) => {
     }
   }, [strokeColor, fillColor, fillOpacity]);
 
-  // Atualiza estado global de cálculo de área
+  /**
+   * Atualiza o estado global de cálculo de área da shape.
+   */
   useEffect(() => {
     if (typeof setOverlays === "function") {
       setOverlays((prev) => ({

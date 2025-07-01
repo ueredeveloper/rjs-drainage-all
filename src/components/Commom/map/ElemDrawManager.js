@@ -92,7 +92,6 @@ const ElemDrawManager = ({ map }) => {
      * @param {Object} shape - Objeto da shape desenhada.
      * @param {google.maps.LatLng | Object} position - Posição para abrir o InfoWindow.
      */
-
     const openInfoWindow = (shape, position) => {
       window.dispatchEvent(new Event("close-all-infowindows"));
 
@@ -172,7 +171,16 @@ const ElemDrawManager = ({ map }) => {
 
         /**
          * Objeto base da shape desenhada.
-         * @type {Object}
+         * @typedef {Object} Shape
+         * @property {number} id - Identificador único da shape.
+         * @property {string} type - Tipo da shape (circle, polygon, rectangle, polyline).
+         * @property {google.maps.Map} map - Instância do mapa.
+         * @property {Object} draw - Overlay desenhado no mapa.
+         * @property {Object|null} position - Posição principal da shape.
+         * @property {number|null} area - Área da shape (quando aplicável).
+         * @property {number|null} meters - Comprimento da shape (quando aplicável).
+         * @property {Array} markers - Marcadores encontrados dentro da shape.
+         * @property {boolean} calculoAreaAtivo - Indica se o cálculo de área está ativo.
          */
         let shape = {
           id: Date.now(),
@@ -186,7 +194,11 @@ const ElemDrawManager = ({ map }) => {
           calculoAreaAtivo: true, // inicia como true
         };
 
-        // === Círculo ===
+        /**
+         * Caso o tipo seja "circle", calcula centro, raio, área e encontra marcadores dentro do círculo.
+         * @async
+         * @param {google.maps.Circle} overlay - Overlay do círculo desenhado.
+         */
         if (type === "circle") {
           const center = overlay.getCenter();
           const radius = overlay.getRadius();
@@ -199,7 +211,11 @@ const ElemDrawManager = ({ map }) => {
           });
         }
 
-        // === Polígono ===
+        /**
+         * Caso o tipo seja "polygon", encontra o ponto mais ao norte, calcula área e encontra marcadores dentro do polígono.
+         * @async
+         * @param {google.maps.Polygon} overlay - Overlay do polígono desenhado.
+         */
         if (type === "polygon") {
           const serverPolygon = overlay
             .getPath()
@@ -229,7 +245,11 @@ const ElemDrawManager = ({ map }) => {
           ]);
         }
 
-        // === Retângulo ===
+        /**
+         * Caso o tipo seja "rectangle", calcula bounds, área e encontra marcadores dentro do retângulo.
+         * @async
+         * @param {google.maps.Rectangle} overlay - Overlay do retângulo desenhado.
+         */
         if (type === "rectangle") {
           const bounds = overlay.getBounds();
           const NE = bounds.getNorthEast();
@@ -246,7 +266,10 @@ const ElemDrawManager = ({ map }) => {
           );
         }
 
-        // === Linha (Polyline) ===
+        /**
+         * Caso o tipo seja "polyline", calcula o último ponto e o comprimento da linha.
+         * @param {google.maps.Polyline} overlay - Overlay da linha desenhada.
+         */
         if (type === "polyline") {
           const path = overlay.getPath();
           const lastPoint = path.getAt(path.getLength() - 1);
@@ -275,7 +298,9 @@ const ElemDrawManager = ({ map }) => {
     // Adiciona DrawingManager ao mapa
     draw.setMap(map);
 
-    // Cleanup: remove barra de ferramentas e listeners ao desmontar
+    /**
+     * Cleanup: remove barra de ferramentas e listeners ao desmontar o componente.
+     */
     return () => {
       draw.setMap(null);
       window.google.maps.event.clearInstanceListeners(draw);
