@@ -1,306 +1,369 @@
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import { TextField } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { ajustarHoraBombAjustada, ajustarQSecaoMD, ajustarSecaoMH, modularHoraQ, modularVazaoH } from '../../../tools/surface-tools';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import { TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import {
+  ajustarHoraBombAjustada,
+  ajustarQSecaoMD,
+  ajustarSecaoMH,
+  modularHoraQ,
+  modularVazaoH,
+} from "../../../tools/surface-tools";
 
 /**
- * 
+ *
  * @returns Tabela de Dados Superificial
  */
-export default function SurfaceTableModulations({ analyse, setSurfaceAnalyse }) {
+export default function SurfaceTableModulations({
+  analyse,
+  setSurfaceAnalyse,
+}) {
+  const months = [
+    "jan",
+    "fev",
+    "mar",
+    "abr",
+    "mai",
+    "jun",
+    "jul",
+    "ago",
+    "set",
+    "out",
+    "nov",
+    "dez",
+  ];
+  const [rows, setRows] = useState([]);
 
-    const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  /**
+   * Renderização inicial, ao selcionar esta tab.
+   */
+  useEffect(() => {
+    if (analyse.alias === "Tabela de ajuste das Horas de Bombeamento") {
+      setSurfaceAnalyse((prev) => {
+        let uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
+        let h_ajuste = { ...prev.h_ajuste };
+        let q_solicitada = { ...prev.q_solicitada };
+        let q_outorgada = { ...prev.q_modula.q_outorgada };
 
-    const [rows, setRows] = useState([]);
+        let q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
+        let q_secao_m_d = ajustarQSecaoMD(h_ajuste);
+        let h_bomb_ajustada = ajustarHoraBombAjustada(
+          q_secao_m_d,
+          q_solicitada
+        );
+        let h_bombeamento = modularVazaoH(q_outorgada, h_ajuste);
+        let h_modula_q_outorgada = modularHoraQ(
+          h_ajuste,
+          uh_q_demanda_ajustada,
+          q_solicitada
+        );
 
-    /** 
-     * Renderização inicial, ao selcionar esta tab.
-     */
-    useEffect(() => {
+        return {
+          ...prev,
+          h_ajuste: {
+            ...prev.h_ajuste,
+            q_secao_m_h: {
+              ...prev.h_ajuste.q_secao_m_h,
+              values: q_secao_m_h,
+            },
+            q_secao_m_d: {
+              ...prev.h_ajuste.q_secao_m_d,
+              values: q_secao_m_d,
+            },
+            h_bomb_ajustada: {
+              ...prev.h_ajuste.h_bomb_ajustada,
+              values: h_bomb_ajustada,
+            },
+          },
+          q_modula: {
+            ...prev.q_modula,
+            q_outorgada: {
+              ...prev.q_modula.q_outorgada,
+              values: uh_q_demanda_ajustada.values,
+            },
+            h_bombeamento: {
+              ...prev.q_modula.h_bombeamento,
+              values: h_bombeamento,
+            },
+          },
+          h_modula: {
+            ...prev.h_modula,
+            q_outorgada: {
+              ...prev.h_modula.q_outorgada,
+              values: h_modula_q_outorgada,
+            },
+            h_bombeamento: {
+              ...prev.h_modula.h_bombeamento,
+              values: h_ajuste.h_bomb_ajustada.values,
+            },
+          },
+        };
+      });
+    }
+  }, []);
 
-        if (analyse.alias === 'Tabela de ajuste das Horas de Bombeamento') {
+  /**
+   * Renderização ao ser modificada a variável analyse.
+   */
+  useEffect(() => {
+    if (analyse.alias === "Tabela de ajuste das Horas de Bombeamento") {
+      let _rows = [
+        {
+          alias: analyse.h_bomb_requerida.alias,
+          values: analyse.h_bomb_requerida.values,
+        },
+        {
+          alias: analyse.q_secao_m_h.alias,
+          values: analyse.q_secao_m_h.values,
+        },
+        {
+          alias: analyse.q_secao_m_d.alias,
+          values: analyse.q_secao_m_d.values,
+        },
+        {
+          alias: analyse.h_bomb_ajustada.alias,
+          values: analyse.h_bomb_ajustada.values,
+        },
+      ];
+      setRows(_rows);
+    } else if (analyse.alias === "Tabela final com HORA modulada") {
+      let _rows = [
+        {
+          alias: analyse.q_outorgada.alias,
+          values: analyse.q_outorgada.values,
+        },
+        {
+          alias: analyse.h_bombeamento.alias,
+          values: analyse.h_bombeamento.values,
+        },
+      ];
+      setRows(_rows);
+    } else {
+      let _rows = [
+        {
+          alias: analyse.q_outorgada.alias,
+          values: analyse.q_outorgada.values,
+        },
+        {
+          alias: analyse.h_bombeamento.alias,
+          values: analyse.h_bombeamento.values,
+        },
+      ];
+      setRows(_rows);
+    }
+  }, [analyse]);
 
-            setSurfaceAnalyse((prev) => {
+  // Permite ponto ou vírgula como separador decimal
+  const handleOnTextFieldChange = (index, value) => {
+    // Aceita ponto ou vírgula como separador decimal
+    let parsedValue = value === "" ? "" : parseFloat(value.replace(",", "."));
+    let update_h_bomb_requerida = [...analyse.h_bomb_requerida.values];
+    update_h_bomb_requerida[index] = parsedValue;
 
-                let uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
-                let h_ajuste = { ...prev.h_ajuste }
-                let q_solicitada = { ...prev.q_solicitada }
-                let q_outorgada = { ...prev.q_modula.q_outorgada }
+    setSurfaceAnalyse((prev) => {
+      // Atualizar h_bomb_requerida
+      const h_bomb_requerida = {
+        ...prev.h_ajuste.h_bomb_requerida,
+        values: update_h_bomb_requerida,
+      };
 
-                let q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
-                let q_secao_m_d = ajustarQSecaoMD(h_ajuste);
-                let h_bomb_ajustada = ajustarHoraBombAjustada(q_secao_m_d, q_solicitada);
+      // Calcular variáveis auxiliares
+      const q_solicitada = { ...prev.q_solicitada };
+      const q_outorgada = { ...prev.q_modula.q_outorgada };
+      const uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
 
-                let h_bombeamento = modularVazaoH(q_outorgada, h_ajuste);
+      const update_h_ajuste = {
+        ...prev.h_ajuste,
+        h_bomb_requerida,
+      };
 
-                let h_modula_q_outorgada = modularHoraQ(h_ajuste, uh_q_demanda_ajustada, q_solicitada);
+      const q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
+      const q_secao_m_d = ajustarQSecaoMD(update_h_ajuste);
+      const h_bomb_ajustada = ajustarHoraBombAjustada(
+        q_secao_m_d,
+        q_solicitada
+      );
+      const h_bombeamento = modularVazaoH(q_outorgada, update_h_ajuste);
+      const h_modula_q_outorgada = modularHoraQ(
+        update_h_ajuste,
+        uh_q_demanda_ajustada,
+        q_solicitada
+      );
 
-                return {
-                    ...prev,
-                    h_ajuste: {
-                        ...prev.h_ajuste,
-                        q_secao_m_h: {
-                            ...prev.h_ajuste.q_secao_m_h,
-                            values: q_secao_m_h
-                        },
-                        q_secao_m_d: {
-                            ...prev.h_ajuste.q_secao_m_d,
-                            values: q_secao_m_d
-                        },
-                        h_bomb_ajustada: {
-                            ...prev.h_ajuste.h_bomb_ajustada,
-                            values: h_bomb_ajustada
+      // Construir h_ajuste final
+      const h_ajuste = {
+        ...update_h_ajuste,
+        q_secao_m_h: {
+          ...prev.h_ajuste.q_secao_m_h,
+          values: q_secao_m_h,
+        },
+        q_secao_m_d: {
+          ...prev.h_ajuste.q_secao_m_d,
+          values: q_secao_m_d,
+        },
+        h_bomb_ajustada: {
+          ...prev.h_ajuste.h_bomb_ajustada,
+          values: h_bomb_ajustada,
+        },
+      };
+
+      // Construir q_modula
+      const q_modula = {
+        ...prev.q_modula,
+        q_outorgada: {
+          ...prev.q_modula.q_outorgada,
+          values: uh_q_demanda_ajustada.values,
+        },
+        h_bombeamento: {
+          ...prev.q_modula.h_bombeamento,
+          values: h_bombeamento,
+        },
+      };
+
+      // Construir h_modula
+      const h_modula = {
+        ...prev.h_modula,
+        q_outorgada: {
+          ...prev.h_modula.q_outorgada,
+          values: h_modula_q_outorgada,
+        },
+        h_bombeamento: {
+          ...prev.h_modula.h_bombeamento,
+          values: h_bomb_ajustada,
+        },
+      };
+
+      // Return final
+      return {
+        ...prev,
+        h_ajuste,
+        q_modula,
+        h_modula,
+      };
+    });
+  };
+
+  return (
+    <Paper
+      id="paper"
+      elevation={3}
+      sx={{ my: 2, height: 121, overflow: "auto" }}
+    >
+      <Table id="table" size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell
+              sx={{
+                padding: "0px",
+                px: "5px",
+                fontSize: "12px",
+                width: "60rem",
+                lineHeight: "1.1rem",
+                textAlign: "center",
+              }}
+            >
+              {analyse.alias}
+            </TableCell>
+            {months.map((value) => (
+              <TableCell
+                key={value}
+                align="right"
+                sx={{ lineHeight: "1.1rem" }}
+              >
+                {value}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row, rowIndex) => (
+            <TableRow
+              key={row.alias + rowIndex}
+              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+            >
+              <TableCell
+                component="th"
+                scope="row"
+                sx={{
+                  padding: "1px",
+                  px: "5px",
+                  fontSize: "12px",
+                  lineHeight: "1.1rem",
+                  width: "100px",
+                  textAlign: "center",
+                }}
+              >
+                {row.alias}
+              </TableCell>
+
+              {row.alias !== "Horas de bombeamento (Requerimento)"
+                ? row.values.map((value, index) => (
+                    <TableCell
+                      key={row.alias.substring(0, 5) + index}
+                      align="right"
+                      sx={{
+                        padding: "0px",
+                        px: "5px",
+                        fontSize: "12px",
+                        lineHeight: "1.1rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      {value}
+                    </TableCell>
+                  ))
+                : row.values.map((value, index) => (
+                    <TableCell
+                      key={row.alias.substring(0, 5) + index}
+                      align="right"
+                      sx={{
+                        padding: "0px",
+                        px: "5px",
+                        fontSize: "12px",
+                        lineHeight: "1.1rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      <TextField
+                        type="number"
+                        inputProps={{
+                          step: "any",
+                          inputMode: "decimal",
+                          pattern: "[0-9]*[.,]?[0-9]*",
+                        }}
+                        value={value}
+                        variant="standard"
+                        InputProps={{
+                          disableUnderline: false,
+                          sx: {
+                            padding: 0,
+                            fontSize: "12px",
+                            textAlign: "center",
+                            input: {
+                              textAlign: "center",
+                            },
+                          },
+                        }}
+                        onChange={(e) =>
+                          handleOnTextFieldChange(index, e.target.value)
                         }
-                    },
-                    q_modula: {
-                        ...prev.q_modula,
-                        q_outorgada: {
-                            ...prev.q_modula.q_outorgada,
-                            values: uh_q_demanda_ajustada.values
-                        },
-                        h_bombeamento: {
-                            ...prev.q_modula.h_bombeamento,
-                            values: h_bombeamento
-                        }
-
-                    },
-                    h_modula: {
-                        ...prev.h_modula,
-                        q_outorgada: {
-                            ...prev.h_modula.q_outorgada,
-                            values: h_modula_q_outorgada
-                        },
-                        h_bombeamento: {
-                            ...prev.h_modula.h_bombeamento,
-                            values: h_ajuste.h_bomb_ajustada.values
-                        }
-
-                    }
-                }
-            });
-
-        }
-
-    }, [])
-
-    /**
-     * Renderização ao ser modificada a variável analyse.
-     */
-    useEffect(() => {
-
-        if (analyse.alias === 'Tabela de ajuste das Horas de Bombeamento') {
-
-            let _rows = [
-
-                {
-                    alias: analyse.h_bomb_requerida.alias,
-                    values: analyse.h_bomb_requerida.values
-                },
-                {
-                    alias: analyse.q_secao_m_h.alias,
-                    values: analyse.q_secao_m_h.values
-
-                },
-                {
-                    alias: analyse.q_secao_m_d.alias,
-                    values: analyse.q_secao_m_d.values
-                },
-                {
-                    alias: analyse.h_bomb_ajustada.alias,
-                    values: analyse.h_bomb_ajustada.values
-                }
-            ];
-
-            setRows(_rows);
-
-        } else if (analyse.alias === 'Tabela final com HORA modulada') {
-
-            let _rows = [
-
-                {
-                    alias: analyse.q_outorgada.alias,
-                    values: analyse.q_outorgada.values
-                },
-                {
-                    alias: analyse.h_bombeamento.alias,
-                    values: analyse.h_bombeamento.values
-                }
-
-            ];
-
-            setRows(_rows);
-
-        } else {
-
-            let _rows = [
-
-                {
-                    alias: analyse.q_outorgada.alias,
-                    values: analyse.q_outorgada.values
-                },
-                {
-                    alias: analyse.h_bombeamento.alias,
-                    values: analyse.h_bombeamento.values
-                }
-
-            ];
-
-            setRows(_rows);
-
-        }
-
-    }, [analyse]);
-
-
-    const handleOnTextFieldChange = (index, value) => {
-        let update_h_bomb_requerida = [...analyse.h_bomb_requerida.values];
-        update_h_bomb_requerida[index] = Number(value);
-
-        setSurfaceAnalyse((prev) => {
-            // Atualizar h_bomb_requerida
-            const h_bomb_requerida = {
-                ...prev.h_ajuste.h_bomb_requerida,
-                values: update_h_bomb_requerida
-            };
-
-            // Calcular variáveis auxiliares
-            const q_solicitada = { ...prev.q_solicitada };
-            const q_outorgada = { ...prev.q_modula.q_outorgada };
-            const uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
-
-            const update_h_ajuste = {
-                ...prev.h_ajuste,
-                h_bomb_requerida
-            };
-
-
-            const q_secao_m_h = ajustarSecaoMH(uh_q_demanda_ajustada);
-            const q_secao_m_d = ajustarQSecaoMD(update_h_ajuste);
-            const h_bomb_ajustada = ajustarHoraBombAjustada(q_secao_m_d, q_solicitada);
-            const h_bombeamento = modularVazaoH(q_outorgada, update_h_ajuste);
-            const h_modula_q_outorgada = modularHoraQ(update_h_ajuste, uh_q_demanda_ajustada, q_solicitada);
-
-            // Construir h_ajuste final
-            const h_ajuste = {
-                ...update_h_ajuste,
-                q_secao_m_h: {
-                    ...prev.h_ajuste.q_secao_m_h,
-                    values: q_secao_m_h
-                },
-                q_secao_m_d: {
-                    ...prev.h_ajuste.q_secao_m_d,
-                    values: q_secao_m_d
-                },
-                h_bomb_ajustada: {
-                    ...prev.h_ajuste.h_bomb_ajustada,
-                    values: h_bomb_ajustada
-                }
-            };
-
-            // Construir q_modula
-            const q_modula = {
-                ...prev.q_modula,
-                q_outorgada: {
-                    ...prev.q_modula.q_outorgada,
-                    values: uh_q_demanda_ajustada.values
-                },
-                h_bombeamento: {
-                    ...prev.q_modula.h_bombeamento,
-                    values: h_bombeamento
-                }
-            };
-
-            // Construir h_modula
-            const h_modula = {
-                ...prev.h_modula,
-                q_outorgada: {
-                    ...prev.h_modula.q_outorgada,
-                    values: h_modula_q_outorgada
-                },
-                h_bombeamento: {
-                    ...prev.h_modula.h_bombeamento,
-                    values: h_bomb_ajustada
-                }
-            };
-
-            // Return final
-            return {
-                ...prev,
-                h_ajuste,
-                q_modula,
-                h_modula
-            };
-        });
-    };
-
-
-    return (
-        <Paper id="paper" elevation={3} sx={{ my: 2, height: 121, overflow: 'auto' }}>
-            <Table id="table" size="small" >
-                <TableHead>
-                    <TableRow>
-                        <TableCell sx={{ padding: "0px", px: "5px", fontSize: "12px", width: "60rem", lineHeight: "1.1rem", textAlign: "center" }}>{analyse.alias}</TableCell>
-                        {months.map((value) => (
-                            <TableCell key={value} align="right" sx={{ lineHeight: "1.1rem" }}>{value}</TableCell>
-                        ))}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {rows.map((row, index) => (
-                        <TableRow
-                            key={row.alias + index}
-                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                        >
-                            <TableCell component="th" scope="row" sx={{ padding: "1px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", width: "100px", textAlign: "center" }}>
-                                {row.alias}
-                            </TableCell >
-
-                            {
-                                row.alias !== "Horas de bombeamento (Requerimento)" ?
-                                    row.values.map((value, index) =>
-                                        (<TableCell key={row.alias.substring(0, 5) + index} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", textAlign: "center" }}>{value}</TableCell>)
-                                    ) :
-                                    row.values.map((value, index) =>
-                                    (<TableCell key={row.alias.substring(0, 5) + index} align="right" sx={{ padding: "0px", px: "5px", fontSize: "12px", lineHeight: "1.1rem", textAlign: "center" }}>
-                                        <TextField
-                                            key={'input' + row.alias.substring(0, 5) + index}
-                                            value={value}
-                                            variant="standard" // optional: to reduce default padding
-                                            InputProps={{
-                                                disableUnderline: false, // optional: removes underline if variant is standard
-                                                sx: {
-                                                    padding: 0,           // removes internal padding
-                                                    fontSize: '12px',     // optional: set desired font size
-                                                    textAlign: 'center',       // centers text in input
-                                                    input: {
-                                                        textAlign: 'center',     // ensure inner <input> is centered
-                                                    },
-
-                                                },
-                                            }}
-                                            onChange={(e) => handleOnTextFieldChange(index, e.target.value)}
-                                           
-
-                                            autoComplete="off"
-                                            sx={{
-                                                p: 0, // outer TextField padding
-                                                m: 0, // remove margin if any
-                                                minWidth: 0,
-
-                                            }}
-                                        />
-                                    </TableCell>)
-                                    )
-                            }
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </Paper>
-    );
+                        autoComplete="off"
+                        sx={{
+                          p: 0,
+                          m: 0,
+                          minWidth: 0,
+                        }}
+                      />
+                    </TableCell>
+                  ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Paper>
+  );
 }
