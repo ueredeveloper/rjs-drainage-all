@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, useTheme } from "@mui/material/styles";
-import PolygonInfoContent from "./html-polygon-content";
+import PolygonInfoContent from "./PolygonContent";
 import { useData } from "../../../../hooks/analyse-hooks";
 
 /**

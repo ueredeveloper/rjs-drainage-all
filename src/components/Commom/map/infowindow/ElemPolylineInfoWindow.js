@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { useTheme } from "@mui/material/styles";
-import PolylineInfoContent from "./html-polyline-content";
+import PolylineInfoContent from "./PolylineContent";
 
 /**
  * Componente para exibir informações em uma janela de informações associada a uma polyline no mapa.
