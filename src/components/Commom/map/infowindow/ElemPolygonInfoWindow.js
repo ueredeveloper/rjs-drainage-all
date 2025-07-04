@@ -1,8 +1,11 @@
+// ElemPolygonInfoWindow.js
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, useTheme } from "@mui/material/styles";
 import PolygonInfoContent from "./PolygonContent";
 import { useData } from "../../../../hooks/analyse-hooks";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 /**
  * Componente para exibir informações em uma janela de informações associada a um polígono no mapa.
@@ -19,6 +22,25 @@ const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
     const { setOverlays } = useData();
     const theme = useTheme();
     const rootRef = useRef(null);
+
+    // Estado para o alerta de sucesso global
+    const [successOpen, setSuccessOpen] = useState(false);
+
+    // Função para fechar a InfoWindow
+    const handleCloseInfoWindow = () => {
+        if (infoWindow) {
+            infoWindow.close();
+        }
+    };
+
+    // Função para mostrar o alerta de sucesso
+    const handleShowSuccess = () => setSuccessOpen(true);
+
+    // Função para fechar o alerta de sucesso
+    const handleCloseSuccess = (event, reason) => {
+        if (reason === "clickaway") return;
+        setSuccessOpen(false);
+    };
 
     useEffect(() => {
         // Cria a InfoWindow se ainda não existir
@@ -46,6 +68,8 @@ const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
                             map={map}
                             setOverlays={setOverlays}
                             color={theme.palette.primary.main}
+                            closeInfoWindow={handleCloseInfoWindow}
+                            onSuccess={handleShowSuccess}
                         />
                     </ThemeProvider>,
                 );
@@ -78,8 +102,26 @@ const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
         };
     }, [map, polygon, infoWindow, shape, theme, setOverlays]);
 
-    // Não renderiza nada diretamente no DOM React
-    return null;
+    // Renderiza o Snackbar global sobre o mapa
+    return (
+        <>
+            <Snackbar
+                open={successOpen}
+                autoHideDuration={3500}
+                onClose={handleCloseSuccess}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={handleCloseSuccess}
+                    severity="success"
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    Outorgas carregadas com sucesso!
+                </Alert>
+            </Snackbar>
+        </>
+    );
 };
 
 export default ElemPolygonInfoWindow;

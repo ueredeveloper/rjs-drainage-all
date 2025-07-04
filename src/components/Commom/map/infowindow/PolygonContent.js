@@ -1,3 +1,4 @@
+// PolygonContent.js
 import React, { useState } from "react";
 import {
     Box,
@@ -5,8 +6,6 @@ import {
     Paper,
     Button,
     CircularProgress,
-    Snackbar,
-    Alert,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
@@ -23,12 +22,21 @@ import { fetchGrantsInsideShape } from "../../../../services/shapes";
  * @param {google.maps.Map} props.map - Instância do mapa do Google.
  * @param {Function} props.setOverlays - Função para atualizar overlays no mapa.
  * @param {string} props.color - Cor principal para o cabeçalho.
+ * @param {Function} props.closeInfoWindow - Função para fechar a InfoWindow.
+ * @param {Function} props.onSuccess - Função para exibir o alerta de sucesso global.
  * @returns {JSX.Element}
  */
-const PolygonInfoContent = ({ polygon, shape, map, setOverlays, color }) => {
+const PolygonInfoContent = ({
+    polygon,
+    shape,
+    map,
+    setOverlays,
+    color,
+    closeInfoWindow,
+    onSuccess, // <-- Nova prop para acionar o alerta global
+}) => {
     const theme = useTheme();
     const [loading, setLoading] = useState(false);
-    const [successOpen, setSuccessOpen] = useState(false);
 
     // Helper para acessar propriedades do shape de forma segura
     const get = (key) => shape?.[key] ?? shape?.properties?.[key] ?? "";
@@ -65,19 +73,17 @@ const PolygonInfoContent = ({ polygon, shape, map, setOverlays, color }) => {
                 shapes: [...prev.shapes, _shape],
             }));
 
-            // Exibe alerta de sucesso do MUI
-            setSuccessOpen(true);
+            // Aciona o alerta global de sucesso
+            if (onSuccess) onSuccess();
+
+            // Fecha a InfoWindow automaticamente após sucesso
+            if (closeInfoWindow) closeInfoWindow();
         } catch (error) {
             alert("Erro ao buscar outorgas.");
             console.error(error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleCloseSuccess = (event, reason) => {
-        if (reason === "clickaway") return;
-        setSuccessOpen(false);
     };
 
     // Títulos conforme o shape
@@ -221,23 +227,6 @@ const PolygonInfoContent = ({ polygon, shape, map, setOverlays, color }) => {
                     {btnSearch}
                 </Box>
             </Box>
-
-            {/* Snackbar de sucesso */}
-            <Snackbar
-                open={successOpen}
-                autoHideDuration={3500}
-                onClose={handleCloseSuccess}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert
-                    onClose={handleCloseSuccess}
-                    severity="success"
-                    variant="filled"
-                    sx={{ width: "100%" }}
-                >
-                    Outorgas carregadas com sucesso!
-                </Alert>
-            </Snackbar>
         </Paper>
     );
 };
