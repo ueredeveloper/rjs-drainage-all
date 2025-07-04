@@ -31,33 +31,32 @@
 /**
  * Conteúdo do InfoWindow do Polígono.
  * @component
- * @param {*} polygon 
- * @param {*} shape 
- * @param {*} map 
- * @param {*} setOverlays 
+ * @param {*} polygon
+ * @param {*} shape
+ * @param {*} map
+ * @param {*} setOverlays
  * @param {*} color
  */
 const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
-
     /**
-  * Obtém concessões dentro de uma forma geográfica e as adiciona ao mapa.
-  *
-  * @async
-  * @param {Object} shape - Informações sobre a forma geográfica.
-  * @param {string} shape.shapeName - Nome da forma geográfica.
-  * @param {string} shape.bacia_cod - Código da bacia hidrográfica (se aplicável).
-  * @param {string} shape.uh_codigo - Código da unidade hidrográfica (se aplicável).
-  * @param {string} shape.cod_plan - Código da sistema fraturado ou poroso (se aplicável).
-  * @param {google.maps.Map} map - Instância do mapa onde as concessões serão adicionadas.
-  */
+     * Obtém concessões dentro de uma forma geográfica e as adiciona ao mapa.
+     *
+     * @async
+     * @param {Object} shape - Informações sobre a forma geográfica.
+     * @param {string} shape.shapeName - Nome da forma geográfica.
+     * @param {string} shape.bacia_cod - Código da bacia hidrográfica (se aplicável).
+     * @param {string} shape.uh_codigo - Código da unidade hidrográfica (se aplicável).
+     * @param {string} shape.cod_plan - Código da sistema fraturado ou poroso (se aplicável).
+     * @param {google.maps.Map} map - Instância do mapa onde as concessões serão adicionadas.
+     */
     const obtainGrants = async (shape, map) => {
         let shapeCode;
         let shapeName = shape.shapeName;
 
         // Verifica qual shape está sendo solicitada e seu código específico.
-        if (shape.shapeName === 'bacias_hidrograficas') {
+        if (shape.shapeName === "bacias_hidrograficas") {
             shapeCode = shape.bacia_cod;
-        } else if (shape.shapeName === 'unidades_hidrograficas') {
+        } else if (shape.shapeName === "unidades_hidrograficas") {
             shapeCode = shape.uh_codigo;
         } else {
             shapeCode = shape.cod_plan;
@@ -65,41 +64,40 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 
         let _shape = {
             id: Date.now(),
-            type: 'polygon',
+            type: "polygon",
             position: null,
             map: map,
             draw: polygon,
             markers: await fetchGrantsInsideShape(shapeName, shapeCode),
-            area: null
+            area: null,
         };
 
-        setOverlays(prev => {
+        setOverlays((prev) => {
             return {
                 ...prev,
-                shapes: [...prev.shapes, _shape]
+                shapes: [...prev.shapes, _shape],
             };
         });
-    }
-
+    };
 
     // Cria o elemento div para o container da janela de informações.
-    const containerDiv = document.createElement('div');
-    containerDiv.id = 'wi-container';
+    const containerDiv = document.createElement("div");
+    containerDiv.id = "wi-container";
 
     // Cria o elemento div para o título.
-    const titleDiv = document.createElement('div');
-    titleDiv.id = 'wi-title';
+    const titleDiv = document.createElement("div");
+    titleDiv.id = "wi-title";
 
     let title1, title2;
 
     // Verifica qual shape está sendo solicitada e seu código específico.
-    if (shape.shapeName === 'bacias_hidrograficas') {
+    if (shape.shapeName === "bacias_hidrograficas") {
         title1 = `Nome da Bacia: ${shape.bacia_nome}`;
-        title2 = `Bacia Código: ${shape.bacia_cod}`
-    } else if (shape.shapeName === 'unidades_hidrograficas') {
+        title2 = `Bacia Código: ${shape.bacia_cod}`;
+    } else if (shape.shapeName === "unidades_hidrograficas") {
         title1 = `Nome da UH: ${shape.uh_nome}`;
-        title2 = `${shape.uh_label}`
-    } else if (shape.shapeName === 'hidrogeo_poroso') {
+        title2 = `${shape.uh_label}`;
+    } else if (shape.shapeName === "hidrogeo_poroso") {
         title1 = `Sistema: ${shape.sistema}`;
         title2 = `Código: ${shape.cod_plan}`;
     } else {
@@ -108,11 +106,11 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     }
 
     // Cria os elementos div para exibir o tipo e descrição.
-    const titleDiv1 = document.createElement('div');
+    const titleDiv1 = document.createElement("div");
     // bacia
     titleDiv1.textContent = `${title1}`;
     // Cria os elementos div para exibir o tipo e descrição.
-    const titleDiv2 = document.createElement('div');
+    const titleDiv2 = document.createElement("div");
     // bacia
     titleDiv2.textContent = `${title2}`;
 
@@ -120,7 +118,7 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     titleDiv.appendChild(titleDiv2);
 
     // Cria um elemento &lt;style> para definir os estilos CSS.
-    const styleElement = document.createElement('style');
+    const styleElement = document.createElement("style");
 
     // Set the CSS styles
 
@@ -181,40 +179,44 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     document.head.appendChild(styleElement);
 
     // Cria o elemento div para o conteúdo rolável.
-    const overlflowDiv = document.createElement('div');
-    overlflowDiv.id = 'wi-overflow';
+    const overlflowDiv = document.createElement("div");
+    overlflowDiv.id = "wi-overflow";
 
     // Cria o elemento div para o subtítulo.
-    const subtitleDiv = document.createElement('div');
-    subtitleDiv.id = 'wi-subtitle';
+    const subtitleDiv = document.createElement("div");
+    subtitleDiv.id = "wi-subtitle";
     //subtitleDiv.textContent = `${'subtitle'}`;
 
     // Cria o primeiro div interno do subtítulo.
-    const infoDiv = document.createElement('div');
-    infoDiv.textContent = 'Informações';
+    const infoDiv = document.createElement("div");
+    infoDiv.textContent = "Informações";
 
     // Adiciona os elementos div ao subtítulo.
     subtitleDiv.appendChild(infoDiv);
     //subtitleDiv.appendChild(image);
 
     // Cria o elemento div para o conteúdo das informações.
-    const infoContentDiv = document.createElement('div');
-    infoContentDiv.id = 'wi-info';
-    const infoTextDiv = document.createElement('div');
+    const infoContentDiv = document.createElement("div");
+    infoContentDiv.id = "wi-info";
+    const infoTextDiv = document.createElement("div");
 
     // Cria os elementos &lt;p> para cada propriedade e define o conteúdo de texto.
-    const pInfo1 = document.createElement('p');
+    const pInfo1 = document.createElement("p");
     pInfo1.textContent = `${title1}`;
 
-    const pInfo2 = document.createElement('p');
+    const pInfo2 = document.createElement("p");
     pInfo2.textContent = `${title2}`;
 
-    const btnSearch = document.createElement('button');
-    btnSearch.innerHTML = 'Buscar Outorgas';
-    btnSearch.className = 'custom-button'
-    btnSearch.addEventListener("click", function () {
-        obtainGrants(shape, map)
-    }, false);
+    const btnSearch = document.createElement("button");
+    btnSearch.innerHTML = "Buscar Outorgas";
+    btnSearch.className = "custom-button";
+    btnSearch.addEventListener(
+        "click",
+        function () {
+            obtainGrants(shape, map);
+        },
+        false,
+    );
 
     infoTextDiv.appendChild(pInfo1);
     infoTextDiv.appendChild(pInfo2);
@@ -231,9 +233,10 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 
     // Retorna o elemento div completo.
     return containerDiv;
-}
+};
 
-export default HTMLPolygonContent;</code></pre>
+export default HTMLPolygonContent;
+</code></pre>
         </article>
     </section>
 
@@ -243,13 +246,13 @@ export default HTMLPolygonContent;</code></pre>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="CustomTabPanel.html">CustomTabPanel</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemOttoPolyline.html">ElemOttoPolyline</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="ElemPolylineInfoWindow.html">ElemPolylineInfoWindow</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="PolylineInfoContent.html">PolylineInfoContent</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#SurfaceChart">SurfaceChart</a></li><li><a href="global.html#ajustarHoraBombAjustada">ajustarHoraBombAjustada</a></li><li><a href="global.html#ajustarQSecaoMD">ajustarQSecaoMD</a></li><li><a href="global.html#ajustarSecaoMH">ajustarSecaoMH</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCentroid">calculateCentroid</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculateContributingArea">calculateContributingArea</a></li><li><a href="global.html#calculateDemandaAjustada">calculateDemandaAjustada</a></li><li><a href="global.html#calculateDisponibilidadeHidrica">calculateDisponibilidadeHidrica</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateQDisponivelSecao">calculateQDisponivelSecao</a></li><li><a href="global.html#calculateQDisponivelUH">calculateQDisponivelUH</a></li><li><a href="global.html#calculateQIndividualSecao">calculateQIndividualSecao</a></li><li><a href="global.html#calculateQOutorgadaSecao">calculateQOutorgadaSecao</a></li><li><a href="global.html#calculateQOutorgavelSecao">calculateQOutorgavelSecao</a></li><li><a href="global.html#calculateQOutorgavelUH">calculateQOutorgavelUH</a></li><li><a href="global.html#calculateQReferenciaSecao">calculateQReferenciaSecao</a></li><li><a href="global.html#calculateQReferenciaUH">calculateQReferenciaUH</a></li><li><a href="global.html#calculateQRemanescenteUH">calculateQRemanescenteUH</a></li><li><a href="global.html#calculateQSolicitadaMenorQIndividual">calculateQSolicitadaMenorQIndividual</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#calculateSolicitataMenorDisponivel">calculateSolicitataMenorDisponivel</a></li><li><a href="global.html#convertOthoCoordToGmaps">convertOthoCoordToGmaps</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchMarkersByUH">fetchMarkersByUH</a></li><li><a href="global.html#fetchOttoBasins">fetchOttoBasins</a></li><li><a href="global.html#fetchRiversByCoordinates">fetchRiversByCoordinates</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#getUsers">getUsers</a></li><li><a href="global.html#joinOttoBasins">joinOttoBasins</a></li><li><a href="global.html#modularHoraH">modularHoraH</a></li><li><a href="global.html#modularVazaoQ">modularVazaoQ</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#searchHydrograficUnit">searchHydrograficUnit</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Apr 25 2025 10:48:00 GMT-0300 (Horário Padrão de Brasília)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jul 04 2025 13:17:22 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>

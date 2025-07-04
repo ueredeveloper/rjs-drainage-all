@@ -1,6 +1,7 @@
 
 hidden = [".config", "package-lock.json"]
 run = "npm run start"
+modules = ["nodejs-20"]
 
 [[hints]]
 regex = "Error \\[ERR_REQUIRE_ESM\\]"

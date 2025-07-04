@@ -1,36 +1,34 @@
 import { fetchGrantsInsideShape } from "../../../../services/shapes";
 
-
 /**
  * Conteúdo do InfoWindow do Polígono.
  * @component
- * @param {*} polygon 
- * @param {*} shape 
- * @param {*} map 
- * @param {*} setOverlays 
+ * @param {*} polygon
+ * @param {*} shape
+ * @param {*} map
+ * @param {*} setOverlays
  * @param {*} color
  */
 const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
-
     /**
-  * Obtém concessões dentro de uma forma geográfica e as adiciona ao mapa.
-  *
-  * @async
-  * @param {Object} shape - Informações sobre a forma geográfica.
-  * @param {string} shape.shapeName - Nome da forma geográfica.
-  * @param {string} shape.bacia_cod - Código da bacia hidrográfica (se aplicável).
-  * @param {string} shape.uh_codigo - Código da unidade hidrográfica (se aplicável).
-  * @param {string} shape.cod_plan - Código da sistema fraturado ou poroso (se aplicável).
-  * @param {google.maps.Map} map - Instância do mapa onde as concessões serão adicionadas.
-  */
+     * Obtém concessões dentro de uma forma geográfica e as adiciona ao mapa.
+     *
+     * @async
+     * @param {Object} shape - Informações sobre a forma geográfica.
+     * @param {string} shape.shapeName - Nome da forma geográfica.
+     * @param {string} shape.bacia_cod - Código da bacia hidrográfica (se aplicável).
+     * @param {string} shape.uh_codigo - Código da unidade hidrográfica (se aplicável).
+     * @param {string} shape.cod_plan - Código da sistema fraturado ou poroso (se aplicável).
+     * @param {google.maps.Map} map - Instância do mapa onde as concessões serão adicionadas.
+     */
     const obtainGrants = async (shape, map) => {
         let shapeCode;
         let shapeName = shape.shapeName;
 
         // Verifica qual shape está sendo solicitada e seu código específico.
-        if (shape.shapeName === 'bacias_hidrograficas') {
+        if (shape.shapeName === "bacias_hidrograficas") {
             shapeCode = shape.bacia_cod;
-        } else if (shape.shapeName === 'unidades_hidrograficas') {
+        } else if (shape.shapeName === "unidades_hidrograficas") {
             shapeCode = shape.uh_codigo;
         } else {
             shapeCode = shape.cod_plan;
@@ -38,41 +36,40 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 
         let _shape = {
             id: Date.now(),
-            type: 'polygon',
+            type: "polygon",
             position: null,
             map: map,
             draw: polygon,
             markers: await fetchGrantsInsideShape(shapeName, shapeCode),
-            area: null
+            area: null,
         };
 
-        setOverlays(prev => {
+        setOverlays((prev) => {
             return {
                 ...prev,
-                shapes: [...prev.shapes, _shape]
+                shapes: [...prev.shapes, _shape],
             };
         });
-    }
-
+    };
 
     // Cria o elemento div para o container da janela de informações.
-    const containerDiv = document.createElement('div');
-    containerDiv.id = 'wi-container';
+    const containerDiv = document.createElement("div");
+    containerDiv.id = "wi-container";
 
     // Cria o elemento div para o título.
-    const titleDiv = document.createElement('div');
-    titleDiv.id = 'wi-title';
+    const titleDiv = document.createElement("div");
+    titleDiv.id = "wi-title";
 
     let title1, title2;
 
     // Verifica qual shape está sendo solicitada e seu código específico.
-    if (shape.shapeName === 'bacias_hidrograficas') {
+    if (shape.shapeName === "bacias_hidrograficas") {
         title1 = `Nome da Bacia: ${shape.bacia_nome}`;
-        title2 = `Bacia Código: ${shape.bacia_cod}`
-    } else if (shape.shapeName === 'unidades_hidrograficas') {
+        title2 = `Bacia Código: ${shape.bacia_cod}`;
+    } else if (shape.shapeName === "unidades_hidrograficas") {
         title1 = `Nome da UH: ${shape.uh_nome}`;
-        title2 = `${shape.uh_label}`
-    } else if (shape.shapeName === 'hidrogeo_poroso') {
+        title2 = `${shape.uh_label}`;
+    } else if (shape.shapeName === "hidrogeo_poroso") {
         title1 = `Sistema: ${shape.sistema}`;
         title2 = `Código: ${shape.cod_plan}`;
     } else {
@@ -81,11 +78,11 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     }
 
     // Cria os elementos div para exibir o tipo e descrição.
-    const titleDiv1 = document.createElement('div');
+    const titleDiv1 = document.createElement("div");
     // bacia
     titleDiv1.textContent = `${title1}`;
     // Cria os elementos div para exibir o tipo e descrição.
-    const titleDiv2 = document.createElement('div');
+    const titleDiv2 = document.createElement("div");
     // bacia
     titleDiv2.textContent = `${title2}`;
 
@@ -93,7 +90,7 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     titleDiv.appendChild(titleDiv2);
 
     // Cria um elemento <style> para definir os estilos CSS.
-    const styleElement = document.createElement('style');
+    const styleElement = document.createElement("style");
 
     // Set the CSS styles
 
@@ -154,40 +151,44 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
     document.head.appendChild(styleElement);
 
     // Cria o elemento div para o conteúdo rolável.
-    const overlflowDiv = document.createElement('div');
-    overlflowDiv.id = 'wi-overflow';
+    const overlflowDiv = document.createElement("div");
+    overlflowDiv.id = "wi-overflow";
 
     // Cria o elemento div para o subtítulo.
-    const subtitleDiv = document.createElement('div');
-    subtitleDiv.id = 'wi-subtitle';
+    const subtitleDiv = document.createElement("div");
+    subtitleDiv.id = "wi-subtitle";
     //subtitleDiv.textContent = `${'subtitle'}`;
 
     // Cria o primeiro div interno do subtítulo.
-    const infoDiv = document.createElement('div');
-    infoDiv.textContent = 'Informações';
+    const infoDiv = document.createElement("div");
+    infoDiv.textContent = "Informações";
 
     // Adiciona os elementos div ao subtítulo.
     subtitleDiv.appendChild(infoDiv);
     //subtitleDiv.appendChild(image);
 
     // Cria o elemento div para o conteúdo das informações.
-    const infoContentDiv = document.createElement('div');
-    infoContentDiv.id = 'wi-info';
-    const infoTextDiv = document.createElement('div');
+    const infoContentDiv = document.createElement("div");
+    infoContentDiv.id = "wi-info";
+    const infoTextDiv = document.createElement("div");
 
     // Cria os elementos <p> para cada propriedade e define o conteúdo de texto.
-    const pInfo1 = document.createElement('p');
+    const pInfo1 = document.createElement("p");
     pInfo1.textContent = `${title1}`;
 
-    const pInfo2 = document.createElement('p');
+    const pInfo2 = document.createElement("p");
     pInfo2.textContent = `${title2}`;
 
-    const btnSearch = document.createElement('button');
-    btnSearch.innerHTML = 'Buscar Outorgas';
-    btnSearch.className = 'custom-button'
-    btnSearch.addEventListener("click", function () {
-        obtainGrants(shape, map)
-    }, false);
+    const btnSearch = document.createElement("button");
+    btnSearch.innerHTML = "Buscar Outorgas";
+    btnSearch.className = "custom-button";
+    btnSearch.addEventListener(
+        "click",
+        function () {
+            obtainGrants(shape, map);
+        },
+        false,
+    );
 
     infoTextDiv.appendChild(pInfo1);
     infoTextDiv.appendChild(pInfo2);
@@ -204,6 +205,6 @@ const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
 
     // Retorna o elemento div completo.
     return containerDiv;
-}
+};
 
 export default HTMLPolygonContent;
