@@ -1,167 +1,216 @@
+import React from "react";
+import { Box, Typography, Paper } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { setInfoMarkerIcon } from "../../../../tools";
 
-
 /**
- * Conteúdo da Infowindow (ElemMarkerInfoWindow).
+ * Componente de conteúdo para InfoWindow de marcadores no mapa.
+ *
+ * Este componente renderiza informações detalhadas de um marcador em um layout
+ * estruturado usando Material-UI. Inclui cabeçalho colorido, ícone SVG dinâmico
+ * e seção de informações com scroll quando necessário.
+ *
  * @component
- * @param {string} color Cor em formato rex color, ex: #ffffff.
- * @param {object} info Informações do marcador. 
+ * @example
+ * // Exemplo de uso básico
+ * <HTMLMarkerContent
+ *   color="#1976d2"
+ *   info={{
+ *     id: 1,
+ *     ti_id: 2,
+ *     tp_id: 3,
+ *     ti_descricao: "Tipo Interferência",
+ *     tp_descricao: "Tipo Processo",
+ *     to_descricao: "Captação",
+ *     sp_descricao: "Ativo",
+ *     us_nome: "João Silva",
+ *     us_cpf_cnpj: "123.456.789-00",
+ *     int_num_ato: "12345/2023",
+ *     emp_endereco: "Rua das Flores, 123",
+ *     int_processo: "PROC-2023-001",
+ *     int_latitude: -23.5505,
+ *     int_longitude: -46.6333,
+ *     bh_nome: "Bacia do Rio Tietê",
+ *     uh_nome: "Unidade Alto Tietê"
+ *   }}
+ * />
+ *
+ * @param {Object} props - Propriedades do componente
+ * @param {string} [props.color] - Cor de fundo do cabeçalho em formato hexadecimal (ex: "#ffffff")
+ *                                 Se não fornecida, usa a cor primária do tema
+ * @param {Object} props.info - Objeto contendo todas as informações do marcador
+ * @param {number|string} props.info.id - Identificador único do marcador
+ * @param {number|string} props.info.ti_id - ID do tipo de interferência
+ * @param {number|string} props.info.tp_id - ID do tipo de processo
+ * @param {string} props.info.ti_descricao - Descrição do tipo de interferência
+ * @param {string} props.info.tp_descricao - Descrição do tipo de processo
+ * @param {string} props.info.to_descricao - Descrição do tipo de outorga
+ * @param {string} props.info.sp_descricao - Descrição da situação do processo
+ * @param {string} props.info.us_nome - Nome do usuário/requerente
+ * @param {string} props.info.us_cpf_cnpj - CPF ou CNPJ do usuário
+ * @param {string} props.info.int_num_ato - Número do ato/documento
+ * @param {string} props.info.emp_endereco - Endereço do empreendimento
+ * @param {string} props.info.int_processo - Número do processo
+ * @param {number|string} props.info.int_latitude - Latitude da interferência
+ * @param {number|string} props.info.int_longitude - Longitude da interferência
+ * @param {string} props.info.bh_nome - Nome da bacia hidrográfica
+ * @param {string} props.info.uh_nome - Nome da unidade hidrográfica
+ *
+ * @returns {React.ReactElement} Componente Paper do Material-UI contendo as informações formatadas
+ *
+ * @requires react
+ * @requires @mui/material
+ * @requires @mui/material/styles
+ * @requires ../../../../tools (função setInfoMarkerIcon)
+ *
+ * @since 1.0.0
  */
-const HTMLMarkerContent = (color, info) => {
+const HTMLMarkerContent = ({ color, info }) => {
+    /**
+     * Hook para acessar o tema atual do Material-UI
+     * Usado como fallback quando a cor não é fornecida via props
+     * @type {import('@mui/material/styles').Theme}
+     */
+    const theme = useTheme();
 
-    // Obtém os dados do ícone para a janela de informações.
-    let svgData = setInfoMarkerIcon(info.id, info.ti_id, info.tp_id).iw;
+    /**
+     * Obtém o SVG do ícone baseado nos IDs do marcador
+     *
+     * @type {string} - String contendo o código SVG do ícone
+     * @function setInfoMarkerIcon
+     * @memberof external:tools
+     * @param {number|string} id - ID do marcador
+     * @param {number|string} ti_id - ID do tipo de interferência
+     * @param {number|string} tp_id - ID do tipo de processo
+     * @returns {Object} Objeto contendo propriedade 'iw' com o SVG
+     */
+    const svgData = setInfoMarkerIcon(info.id, info.ti_id, info.tp_id).iw;
 
-    // Cria um elemento object para renderizar a imagem SVG.
-    const image = document.createElement('object');
-    image.setAttribute('type', 'image/svg+xml');
-    image.setAttribute('data', `data:image/svg+xml,${encodeURIComponent(svgData)}`);
-    image.style.width = '70px';
-    image.style.height = '70px';
+    return (
+        <Paper
+            elevation={2}
+            sx={{
+                width: "100%",
+                minWidth: 320,
+                maxWidth: 400,
+            }}
+        >
+            {/* Cabeçalho com informações principais */}
+            <Box
+                sx={{
+                    backgroundColor: color || theme.palette.primary.main,
+                    color: "white",
+                    p: 1.5,
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
+            >
+                {/* Tipo de interferência */}
+                <Typography variant="h6" sx={{ fontWeight: 400 }}>
+                    {info.ti_descricao}
+                </Typography>
 
-    // Cria o elemento div para o container da janela de informações.
-    const containerDiv = document.createElement('div');
-    containerDiv.id = 'wi-container';
+                {/* Tipo de processo */}
+                <Typography variant="h6" sx={{ fontWeight: 400 }}>
+                    {info.tp_descricao}
+                </Typography>
+            </Box>
 
-    // Cria o elemento div para o título.
-    const titleDiv = document.createElement('div');
-    titleDiv.id = 'wi-title';
+            {/* Corpo do conteúdo com informações detalhadas */}
+            <Box
+                sx={{
+                    p: 2,
+                    maxHeight: "180px",
+                    overflowY: "auto", // Scroll vertical quando necessário
+                }}
+            >
+                {/* Cabeçalho da seção de informações com ícone */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        mb: 2,
+                    }}
+                >
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        Informações
+                    </Typography>
 
-    // Cria os elementos div para exibir o tipo e descrição.
-    const tittleType = document.createElement('div');
-    tittleType.textContent = info.ti_descricao;
-    const wellType = document.createElement('div');
-    wellType.textContent = info.tp_descricao;
-    titleDiv.appendChild(tittleType);
-    titleDiv.appendChild(wellType);
+                    {/* Ícone SVG dinâmico */}
+                    <object
+                        type="image/svg+xml"
+                        data={`data:image/svg+xml,${encodeURIComponent(svgData)}`}
+                        style={{ width: 70, height: 70 }}
+                        aria-label="Ícone do marcador"
+                    />
+                </Box>
 
-    // Cria um elemento <style> para definir os estilos CSS.
-    const styleElement = document.createElement('style');
+                {/* Lista de informações detalhadas */}
+                <Box
+                    sx={{
+                        fontSize: 13,
+                        lineHeight: "18px",
+                        fontWeight: 400,
+                    }}
+                >
+                    {/* Tipo de outorga */}
+                    <Typography variant="body2">
+                        <strong>Tipo:</strong> {info.to_descricao}
+                    </Typography>
 
-    // Set the CSS styles
+                    {/* Situação do processo */}
+                    <Typography variant="body2">
+                        <strong>Situação:</strong> {info.sp_descricao}
+                    </Typography>
 
-    const setStyles = (bgColor) => {
-        return `
-          #wi-container {
-                width: 100%;
-                height: 300px;
-            }
-          #wi-title {
-              font-family: 'Open Sans Condensed', sans-serif;
-              font-size: 22px;
-              font-weight: 400;
-              padding: 10px;
-              background-color: ${bgColor};
-              color: white;
-              margin: 0;
-              display: flex;
-              flex-direction: row;
-              justify-content: space-between;
-          }
-          #wi-overflow {
-              overflow-y: auto;
-              overflow-x: hidden;
-          }
-          #wi-subtitle {
-              font-size: 16px;
-              font-weight: 700;
-              padding: 5px 0;
-              display: flex;
-              flex-direction: row;
-              justify-content: space-around;
-              align-items: center;
-              padding: 10px;
-          }
-          #wi-info {
-              font-size: 13px;
-              line-height: 18px;
-              font-weight: 400;
-              padding: 15px;
-              max-height: 140px;
-          }
-        `;
-    };
+                    {/* Nome do requerente */}
+                    <Typography variant="body2">
+                        <strong>Nome:</strong> {info.us_nome}
+                    </Typography>
 
-    styleElement.textContent = setStyles(color);
+                    {/* CPF/CNPJ */}
+                    <Typography variant="body2">
+                        <strong>CPF:</strong> {info.us_cpf_cnpj}
+                    </Typography>
 
-    // Adiciona o <style> ao <head> do documento.
-    document.head.appendChild(styleElement);
+                    {/* Número do ato */}
+                    <Typography variant="body2">
+                        <strong>Número do Ato:</strong> {info.int_num_ato}
+                    </Typography>
 
-    // Cria o elemento div para o conteúdo rolável.
-    const overlflowDiv = document.createElement('div');
-    overlflowDiv.id = 'wi-overflow';
+                    {/* Endereço do empreendimento */}
+                    <Typography variant="body2">
+                        <strong>Endereço:</strong> {info.emp_endereco}
+                    </Typography>
 
-    // Cria o elemento div para o subtítulo.
-    const subtitleDiv = document.createElement('div');
-    subtitleDiv.id = 'wi-subtitle';
+                    {/* Número do processo */}
+                    <Typography variant="body2">
+                        <strong>Processo:</strong> {info.int_processo}
+                    </Typography>
 
-    // Cria o primeiro div interno do subtítulo.
-    const infoDiv = document.createElement('div');
-    infoDiv.textContent = 'Informações';
+                    {/* Coordenadas geográficas */}
+                    <Typography variant="body2">
+                        <strong>Coordenadas:</strong> {info.int_latitude},{" "}
+                        {info.int_longitude}
+                    </Typography>
 
-    // Adiciona os elementos div ao subtítulo.
-    subtitleDiv.appendChild(infoDiv);
-    subtitleDiv.appendChild(image);
+                    {/* Bacia hidrográfica */}
+                    <Typography variant="body2">
+                        <strong>Bacia Hidrográfica:</strong> {info.bh_nome}
+                    </Typography>
 
-    // Cria o elemento div para o conteúdo das informações.
-    const infoContentDiv = document.createElement('div');
-    infoContentDiv.id = 'wi-info';
-    const infoTextDiv = document.createElement('div');
-
-    const tipoOutorga = document.createElement('p');
-    tipoOutorga.textContent = `Tipo: ${info.to_descricao}`;
-
-    const situacaoProcesso = document.createElement('p');
-    situacaoProcesso.textContent = `Situação: ${info.sp_descricao}`;
-
-    // Cria os elementos <p> para cada propriedade e define o conteúdo de texto.
-    const nome = document.createElement('p');
-    nome.textContent = `Nome: ${info.us_nome}`;
-
-    const cpfCnpj = document.createElement('p');
-    cpfCnpj.textContent = `CPF: ${info.us_cpf_cnpj}`;
-
-    const numAto = document.createElement('p');
-    numAto.textContent = `Número do Ato: ${info.int_num_ato}`;
-
-    const endereco = document.createElement('p');
-    endereco.textContent = `Endereço: ${info.emp_endereco}`;
-
-    const processo = document.createElement('p');
-    processo.textContent = `Processo: ${info.int_processo}`;
-
-    const coordenadas = document.createElement('p');
-    coordenadas.textContent = `Coordenadas: ${info.int_latitude}, ${info.int_longitude}`;
-
-    const bacia = document.createElement('p');
-    bacia.textContent = `Bacia Hidrográfica: ${info.bh_nome}`;
-
-    const unidade = document.createElement('p');
-    unidade.textContent = `Unidade Hidrográfica: ${info.uh_nome}`;
-
-    // Adiciona os elementos <p> ao div de texto das informações.
-    infoTextDiv.appendChild(tipoOutorga);
-    infoTextDiv.appendChild(situacaoProcesso);
-    infoTextDiv.appendChild(nome);
-    infoTextDiv.appendChild(cpfCnpj);
-    infoTextDiv.appendChild(numAto);
-    infoTextDiv.appendChild(endereco);
-    infoTextDiv.appendChild(processo);
-    infoTextDiv.appendChild(coordenadas);
-    infoTextDiv.appendChild(bacia);
-    infoTextDiv.appendChild(unidade);
-
-    // Adiciona o div de texto das informações ao div de conteúdo.
-    infoContentDiv.appendChild(infoTextDiv);
-
-    // Adiciona todos os elementos ao div do container.
-    containerDiv.appendChild(titleDiv);
-    overlflowDiv.appendChild(subtitleDiv);
-    overlflowDiv.appendChild(infoContentDiv);
-    containerDiv.appendChild(overlflowDiv);
-
-    // Retorna o elemento div completo.
-    return containerDiv;
-}
+                    {/* Unidade hidrográfica */}
+                    <Typography variant="body2">
+                        <strong>Unidade Hidrográfica:</strong> {info.uh_nome}
+                    </Typography>
+                </Box>
+            </Box>
+        </Paper>
+    );
+};
 
 export default HTMLMarkerContent;

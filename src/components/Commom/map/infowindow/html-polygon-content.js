@@ -1,210 +1,245 @@
+import React, { useState } from "react";
+import {
+    Box,
+    Typography,
+    Paper,
+    Button,
+    CircularProgress,
+    Snackbar,
+    Alert,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import SearchIcon from "@mui/icons-material/Search";
 import { fetchGrantsInsideShape } from "../../../../services/shapes";
 
 /**
- * Conteúdo do InfoWindow do Polígono.
+ * Componente React que exibe informações detalhadas sobre um polígono
+ * e permite buscar outorgas dentro da área do polígono.
+ *
  * @component
- * @param {*} polygon
- * @param {*} shape
- * @param {*} map
- * @param {*} setOverlays
- * @param {*} color
+ * @param {Object} props
+ * @param {google.maps.Polygon} props.polygon - Instância do Polígono no mapa do Google.
+ * @param {Object} props.shape - Objeto contendo as propriedades e geometria da shape associada.
+ * @param {google.maps.Map} props.map - Instância do mapa do Google.
+ * @param {Function} props.setOverlays - Função para atualizar overlays no mapa.
+ * @param {string} props.color - Cor principal para o cabeçalho.
+ * @returns {JSX.Element}
  */
-const HTMLPolygonContent = (polygon, shape, map, setOverlays, color) => {
-    /**
-     * Obtém concessões dentro de uma forma geográfica e as adiciona ao mapa.
-     *
-     * @async
-     * @param {Object} shape - Informações sobre a forma geográfica.
-     * @param {string} shape.shapeName - Nome da forma geográfica.
-     * @param {string} shape.bacia_cod - Código da bacia hidrográfica (se aplicável).
-     * @param {string} shape.uh_codigo - Código da unidade hidrográfica (se aplicável).
-     * @param {string} shape.cod_plan - Código da sistema fraturado ou poroso (se aplicável).
-     * @param {google.maps.Map} map - Instância do mapa onde as concessões serão adicionadas.
-     */
-    const obtainGrants = async (shape, map) => {
-        let shapeCode;
-        let shapeName = shape.shapeName;
+const PolygonInfoContent = ({ polygon, shape, map, setOverlays, color }) => {
+    const theme = useTheme();
+    const [loading, setLoading] = useState(false);
+    const [successOpen, setSuccessOpen] = useState(false);
 
-        // Verifica qual shape está sendo solicitada e seu código específico.
-        if (shape.shapeName === "bacias_hidrograficas") {
-            shapeCode = shape.bacia_cod;
-        } else if (shape.shapeName === "unidades_hidrograficas") {
-            shapeCode = shape.uh_codigo;
-        } else {
-            shapeCode = shape.cod_plan;
-        }
+    // Helper para acessar propriedades do shape de forma segura
+    const get = (key) => shape?.[key] ?? shape?.properties?.[key] ?? "";
 
-        let _shape = {
-            id: Date.now(),
-            type: "polygon",
-            position: null,
-            map: map,
-            draw: polygon,
-            markers: await fetchGrantsInsideShape(shapeName, shapeCode),
-            area: null,
-        };
+    // Função para buscar outorgas da mesma forma que o código original
+    const handleSearchGrants = async () => {
+        setLoading(true);
+        try {
+            let shapeCode;
+            let shapeName = get("shapeName");
 
-        setOverlays((prev) => {
-            return {
+            if (shapeName === "bacias_hidrograficas") {
+                shapeCode = get("bacia_cod");
+            } else if (shapeName === "unidades_hidrograficas") {
+                shapeCode = get("uh_codigo");
+            } else {
+                shapeCode = get("cod_plan");
+            }
+
+            const markers = await fetchGrantsInsideShape(shapeName, shapeCode);
+
+            const _shape = {
+                id: Date.now(),
+                type: "polygon",
+                position: null,
+                map,
+                draw: polygon,
+                markers,
+                area: null,
+            };
+
+            setOverlays((prev) => ({
                 ...prev,
                 shapes: [...prev.shapes, _shape],
-            };
-        });
+            }));
+
+            // Exibe alerta de sucesso do MUI
+            setSuccessOpen(true);
+        } catch (error) {
+            alert("Erro ao buscar outorgas.");
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Cria o elemento div para o container da janela de informações.
-    const containerDiv = document.createElement("div");
-    containerDiv.id = "wi-container";
+    const handleCloseSuccess = (event, reason) => {
+        if (reason === "clickaway") return;
+        setSuccessOpen(false);
+    };
 
-    // Cria o elemento div para o título.
-    const titleDiv = document.createElement("div");
-    titleDiv.id = "wi-title";
-
+    // Títulos conforme o shape
     let title1, title2;
-
-    // Verifica qual shape está sendo solicitada e seu código específico.
-    if (shape.shapeName === "bacias_hidrograficas") {
-        title1 = `Nome da Bacia: ${shape.bacia_nome}`;
-        title2 = `Bacia Código: ${shape.bacia_cod}`;
-    } else if (shape.shapeName === "unidades_hidrograficas") {
-        title1 = `Nome da UH: ${shape.uh_nome}`;
-        title2 = `${shape.uh_label}`;
-    } else if (shape.shapeName === "hidrogeo_poroso") {
-        title1 = `Sistema: ${shape.sistema}`;
-        title2 = `Código: ${shape.cod_plan}`;
+    if (get("shapeName") === "bacias_hidrograficas") {
+        title1 = `Nome da Bacia: ${get("bacia_nome")}`;
+        title2 = `Bacia Código: ${get("bacia_cod")}`;
+    } else if (get("shapeName") === "unidades_hidrograficas") {
+        title1 = `Nome da UH: ${get("uh_nome")}`;
+        title2 = `${get("uh_label")}`;
+    } else if (get("shapeName") === "hidrogeo_poroso") {
+        title1 = `Sistema: ${get("sistema")}`;
+        title2 = `Código: ${get("cod_plan")}`;
     } else {
-        title1 = `Sistema: ${shape.sistema}, Subsistema: ${shape.subsistema}`;
-        title2 = `Código: ${shape.cod_plan}`;
+        title1 = `Sistema: ${get("sistema")}, Subsistema: ${get("subsistema")}`;
+        title2 = `Código: ${get("cod_plan")}`;
     }
 
-    // Cria os elementos div para exibir o tipo e descrição.
-    const titleDiv1 = document.createElement("div");
-    // bacia
-    titleDiv1.textContent = `${title1}`;
-    // Cria os elementos div para exibir o tipo e descrição.
-    const titleDiv2 = document.createElement("div");
-    // bacia
-    titleDiv2.textContent = `${title2}`;
-
-    titleDiv.appendChild(titleDiv1);
-    titleDiv.appendChild(titleDiv2);
-
-    // Cria um elemento <style> para definir os estilos CSS.
-    const styleElement = document.createElement("style");
-
-    // Set the CSS styles
-
-    const setStyles = (bgColor) => {
-        return `
-          #wi-container {
-                width: 100%;
-                min-width: 300px;
-                height: 300px;
+    // Botão de busca de outorgas
+    const btnSearch = (
+        <Button
+            variant="contained"
+            color="primary"
+            startIcon={
+                loading ? (
+                    <CircularProgress size={16} color="inherit" />
+                ) : (
+                    <SearchIcon />
+                )
             }
-          #wi-title {
-              font-family: 'Open Sans Condensed', sans-serif;
-              font-size: 22px;
-              font-weight: 400;
-              padding: 10px;
-              background-color: ${bgColor};
-              color: white;
-              margin: 0;
-              display: flex;
-              flex-direction: row;
-              justify-content: space-between;
-          }
-          #wi-overflow {
-              overflow-y: auto;
-              overflow-x: hidden;
-          }
-          #wi-subtitle {
-              font-size: 16px;
-              font-weight: 700;
-              padding: 5px 0;
-              display: flex;
-              flex-direction: row;
-              justify-content: space-around;
-              align-items: center;
-              padding: 10px;
-          }
-          #wi-info {
-              font-size: 13px;
-              line-height: 18px;
-              font-weight: 400;
-              padding: 15px;
-              max-height: 140px;
-          },
-          .custom-button {
-              background-color: ${bgColor};
-              color: white;
-              border: none;
-              padding: 10px 20px;
-              border-radius: 5px;
-              cursor: pointer;
-}
-        `;
-    };
-
-    styleElement.textContent = setStyles(color);
-
-    // Adiciona o <style> ao <head> do documento.
-    document.head.appendChild(styleElement);
-
-    // Cria o elemento div para o conteúdo rolável.
-    const overlflowDiv = document.createElement("div");
-    overlflowDiv.id = "wi-overflow";
-
-    // Cria o elemento div para o subtítulo.
-    const subtitleDiv = document.createElement("div");
-    subtitleDiv.id = "wi-subtitle";
-    //subtitleDiv.textContent = `${'subtitle'}`;
-
-    // Cria o primeiro div interno do subtítulo.
-    const infoDiv = document.createElement("div");
-    infoDiv.textContent = "Informações";
-
-    // Adiciona os elementos div ao subtítulo.
-    subtitleDiv.appendChild(infoDiv);
-    //subtitleDiv.appendChild(image);
-
-    // Cria o elemento div para o conteúdo das informações.
-    const infoContentDiv = document.createElement("div");
-    infoContentDiv.id = "wi-info";
-    const infoTextDiv = document.createElement("div");
-
-    // Cria os elementos <p> para cada propriedade e define o conteúdo de texto.
-    const pInfo1 = document.createElement("p");
-    pInfo1.textContent = `${title1}`;
-
-    const pInfo2 = document.createElement("p");
-    pInfo2.textContent = `${title2}`;
-
-    const btnSearch = document.createElement("button");
-    btnSearch.innerHTML = "Buscar Outorgas";
-    btnSearch.className = "custom-button";
-    btnSearch.addEventListener(
-        "click",
-        function () {
-            obtainGrants(shape, map);
-        },
-        false,
+            onClick={handleSearchGrants}
+            disabled={loading}
+            sx={{ minWidth: 140 }}
+        >
+            {loading ? "Buscando..." : "Buscar Outorgas"}
+        </Button>
     );
 
-    infoTextDiv.appendChild(pInfo1);
-    infoTextDiv.appendChild(pInfo2);
-    infoTextDiv.appendChild(btnSearch);
+    return (
+        <Paper elevation={2} sx={{ width: "100%", minHeight: "250px" }}>
+            {/* Cabeçalho */}
+            <Box
+                sx={{
+                    backgroundColor: color || theme.palette.primary.main,
+                    color: "white",
+                    p: 1.5,
+                    textAlign: "center",
+                }}
+            >
+                <Typography variant="h6" component="h3">
+                    {title1}
+                </Typography>
+                <Typography variant="subtitle1">{title2}</Typography>
+            </Box>
 
-    // Adiciona o div de texto das informações ao div de conteúdo.
-    infoContentDiv.appendChild(infoTextDiv);
+            {/* Corpo com informações detalhadas */}
+            <Box sx={{ p: 2, maxHeight: "180px", overflowY: "auto" }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: "center" }}>
+                    Informações
+                </Typography>
 
-    // Adiciona todos os elementos ao div do container.
-    containerDiv.appendChild(titleDiv);
-    overlflowDiv.appendChild(subtitleDiv);
-    overlflowDiv.appendChild(infoContentDiv);
-    containerDiv.appendChild(overlflowDiv);
+                {/* Seção específica para bacias hidrográficas */}
+                {(get("shapeName") === "bacias_hidrograficas" ||
+                    !!get("bacia_nome") ||
+                    !!get("bacia_cod")) && (
+                    <>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Nome da Bacia:</strong>{" "}
+                            {get("bacia_nome") || "Não informado"}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                            <strong>Bacia Código:</strong>{" "}
+                            {get("bacia_cod") || "Não informado"}
+                        </Typography>
+                    </>
+                )}
 
-    // Retorna o elemento div completo.
-    return containerDiv;
+                {/* Seção específica para unidades hidrográficas */}
+                {get("shapeName") === "unidades_hidrograficas" && (
+                    <>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Nome da UH:</strong>{" "}
+                            {get("uh_nome") || "Não informado"}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Código da UH:</strong>{" "}
+                            {get("uh_codigo") || "Não informado"}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Label:</strong>{" "}
+                            {get("uh_label") || "Não informado"}
+                        </Typography>
+                    </>
+                )}
+
+                {/* Seção específica para sistemas hidrogeológicos */}
+                {(get("shapeName") === "hidrogeo_poroso" ||
+                    get("shapeName") === "hidrogeo_fraturado") && (
+                    <>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Sistema:</strong>{" "}
+                            {get("sistema") || "Não informado"}
+                        </Typography>
+                        {get("subsistema") && (
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Subsistema:</strong> {get("subsistema")}
+                            </Typography>
+                        )}
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            <strong>Código:</strong>{" "}
+                            {get("cod_plan") || "Não informado"}
+                        </Typography>
+                    </>
+                )}
+
+                {/* Observações (se existirem) */}
+                {(get("observacao") || get("observação")) && (
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Observações:</strong>{" "}
+                        {get("observacao") || get("observação")}
+                    </Typography>
+                )}
+
+                {/* ID do objeto (informação técnica) */}
+                {(get("objectid") || get("OBJECTID_1")) && (
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            mb: 1,
+                            fontSize: "0.75rem",
+                            color: "text.secondary",
+                        }}
+                    >
+                        <strong>ID:</strong>{" "}
+                        {get("objectid") || get("OBJECTID_1")}
+                    </Typography>
+                )}
+
+                {/* Botão de busca */}
+                <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
+                    {btnSearch}
+                </Box>
+            </Box>
+
+            {/* Snackbar de sucesso */}
+            <Snackbar
+                open={successOpen}
+                autoHideDuration={3500}
+                onClose={handleCloseSuccess}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={handleCloseSuccess}
+                    severity="success"
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    Outorgas carregadas com sucesso!
+                </Alert>
+            </Snackbar>
+        </Paper>
+    );
 };
 
-export default HTMLPolygonContent;
+export default PolygonInfoContent;

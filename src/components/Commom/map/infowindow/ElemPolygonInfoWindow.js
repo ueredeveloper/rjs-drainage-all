@@ -1,63 +1,84 @@
-
-import { useEffect, useState } from 'react';
-import { useTheme } from '@mui/material/styles';
-import HTMLPolygonContent from './html-polygon-content';
-import { useData } from '../../../../hooks/analyse-hooks';
-
+import React, { useEffect, useState, useRef } from "react";
+import { createRoot } from "react-dom/client";
+import { ThemeProvider, useTheme } from "@mui/material/styles";
+import PolygonInfoContent from "./html-polygon-content";
+import { useData } from "../../../../hooks/analyse-hooks";
 
 /**
  * Componente para exibir informações em uma janela de informações associada a um polígono no mapa.
+ *
  * @component
- * @param {object} props - Propriedades do componente.
- * @param {google.maps.Polygon} props.marker - O polígono ao qual a janela de informações está associada.
- * @param {object} props.shape - As informações a serem exibidas na janela.
- * @param {google.maps.Map} props.map - O mapa ao qual o polígono e a janela de informações pertencem.
+ * @param {Object} props
+ * @param {google.maps.Polygon} props.polygon - O polígono do Google Maps.
+ * @param {Object} props.shape - Dados do polígono.
+ * @param {google.maps.Map} props.map - Instância do mapa.
+ * @returns {null}
  */
 const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
-
-    /**
-     * Estado que controla a instância da janela de informações.
-     * @type {google.maps.InfoWindow}
-     */
-    const [infowindow, setInfowindow] = useState();
-   // const [, , , , , setOverlays] = useContext(AnalyseContext)
-   const {setOverlays} = useData()
-
-
-
-    /**
-     * O tema do Material-UI sendo utilizado no componente.
-     */
+    const [infoWindow, setInfoWindow] = useState(null);
+    const { setOverlays } = useData();
     const theme = useTheme();
-
-    function updateInfoWindowContent(myInfowindow, newContent) {
-        myInfowindow.setContent(newContent);
-    }
+    const rootRef = useRef(null);
 
     useEffect(() => {
-        // Cria a instância da janela de informações caso ainda não exista.
-        if (!infowindow) {
-            let _infowindow = new window.google.maps.InfoWindow({});
-            // Sobrepor a janela de informações ao popup do polígono, retângulo, etc...
-            _infowindow.setZIndex(10);
-
-            setInfowindow(_infowindow);
+        // Cria a InfoWindow se ainda não existir
+        if (!infoWindow && window.google && window.google.maps) {
+            const _infoWindow = new window.google.maps.InfoWindow({});
+            _infoWindow.setZIndex(10);
+            setInfoWindow(_infoWindow);
         }
 
-        // Atualiza a posição da janela de informações ao marcador.
-        if (map && polygon && infowindow) {
-            // Adiciona um listener para abrir a janela de informações quando o marcador for clicado.
-            if (polygon) {
-                polygon.addListener("click", function (event) {
-                    infowindow.setPosition(event.latLng);
-                    infowindow.open(map);
-                });
-                updateInfoWindowContent(infowindow, HTMLPolygonContent(polygon, shape, map, setOverlays, theme.palette.primary.main))
+        // Configura listeners e renderização React na InfoWindow
+        if (map && polygon && infoWindow) {
+            // Remove listeners antigos para evitar duplicidade
+            window.google.maps.event.clearListeners(polygon, "click");
+
+            // Listener para abrir a InfoWindow ao clicar no polígono
+            polygon.addListener("click", (event) => {
+                const div = document.createElement("div");
+                const root = createRoot(div);
+
+                root.render(
+                    <ThemeProvider theme={theme}>
+                        <PolygonInfoContent
+                            polygon={polygon}
+                            shape={shape}
+                            map={map}
+                            setOverlays={setOverlays}
+                            color={theme.palette.primary.main}
+                        />
+                    </ThemeProvider>,
+                );
+
+                infoWindow.setContent(div);
+                infoWindow.setPosition(event.latLng);
+                infoWindow.open(map);
+
+                rootRef.current = root;
+            });
+
+            // Limpa o React Root ao fechar a InfoWindow
+            infoWindow.addListener("closeclick", () => {
+                if (rootRef.current) {
+                    rootRef.current.unmount();
+                    rootRef.current = null;
+                }
+            });
+        }
+
+        // Limpeza ao desmontar ou atualizar dependências
+        return () => {
+            if (polygon && window.google && window.google.maps) {
+                window.google.maps.event.clearListeners(polygon, "click");
             }
-        }
-    }, [map, polygon, infowindow]);
+            if (rootRef.current) {
+                rootRef.current.unmount();
+                rootRef.current = null;
+            }
+        };
+    }, [map, polygon, infoWindow, shape, theme, setOverlays]);
 
-    // Retorna null, pois este componente não possui renderização visível.
+    // Não renderiza nada diretamente no DOM React
     return null;
 };
 
