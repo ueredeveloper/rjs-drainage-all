@@ -8,7 +8,7 @@
  * @returns {null} Componente não renderiza elementos visuais diretamente.
  */
 
-import ReactDOM from 'react-dom/client';
+import ReactDOM from "react-dom/client";
 import { useEffect } from "react";
 import {
   findAllPointsInRectangle,
@@ -98,9 +98,9 @@ const ElemDrawManager = ({ map }) => {
       if (currentInfoWindow) currentInfoWindow.close();
 
       // Ao abrir o InfoWindow, seta calculoAreaAtivo para false
-      setOverlays(prev => ({
+      setOverlays((prev) => ({
         ...prev,
-        shapes: prev.shapes.map(s =>
+        shapes: prev.shapes.map((s) =>
           s.id === shape.id ? { ...s, calculoAreaAtivo: false } : s
         ),
       }));
@@ -108,7 +108,10 @@ const ElemDrawManager = ({ map }) => {
       const container = document.createElement("div");
       const root = ReactDOM.createRoot(container);
       root.render(
-        <InfoWindowContent shape={{ ...shape, calculoAreaAtivo: false }} setOverlays={setOverlays} />
+        <InfoWindowContent
+          shape={{ ...shape, calculoAreaAtivo: false }}
+          setOverlays={setOverlays}
+        />
       );
 
       const infoWindow = new window.google.maps.InfoWindow({
@@ -196,13 +199,23 @@ const ElemDrawManager = ({ map }) => {
 
         /**
          * Caso o tipo seja "circle", calcula centro, raio, área e encontra marcadores dentro do círculo.
+         * 
+         * - A posição (`shape.position`) é definida na borda norte do círculo (latitude máxima, mesmo longitude do centro),
+         *   para que o InfoWindow apareça fora do centro geométrico.
+         * - O raio é obtido diretamente do overlay.
+         * - A área é calculada usando a função utilitária `calculateCircleArea`.
+         * - Os marcadores internos ao círculo são encontrados pela função `findAllPointsInCircle`.
+         * 
          * @async
          * @param {google.maps.Circle} overlay - Overlay do círculo desenhado.
          */
         if (type === "circle") {
           const center = overlay.getCenter();
           const radius = overlay.getRadius();
-          shape.position = center.toJSON();
+          const bounds = overlay.getBounds();
+          const lat = bounds.getNorthEast().lat(); // latitude máxima (borda norte)
+          const lng = center.lng(); // mesma longitude do centro
+          shape.position = { lat, lng };
           shape.radius = radius;
           shape.area = calculateCircleArea(radius);
           shape.markers = await findAllPointsInCircle({

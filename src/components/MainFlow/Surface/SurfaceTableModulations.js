@@ -1,10 +1,17 @@
+/**
+ * @file SurfaceTableModulations.js
+ * @description Componente React para exibição e edição de tabelas de modulação de horas de bombeamento.
+ * Permite ao usuário informar as horas de bombeamento por mês, valida os valores e atualiza os cálculos relacionados.
+ * Utiliza Material UI para renderização da tabela e campos de entrada.
+ */
+
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import { TextField } from "@mui/material";
+import { TextField, Tooltip } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
   ajustarHoraBombAjustada,
@@ -15,31 +22,47 @@ import {
 } from "../../../tools/surface-tools";
 
 /**
+ * Componente SurfaceTableModulations
  *
- * @returns Tabela de Dados Superificial
+ * @param {Object} props
+ * @param {Object} props.analyse - Objeto de análise contendo dados e aliases das tabelas.
+ * @param {Function} props.setSurfaceAnalyse - Função para atualizar o estado da análise superficial.
+ * @returns {JSX.Element} Tabela de modulação de horas de bombeamento.
  */
 export default function SurfaceTableModulations({
   analyse,
   setSurfaceAnalyse,
 }) {
+  /**
+   * Meses do ano para exibição nas colunas da tabela.
+   * @type {string[]}
+   */
   const months = [
-    "jan",
-    "fev",
-    "mar",
-    "abr",
-    "mai",
-    "jun",
-    "jul",
-    "ago",
-    "set",
-    "out",
-    "nov",
-    "dez",
+    "jan", "fev", "mar", "abr", "mai", "jun",
+    "jul", "ago", "set", "out", "nov", "dez",
   ];
+
+  /**
+   * Estado das linhas da tabela.
+   * @type {[Object[], Function]}
+   */
   const [rows, setRows] = useState([]);
 
   /**
-   * Renderização inicial, ao selcionar esta tab.
+   * Estado de erros de validação dos campos de entrada.
+   * @type {[boolean[], Function]}
+   */
+  const [inputErrors, setInputErrors] = useState(Array(12).fill(false));
+
+  /**
+   * Estado para destacar células alteradas recentemente.
+   * @type {[boolean[], Function]}
+   */
+  const [highlighted, setHighlighted] = useState(Array(12).fill(false));
+
+  /**
+   * Efeito para atualizar os cálculos e o estado da análise ao montar o componente,
+   * caso o alias seja "Tabela de ajuste das Horas de Bombeamento".
    */
   useEffect(() => {
     if (analyse.alias === "Tabela de ajuste das Horas de Bombeamento") {
@@ -107,7 +130,7 @@ export default function SurfaceTableModulations({
   }, []);
 
   /**
-   * Renderização ao ser modificada a variável analyse.
+   * Efeito para atualizar as linhas da tabela conforme o tipo de análise.
    */
   useEffect(() => {
     if (analyse.alias === "Tabela de ajuste das Horas de Bombeamento") {
@@ -157,21 +180,39 @@ export default function SurfaceTableModulations({
     }
   }, [analyse]);
 
-  // Permite ponto ou vírgula como separador decimal
+  /**
+   * Manipula a alteração dos campos de horas de bombeamento.
+   * Valida o valor (apenas inteiros de 0 a 24), atualiza os cálculos dependentes e destaca a célula alterada.
+   *
+   * @param {number} index - Índice do mês/coluna alterado.
+   * @param {string} value - Valor informado pelo usuário.
+   */
   const handleOnTextFieldChange = (index, value) => {
-    // Aceita ponto ou vírgula como separador decimal
-    let parsedValue = value === "" ? "" : parseFloat(value.replace(",", "."));
+    // Aceita apenas inteiros entre 0 e 24
+    let parsedValue = value === "" ? "" : parseInt(value.replace(/\D/g, ""), 10);
+    if (isNaN(parsedValue)) parsedValue = "";
+
+    let errors = [...inputErrors];
+    let highlights = [...highlighted];
+
+    if (parsedValue === "" || (parsedValue >= 0 && parsedValue <= 24)) {
+      errors[index] = false;
+    } else {
+      errors[index] = true;
+    }
+    setInputErrors(errors);
+
+    if (errors[index]) return;
+
     let update_h_bomb_requerida = [...analyse.h_bomb_requerida.values];
     update_h_bomb_requerida[index] = parsedValue;
 
     setSurfaceAnalyse((prev) => {
-      // Atualizar h_bomb_requerida
       const h_bomb_requerida = {
         ...prev.h_ajuste.h_bomb_requerida,
         values: update_h_bomb_requerida,
       };
 
-      // Calcular variáveis auxiliares
       const q_solicitada = { ...prev.q_solicitada };
       const q_outorgada = { ...prev.q_modula.q_outorgada };
       const uh_q_demanda_ajustada = { ...prev.uh.q_demanda_ajustada };
@@ -194,7 +235,6 @@ export default function SurfaceTableModulations({
         q_solicitada
       );
 
-      // Construir h_ajuste final
       const h_ajuste = {
         ...update_h_ajuste,
         q_secao_m_h: {
@@ -211,7 +251,6 @@ export default function SurfaceTableModulations({
         },
       };
 
-      // Construir q_modula
       const q_modula = {
         ...prev.q_modula,
         q_outorgada: {
@@ -224,7 +263,6 @@ export default function SurfaceTableModulations({
         },
       };
 
-      // Construir h_modula
       const h_modula = {
         ...prev.h_modula,
         q_outorgada: {
@@ -237,7 +275,6 @@ export default function SurfaceTableModulations({
         },
       };
 
-      // Return final
       return {
         ...prev,
         h_ajuste,
@@ -245,13 +282,21 @@ export default function SurfaceTableModulations({
         h_modula,
       };
     });
+
+    highlights[index] = true;
+    setHighlighted(highlights);
+    setTimeout(() => {
+      highlights[index] = false;
+      setHighlighted([...highlights]);
+    }, 800);
   };
 
+  // Renderização da tabela de modulação
   return (
     <Paper
       id="paper"
       elevation={3}
-      sx={{ my: 2, height: 121, overflow: "auto" }}
+      sx={{ my: 2, height: 150, overflow: "auto" }}
     >
       <Table id="table" size="small">
         <TableHead>
@@ -299,7 +344,6 @@ export default function SurfaceTableModulations({
               >
                 {row.alias}
               </TableCell>
-
               {row.alias !== "Horas de bombeamento (Requerimento)"
                 ? row.values.map((value, index) => (
                     <TableCell
@@ -311,9 +355,12 @@ export default function SurfaceTableModulations({
                         fontSize: "12px",
                         lineHeight: "1.1rem",
                         textAlign: "center",
+                        backgroundColor: highlighted[index] && rowIndex === 0 ? "#e3f2fd" : "inherit",
                       }}
                     >
-                      {value}
+                      {typeof value === "number" && !isNaN(value)
+                        ? value
+                        : value}
                     </TableCell>
                   ))
                 : row.values.map((value, index) => (
@@ -326,38 +373,47 @@ export default function SurfaceTableModulations({
                         fontSize: "12px",
                         lineHeight: "1.1rem",
                         textAlign: "center",
+                        backgroundColor: highlighted[index] ? "#ffe082" : (inputErrors[index] ? "#ffcdd2" : "inherit"),
+                        transition: "background-color 0.5s",
                       }}
                     >
-                      <TextField
-                        type="number"
-                        inputProps={{
-                          step: "any",
-                          inputMode: "decimal",
-                          pattern: "[0-9]*[.,]?[0-9]*",
-                        }}
-                        value={value}
-                        variant="standard"
-                        InputProps={{
-                          disableUnderline: false,
-                          sx: {
-                            padding: 0,
-                            fontSize: "12px",
-                            textAlign: "center",
-                            input: {
+                      <Tooltip title="Informe as horas de bombeamento (0 a 24)">
+                        <TextField
+                          type="number"
+                          inputProps={{
+                            min: 0,
+                            max: 24,
+                            step: 1,
+                            pattern: "[0-9]*",
+                            maxLength: 2,
+                            placeholder: "0-24",
+                          }}
+                          value={value}
+                          variant="standard"
+                          error={inputErrors[index]}
+                          helperText={inputErrors[index] ? "Valor inválido" : ""}
+                          InputProps={{
+                            disableUnderline: false,
+                            sx: {
+                              padding: 0,
+                              fontSize: "12px",
                               textAlign: "center",
+                              input: {
+                                textAlign: "center",
+                              },
                             },
-                          },
-                        }}
-                        onChange={(e) =>
-                          handleOnTextFieldChange(index, e.target.value)
-                        }
-                        autoComplete="off"
-                        sx={{
-                          p: 0,
-                          m: 0,
-                          minWidth: 0,
-                        }}
-                      />
+                          }}
+                          onChange={(e) =>
+                            handleOnTextFieldChange(index, e.target.value)
+                          }
+                          autoComplete="off"
+                          sx={{
+                            p: 0,
+                            m: 0,
+                            minWidth: 0,
+                          }}
+                        />
+                      </Tooltip>
                     </TableCell>
                   ))}
             </TableRow>
