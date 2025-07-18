@@ -33,16 +33,22 @@
 import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
-import { CircularProgress, Fade, FormControl, FormLabel, TextField } from "@mui/material";
+import { CircularProgress, Fade, FormControl, FormLabel, TextField, Tooltip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
-import { findAllPointsInASubsystem, findAllPointsInCircle } from "../../services/geolocation";
+import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyzeAvailability } from "../../tools";
+import { analyzeAvailability, calculateCircleArea, converterPostgresToGmaps, getMarkersInsideOttoBasins, searchHydrograficUnit } from "../../tools";
 import AlertCommon from "./AlertCommon";
+import { initialsStates } from "../../initials-states";
+import ElemGrant from '../Connection/elem-grant';
+import { fetchShape, fetchMarkersByUH, fetchOttoBasins } from "../../services/shapes";
+import { calculateQOutorgadaSecao, calculateQIndividualSecao, calculateQOutorgavelSecao, calculateQReferenciaSecao, calculateQDisponivelSecao, calculateQOutorgadaUH, calculateQReferenciaUH, calculateQRemanescenteUH, calculateQOutorgavelUH, calculateQDisponivelUH, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual } from "../../tools/surface-tools";
+
+
 
 
 /**
@@ -52,15 +58,18 @@ import AlertCommon from "./AlertCommon";
  * 
  * @component
  * @param {Object} props - Propriedades do componente.
- * @param {number} props.value - Define o tipo de busca: 0 para raio, 1 para subsistema.
+ * @param {number} props.tabNumber - Define o tipo de busca pela tab selecionada: 0 para raio, 1 para subsistema.
  * @returns {JSX.Element} Elemento JSX que representa o componente SearchCoords.
  */
-
-
-function SearchCoords({ value }) {
+function SearchCoords({ tabNumber }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
-  const { marker, setMarker, setOverlays, radius, setHgAnalyse } = useData(); // Hook para estado global
+  const {
+    map, marker, setMarker, overlays, setOverlays,
+    radius, setHgAnalyse, subsystem, setSubsystem,
+    setOttoBasins,
+    surfaceAnalyse, setSurfaceAnalyse,
+    overlaysFetched, setOverlaysFetched } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
 
   // Estados para o controle do alerta
@@ -91,6 +100,7 @@ function SearchCoords({ value }) {
    * @returns {Promise&lt;void>}
    */
   async function handleOnClick() {
+
     const lat = parseFloat(position.int_latitude);
     const lng = parseFloat(position.int_longitude);
 
@@ -110,8 +120,9 @@ function SearchCoords({ value }) {
       int_longitude: position.int_longitude
     }));
 
-    // Busca por pontos próximos no raio especificado
-    if (value === 0) {
+    // Se selecionado a tab geral, de buscas gerais por camadas ou dados do banco de dados com cpf, nome etc...
+    if (tabNumber === 0) {
+
       let markers = await findAllPointsInCircle({
         center: { lng: position.int_longitude, lat: position.int_latitude },
         radius: parseInt(radius)
@@ -126,44 +137,82 @@ function SearchCoords({ value }) {
         draw: null,
         markers: markers,
         radius: radius,
-        area: null
+        area: calculateCircleArea(radius)
       };
+
+      console.log(markers)
 
       setOverlays(prev => ({
         ...prev,
         shapes: [...prev.shapes, shape]
       }));
     }
+    // Set selecionado a tab subterrânea
+    else if (tabNumber === 1) {
 
-    // Busca por subsistema
-    else if (value === 1) {
+      // limpa o mapa
+      overlays.shapes.forEach(shape => {
+        if (shape.draw !== null) shape?.draw?.setMap(null)
+      });
+      setOverlays(initialsStates.overlays);
+
+
       let { tp_id, int_latitude, int_longitude } = marker;
 
-      await findAllPointsInASubsystem(tp_id, int_latitude, int_longitude).then(markers => {
-        let hidrogeoInfo = markers.hidrogeo[0].info;
+      await findPointsInASystem(tp_id, int_latitude, int_longitude).then(markers => {
 
-        let subterraneanMarkers = [
+        let hidrogeoInfo = markers._hg_info;
+
+        // Cria um primeiro marcador com dados vazios, pois não foi buscado usuário específico
+        let _markers = [
           {
-            int_latitude: position.int_latitude,
-            int_longitude: position.int_longitude,
-            dt_demanda: { demandas: [], vol_anual_ma: 5000000.4585 }
+            id: 0,
+            tp_id: tp_id,
+            ti_id: 2,
+            int_latitude: lat,
+            int_longitude: lng,
+            dt_demanda: { demandas: [] }
           },
-          ...markers.subterranea
+          ...markers._points || []
         ];
 
-        // Realiza análise de disponibilidade hídrica
-        let hgAnalyse = analyzeAvailability(hidrogeoInfo, subterraneanMarkers);
-        setHgAnalyse(hgAnalyse);
+        // Realiza análise de disponibilidade hídrica.
+        let hgAnalyse = analyzeAvailability(hidrogeoInfo, _markers);
 
-        // Cria uma forma de polígono com os marcadores encontrados
+        setHgAnalyse(hgAnalyse)
+
+        // Preenche subsistema com dados dos usuários etc.
+        setSubsystem((prev) => ({
+          ...prev,
+          markers: _markers,
+          hg_shape: markers._hg_shape,
+          hg_info: markers._hg_info,
+          hg_analyse: hgAnalyse,
+        }));
+
+        let coordinates = { shape: { type: markers._hg_shape.type, coordinates: converterPostgresToGmaps(markers._hg_shape) } }
+
         let shape = {
           id: Date.now(),
-          type: "polygon",
-          position: { lat: position.int_latitude, lng: position.int_longitude },
-          map: null,
-          draw: null,
-          markers: markers,
-          radius: radius,
+          type: 'polygon',
+          position: null,
+          map: map,
+          draw: new window.google.maps.Polygon({
+            paths: coordinates.shape.coordinates,
+            strokeColor: 'red',
+            strokeOpacity: 0.8,
+            strokeWeight: 1,
+            fillColor: 'red',
+            fillOpacity: 0.35,
+            map: map
+          }),
+          markers: {
+            subterranea: _markers,
+            superficial: null,
+            barragem: null,
+            lancamento_efluentes: null,
+            lancamento_pluviais: null
+          },
           area: null
         };
 
@@ -171,7 +220,125 @@ function SearchCoords({ value }) {
           ...prev,
           shapes: [...prev.shapes, shape]
         }));
+
       });
+
+
+    }
+    // Se selecionado a tab superficial 
+    else if (tabNumber === 2) {
+
+      // Limpa os mapa de camadas, marcadores etc.
+      overlays.shapes.forEach(shape => {
+        if (shape.draw !== null) shape?.draw?.setMap(null)
+      });
+      setOverlays(initialsStates.overlays)
+
+      // Busca ottobacias a partir das coordenadas (lat, lng)
+      let ottoBasins = await fetchOttoBasins(lat, lng);
+
+      setOttoBasins(ottoBasins.ottoBasinsToGmaps);
+
+      // Número da UH (uh_codigo, nas shape de otto bacias: uh_rotulo)
+      let uhRotulo = ottoBasins.ottoBasins[0].attributes.uh_rotulo;
+
+      let uhGrants = await fetchMarkersByUH(uhRotulo);
+
+      let sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, map)
+
+      let hydrographicBasin = await searchHydrograficUnit(fetchShape, overlaysFetched, setOverlaysFetched, uhRotulo)
+
+      let ottoBasinArea = ottoBasins.ottoBasinsToGmaps.area;
+
+      let q_outorgada_secao = calculateQOutorgadaSecao(sectionGrants);
+      let q_referencia_secao = calculateQReferenciaSecao(hydrographicBasin, ottoBasinArea);
+      let q_outorgavel_secao = calculateQOutorgavelSecao(q_referencia_secao);
+      // verificarum hook para o percentual desta função, no caso aqui está 20%
+      let q_individual_secao = calculateQIndividualSecao(q_outorgavel_secao, 0.2)
+      let q_disponivel = calculateQDisponivelSecao(q_outorgavel_secao, q_outorgada_secao)
+
+      let q_sol_q_dis = calculateQSolicitadaMenorQDisponivel(surfaceAnalyse.q_solicitada.values, q_disponivel)
+      let q_sol_q_ind = calculateQSolicitadaMenorQIndividual(surfaceAnalyse.q_solicitada.values, q_individual_secao)
+
+      let q_outorgada_uh = calculateQOutorgadaUH(uhGrants[0]);
+      let q_referencia_uh = calculateQReferenciaUH(hydrographicBasin);
+      let q_remanescente_uh = calculateQRemanescenteUH(q_referencia_uh);
+      let q_outorgavel_uh = calculateQOutorgavelUH(q_referencia_uh);
+      let q_disponivel_uh = calculateQDisponivelUH(q_outorgavel_uh, q_outorgada_uh);
+
+      setSurfaceAnalyse((prev) => {
+        return {
+          ...prev,
+          secao: {
+            ...prev.secao,
+            outorgas: sectionGrants,
+            q_outorgada: {
+              ...prev.secao.q_outorgada,
+              values: q_outorgada_secao
+            },
+            q_referencia: {
+              ...prev.secao.q_referencia,
+              values: q_referencia_secao
+            },
+            q_outorgavel: {
+              ...prev.secao.q_outorgavel,
+              values: q_outorgavel_secao
+            },
+            q_individual: {
+              ...prev.secao.q_individual,
+              values: q_individual_secao
+            },
+            q_disponivel: {
+              ...prev.secao.q_disponivel,
+              values: q_disponivel
+            },
+            q_sol_q_dis: {
+              ...prev.secao.q_sol_q_dis,
+              values: q_sol_q_dis
+            },
+            q_sol_q_ind: {
+              ...prev.secao.q_sol_q_ind,
+              values: q_sol_q_ind
+            }
+          },
+          uh: {
+            ...prev.uh,
+            outorgas: uhGrants,
+            attributes: hydrographicBasin.attributes,
+            q_outorgada: {
+              ...prev.uh.q_outorgada,
+              values: q_outorgada_uh
+            },
+            q_referencia: {
+              ...prev.uh.q_referencia,
+              values: q_referencia_uh
+            },
+            q_remanescente: {
+              ...prev.uh.q_remanescente,
+              values: q_remanescente_uh
+            },
+            q_outorgavel: {
+              ...prev.uh.q_outorgavel,
+              values: q_outorgavel_uh
+            },
+            q_disponivel: {
+              ...prev.uh.q_disponivel,
+              values: q_disponivel_uh
+            },
+          }
+        };
+      });
+
+      // section markers
+      ottoBasins.ottoBasinsToGmaps.markers = sectionGrants;
+
+      // Seta em uma variável global para ter como limpar o mapa
+      setOverlays(prev => ({
+        ...prev,
+        shapes: [...prev.shapes, ottoBasins.ottoBasinsToGmaps]
+      }));
+
+
     }
 
     setLoading(false);
@@ -184,6 +351,17 @@ function SearchCoords({ value }) {
    * @param {React.ChangeEvent&lt;HTMLInputElement>} event - Evento do input.
    */
   function handleOnTextFieldChange(event) {
+
+    if (tabNumber === 1) {
+      overlays.shapes.forEach(shape => {
+        if (shape.draw !== null) shape?.draw?.setMap(null)
+
+      });
+      setOverlays(initialsStates.overlays);
+      setSubsystem(initialsStates.subsystem);
+      setHgAnalyse(initialsStates.subsystem.hg_analyse);
+    }
+
     let { name, value } = event.target;
 
     // Remove tudo que não for número, ponto, vírgula ou hífen
@@ -206,9 +384,14 @@ function SearchCoords({ value }) {
     // Limita para no máximo 12 caracteres
     value = value.slice(0, 12);
 
-
     // Atualiza estado
     setPosition(prev => ({
+      ...prev,
+      [name]: value.trim()
+    }));
+
+    // Atualiza o marcador global
+    setMarker(prev => ({
       ...prev,
       [name]: value.trim()
     }));
@@ -221,6 +404,7 @@ function SearchCoords({ value }) {
    * @param {KeyboardEvent} event - O evento de teclado disparado.
    */
   function handlekeydown(event) {
+
     const { key } = event;
     if (key === "Enter") {
       event.preventDefault(); // evita que a pagina recarregue ao pressionar Enter
@@ -228,11 +412,16 @@ function SearchCoords({ value }) {
     }
   }
 
+  const handleCopy = () => {
+
+    navigator.clipboard.writeText(`${position.int_latitude}, ${position.int_longitude}`).then(() => {
+      console.log(`${position.int_latitude}, ${position.int_longitude}`);
+    });
+  };
+
 
   return (
     &lt;>
-
-
       {/* Componente de alerta exibido quando necessário */}
       &lt;AlertCommon openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
 
@@ -265,18 +454,18 @@ function SearchCoords({ value }) {
             &lt;/Box>
 
             {/* Renderiza o seletor de raio ou tipo de poço, dependendo do valor */}
-            {value === 0 ? (
+            {tabNumber === 0 ? (
               &lt;Box sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
                 &lt;CircleRadiusSelector />
               &lt;/Box>
-            ) : value === 1 ? (
+            ) : tabNumber === 1 ? (
               &lt;Box sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
                 &lt;WellTypeSelector />
               &lt;/Box>
             ) : null}
 
             {/* Botões de busca e cópia */}
-            &lt;Box sx={{ minWidth: 100 }}>
+            &lt;Box sx={{ display: "flex", minWidth: 100 }}>
               {loading ? (
                 &lt;Fade
                   sx={{ color: "secondary.main" }}
@@ -287,20 +476,37 @@ function SearchCoords({ value }) {
                   &lt;CircularProgress size={25} />
                 &lt;/Fade>
               ) : (
+                &lt;Tooltip title="Buscar por coordenada">
+                  &lt;IconButton
+                    color="secondary"
+                    size="large"
+                    onClick={() => {
+                      handleOnClick().then(() => setLoading(false));
+                    }}
+                  >
+                    &lt;SearchIcon />
+                  &lt;/IconButton>
+                &lt;/Tooltip>
+              )}
+
+              {tabNumber === 1 ? &lt;ElemGrant /> : null}
+
+              &lt;Tooltip title="Copiar coordenada">
                 &lt;IconButton
                   color="secondary"
                   size="large"
-                  onClick={() => {
-                    handleOnClick().then(() => setLoading(false));
-                  }}
-                >
-                  &lt;SearchIcon />
+                  onClick={handleCopy}>
+
+
+                  &lt;ContentCopyIcon />
                 &lt;/IconButton>
-              )}
-              &lt;IconButton color="secondary" size="large">
-                &lt;ContentCopyIcon />
-              &lt;/IconButton>
+              &lt;/Tooltip>
+
+
             &lt;/Box>
+
+
+
           &lt;/Box>
         &lt;/Paper>
       &lt;/FormControl>
@@ -319,13 +525,13 @@ export default SearchCoords;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="CustomTabPanel.html">CustomTabPanel</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemOttoPolyline.html">ElemOttoPolyline</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="ElemPolylineInfoWindow.html">ElemPolylineInfoWindow</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="PolylineInfoContent.html">PolylineInfoContent</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#SurfaceChart">SurfaceChart</a></li><li><a href="global.html#ajustarHoraBombAjustada">ajustarHoraBombAjustada</a></li><li><a href="global.html#ajustarQSecaoMD">ajustarQSecaoMD</a></li><li><a href="global.html#ajustarSecaoMH">ajustarSecaoMH</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCentroid">calculateCentroid</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculateContributingArea">calculateContributingArea</a></li><li><a href="global.html#calculateDemandaAjustada">calculateDemandaAjustada</a></li><li><a href="global.html#calculateDisponibilidadeHidrica">calculateDisponibilidadeHidrica</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateQDisponivelSecao">calculateQDisponivelSecao</a></li><li><a href="global.html#calculateQDisponivelUH">calculateQDisponivelUH</a></li><li><a href="global.html#calculateQIndividualSecao">calculateQIndividualSecao</a></li><li><a href="global.html#calculateQOutorgadaSecao">calculateQOutorgadaSecao</a></li><li><a href="global.html#calculateQOutorgavelSecao">calculateQOutorgavelSecao</a></li><li><a href="global.html#calculateQOutorgavelUH">calculateQOutorgavelUH</a></li><li><a href="global.html#calculateQReferenciaSecao">calculateQReferenciaSecao</a></li><li><a href="global.html#calculateQReferenciaUH">calculateQReferenciaUH</a></li><li><a href="global.html#calculateQRemanescenteUH">calculateQRemanescenteUH</a></li><li><a href="global.html#calculateQSolicitadaMenorQIndividual">calculateQSolicitadaMenorQIndividual</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#calculateSolicitataMenorDisponivel">calculateSolicitataMenorDisponivel</a></li><li><a href="global.html#convertOthoCoordToGmaps">convertOthoCoordToGmaps</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchMarkersByUH">fetchMarkersByUH</a></li><li><a href="global.html#fetchOttoBasins">fetchOttoBasins</a></li><li><a href="global.html#fetchRiversByCoordinates">fetchRiversByCoordinates</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#getUsers">getUsers</a></li><li><a href="global.html#joinOttoBasins">joinOttoBasins</a></li><li><a href="global.html#modularHoraH">modularHoraH</a></li><li><a href="global.html#modularVazaoQ">modularVazaoQ</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#searchHydrograficUnit">searchHydrograficUnit</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Apr 25 2025 10:48:00 GMT-0300 (Horário Padrão de Brasília)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jul 04 2025 13:17:22 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>

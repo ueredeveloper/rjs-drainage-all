@@ -27,213 +27,275 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>
+import React, { useEffect, useState } from "react";
+import {
+    Box,
+    Checkbox,
+    FormControlLabel,
+    Paper,
+    SpeedDial,
+    SpeedDialIcon,
+    ClickAwayListener,
+    Button,
+    Icon,
+} from "@mui/material";
+import LayersClearIcon from "@mui/icons-material/LayersClear";
+import LayersIcon from "@mui/icons-material/Layers";
+import { Height, MarkEmailReadSharp } from "@mui/icons-material";
+import { converterPostgresToGmaps } from "../../../tools";
+import { useData } from "../../../hooks/analyse-hooks";
+import { fetchRiversByCoordinates, fetchShape } from "../../../services/shapes";
+import { initialsStates } from "../../../initials-states";
 
-import React, { useEffect, useState } from 'react';
-import { Box, Button, Checkbox, FormControl, FormLabel, Paper, Tooltip } from '@mui/material';
-import LayersClearIcon from '@mui/icons-material/LayersClear';
-import { initialsStates } from '../../../initials-states';
-import { fetchShape } from '../../../services/shapes';
-import { converterPostgresToGmaps } from '../../../tools';
-import { useData } from '../../../hooks/analyse-hooks';
+const checkboxOptions = {
+    Superficial: [
+        {
+            name: "bacias_hidrograficas",
+            alias: "Bacias Hidrográficas",
+            checked: false
+        },
+        {
+            name: "unidades_hidrograficas",
+            alias: "Unidades Hidrográficas",
+            checked: false
+        },
+        {
+            name: "rios_df",
+            alias: "Rios do DF",
+            checked: false
+        }
+    ],
+    Subterrânea: [
+        {
+            name: "hidrogeo_fraturado",
+            alias: "Fraturado",
+            checked: false
+        },
+        {
+            name: "hidrogeo_poroso",
+            alias: "Poroso",
+            checked: false
+        },
+    ],
+};
+
 
 /**
- * Componente MapControllers responsável por gerenciar camadas de mapa usando caixas de seleção.
+ * Componente React responsável pelos controladores do mapa.
+ *
+ * Este componente gerencia checkboxes que representam camadas geográficas
+ * como bacias hidrográficas, entre outras, e lida com a lógica para carregar,
+ * exibir e remover os polígonos no mapa com base na seleção do usuário.
+ *
+ * - Inicializa camadas geográficas ao selecionar checkboxes.
+ * - Evita requisições duplicadas reutilizando dados já buscados.
+ * - Possui botão para limpar todos os checkboxes e remover polígonos do mapa.
+ * - Usa o hook `useData` para acessar e modificar estados globais relacionados às camadas.
+ *
  * @component
- * @requires converterPostgresToGmaps
- * @requires useData
- * @requires fetchShape
- * @requires initialsStates
- * @returns {JSX.Element} JSX do componente MapControllers.
+ * @param {Object} props - Propriedades do componente.
+ * @param {Object} props.checkboxes - Estado atual das camadas ativas, organizado por grupos e itens.
+ * @param {Function} props.setCheckboxes - Função para atualizar o estado dos checkboxes.
+ *
+ * @returns {JSX.Element} Elemento JSX que renderiza o painel de controle do mapa.
  */
-function MapControllers({ updateCheckBoxState }) {
+function MapControllers({ checkboxes, setCheckboxes }) {
 
-    /**
-     * Inicializa o estado das caixas de seleção com base nos dados.
-     * @param {Object} data - Dados para inicialização das caixas de seleção.
-     * @returns {Array} Estado inicial das caixas de seleção.
-     */
-    const initializeCheckBoxState = (data) => {
-        const initialState = [];
-        for (const propertyName in data) {
-            initialState.push({ name: propertyName, checked: data[propertyName] });
-        }
+    const { marker, overlaysFetched, setOverlaysFetched, setSubsystem, setHgAnalyse, overlays, setOverlays } = useData();
 
-        return initialState;
+    const [openPanel, setOpenPanel] = useState(false);
+
+    const toggleCheckbox = (group, item) => (event) => {
+        setCheckboxes((prev) => ({
+            ...prev,
+            [group]: {
+                ...prev[group],
+                [item.name]: {
+                    ...prev[group]?.[item.name],
+                    ...item,
+                    checked: event.target.checked,
+                },
+            },
+        }));
     };
 
-    const [checkBoxState, setCheckBoxState] = useState(initializeCheckBoxState(mapControllersSchema.data));
-    const { overlays, setOverlays, shapesFetched, setShapesFetched } = useData();
+    const clearCheckboxes = () => {
+        setCheckboxes({});
 
-    /**
-     * Cria um objeto de propriedades para a caixa de seleção.
-     * @param {Object} elem - Elemento da caixa de seleção.
-     * @returns {Object} Propriedades da caixa de seleção.
-     */
-    const createCheckboxProps = (elem) => {
-        let chBoxProperties = {
-            name: elem.name,
-            checked: elem.checked,
-            onChange: () => { handleChange(elem) },
-        };
-        return chBoxProperties;
-    };
-
-    /**
-     * Obtém o texto do rótulo com base no índice dos elementos da interface do usuário.
-     * @param {number} index - Índice do elemento.
-     * @returns {string} Texto do rótulo.
-     */
-    const createLabelText = (index) => {
-        return mapControllersSchema.uischema.elements[index].label;
-    }
-
-    useEffect(() => {
-
-        checkBoxState.map(async cbState => {
-            if (cbState.checked === true) {
-                // verificar se shapesFetched está vazio
-                if (shapesFetched.length === 0) {
-                    const _shape = await fetchShape(cbState.name).then(__shape => {
-                        // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
-                        return __shape.map(sh => {
-                            return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
-                        })
-                    });
-                    setShapesFetched(prev => [...prev, { name: cbState.name, shape: _shape }]);
-                } else {
-                    // verifica se a shape está presente na array shapesFetched
-                    let searchShapesFetched = shapesFetched.find(st => st.name === cbState.name);
-                    // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
-                    // Assim, não se repete solicitação de camada no servidor.]
-                    if (searchShapesFetched === undefined) {
-                        const _shape = await fetchShape(cbState.name).then(__shape => {
-                            return __shape.map(sh => {
-
-                                return { ...sh, shapeName: cbState.name, shape: { coordinates: converterPostgresToGmaps(sh) } }
-                            })
-                        });
-                        setShapesFetched(prev => [...prev, { name: cbState.name, shape: _shape }]);
-                    }
-                }
-            }
-        });
-
-    }, [checkBoxState]);
-
-    /**
-     * Manipula o evento de mudança da caixa de seleção.
-     * @param {Object} elem - Elemento da caixa de seleção.
-     */
-    const handleChange = (elem) => {
-        let _checkBoxState = checkBoxState.map((ch, i) => {
-            if (ch.name === elem.name) {
-                return { name: ch.name, checked: !ch.checked };
-            } else {
-                return ch;
-            }
-        });
-        setCheckBoxState(_checkBoxState);
-        updateCheckBoxState(_checkBoxState)
-    };
-
-    /**
-     * Limpa o mapa e o estado da caixa de seleção.
-     * @param {Event} event - Evento de clique.
-     */
-    const clearMapHandler = (event) => {
-        // let _checkBoxState = checkBoxState.map(ch => ch = false)
-        setCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
-        updateCheckBoxState(initializeCheckBoxState(mapControllersSchema.data));
-        overlays.shapes.map(shape => {
-            if (shape.draw !== null)
-                shape.draw.setMap(null)
+        setSubsystem(initialsStates.subsystem);
+        setHgAnalyse(initialsStates.subsystem.hg_analyse);
+        overlays.shapes.forEach(shape => {
+            if (shape.draw !== null) shape?.draw?.setMap(null)
         });
         setOverlays(initialsStates.overlays);
     };
 
+    useEffect(() => {
+        
+
+        // Converter objeto em array com os valores name, alias e checked
+        const listCheckboxes = Object.values(checkboxes).flatMap(group =>
+            Object.values(group).map(item => ({
+                name: item.name,
+                alias: item.alias,
+                checked: item.checked
+            }))
+        );
+
+
+        listCheckboxes.forEach(async checkbox => {
+            if (checkbox.checked) {
+
+                // verificar se overlaysFetched está vazio
+                if (overlaysFetched.length === 0) {
+                    // A busca dos rios é em outro método
+                    if (checkbox.name === "rios_df") {
+
+                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
+                            return __shape.map(sh => {
+
+                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
+                            })
+                        });
+                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                    } else {
+
+                        const _shape = await fetchShape(checkbox.name).then(__shape => {
+                            // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
+                            return __shape.map(sh => {
+                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
+                            })
+                        });
+
+                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+
+                    }
+
+                } else {
+                    // A busca dos rios é em outro método
+                    if (checkbox.name === "rios_df") {
+
+                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
+                            return __shape.map(sh => {
+
+                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
+                            })
+                        });
+                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+
+                    } else {
+                        // verifica se a shape está presente na array overlaysFetched
+                        let searchoverlaysFetched = overlaysFetched.find(st => st.name === checkbox.name);
+                        // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
+                        // Assim, não se repete solicitação de camada no servidor.]
+                        if (searchoverlaysFetched === undefined) {
+                            const _shape = await fetchShape(checkbox.name).then(__shape => {
+                                return __shape.map(sh => {
+
+                                    return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
+                                })
+                            });
+
+                            setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                        }
+                    }
+
+                }
+
+            }
+        })
+
+    }, [checkboxes, setOverlaysFetched, overlaysFetched]);
+
     return (
-        &lt;FormControl style={{ display: "flex", flex: 1, flexDirection: 'column' }}>
-            &lt;FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Camadas&lt;/FormLabel>
-            &lt;Paper elevation={3} style={{ padding: 5, margin: 1 }}>
-                &lt;Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                    {checkBoxState.map((elem, index) =>
-                        &lt;Box key={'map-contr-ch-box-' + index}>
-                            &lt;Checkbox color="secondary"  {...createCheckboxProps(elem)} />
-                            &lt;FormLabel style={{ wordBreak: "break-all" }} color="secondary" id="demo-controlled-radio-buttons-group">{
-                                createLabelText(index)
-                            }&lt;/FormLabel>
-                        &lt;/Box>
-                    )}
-                    &lt;Tooltip title="Limpar Mapa">
-                        &lt;Button sx={{ mx: '0rem' }} onClick={clearMapHandler}>&lt;LayersClearIcon color="secondary" />&lt;/Button>
-                    &lt;/Tooltip>
-                &lt;/Box>
-            &lt;/Paper>
-        &lt;/FormControl>
+        &lt;Box
+
+            sx={{
+
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                position: "absolute",
+                right: 0
+
+            }}
+
+        >
+            &lt;SpeedDial
+                sx={{
+                    "&amp; .MuiFab-primary": {
+                        width: 45, // Metade do tamanho padrão (56px)
+                        height: 45,
+                        mx: 0.5,
+                    },
+                }}
+                ariaLabel="Show Filters"
+                icon={&lt;LayersIcon />}
+                onClick={() => setOpenPanel((prev) => !prev)}
+            />
+
+            {openPanel &amp;&amp; (
+                &lt;ClickAwayListener onClickAway={() => setOpenPanel(false)}>
+                    &lt;Paper
+                        elevation={6}
+                        sx={{
+                            position: "absolute",
+                            bottom: 70,
+                            right: 0,
+                            p: 2,
+                            width: 250,
+                            maxHeight: 500,
+                            overflowY: "auto",
+                            borderRadius: 2,
+                        }}
+                    >
+                        {Object.entries(checkboxOptions).map(([group, items]) => (
+                            &lt;Box key={group} sx={{ mb: 1 }}>
+                                &lt;strong>{group}&lt;/strong>
+
+                                {items.map((item) => (
+                                    &lt;FormControlLabel
+                                        sx={{
+                                            display: "flex",
+                                            flexDirection: "row"
+
+                                        }}
+                                        key={item.name}
+                                        control={
+                                            &lt;Checkbox
+                                                checked={checkboxes[group]?.[item.name]?.checked || false}
+                                                onChange={toggleCheckbox(group, item)}
+                                            />
+                                        }
+                                        label={item.alias}
+                                    />
+                                ))}
+                            &lt;/Box>
+                        ))}
+
+                        &lt;Box display="flex" justifyContent="flex-end" mt={1}>&lt;/Box>
+                    &lt;/Paper>
+                &lt;/ClickAwayListener>
+            )}
+            &lt;SpeedDial
+                sx={{
+                    "&amp; .MuiFab-primary": {
+                        width: 35, // Metade do tamanho padrão (56px)
+                        height: 20,
+                        mx: 0.5,
+                    },
+                }}
+                ariaLabel="Show Filters"
+                icon={&lt;LayersClearIcon sx={{ fontSize: 20 }} />}
+                onClick={() => clearCheckboxes()}
+            />
+        &lt;/Box>
     );
+
 }
 
-/**
- * Esquema de configuração para MapControllers.
- * @type {Object}
- */
-const mapControllersSchema = {
-    schema: {
-        "type": "object",
-        "properties": {
-            "hidrogeo_fraturado": {
-                "type": "boolean",
-                "default": false
-            },
-            "hidrogeo_poroso": {
-                "type": "boolean",
-                "default": false
-            },
-            "bacias_hidrograficas": {
-                "type": "boolean",
-                "default": false
-            },
-            "unidades_hidrograficas": {
-                "type": "boolean",
-                "default": false
-            },
-        }
-    },
-    uischema: {
-        "type": "HorizontalLayout",
-        "elements": [
-            {
-                "type": "Control",
-                "label": "Fraturado",
-                "scope": "#/properties/hidrogeo_fraturado"
-            },
-            {
-                "type": "Control",
-                "label": "Poroso",
-                "scope": "#/properties/hidrogeo_poroso"
-            },
-            {
-                "type": "Control",
-                "label": "Bacia Hidrográfica",
-                "scope": "#/properties/bacias_hidrograficas"
-            },
-            {
-                "type": "Control",
-                "label": "Unidade Hidrográfica",
-                "scope": "#/properties/unidades_hidrograficas"
-            },
-        ]
-    },
-    data: {
-        hidrogeo_fraturado: false,
-        hidrogeo_poroso: false,
-        bacias_hidrograficas: false,
-        unidades_hidrograficas: false
-    }
-}
-
-export default MapControllers;
-</code></pre>
+export default MapControllers</code></pre>
         </article>
     </section>
 
@@ -243,13 +305,13 @@ export default MapControllers;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="CustomTabPanel.html">CustomTabPanel</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemOttoPolyline.html">ElemOttoPolyline</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="ElemPolylineInfoWindow.html">ElemPolylineInfoWindow</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="PolylineInfoContent.html">PolylineInfoContent</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#SurfaceChart">SurfaceChart</a></li><li><a href="global.html#ajustarHoraBombAjustada">ajustarHoraBombAjustada</a></li><li><a href="global.html#ajustarQSecaoMD">ajustarQSecaoMD</a></li><li><a href="global.html#ajustarSecaoMH">ajustarSecaoMH</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCentroid">calculateCentroid</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculateContributingArea">calculateContributingArea</a></li><li><a href="global.html#calculateDemandaAjustada">calculateDemandaAjustada</a></li><li><a href="global.html#calculateDisponibilidadeHidrica">calculateDisponibilidadeHidrica</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateQDisponivelSecao">calculateQDisponivelSecao</a></li><li><a href="global.html#calculateQDisponivelUH">calculateQDisponivelUH</a></li><li><a href="global.html#calculateQIndividualSecao">calculateQIndividualSecao</a></li><li><a href="global.html#calculateQOutorgadaSecao">calculateQOutorgadaSecao</a></li><li><a href="global.html#calculateQOutorgavelSecao">calculateQOutorgavelSecao</a></li><li><a href="global.html#calculateQOutorgavelUH">calculateQOutorgavelUH</a></li><li><a href="global.html#calculateQReferenciaSecao">calculateQReferenciaSecao</a></li><li><a href="global.html#calculateQReferenciaUH">calculateQReferenciaUH</a></li><li><a href="global.html#calculateQRemanescenteUH">calculateQRemanescenteUH</a></li><li><a href="global.html#calculateQSolicitadaMenorQIndividual">calculateQSolicitadaMenorQIndividual</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#calculateSolicitataMenorDisponivel">calculateSolicitataMenorDisponivel</a></li><li><a href="global.html#convertOthoCoordToGmaps">convertOthoCoordToGmaps</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchMarkersByUH">fetchMarkersByUH</a></li><li><a href="global.html#fetchOttoBasins">fetchOttoBasins</a></li><li><a href="global.html#fetchRiversByCoordinates">fetchRiversByCoordinates</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#getUsers">getUsers</a></li><li><a href="global.html#joinOttoBasins">joinOttoBasins</a></li><li><a href="global.html#modularHoraH">modularHoraH</a></li><li><a href="global.html#modularVazaoQ">modularVazaoQ</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#searchHydrograficUnit">searchHydrograficUnit</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Apr 25 2025 10:48:00 GMT-0300 (Horário Padrão de Brasília)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jul 04 2025 13:17:22 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>

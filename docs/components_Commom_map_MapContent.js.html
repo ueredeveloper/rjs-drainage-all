@@ -26,9 +26,9 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import React, { useEffect, useState } from 'react';
+            <pre class="prettyprint source linenums"><code>import { useEffect, useState } from 'react';
 import { Wrapper } from "@googlemaps/react-wrapper";
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import ElemMap from './ElemMap';
 import ElemDrawManager from './ElemDrawManager';
 import ElemMarker from './ElemMarker';
@@ -36,25 +36,26 @@ import ElemPopupOverlay from './ElemPopupOverlay';
 import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
-
-
-
+import ElemOttoPolyline from './ElemOthoPolyline';
+import MapControllers from './MapControllers';
 
 /**
  * Componente que representa o conteúdo do mapa.
  * @component
  * @param {Object} props - As propriedades do componente.
- * @param {boolean} props.checkBoxState - O estado das caixas de seleção.
+ * @param {boolean} props.checkBox - O estado das caixas de seleção.
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
-function MapContent({ checkBoxState }) {
+function MapContent({ checkboxes, setCheckboxes }) {
   
-  
+
   // Estados do componente
   const [mode] = useState('light');
 
+  const [popups, setPopups] = useState([]);
+
   // Obtém os estados do contexto de análise
-  const { map, setMap, marker, overlays, setOverlays, shapesFetched } = useData();
+  const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
 
   /**
      * Função para converter um nome de dado em um nome de forma.
@@ -120,10 +121,9 @@ function MapContent({ checkBoxState }) {
     }
   }
 
-
   return (
     &lt;Box id="map-box" sx={{ height: '100%', width: '100%' }}>
-      &lt;Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing"]}>
+      &lt;Wrapper apiKey={""} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
         &lt;ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
         &lt;ElemDrawManager map={map} />
@@ -135,8 +135,8 @@ function MapContent({ checkBoxState }) {
         {/* Renderização dos marcadores */}
         {overlays.shapes.map(shape => {
           return selectedsShapes.map(type => {
-            
-            if (shape.markers !== undefined &amp;&amp; shape.markers[type] !== null   ) {
+
+            if (shape.markers !== undefined &amp;&amp; shape.markers[type] !== null) {
               return shape.markers[type].map((marker, i) => {
                 return &lt;ElemMarker
                   key={'marker-' + i}
@@ -150,21 +150,45 @@ function MapContent({ checkBoxState }) {
 
         {/* Renderização das sobreposições */}
         {overlays.shapes.map((shape, i) => {
-          return &lt;ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} />;
-        })}
+          return &lt;ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} setPopups={setPopups} />;
+        })
+        }
 
         {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
-        {shapesFetched.map((shape) => {
-          return checkBoxState.map(cbState => {
-            if (cbState.checked === true &amp;&amp; cbState.name === shape.name) {
-              return shape.shape.map((sh, ii) => {
+        {overlaysFetched.map((shape) => {
 
-                return &lt;ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+          let listCheckBoxes = Object.values(checkboxes).flatMap(group =>
+            Object.values(group).map(item => ({
+              name: item.name,
+              alias: item.alias,
+              checked: item.checked
+            }))
+          );
+
+          /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
+          return listCheckBoxes.map(cbState => {
+            if (cbState.checked === true &amp;&amp; cbState.name === shape.name) {
+
+              return shape.geometry.map((sh, ii) => {
+
+                if (sh.geometry.type === 'LineString') {
+                  return &lt;ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} setOverlays={setOverlays} />
+                } else {
+                  return &lt;ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+                }
               });
             }
           });
         })}
+
+
         {overlays.shapes.map(sh => {
+          if (sh.name === 'otto-bacias') {
+            return sh.map((_sh, index) => {
+              return &lt;ElemOttoPolyline key={`elem-otto-${index}`} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
+            });
+          }
+
           if (sh.markers !== undefined &amp;&amp; sh.markers.hidrogeo !== undefined) {
             return RenderPolylines(sh.markers.hidrogeo)
           }
@@ -186,13 +210,13 @@ export default MapContent;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="ChartPaper.html">ChartPaper</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#mapControllersSchema">mapControllersSchema</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AlertCommom.html">AlertCommom</a></li><li><a href="Analyse.html">Analyse</a></li><li><a href="App.html">App</a></li><li><a href="CustomTabPanel.html">CustomTabPanel</a></li><li><a href="DataAnalyseChart.html">DataAnalyseChart</a></li><li><a href="ElemDrawManager.html">ElemDrawManager</a></li><li><a href="ElemMap.html">ElemMap</a></li><li><a href="ElemMarker.html">ElemMarker</a></li><li><a href="ElemMarkerInfoWindow.html">ElemMarkerInfoWindow</a></li><li><a href="ElemOttoPolyline.html">ElemOttoPolyline</a></li><li><a href="ElemPolygon.html">ElemPolygon</a></li><li><a href="ElemPolygonInfoWindow.html">ElemPolygonInfoWindow</a></li><li><a href="ElemPolyline.html">ElemPolyline</a></li><li><a href="ElemPolylineInfoWindow.html">ElemPolylineInfoWindow</a></li><li><a href="GeneralAnalysePanel.html">GeneralAnalysePanel</a></li><li><a href="GrantsPanel.html">GrantsPanel</a></li><li><a href="HTMLMarkerContent.html">HTMLMarkerContent</a></li><li><a href="HTMLPolygonContent.html">HTMLPolygonContent</a></li><li><a href="MapContainer.html">MapContainer</a></li><li><a href="MapContent.html">MapContent</a></li><li><a href="MapControllers.html">MapControllers</a></li><li><a href="MapPanel.html">MapPanel</a></li><li><a href="MenuAppBar.html">MenuAppBar</a></li><li><a href="NumberOfGrantsChart.html">NumberOfGrantsChart</a></li><li><a href="PolylineInfoContent.html">PolylineInfoContent</a></li><li><a href="SearchCoords.html">SearchCoords</a></li><li><a href="SearchPaper.html">SearchPaper</a></li><li><a href="SubterraneanAnalysePanel.html">SubterraneanAnalysePanel</a></li><li><a href="WellTypeSelector.html">WellTypeSelector</a></li><li><a href="module.html#.exports">exports</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#ElemPopupOverlay">ElemPopupOverlay</a></li><li><a href="global.html#SurfaceChart">SurfaceChart</a></li><li><a href="global.html#ajustarHoraBombAjustada">ajustarHoraBombAjustada</a></li><li><a href="global.html#ajustarQSecaoMD">ajustarQSecaoMD</a></li><li><a href="global.html#ajustarSecaoMH">ajustarSecaoMH</a></li><li><a href="global.html#analyzeAvailability">analyzeAvailability</a></li><li><a href="global.html#calculateCentroid">calculateCentroid</a></li><li><a href="global.html#calculateCircleArea">calculateCircleArea</a></li><li><a href="global.html#calculateContributingArea">calculateContributingArea</a></li><li><a href="global.html#calculateDemandaAjustada">calculateDemandaAjustada</a></li><li><a href="global.html#calculateDisponibilidadeHidrica">calculateDisponibilidadeHidrica</a></li><li><a href="global.html#calculatePolygonArea">calculatePolygonArea</a></li><li><a href="global.html#calculatePolylineLength">calculatePolylineLength</a></li><li><a href="global.html#calculateQDisponivelSecao">calculateQDisponivelSecao</a></li><li><a href="global.html#calculateQDisponivelUH">calculateQDisponivelUH</a></li><li><a href="global.html#calculateQIndividualSecao">calculateQIndividualSecao</a></li><li><a href="global.html#calculateQOutorgadaSecao">calculateQOutorgadaSecao</a></li><li><a href="global.html#calculateQOutorgavelSecao">calculateQOutorgavelSecao</a></li><li><a href="global.html#calculateQOutorgavelUH">calculateQOutorgavelUH</a></li><li><a href="global.html#calculateQReferenciaSecao">calculateQReferenciaSecao</a></li><li><a href="global.html#calculateQReferenciaUH">calculateQReferenciaUH</a></li><li><a href="global.html#calculateQRemanescenteUH">calculateQRemanescenteUH</a></li><li><a href="global.html#calculateQSolicitadaMenorQIndividual">calculateQSolicitadaMenorQIndividual</a></li><li><a href="global.html#calculateRectangleArea">calculateRectangleArea</a></li><li><a href="global.html#calculateSolicitataMenorDisponivel">calculateSolicitataMenorDisponivel</a></li><li><a href="global.html#convertOthoCoordToGmaps">convertOthoCoordToGmaps</a></li><li><a href="global.html#converterPostgresToGmaps">converterPostgresToGmaps</a></li><li><a href="global.html#createCircleRings">createCircleRings</a></li><li><a href="global.html#fetchGrantsInsideShape">fetchGrantsInsideShape</a></li><li><a href="global.html#fetchMarkersByUH">fetchMarkersByUH</a></li><li><a href="global.html#fetchOttoBasins">fetchOttoBasins</a></li><li><a href="global.html#fetchRiversByCoordinates">fetchRiversByCoordinates</a></li><li><a href="global.html#fetchShape">fetchShape</a></li><li><a href="global.html#findAllPointsInCircle">findAllPointsInCircle</a></li><li><a href="global.html#findAllPointsInPolygon">findAllPointsInPolygon</a></li><li><a href="global.html#findAllPointsInRectangle">findAllPointsInRectangle</a></li><li><a href="global.html#findDemands">findDemands</a></li><li><a href="global.html#findPointsInASystem">findPointsInASystem</a></li><li><a href="global.html#getUsers">getUsers</a></li><li><a href="global.html#joinOttoBasins">joinOttoBasins</a></li><li><a href="global.html#modularHoraH">modularHoraH</a></li><li><a href="global.html#modularVazaoQ">modularVazaoQ</a></li><li><a href="global.html#nFormatter">nFormatter</a></li><li><a href="global.html#numberWithCommas">numberWithCommas</a></li><li><a href="global.html#searchHydrograficUnit">searchHydrograficUnit</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#wellType">wellType</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Apr 25 2025 10:48:00 GMT-0300 (Horário Padrão de Brasília)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jul 04 2025 13:17:22 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>
