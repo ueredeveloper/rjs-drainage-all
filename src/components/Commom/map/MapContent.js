@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Wrapper } from "@googlemaps/react-wrapper";
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import ElemMap from './ElemMap';
 import ElemDrawManager from './ElemDrawManager';
 import ElemMarker from './ElemMarker';
@@ -9,126 +9,169 @@ import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
 import ElemOttoPolyline from './ElemOthoPolyline';
-import MapControllers from './MapControllers';
+
+/**
+ * Formata um valor numérico para string com casas decimais seguras.
+ * @param {any} val - Valor a ser convertido.
+ * @param {number} [decimals=2] - Número de casas decimais.
+ * @returns {string} Valor formatado.
+ */
+function safeNumber(val, decimals = 2) {
+  const num = Number(val);
+  if (isNaN(num) || typeof num !== 'number' || !isFinite(num)) return '0.00';
+  return num.toFixed(decimals);
+}
+
+/**
+ * Gera o conteúdo do popup de cálculo de área/comprimento para cada tipo de shape.
+ * @param {Object} draw - Objeto da shape desenhada.
+ * @returns {string} Texto formatado para o popup.
+ */
+function setContent(draw) {
+  if (!draw) return '';
+  if (draw.type === 'polygon' || draw.type === 'rectangle') {
+    const areaM2 = safeNumber(draw.area, 2);
+    const areaKm2 = safeNumber(Number(draw.area) / 1000000, 4);
+    return `Área: ${areaM2} m² = ${areaKm2} km²`;
+  }
+  if (draw.type === 'circle') {
+    const areaM2 = safeNumber(draw.area, 2);
+    const areaKm2 = safeNumber(Number(draw.area) / 1000000, 4);
+    const radius = safeNumber(draw.radius, 2);
+    return `Área: ${areaM2} m² = ${areaKm2} km², Raio: ${radius} metros`;
+  }
+  if (draw.type === 'polyline') {
+    const meters = safeNumber(draw.meters, 2);
+    return `Comprimento: ${meters} metros`;
+  }
+  return '';
+}
 
 /**
  * Componente que representa o conteúdo do mapa.
+ * Gerencia a renderização de marcadores, polígonos, polilinhas, popups e overlays
+ * de acordo com o estado global e as opções selecionadas pelo usuário.
+ *
  * @component
  * @param {Object} props - As propriedades do componente.
- * @param {boolean} props.checkBox - O estado das caixas de seleção.
+ * @param {Object} props.checkboxes - O estado das caixas de seleção agrupadas.
+ * @param {Function} props.setCheckboxes - Função para atualizar o estado dos checkboxes.
  * @returns {JSX.Element} O componente de conteúdo do mapa.
  */
 function MapContent({ checkboxes, setCheckboxes }) {
-  
-
-  // Estados do componente
+  /** @type {string} Modo do mapa (ex: 'light') */
   const [mode] = useState('light');
-
+  /** @type {Array} Estado dos popups ativos */
   const [popups, setPopups] = useState([]);
 
   // Obtém os estados do contexto de análise
   const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
 
   /**
-     * Função para converter um nome de dado em um nome de forma.
-     * @param {string} dataName - O nome do dado.
-     * @returns {string} O nome da forma correspondente.
-     */
+   * Converte o nome de um dado para o nome da shape correspondente.
+   * @param {string} dataName - Nome do dado.
+   * @returns {string} Nome da shape.
+   */
   function convertToShapeName(dataName) {
     switch (dataName) {
-      case 'Subterrâneas':
-        return 'subterranea';
-      case 'Superficiais':
-        return 'superficial';
-      case 'Pluviais':
-        return 'lancamento_pluviais';
-      case 'Efluentes':
-        return 'lancamento_efluentes';
-      case 'Barragens':
-        return 'barragem';
-      default:
-        return 'Desconhecido'
+      case 'Subterrâneas': return 'subterranea';
+      case 'Superficiais': return 'superficial';
+      case 'Pluviais': return 'lancamento_pluviais';
+      case 'Efluentes': return 'lancamento_efluentes';
+      case 'Barragens': return 'barragem';
+      default: return 'Desconhecido';
     }
   }
 
+  // Estados do contexto para seleção de gráficos
   const { selectedsCharts } = useData();
 
-  // Estado para formas selecionadas. Renderizar marcadores de acordo com o que o usuário escolho no chart.
-  const [selectedsShapes, setSelectedsShapes] = useState(['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem']);
+  /**
+   * Estado das shapes selecionadas para renderização de marcadores.
+   * Inicialmente inclui todas as opções.
+   * @type {Array<string>}
+   */
+  const [selectedsShapes, setSelectedsShapes] = useState([
+    'subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'
+  ]);
 
-
+  /**
+   * Atualiza as shapes selecionadas conforme o estado dos gráficos selecionados.
+   */
   useEffect(() => {
-
-    let keys = Object.keys(selectedsCharts)
+    let keys = Object.keys(selectedsCharts);
     keys.forEach((key) => {
       let tableName = convertToShapeName(key);
       if (selectedsCharts[key] === true) {
         setSelectedsShapes(prev => {
-          // Verifica se existe o nome selecionado, se existir retira
-          const selecteds = prev.filter(s => s !== tableName)
-          // Inclui o nome selecionado
-          return [...selecteds, tableName]
-        })
+          const selecteds = prev.filter(s => s !== tableName);
+          return [...selecteds, tableName];
+        });
       } else {
-        setSelectedsShapes(prev => {
-          // Filtra para retirar nome não selecionado
-          return [...prev.filter(prev => prev !== tableName)]
-        })
+        setSelectedsShapes(prev => prev.filter(prev => prev !== tableName));
       }
     });
   }, [selectedsCharts]);
 
+  /**
+   * Renderiza polilinhas a partir de uma estrutura de dados de polilinhas.
+   * Suporta MultiPolygon e LineString.
+   * @param {Array} polylines - Array de polilinhas.
+   * @returns {JSX.Element|null} Elementos de polilinha ou null.
+   */
   const RenderPolylines = (polylines) => {
+    if (!Array.isArray(polylines) || polylines.length === 0) return null;
     if (polylines[0].shape.type === 'MultiPolygon') {
-      return polylines[0].shape.coordinates.map((coord, i) => {
-        return coord.map((_coord, ii) => {
-          return (<ElemPolyline key={ii} coord={_coord} map={map} />)
-        })
-      })
+      return polylines[0].shape.coordinates.map((coord, i) =>
+        coord.map((_coord, ii) => (
+          <ElemPolyline key={ii} coord={_coord} map={map} />
+        ))
+      );
+    } else {
+      return polylines[0].shape.coordinates.map((coord, i) => (
+        <ElemPolyline key={i} coord={coord} map={map} />
+      ));
     }
-    else {
-      return polylines[0].shape.coordinates.map((coord, i) => {
-        return (<ElemPolyline key={i} coord={coord} map={map} />)
-      })
-    }
-  }
+  };
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
+        {/* Gerenciador de desenho de shapes */}
         <ElemDrawManager map={map} />
-        <ElemMarker
-          info={marker}
-          map={map}
-        />
+        {/* Marcador principal (ex: marcador de busca) */}
+        <ElemMarker info={marker} map={map} />
 
-        {/* Renderização dos marcadores */}
-        {overlays.shapes.map(shape => {
-          return selectedsShapes.map(type => {
+        {/* Renderização dos marcadores de acordo com as shapes selecionadas */}
+        {Array.isArray(overlays.shapes) && overlays.shapes.map(shape =>
+          selectedsShapes.map(type =>
+            shape.markers?.[type]?.map((marker, i) => (
+              <ElemMarker key={'marker-' + i} info={marker} map={map} />
+            ))
+          )
+        )}
 
-            if (shape.markers !== undefined && shape.markers[type] !== null) {
-              return shape.markers[type].map((marker, i) => {
-                return <ElemMarker
-                  key={'marker-' + i}
-                  info={marker}
-                  map={map}
-                />;
-              });
-            } else { return null }
-          });
-        })}
-
-        {/* Renderização das sobreposições */}
-        {overlays.shapes.map((shape, i) => {
-          return <ElemPopupOverlay key={'popup-' + i} map={shape.map} position={shape.position} content={'conteudo'} draw={shape} setPopups={setPopups} />;
-        })
+        {/* Popups de cálculo de área/comprimento para shapes desenhadas */}
+        {Array.isArray(overlays.shapes) &&
+          overlays.shapes.map((shape, i) =>
+            shape.calculoAreaAtivo && (
+              <ElemPopupOverlay
+                key={shape.id || `popup-${i}`}
+                map={map}
+                position={shape.position}
+                content={setContent(shape)}
+                draw={shape}
+                setPopups={setPopups}
+              />
+            )
+          )
         }
 
-        {/* Renderização das shapes (Bacias Hidrográficas, Unidades Hidrográficas...) */}
-        {overlaysFetched.map((shape) => {
-
+        {/* Renderização de shapes (polígonos e linhas) conforme checkboxes marcados */}
+        {Array.isArray(overlaysFetched) && overlaysFetched.map((shape) => {
+          // Transforma os checkboxes agrupados em uma lista simples
           let listCheckBoxes = Object.values(checkboxes).flatMap(group =>
             Object.values(group).map(item => ({
               name: item.name,
@@ -137,35 +180,34 @@ function MapContent({ checkboxes, setCheckboxes }) {
             }))
           );
 
-          /* renderiza através do checkbox, da escolha do polígono que quer renderizar */
+          // Para cada checkbox marcado, verifica se o nome bate com o shape
           return listCheckBoxes.map(cbState => {
             if (cbState.checked === true && cbState.name === shape.name) {
-
+              // Para cada geometria, renderiza polígono ou linha
               return shape.geometry.map((sh, ii) => {
-
                 if (sh.geometry.type === 'LineString') {
-                  return <ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} setOverlays={setOverlays} />
+                  return <ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
                 } else {
                   return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
                 }
               });
             }
+            return null;
           });
         })}
 
-
-        {overlays.shapes.map(sh => {
+        {/* Renderização de polilinhas Otto e shapes hidrogeo */}
+        {Array.isArray(overlays.shapes) && overlays.shapes.map(sh => {
           if (sh.name === 'otto-bacias') {
-            return sh.map((_sh, index) => {
-              return <ElemOttoPolyline key={`elem-otto-${index}`} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
-            });
+            return sh.map((_sh, index) => (
+              <ElemOttoPolyline key={`elem-otto-${index}`} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
+            ));
           }
-
-          if (sh.markers !== undefined && sh.markers.hidrogeo !== undefined) {
-            return RenderPolylines(sh.markers.hidrogeo)
+          if (sh.markers?.hidrogeo) {
+            return RenderPolylines(sh.markers.hidrogeo);
           }
+          return null;
         })}
-
       </Wrapper>
     </Box>
   );

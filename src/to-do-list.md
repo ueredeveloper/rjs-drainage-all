@@ -83,4 +83,53 @@ Alterar a cor da borda dos polígonos para vermelho.
 - [X] Adicionar nas informações das outorgas o tipo de uso, se prévia, direito de uso ou registro. Verificar se é possível adicionar se vendida, arquivado etc.
 
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+📅 **Data:** 23 de junho de 2025 
+👨‍💻 **Responsável:** [Luan Carvalho]
+
+✅ Objetivo
+Implementar e integrar o InfoWindow personalizado para formas desenhadas no Google Maps, com suporte completo a estilos e interações.
+
+🔹 Tarefas
+
+[x] Criar componente ElemDrawManager para gerenciar desenhos no mapa
+
+[x] Implementar lógica de detecção e captura de overlaycomplete
+
+[x] Identificar tipo de shape desenhada e calcular propriedades específicas (área, posição, marcadores)
+
+[x] Criar InfoWindow customizado com conteúdo dinâmico (ElemDrawInfoWindow)
+
+[x] Abrir InfoWindow ao clicar sobre a shape desenhada
+
+[x] Adicionar listeners interativos dentro do InfoWindow (cor, opacidade, cálculo de área)
+
+[x] Armazenar referência ao InfoWindow na shape desenhada para controle
+
+[x] Atualizar estado global de overlays após cada desenho
+
+[x] Garantir o encerramento adequado do DrawingManager no unmount do componente
+
+[x] Padronização do código para react
+
+-----------------------------------------------------------------------------------------------
+
+📅 **Data:** 04 de julho de 2025  
+👨‍💻 **Responsável:** [Luan Carvalho]  
+
+## ✅ Objetivo  
+Permitir números float no Superficial, na aba de tabelas, QSS
+
+---
+
+## 🔹 Tarefas
+
+### 1️⃣ Permitir a digitação de números com casas decimais (float) nos inputs das tabelas de QSS  
+- [x] Ajustar os campos para aceitar ponto e vírgula como separador decimal  
+- [x] Garantir que a validação aceite valores float (ex: `12.5`, `7,25`, `0.75`)  
+- [x] Atualizar mensagens de erro e tooltips para informar o novo formato aceito  
+
+### 2️⃣ Ajustar cálculos e exibição  
+- [x] Garantir que os cálculos e atualizações funcionem corretamente com valores float  
+- [x] Padronizar a exibição dos valores nas tabelas (usar sempre ponto como separador)  
