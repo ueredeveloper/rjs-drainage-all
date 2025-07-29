@@ -65,6 +65,7 @@ const ElemDrawManager = ({ map }) => {
         editable: true,
         clickable: true,
       },
+      
     });
 
     let marker;
@@ -117,9 +118,9 @@ const ElemDrawManager = ({ map }) => {
       shapeObj.listenerClick = window.google.maps.event.addListener(
         overlay,
         "click",
-        () => {
-          // Sempre usar shapeObj.position (ponto norte do círculo, topo do retângulo, latitude máxima do polígono)
-          openInfoWindow(shapeObj, shapeObj.position);
+        (event) => {
+          // event.latLng contém a posição do clique
+          openInfoWindow(shapeObj, event.latLng ? event.latLng.toJSON() : shapeObj.position);
         }
       );
     };
