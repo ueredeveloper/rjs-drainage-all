@@ -133,3 +133,10 @@ Permitir números float no Superficial, na aba de tabelas, QSS
 ### 2️⃣ Ajustar cálculos e exibição  
 - [x] Garantir que os cálculos e atualizações funcionem corretamente com valores float  
 - [x] Padronizar a exibição dos valores nas tabelas (usar sempre ponto como separador)  
+
+
+
+📅 **Data:** 01 de Agosto de 2025 
+
+- [] Testar o salvamento de documento quando há duas interferências cadastradas
+
