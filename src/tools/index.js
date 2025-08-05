@@ -461,6 +461,27 @@ const searchHydrograficUnit = async (fetchShape, overlaysFetched, setOverlaysFet
   }
 }
 
+
+/**
+ * Converte metros quadrados para hectares.
+ * @function
+ * @param {number} areaM2 - Área em metros quadrados.
+ * @returns {number} Área em hectares.
+ */
+const convertM2ToHa = (areaM2) => {
+  return areaM2 / 10000;
+}
+
+/**
+ * Converte metros quadrados para quilômetros quadrados.
+ * @function
+ * @param {number} areaM2 - Área em metros quadrados.
+ * @returns {number} Área em km².
+ */
+const convertM2ToKm2 = (areaM2) => {
+  return areaM2 / 1000000;
+}
+
 export {
   createCircleRings,
   converterPostgresToGmaps, nFormatter,
@@ -473,5 +494,9 @@ export {
   calculateCentroid,
   joinOttoBasins,
   getMarkersInsideOttoBasins,
-  searchHydrograficUnit
+  searchHydrograficUnit, 
+  // conversões de área
+  convertM2ToHa, 
+  convertM2ToKm2
+  
 }

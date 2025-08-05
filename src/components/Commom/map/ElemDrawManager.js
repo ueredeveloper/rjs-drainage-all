@@ -1,13 +1,3 @@
-/**
- * Componente ElemDrawManager
- * Gerencia a criação de formas desenhadas no mapa do Google Maps, escuta eventos de desenho
- * e interage com InfoWindows para personalização visual das formas.
- *
- * @param {Object} props - Propriedades do componente.
- * @param {google.maps.Map} props.map - Instância do mapa Google Maps onde os desenhos ocorrerão.
- * @returns {null} Componente não renderiza elementos visuais diretamente.
- */
-
 import ReactDOM from "react-dom/client";
 import { useEffect } from "react";
 import {
@@ -39,11 +29,6 @@ const ElemDrawManager = ({ map }) => {
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
 
-    /**
-     * Inicializa o DrawingManager do Google Maps.
-     * Permite desenhar marcadores, círculos, polígonos, retângulos e linhas.
-     * @type {google.maps.drawing.DrawingManager}
-     */
     const draw = new window.google.maps.drawing.DrawingManager({
       drawingControl: true,
       drawingControlOptions: {
@@ -80,24 +65,19 @@ const ElemDrawManager = ({ map }) => {
         editable: true,
         clickable: true,
       },
+      
     });
 
-    /** @type {google.maps.Marker | undefined} */
     let marker;
-    /** @type {google.maps.InfoWindow | null} */
     let currentInfoWindow = null;
 
     /**
      * Abre o InfoWindow customizado para uma shape.
-     * @param {Object} shape - Objeto da shape desenhada.
-     * @param {google.maps.LatLng | Object} position - Posição para abrir o InfoWindow.
      */
     const openInfoWindow = (shape, position) => {
       window.dispatchEvent(new Event("close-all-infowindows"));
-
       if (currentInfoWindow) currentInfoWindow.close();
 
-      // Ao abrir o InfoWindow, seta calculoAreaAtivo para false
       setOverlays((prev) => ({
         ...prev,
         shapes: prev.shapes.map((s) =>
@@ -126,31 +106,26 @@ const ElemDrawManager = ({ map }) => {
 
     /**
      * Adiciona listener de clique à shape desenhada para abrir o InfoWindow.
-     * @param {Object} shapeObj - Objeto da shape.
      */
     const addClickListenerToShape = (shapeObj) => {
       const overlay = shapeObj.draw;
       if (!overlay) return;
 
-      // Remove listener antigo, se existir
       if (shapeObj.listenerClick) {
         window.google.maps.event.removeListener(shapeObj.listenerClick);
       }
 
-      // Adiciona novo listener
       shapeObj.listenerClick = window.google.maps.event.addListener(
         overlay,
         "click",
         (event) => {
-          openInfoWindow(shapeObj, event.latLng);
+          // event.latLng contém a posição do clique
+          openInfoWindow(shapeObj, event.latLng ? event.latLng.toJSON() : shapeObj.position);
         }
       );
     };
 
-    /**
-     * Handler para evento de desenho completo no mapa.
-     * Cria objeto shape, calcula área/posição e adiciona ao estado global.
-     */
+    // Handler de desenho completo
     window.google.maps.event.addListener(
       draw,
       "overlaycomplete",
@@ -158,7 +133,6 @@ const ElemDrawManager = ({ map }) => {
         const overlay = event.overlay;
         const type = event.type;
 
-        // Se for marcador, salva coordenadas e remove do mapa (controle externo)
         if (type === "marker") {
           if (marker) marker.setMap(null);
           marker = overlay;
@@ -172,19 +146,6 @@ const ElemDrawManager = ({ map }) => {
           return;
         }
 
-        /**
-         * Objeto base da shape desenhada.
-         * @typedef {Object} Shape
-         * @property {number} id - Identificador único da shape.
-         * @property {string} type - Tipo da shape (circle, polygon, rectangle, polyline).
-         * @property {google.maps.Map} map - Instância do mapa.
-         * @property {Object} draw - Overlay desenhado no mapa.
-         * @property {Object|null} position - Posição principal da shape.
-         * @property {number|null} area - Área da shape (quando aplicável).
-         * @property {number|null} meters - Comprimento da shape (quando aplicável).
-         * @property {Array} markers - Marcadores encontrados dentro da shape.
-         * @property {boolean} calculoAreaAtivo - Indica se o cálculo de área está ativo.
-         */
         let shape = {
           id: Date.now(),
           type,
@@ -194,41 +155,30 @@ const ElemDrawManager = ({ map }) => {
           area: null,
           meters: null,
           markers: [],
-          calculoAreaAtivo: true, // inicia como true
+          calculoAreaAtivo: true,
         };
 
-        /**
-         * Caso o tipo seja "circle", calcula centro, raio, área e encontra marcadores dentro do círculo.
-         * 
-         * - A posição (`shape.position`) é definida na borda norte do círculo (latitude máxima, mesmo longitude do centro),
-         *   para que o InfoWindow apareça fora do centro geométrico.
-         * - O raio é obtido diretamente do overlay.
-         * - A área é calculada usando a função utilitária `calculateCircleArea`.
-         * - Os marcadores internos ao círculo são encontrados pela função `findAllPointsInCircle`.
-         * 
-         * @async
-         * @param {google.maps.Circle} overlay - Overlay do círculo desenhado.
-         */
+        // --- Aqui está o ajuste para o círculo! ---
         if (type === "circle") {
           const center = overlay.getCenter();
           const radius = overlay.getRadius();
           const bounds = overlay.getBounds();
-          const lat = bounds.getNorthEast().lat(); // latitude máxima (borda norte)
-          const lng = center.lng(); // mesma longitude do centro
-          shape.position = { lat, lng };
+          const latNorth = bounds.getNorthEast().lat(); // topo do círculo
+          const lngCenter = center.lng();
+
+          // Para popup, use o ponto norte (não altera o centro do círculo real!)
+          shape.position = { lat: latNorth, lng: lngCenter };
+
           shape.radius = radius;
           shape.area = calculateCircleArea(radius);
+          // Para encontrar marcadores, use o centro real do círculo!
           shape.markers = await findAllPointsInCircle({
-            center: shape.position,
+            center: { lat: center.lat(), lng: center.lng() }, // não use shape.position aqui!
             radius: parseInt(radius),
           });
         }
 
-        /**
-         * Caso o tipo seja "polygon", encontra o ponto mais ao norte, calcula área e encontra marcadores dentro do polígono.
-         * @async
-         * @param {google.maps.Polygon} overlay - Overlay do polígono desenhado.
-         */
+        // Polígono: ponto latitude máxima
         if (type === "polygon") {
           const serverPolygon = overlay
             .getPath()
@@ -237,8 +187,6 @@ const ElemDrawManager = ({ map }) => {
           const paths = overlay.getPaths();
           let lat = null,
             lng = null;
-
-          // Encontra o ponto mais ao norte do polígono
           paths.forEach((path) => {
             path.forEach((point) => {
               const latitude = point.lat();
@@ -249,7 +197,6 @@ const ElemDrawManager = ({ map }) => {
               }
             });
           });
-
           shape.position = { lat, lng };
           shape.area = calculatePolygonArea(overlay);
           shape.markers = await findAllPointsInPolygon([
@@ -258,11 +205,7 @@ const ElemDrawManager = ({ map }) => {
           ]);
         }
 
-        /**
-         * Caso o tipo seja "rectangle", calcula bounds, área e encontra marcadores dentro do retângulo.
-         * @async
-         * @param {google.maps.Rectangle} overlay - Overlay do retângulo desenhado.
-         */
+        // Retângulo: use canto NE (topo direito)
         if (type === "rectangle") {
           const bounds = overlay.getBounds();
           const NE = bounds.getNorthEast();
@@ -279,10 +222,7 @@ const ElemDrawManager = ({ map }) => {
           );
         }
 
-        /**
-         * Caso o tipo seja "polyline", calcula o último ponto e o comprimento da linha.
-         * @param {google.maps.Polyline} overlay - Overlay da linha desenhada.
-         */
+        // Polyline
         if (type === "polyline") {
           const path = overlay.getPath();
           const lastPoint = path.getAt(path.getLength() - 1);
@@ -300,7 +240,6 @@ const ElemDrawManager = ({ map }) => {
         // Adiciona listener de clique para abrir InfoWindow
         addClickListenerToShape(shape);
 
-        // Adiciona shape ao estado global
         setOverlays((prev) => ({
           ...prev,
           shapes: [...prev.shapes, shape],
@@ -308,17 +247,14 @@ const ElemDrawManager = ({ map }) => {
       }
     );
 
-    // Adiciona DrawingManager ao mapa
     draw.setMap(map);
 
-    /**
-     * Cleanup: remove barra de ferramentas e listeners ao desmontar o componente.
-     */
+    // Cleanup
     return () => {
       draw.setMap(null);
       window.google.maps.event.clearInstanceListeners(draw);
     };
-  }, [map]); // Apenas map como dependência
+  }, [map]);
 
   return null;
 };
