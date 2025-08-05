@@ -12,6 +12,16 @@ function convertM2ToHa(areaM2) {
 }
 
 /**
+ * Converte metros quadrados para quilômetros quadrados.
+ * @function
+ * @param {number} areaM2 - Área em metros quadrados.
+ * @returns {number} Área em km².
+ */
+function convertM2ToKm2(areaM2) {
+  return areaM2 / 1000000;
+}
+
+/**
  * Componente React responsável por criar e exibir um popup customizado (OverlayView) no Google Maps,
  * mostrando informações sobre shapes desenhadas (polígonos, retângulos, círculos, polilinhas).
  *
@@ -160,13 +170,13 @@ const ElemPopupOverlay = ({
       window.removeEventListener("close-all-infowindows", handleInfoWindowOpen);
       window.removeEventListener("infowindow-open", handleInfoWindowOpen);
     };
-    }, [map, position, content, draw, onInfoWindowOpen]);
+  }, [map, position, content, draw, onInfoWindowOpen]);
 
-    useEffect(() => {
-        if (!overlayRef.current || !content) return;
-        const containerDiv = overlayRef.current.containerDiv;
-        containerDiv.style.display = "block";
-    }, [content]);
+  useEffect(() => {
+    if (!overlayRef.current || !content) return;
+    const containerDiv = overlayRef.current.containerDiv;
+    containerDiv.style.display = "block";
+  }, [content]);
 
   return null;
 };
@@ -228,63 +238,75 @@ const setContent = (draw) => {
   }
 
   // Polilinha
-    if (draw.type === "polyline") {
-        let coordinates = [];
-        let htmlCoords = "";
+  if (draw.type === "polyline") {
+    let coordinates = [];
+    let htmlCoords = "";
 
-        draw.draw.getPath().forEach((latLng) => {
-        coordinates.push({ lat: latLng.lat(), lng: latLng.lng() });
-        });
+    draw.draw.getPath().forEach((latLng) => {
+      coordinates.push({ lat: latLng.lat(), lng: latLng.lng() });
+    });
 
-        coordinates.forEach((coordinate, index) => {
-        htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}`;
-        });
+    coordinates.forEach((coordinate, index) => {
+      htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}`;
+    });
 
-        let meters = draw.meters.toFixed(3);
-        let formatMeters = numberWithCommas(meters);
-        let km = draw.meters / 1000;
-        let formatKm = numberWithCommas(km);
+    let meters = draw.meters.toFixed(3);
+    let formatMeters = numberWithCommas(meters);
+    let km = draw.meters / 1000;
+    let formatKm = numberWithCommas(km);
 
-        let content = `${formatMeters} metros / ${formatKm} km.`;
-        let type = `Polilinha`;
-        return createContentDiv(type, content);
-    }
+    let content = `${formatMeters} metros | ${formatKm} km.`;
+    let type = `Polilinha`;
+    return createContentDiv(type, content);
+  }
 
   // Retângulo
-    if (draw.type === "rectangle") {
-        let areaM2 = draw.area.toFixed(2);
-        let formatAreaM2 = numberWithCommas(areaM2);
-        let areaHa = convertM2ToHa(draw.area);
-        let formatAreaHa = numberWithCommas(areaHa.toFixed(2));
+  if (draw.type === "rectangle") {
 
-        let content = `Área: ${formatAreaM2} m² / ${formatAreaHa} ha`;
-        let type = `Retângulo`;
-        return createContentDiv(type, content);
-    }
+    let areaM2 = draw.area.toFixed(2);
+    let formatAreaM2 = numberWithCommas(areaM2);
+    let areaHa = convertM2ToHa(draw.area);
+    let formatAreaHa = numberWithCommas(areaHa.toFixed(2));
+    let areaKm2 = convertM2ToKm2(draw.area);
+    let formatAreaKm2 = numberWithCommas(areaKm2.toFixed(5));
+
+    let content = `Área: ${formatAreaM2} m² | ${formatAreaHa} ha | ${formatAreaKm2} km²`;
+    let type = `Retângulo`;
+    return createContentDiv(type, content);
+  }
 
   // Polígono
-    if (draw.type === "polygon") {
-        let areaM2 = draw.area.toFixed(2);
-        let formatAreaM2 = numberWithCommas(areaM2);
-        let areaHa = convertM2ToHa(draw.area);
-        let formatAreaHa = numberWithCommas(areaHa.toFixed(2));
+  if (draw.type === "polygon") {
+    let areaM2 = draw.area.toFixed(2);
+    let formatAreaM2 = numberWithCommas(areaM2);
 
-        let content = `Área: ${formatAreaM2} m² / ${formatAreaHa} ha`;
-        let type = `Polígono`;
-        return createContentDiv(type, content);
-    }
+    let areaHa = convertM2ToHa(draw.area);
+    let formatAreaHa = numberWithCommas(areaHa.toFixed(2));
+
+    let areaKm2 = convertM2ToKm2(draw.area);
+    let formatAreaKm2 = numberWithCommas(areaKm2.toFixed(5));
+
+    let content = `Área: ${formatAreaM2} m² | ${formatAreaHa} ha | ${formatAreaKm2} km²`;
+    let type = `Polígono`;
+    return createContentDiv(type, content);
+  }
 
   // Círculo
-    if (draw.type === "circle") {
-        let formatAreaM2 = numberWithCommas(draw.area);
-        let areaHa = convertM2ToHa(draw.area);
-        let formatAreaHa = numberWithCommas(areaHa.toFixed(2));
-        let formatRadius = numberWithCommas(draw.radius);
+  if (draw.type === "circle") {
+    let formatAreaM2 = numberWithCommas(draw.area);
 
-        let content = `Área: ${formatAreaM2} m² / ${formatAreaHa} ha / Raio: ${formatRadius} metros`;
-        let type = `Círculo`;
-        return createContentDiv(type, content);
-    }
+    let areaHa = convertM2ToHa(draw.area);
+    let formatAreaHa = numberWithCommas(areaHa.toFixed(2));
+
+    let areaKm2 = convertM2ToKm2(draw.area);
+    let formatAreaKm2 = numberWithCommas(areaKm2.toFixed(5));
+
+    let formatRadius = numberWithCommas(draw.radius);
+
+    let content = `Área: ${formatAreaM2} m² | ${formatAreaHa} ha | ${formatAreaKm2} km² / Raio: ${formatRadius} metros`;
+    let type = `Círculo`;
+    return createContentDiv(type, content);
+  }
 
   // Caso não reconheça o tipo
   return `<div></div>`;
