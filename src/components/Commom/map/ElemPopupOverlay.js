@@ -1,25 +1,5 @@
 import { useRef, useEffect } from "react";
-import { numberWithCommas } from "../../../tools";
-
-/**
- * Converte metros quadrados para hectares.
- * @function
- * @param {number} areaM2 - Área em metros quadrados.
- * @returns {number} Área em hectares.
- */
-function convertM2ToHa(areaM2) {
-  return areaM2 / 10000;
-}
-
-/**
- * Converte metros quadrados para quilômetros quadrados.
- * @function
- * @param {number} areaM2 - Área em metros quadrados.
- * @returns {number} Área em km².
- */
-function convertM2ToKm2(areaM2) {
-  return areaM2 / 1000000;
-}
+import { convertM2ToHa, convertM2ToKm2, numberWithCommas } from "../../../tools";
 
 /**
  * Componente React responsável por criar e exibir um popup customizado (OverlayView) no Google Maps,
