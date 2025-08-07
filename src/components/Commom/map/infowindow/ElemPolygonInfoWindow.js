@@ -18,6 +18,7 @@ import Alert from "@mui/material/Alert";
  * @returns {null}
  */
 const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
+    
     const [infoWindow, setInfoWindow] = useState(null);
     const { setOverlays } = useData();
     const theme = useTheme();

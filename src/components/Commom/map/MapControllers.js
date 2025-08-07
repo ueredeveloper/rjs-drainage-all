@@ -10,6 +10,7 @@ import {
     ClickAwayListener,
     Button,
     Icon,
+    Typography
 } from "@mui/material";
 import LayersClearIcon from "@mui/icons-material/LayersClear";
 import LayersIcon from "@mui/icons-material/Layers";
@@ -18,6 +19,8 @@ import { converterPostgresToGmaps } from "../../../tools";
 import { useData } from "../../../hooks/analyse-hooks";
 import { fetchRiversByCoordinates, fetchShape } from "../../../services/shapes";
 import { initialsStates } from "../../../initials-states";
+
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const checkboxOptions = {
     Superficial: [
@@ -41,14 +44,28 @@ const checkboxOptions = {
         {
             name: "hidrogeo_fraturado",
             alias: "Fraturado",
-            checked: false
+            checked: false,
+            isWaterAvailable: false
         },
         {
             name: "hidrogeo_poroso",
             alias: "Poroso",
-            checked: false
-        },
+            checked: false,
+            isWaterAvailable: false
+        }
     ],
+};
+
+// Copia profunda do objeto para o estado inicial
+const getInitialCheckboxes = () => {
+    const initial = {};
+    for (const [group, items] of Object.entries(checkboxOptions)) {
+        initial[group] = {};
+        items.forEach((item) => {
+            initial[group][item.name] = { ...item };
+        });
+    }
+    return initial;
 };
 
 
@@ -73,26 +90,59 @@ const checkboxOptions = {
  */
 function MapControllers({ checkboxes, setCheckboxes }) {
 
+    const theme = createTheme({
+        typography: {
+            fontSize: 12, // ⬅️ muda a base para todos os componentes MUI (12px por padrão)
+        },
+    });
+
     const { marker, overlaysFetched, setOverlaysFetched, setSubsystem, setHgAnalyse, overlays, setOverlays } = useData();
 
     const [openPanel, setOpenPanel] = useState(false);
 
-    const toggleCheckbox = (group, item) => (event) => {
-        setCheckboxes((prev) => ({
-            ...prev,
-            [group]: {
-                ...prev[group],
-                [item.name]: {
-                    ...prev[group]?.[item.name],
-                    ...item,
-                    checked: event.target.checked,
+    useEffect(() => {
+        // Inicialização da variável checkboxes
+        setCheckboxes(getInitialCheckboxes())
+
+    }, [])
+
+    const handleChange = (group, name, field) => (event) => {
+
+        const value = event.target.checked;
+
+        // Se fechar a camada, não precisa mostrar a disponibilidade (cores, nº poços e porcentagem)
+        if (field === 'checked' && !value) {
+
+            setCheckboxes((prev) => ({
+                ...prev,
+                [group]: {
+                    ...prev[group],
+                    [name]: {
+                        ...prev[group][name],
+                        [field]: value,
+                        ['isWaterAvailable']: false
+                    },
                 },
-            },
-        }));
+            }));
+
+        } else {
+            setCheckboxes((prev) => ({
+                ...prev,
+                [group]: {
+                    ...prev[group],
+                    [name]: {
+                        ...prev[group][name],
+                        [field]: value,
+                    },
+                },
+            }));
+
+        }
+
     };
 
     const clearCheckboxes = () => {
-        setCheckboxes({});
+        setCheckboxes(getInitialCheckboxes())
 
         setSubsystem(initialsStates.subsystem);
         setHgAnalyse(initialsStates.subsystem.hg_analyse);
@@ -103,33 +153,44 @@ function MapControllers({ checkboxes, setCheckboxes }) {
     };
 
     useEffect(() => {
-        
 
         // Converter objeto em array com os valores name, alias e checked
         const listCheckboxes = Object.values(checkboxes).flatMap(group =>
             Object.values(group).map(item => ({
                 name: item.name,
                 alias: item.alias,
-                checked: item.checked
+                checked: item.checked,
+                isWaterAvailable: item.isWaterAvailable || null
             }))
         );
 
-
         listCheckboxes.forEach(async checkbox => {
+
             if (checkbox.checked) {
+
+                let riversByCoordinates = "rios_df_" + marker.int_latitude + "_" + marker.int_longitude;
 
                 // verificar se overlaysFetched está vazio
                 if (overlaysFetched.length === 0) {
+
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
 
-                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
-                            return __shape.map(sh => {
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = overlaysFetched.find(_ov => _ov.name === riversByCoordinates)
 
-                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
-                            })
-                        });
-                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                        if (overlay === undefined) {
+
+                            const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
+                                return __shape.map(sh => {
+
+                                    return { ...sh, shapeName: riversByCoordinates, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
+                                })
+                            });
+                            setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
+
+
+                        }
                     } else {
 
                         const _shape = await fetchShape(checkbox.name).then(__shape => {
@@ -147,14 +208,20 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
 
-                        const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
-                            return __shape.map(sh => {
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = overlaysFetched.find(_ov => _ov.name === riversByCoordinates)
 
-                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
-                            })
-                        });
-                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                        if (overlay === undefined) {
 
+                            const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
+                                return __shape.map(sh => {
+
+                                    return { ...sh, shapeName: riversByCoordinates, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
+                                })
+                            });
+                            setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
+
+                        }
                     } else {
                         // verifica se a shape está presente na array overlaysFetched
                         let searchoverlaysFetched = overlaysFetched.find(st => st.name === checkbox.name);
@@ -177,92 +244,105 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             }
         })
 
-    }, [checkboxes, setOverlaysFetched, overlaysFetched]);
+    }, [checkboxes, overlaysFetched]);
 
     return (
-        <Box
-
-            sx={{
-
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                position: "absolute",
-                right: 0
-
-            }}
-
-        >
-            <SpeedDial
+        <ThemeProvider theme={theme}>
+            <Box
                 sx={{
-                    "& .MuiFab-primary": {
-                        width: 45, // Metade do tamanho padrão (56px)
-                        height: 45,
-                        mx: 0.5,
-                    },
+
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    position: "absolute",
+                    right: 0
+
                 }}
-                ariaLabel="Show Filters"
-                icon={<LayersIcon />}
-                onClick={() => setOpenPanel((prev) => !prev)}
-            />
+            >
+                <SpeedDial
+                    sx={{
+                        "& .MuiFab-primary": {
+                            width: 45, // Metade do tamanho padrão (56px)
+                            height: 45,
+                            mx: 0.5,
+                        },
+                    }}
+                    ariaLabel="Show Filters"
+                    icon={<LayersIcon />}
+                    onClick={() => setOpenPanel((prev) => !prev)}
+                />
 
-            {openPanel && (
-                <ClickAwayListener onClickAway={() => setOpenPanel(false)}>
-                    <Paper
-                        elevation={6}
-                        sx={{
-                            position: "absolute",
-                            bottom: 70,
-                            right: 0,
-                            p: 2,
-                            width: 250,
-                            maxHeight: 500,
-                            overflowY: "auto",
-                            borderRadius: 2,
-                        }}
-                    >
-                        {Object.entries(checkboxOptions).map(([group, items]) => (
-                            <Box key={group} sx={{ mb: 1 }}>
-                                <strong>{group}</strong>
+                {openPanel && (
+                    <ClickAwayListener onClickAway={() => setOpenPanel(false)}>
+                        <Paper
+                            elevation={6}
+                            sx={{
+                                position: "absolute",
+                                bottom: 70,
+                                right: 4,
+                                p: 2,
+                                width: 250,
+                                maxHeight: 350,
+                                overflowY: "auto",
+                                borderRadius: 2,
+                            }}
+                        >
+                            {Object.entries(checkboxOptions).map(([group, items]) => (
+                                <Box key={group} sx={{ my: 0, mx: 0 }}>
+                                    <Typography variant="h6">{group}</Typography>
+                                    {items.map((item) => {
 
-                                {items.map((item) => (
-                                    <FormControlLabel
-                                        sx={{
-                                            display: "flex",
-                                            flexDirection: "row"
+                                        const state = checkboxes[group][item.name];
+                                        return (
+                                            <Box key={item.name} sx={{ mb: 0 }}>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={state.checked}
+                                                            onChange={handleChange(group, item.name, 'checked')}
+                                                        />
+                                                    }
+                                                    label={item.alias}
+                                                />
+                                                {/* Exibe o checkbox adicional para qualquer item que tenha o campo isWaterAvailable */}
+                                                {'isWaterAvailable' in item && (
+                                                    <FormControlLabel
+                                                        control={
+                                                            <Checkbox
+                                                                checked={state.isWaterAvailable}
+                                                                onChange={handleChange(group, item.name, 'isWaterAvailable')}
+                                                            />
+                                                        }
+                                                        label="Disponibilidade Hídrica"
+                                                        sx={{ ml: 1 }}
+                                                    />
+                                                )}
+                                            </Box>
+                                        );
+                                    })}
+                                </Box>
+                            ))}
 
-                                        }}
-                                        key={item.name}
-                                        control={
-                                            <Checkbox
-                                                checked={checkboxes[group]?.[item.name]?.checked || false}
-                                                onChange={toggleCheckbox(group, item)}
-                                            />
-                                        }
-                                        label={item.alias}
-                                    />
-                                ))}
-                            </Box>
-                        ))}
+                            <Box display="flex" justifyContent="flex-end" mt={1}></Box>
+                        </Paper>
+                    </ClickAwayListener>
+                )}
+                <SpeedDial
+                    sx={{
+                        "& .MuiFab-primary": {
+                            width: 35, // Metade do tamanho padrão (56px)
+                            height: 20,
+                            mx: 0.5,
+                        },
+                    }}
+                    ariaLabel="Show Filters"
+                    icon={<LayersClearIcon sx={{ fontSize: 20 }} />}
+                    onClick={() => clearCheckboxes()}
+                />
+            </Box>
+        </ThemeProvider>
 
-                        <Box display="flex" justifyContent="flex-end" mt={1}></Box>
-                    </Paper>
-                </ClickAwayListener>
-            )}
-            <SpeedDial
-                sx={{
-                    "& .MuiFab-primary": {
-                        width: 35, // Metade do tamanho padrão (56px)
-                        height: 20,
-                        mx: 0.5,
-                    },
-                }}
-                ariaLabel="Show Filters"
-                icon={<LayersClearIcon sx={{ fontSize: 20 }} />}
-                onClick={() => clearCheckboxes()}
-            />
-        </Box>
     );
 
 }

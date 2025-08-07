@@ -67,6 +67,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
   // Obtém os estados do contexto de análise
   const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
 
+  const [zoom, setZoom] = useState(12)
   /**
    * Converte o nome de um dado para o nome da shape correspondente.
    * @param {string} dataName - Nome do dado.
@@ -124,12 +125,12 @@ function MapContent({ checkboxes, setCheckboxes }) {
     if (polylines[0].shape.type === 'MultiPolygon') {
       return polylines[0].shape.coordinates.map((coord, i) =>
         coord.map((_coord, ii) => (
-          <ElemPolyline key={ii} coord={_coord} map={map} />
+          <ElemPolyline key={ii} coord={_coord} map={map} zoom={zoom} />
         ))
       );
     } else {
       return polylines[0].shape.coordinates.map((coord, i) => (
-        <ElemPolyline key={i} coord={coord} map={map} />
+        <ElemPolyline key={i} coord={coord} map={map} zoom={zoom} />
       ));
     }
   };
@@ -138,7 +139,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
-        <ElemMap mode={mode} map={map} setMap={setMap} zoom={10} />
+        <ElemMap mode={mode} map={map} setMap={setMap} zoom={zoom} setZoom={setZoom} />
         {/* Gerenciador de desenho de shapes */}
         <ElemDrawManager map={map} />
         {/* Marcador principal (ex: marcador de busca) */}
@@ -176,19 +177,20 @@ function MapContent({ checkboxes, setCheckboxes }) {
             Object.values(group).map(item => ({
               name: item.name,
               alias: item.alias,
-              checked: item.checked
+              checked: item.checked,
+              isWaterAvailable: item.isWaterAvailable
             }))
           );
 
           // Para cada checkbox marcado, verifica se o nome bate com o shape
           return listCheckBoxes.map(cbState => {
-            if (cbState.checked === true && cbState.name === shape.name) {
+            if ((cbState.checked === true && cbState.name === shape.name) || (cbState.checked === true && shape.name.startsWith(cbState.name))) {
               // Para cada geometria, renderiza polígono ou linha
               return shape.geometry.map((sh, ii) => {
                 if (sh.geometry.type === 'LineString') {
-                  return <ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+                  return <ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} zoom={zoom} />;
                 } else {
-                  return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} setOverlays={setOverlays} />;
+                  return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} isWaterAvailable={cbState.isWaterAvailable} zoom={zoom} />;
                 }
               });
             }
@@ -198,9 +200,9 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
         {/* Renderização de polilinhas Otto e shapes hidrogeo */}
         {Array.isArray(overlays.shapes) && overlays.shapes.map(sh => {
-          if (sh.name === 'otto-bacias') {
+          if (sh.name != undefined && sh.name === 'otto-bacias') {
             return sh.map((_sh, index) => (
-              <ElemOttoPolyline key={`elem-otto-${index}`} attributes={_sh.attributes} geometry={_sh.geometry} map={map} />
+              <ElemOttoPolyline key={`elem-otto-${index}`} geometry={_sh.geometry} map={map} zoom={zoom} />
             ));
           }
           if (sh.markers?.hidrogeo) {

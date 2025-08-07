@@ -129,20 +129,7 @@ const PolylineInfoContent = ({ polyline, shape }) => {
                     </Typography>
                 )}
 
-                {shape?.geometry?.coordinates && (
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            mb: 1,
-                            fontSize: "0.75rem",
-                            color: "text.secondary",
-                        }}
-                    >
-                        <strong>ID:</strong>{" "}
-                        {shape?.properties?.objectid ||
-                            shape?.properties?.OBJECTID_1}
-                    </Typography>
-                )}
+               
             </Box>
         </Paper>
     );

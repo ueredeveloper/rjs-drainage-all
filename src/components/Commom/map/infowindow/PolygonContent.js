@@ -150,17 +150,17 @@ const PolygonInfoContent = ({
                 {(get("shapeName") === "bacias_hidrograficas" ||
                     !!get("bacia_nome") ||
                     !!get("bacia_cod")) && (
-                    <>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                            <strong>Nome da Bacia:</strong>{" "}
-                            {get("bacia_nome") || "Não informado"}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 2 }}>
-                            <strong>Bacia Código:</strong>{" "}
-                            {get("bacia_cod") || "Não informado"}
-                        </Typography>
-                    </>
-                )}
+                        <>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Nome da Bacia:</strong>{" "}
+                                {get("bacia_nome") || "Não informado"}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 2 }}>
+                                <strong>Bacia Código:</strong>{" "}
+                                {get("bacia_cod") || ""}
+                            </Typography>
+                        </>
+                    )}
 
                 {/* Seção específica para unidades hidrográficas */}
                 {get("shapeName") === "unidades_hidrograficas" && (
@@ -183,45 +183,31 @@ const PolygonInfoContent = ({
                 {/* Seção específica para sistemas hidrogeológicos */}
                 {(get("shapeName") === "hidrogeo_poroso" ||
                     get("shapeName") === "hidrogeo_fraturado") && (
-                    <>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                            <strong>Sistema:</strong>{" "}
-                            {get("sistema") || "Não informado"}
-                        </Typography>
-                        {get("subsistema") && (
+                        <>
                             <Typography variant="body2" sx={{ mb: 1 }}>
-                                <strong>Subsistema:</strong> {get("subsistema")}
+                                <strong>Sistema:</strong>{" "}
+                                {get("sistema") || "Não informado"}
                             </Typography>
-                        )}
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                            <strong>Código:</strong>{" "}
-                            {get("cod_plan") || "Não informado"}
-                        </Typography>
-                    </>
-                )}
+                            {get("subsistema") && (
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    <strong>Subsistema:</strong> {get("subsistema")}
+                                </Typography>
+                            )}
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Código:</strong>{" "}
+                                {get("cod_plan") || "Não informado"}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Número de Poços:</strong>{" "}
+                                {get("qtd_pocos") || "0"}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                <strong>Porcentagem de Utilização:</strong>{" "}
+                                {get("pct_utilizada") + "%" || "0%"}
+                            </Typography>
+                        </>
+                    )}
 
-                {/* Observações (se existirem) */}
-                {(get("observacao") || get("observação")) && (
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Observações:</strong>{" "}
-                        {get("observacao") || get("observação")}
-                    </Typography>
-                )}
-
-                {/* ID do objeto (informação técnica) */}
-                {(get("objectid") || get("OBJECTID_1")) && (
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            mb: 1,
-                            fontSize: "0.75rem",
-                            color: "text.secondary",
-                        }}
-                    >
-                        <strong>ID:</strong>{" "}
-                        {get("objectid") || get("OBJECTID_1")}
-                    </Typography>
-                )}
 
                 {/* Botão de busca */}
                 <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>

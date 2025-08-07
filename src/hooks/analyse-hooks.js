@@ -73,6 +73,7 @@ export const DataProvider = ({ children }) => {
     }
   }, [marker])
 
+
   return (
     // Fornece o estado 'selectedsCharts' para os componentes filhos
     <DataContext.Provider value={{

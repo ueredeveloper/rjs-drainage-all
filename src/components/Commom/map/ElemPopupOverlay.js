@@ -28,6 +28,7 @@ const ElemPopupOverlay = ({
   const overlayRef = useRef(null);
 
   useEffect(() => {
+    
     if (!map || !position || !content || !draw) return;
 
     /**

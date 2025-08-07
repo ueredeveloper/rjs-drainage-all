@@ -68,6 +68,8 @@ async function findAllPointsInRectangle(nex, ney, swx, swy) {
  */
 async function findAllPointsInPolygon(polygon) {
 
+  console.log('findAllPointsInPolygon')
+
   try {
     const response = await fetch(url + '/find-points-inside-polygon', {
       method: 'POST',
@@ -97,6 +99,9 @@ async function findAllPointsInPolygon(polygon) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findAllPointsInCircle(circle) {
+
+    console.log('findAllPointsInCircle')
+
 
   try {
     const response = await fetch(url + '/find-points-inside-circle', {
@@ -132,6 +137,8 @@ async function findAllPointsInCircle(circle) {
 
 
 async function findPointsInASystem(tp_id, lat, lng) {
+
+    console.log('findPointsInASystem')
 
   //  Tipo de poço na forma antiga 1 - Manual e 2 - Tubular
   //      opções neste sistema

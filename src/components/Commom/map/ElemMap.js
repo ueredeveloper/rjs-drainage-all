@@ -5,7 +5,7 @@ import { darkMap } from './mode/dark-map';
   * Elemento de renderização do mapa
   * @component
   */
-function ElemMap({ mode, map, setMap, zoom }) {
+function ElemMap({ mode, map, setMap, zoom, setZoom }) {
 
   const ref = useRef();
   const center = { lat: -15.764514558482336, lng: -47.76491209127806 }
@@ -23,6 +23,12 @@ function ElemMap({ mode, map, setMap, zoom }) {
     }
 
     if (map) {
+
+      // Adiciona listener para capturar o zoom do mapa.
+      map.addListener('zoom_changed', function () {
+        setZoom(map.getZoom())
+      });
+
       ["click"].forEach((e) =>
         window.google.maps.event.clearListeners(map, e)
       );
