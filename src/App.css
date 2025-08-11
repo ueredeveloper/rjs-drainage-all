@@ -4,3 +4,16 @@
   height: 100vh;
 }
 
+
+.popup-container {
+  display: flex;
+  flex-direction: row;
+  height: 60px;
+  width: 80%;
+  justify-content: center;
+  /* Esta classe não é mais usada para posicionamento, que agora é
+     tratado pela API de Controles do Google Maps.
+     Usamos para adicionar uma margem inferior para espaçamento. */
+  margin-bottom: 5px !important;
+  /* !important pode ser necessário para sobrescrever estilos do Google Maps */
+}

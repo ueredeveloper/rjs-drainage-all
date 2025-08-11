@@ -97,10 +97,10 @@ const PolygonInfoContent = ({
         title2 = `${get("uh_label")}`;
     } else if (get("shapeName") === "hidrogeo_poroso") {
         title1 = `Sistema: ${get("sistema")}`;
-        title2 = `Código: ${get("cod_plan")}`;
+        
     } else {
         title1 = `Sistema: ${get("sistema")}, Subsistema: ${get("subsistema")}`;
-        title2 = `Código: ${get("cod_plan")}`;
+        
     }
 
     // Botão de busca de outorgas

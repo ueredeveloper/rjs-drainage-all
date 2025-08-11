@@ -296,7 +296,7 @@ export default function SurfaceTableModulations({
     <Paper
       id="paper"
       elevation={3}
-      sx={{ my: 2, height: 150, overflow: "auto" }}
+      sx={{ my: 2, height: 120, overflow: "auto" }}
     >
       <Table id="table" size="small">
         <TableHead>

@@ -49,7 +49,7 @@ export const DataProvider = ({ children }) => {
   /*Shapes (polígonos) buscados no servidor (Bacias Hidrográficas, Unidades Hidrográficas...) e que ficarão guardados
   em um hooks para utilização sem precisar buscar novamente.
   */
-  const [overlaysFetched, setOverlaysFetched] = useState([]);
+  const [overlaysFetched, setOverlaysFetched] = useState(new Set());
 
   const [radius, setRadius] = useState(600);
 

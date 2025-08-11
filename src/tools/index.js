@@ -436,7 +436,7 @@ const calculateCentroid = (vertices) => {
  */
 const searchHydrograficUnit = async (fetchShape, overlaysFetched, setOverlaysFetched, uhCodigo) => {
 
-  let hydrographicBasins = overlaysFetched.find(shape => shape.name === 'unidades_hidrograficas');
+  let hydrographicBasins = Array.from(overlaysFetched).find(shape => shape.name === 'unidades_hidrograficas');
 
   let hydrographicBasin;
 
@@ -452,7 +452,16 @@ const searchHydrograficUnit = async (fetchShape, overlaysFetched, setOverlaysFet
       })
     });
 
-    setOverlaysFetched(prev => [...prev, { name: 'unidades_hidrograficas', geometry: hydrographicBasins }]);
+    // setOverlaysFetched(prev => [...prev, { name: 'unidades_hidrograficas', geometry: hydrographicBasins }]);
+
+
+    setOverlaysFetched((prev) => {
+      const newSet = new Set(prev)
+      newSet.add({ name: 'unidades_hidrograficas', geometry: hydrographicBasins })
+      return newSet;
+    })
+
+
 
     hydrographicBasin = hydrographicBasins.find(hb => hb.uh_codigo === Number(uhCodigo))
 
@@ -494,9 +503,9 @@ export {
   calculateCentroid,
   joinOttoBasins,
   getMarkersInsideOttoBasins,
-  searchHydrograficUnit, 
+  searchHydrograficUnit,
   // conversões de área
-  convertM2ToHa, 
+  convertM2ToHa,
   convertM2ToKm2
-  
+
 }

@@ -173,11 +173,13 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                 // verificar se overlaysFetched está vazio
                 if (overlaysFetched.length === 0) {
 
+                    console.log('overlaysFetched.len = 0 ')
+
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = overlaysFetched.find(_ov => _ov.name === riversByCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_ov => _ov.name === riversByCoordinates)
 
                         if (overlay === undefined) {
 
@@ -187,8 +189,13 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                     return { ...sh, shapeName: riversByCoordinates, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
                                 })
                             });
-                            setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
+                            // setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
 
+                            setOverlaysFetched((prev) => {
+                                const newSet = new Set(prev)
+                                newSet.add({ name: riversByCoordinates, geometry: _shape })
+                                return newSet;
+                            })
 
                         }
                     } else {
@@ -200,7 +207,14 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             })
                         });
 
-                        setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                        //setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+
+                        setOverlaysFetched((prev) => {
+                            const newSet = new Set(prev)
+                            newSet.add({ name: checkbox.name, geometry: _shape })
+                            return newSet;
+                        })
+
 
                     }
 
@@ -209,7 +223,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     if (checkbox.name === "rios_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = overlaysFetched.find(_ov => _ov.name === riversByCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_ov => _ov.name === riversByCoordinates)
 
                         if (overlay === undefined) {
 
@@ -219,14 +233,24 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                     return { ...sh, shapeName: riversByCoordinates, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
                                 })
                             });
-                            setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
+
+                            // setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
+
+                            setOverlaysFetched((prev) => {
+                                const newSet = new Set(prev)
+                                newSet.add({ name: riversByCoordinates, geometry: _shape })
+                                return newSet;
+                            })
 
                         }
                     } else {
                         // verifica se a shape está presente na array overlaysFetched
-                        let searchoverlaysFetched = overlaysFetched.find(st => st.name === checkbox.name);
+
+                        // converte new Set() to array e busca um valor
+                        let searchoverlaysFetched = Array.from(overlaysFetched).find(st => st.name === checkbox.name);
                         // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
                         // Assim, não se repete solicitação de camada no servidor.]
+
                         if (searchoverlaysFetched === undefined) {
                             const _shape = await fetchShape(checkbox.name).then(__shape => {
                                 return __shape.map(sh => {
@@ -235,14 +259,25 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                 })
                             });
 
-                            setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+                            // { name: checkbox.name, geometry: _shape }
+
+                            //setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
+
+                            setOverlaysFetched((prev) => {
+                                const newSet = new Set(prev)
+                                newSet.add({ name: checkbox.name, geometry: _shape })
+                                return newSet;
+                            })
+
                         }
                     }
 
                 }
 
             }
-        })
+        });
+
+        console.log(overlaysFetched)
 
     }, [checkboxes, overlaysFetched]);
 
@@ -250,13 +285,12 @@ function MapControllers({ checkboxes, setCheckboxes }) {
         <ThemeProvider theme={theme}>
             <Box
                 sx={{
-
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "flex-end",
                     position: "absolute",
-                    right: 0
+                    right: 0,
+                    bottom: 10
 
                 }}
             >
@@ -265,8 +299,8 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         "& .MuiFab-primary": {
                             width: 45, // Metade do tamanho padrão (56px)
                             height: 45,
-                            mx: 0.5,
-                        },
+                            mx: 0.5
+                        }
                     }}
                     ariaLabel="Show Filters"
                     icon={<LayersIcon />}

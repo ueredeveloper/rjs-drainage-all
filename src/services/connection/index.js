@@ -10,6 +10,8 @@ const url = 'https://j-sb-drainage-ueredeveloper.replit.app';
   */
 async function getUsers(keyword) {
 
+  console.log('fetch get Users')
+
   let response = await fetch(url + `/user/list-by-keyword?keyword=${keyword}`, {
     method: 'GET',
     headers: {
@@ -28,6 +30,8 @@ async function getUsers(keyword) {
 * Buscar as demandas de vazões de acordo com o usuário solicitado.
 */
 async function findDemands(end_id) {
+
+    console.log('fetch find demands')
 
   let response = await fetch(url + `/interference/search-by-end-id?endId=${end_id}`, {
     method: 'GET',

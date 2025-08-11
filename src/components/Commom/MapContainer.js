@@ -17,10 +17,9 @@ function MapContainer() {
 
     return (
         <Box sx={{ height: "100%", width: "100%" }}>
-            <Box sx={{ position: "relative", height: '90%' }}>
+            <Box sx={{ position: "relative", height: "100%" }}>
                 <MapContent checkboxes={checkboxes} setCheckboxes={setCheckboxes} />
-                <MapControllers checkboxes={checkboxes} setCheckboxes={setCheckboxes}/>
-            </Box>
+              </Box>
         </Box>
     )
 }

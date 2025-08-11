@@ -112,12 +112,11 @@ function SearchCoords({ tabNumber }) {
         area: calculateCircleArea(radius)
       };
 
-      console.log(markers)
-
       setOverlays(prev => ({
         ...prev,
         shapes: [...prev.shapes, shape]
       }));
+
     }
     // Set selecionado a tab subterrânea
     else if (tabNumber === 1) {

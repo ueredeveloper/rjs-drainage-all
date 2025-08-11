@@ -5,7 +5,7 @@ import { darkMap } from './mode/dark-map';
   * Elemento de renderização do mapa
   * @component
   */
-function ElemMap({ mode, map, setMap, zoom, setZoom }) {
+function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
 
   const ref = useRef();
   const center = { lat: -15.764514558482336, lng: -47.76491209127806 }
@@ -17,7 +17,11 @@ function ElemMap({ mode, map, setMap, zoom, setZoom }) {
         new window.google.maps.Map(ref.current, {
           center,
           zoom,
-          mapTypeId: 'hybrid'
+          mapTypeId: 'hybrid',
+          mapTypeControlOptions: {
+            mapTypeIds: ['hybrid', 'roadmap', 'satellite', 'terrain'],
+            style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+          },
         })
       );
     }
@@ -27,6 +31,12 @@ function ElemMap({ mode, map, setMap, zoom, setZoom }) {
       // Adiciona listener para capturar o zoom do mapa.
       map.addListener('zoom_changed', function () {
         setZoom(map.getZoom())
+      });
+
+      map.addListener('bounds_changed', () => {
+        // Verifica se o documento tem um elemento em tela cheia.
+        // Quando o mapa está em tela cheia, o elemento será o container do mapa.
+        setIsFullscreen(!!document.fullscreenElement);
       });
 
       ["click"].forEach((e) =>

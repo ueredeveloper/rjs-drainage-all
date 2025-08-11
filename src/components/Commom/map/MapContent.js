@@ -9,6 +9,7 @@ import ElemPolygon from './ElemPolygon';
 import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
 import ElemOttoPolyline from './ElemOthoPolyline';
+import ElemMapOverlayControls from './ElemMapOverlayControls';
 
 /**
  * Formata um valor numérico para string com casas decimais seguras.
@@ -68,6 +69,27 @@ function MapContent({ checkboxes, setCheckboxes }) {
   const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
 
   const [zoom, setZoom] = useState(12)
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const [isWaterAvailable, setIsWaterAvailable] = useState(false)
+
+  useEffect(() => {
+
+    // Busca nos checkboxes se foi solicitado disponibilidade de água nos subsistemas
+    setIsWaterAvailable(Object.values(checkboxes).flatMap(group =>
+      Object.values(group).map(item => ({
+        name: item.name,
+        alias: item.alias,
+        checked: item.checked,
+        isWaterAvailable: item.isWaterAvailable
+      }))
+    ).some(item => item.isWaterAvailable === true))
+
+  }, [checkboxes])
+
+
+
   /**
    * Converte o nome de um dado para o nome da shape correspondente.
    * @param {string} dataName - Nome do dado.
@@ -139,11 +161,13 @@ function MapContent({ checkboxes, setCheckboxes }) {
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
-        <ElemMap mode={mode} map={map} setMap={setMap} zoom={zoom} setZoom={setZoom} />
+        <ElemMap mode={mode} map={map} setMap={setMap} zoom={zoom} setZoom={setZoom} setIsFullscreen={setIsFullscreen} />
         {/* Gerenciador de desenho de shapes */}
         <ElemDrawManager map={map} />
         {/* Marcador principal (ex: marcador de busca) */}
         <ElemMarker info={marker} map={map} />
+
+        <ElemMapOverlayControls map={map} position={"BOTTOM_CENTER"} isFullscreen={isFullscreen} isWaterAvailable={isWaterAvailable} checkboxes={checkboxes} setCheckboxes={setCheckboxes} />
 
         {/* Renderização dos marcadores de acordo com as shapes selecionadas */}
         {Array.isArray(overlays.shapes) && overlays.shapes.map(shape =>
@@ -171,7 +195,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
         }
 
         {/* Renderização de shapes (polígonos e linhas) conforme checkboxes marcados */}
-        {Array.isArray(overlaysFetched) && overlaysFetched.map((shape) => {
+        {Array.isArray(Array.from(overlaysFetched)) && Array.from(overlaysFetched).map((shape) => {
           // Transforma os checkboxes agrupados em uma lista simples
           let listCheckBoxes = Object.values(checkboxes).flatMap(group =>
             Object.values(group).map(item => ({

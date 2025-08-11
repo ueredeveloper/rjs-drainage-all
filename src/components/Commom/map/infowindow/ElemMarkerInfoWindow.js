@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useTheme } from "@mui/material/styles";
 import HTMLMarkerContent from "./MarkerContent";
+import { createRoot } from "react-dom/client";
 
 /**
  * Componente para exibir informações em uma janela de informações associada a um marcador no mapa.
@@ -50,6 +51,7 @@ const ElemMarkerInfoWindow = ({ marker, info, map }) => {
      * @type {React.MutableRefObject<HTMLDivElement|undefined>}
      */
     const containerRef = useRef();
+    const rootRef = useRef(null);
 
     /**
      * Efeito para gerenciar o ciclo de vida da InfoWindow
@@ -78,16 +80,22 @@ const ElemMarkerInfoWindow = ({ marker, info, map }) => {
          * Renderiza o conteúdo React no container DOM usando importação dinâmica
          * A importação dinâmica evita problemas de SSR (Server-Side Rendering)
          */
-        import("react-dom").then(({ render }) => {
-            render(
-                <HTMLMarkerContent
-                    color={theme.palette.primary.main}
-                    info={info}
-                />,
-                containerRef.current,
-            );
-        });
+        if (!containerRef.current) {
+            containerRef.current = document.createElement("div");
+        }
 
+        // Create root only once
+        if (!rootRef.current) {
+            rootRef.current = createRoot(containerRef.current);
+        }
+
+        // Render or re-render
+        rootRef.current.render(
+            <HTMLMarkerContent
+                color={theme.palette.primary.main}
+                info={info}
+            />
+        );
         /**
          * Cria uma nova instância do InfoWindow se não existir,
          * caso contrário atualiza o conteúdo da instância existente
