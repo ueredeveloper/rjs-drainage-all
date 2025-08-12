@@ -68,7 +68,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
   // Obtém os estados do contexto de análise
   const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
 
-  const [zoom, setZoom] = useState(12)
+  const [zoom, setZoom] = useState(11);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 

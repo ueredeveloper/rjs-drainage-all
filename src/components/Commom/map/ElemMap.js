@@ -18,6 +18,7 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
           center,
           zoom,
           mapTypeId: 'hybrid',
+          
           mapTypeControlOptions: {
             mapTypeIds: ['hybrid', 'roadmap', 'satellite', 'terrain'],
             style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,

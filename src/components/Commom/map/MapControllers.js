@@ -173,8 +173,6 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                 // verificar se overlaysFetched está vazio
                 if (overlaysFetched.length === 0) {
 
-                    console.log('overlaysFetched.len = 0 ')
-
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
 
@@ -189,13 +187,14 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                     return { ...sh, shapeName: riversByCoordinates, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
                                 })
                             });
-                            // setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
 
-                            setOverlaysFetched((prev) => {
-                                const newSet = new Set(prev)
-                                newSet.add({ name: riversByCoordinates, geometry: _shape })
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === riversByCoordinates);
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: riversByCoordinates, geometry: _shape });
                                 return newSet;
-                            })
+                            });
 
                         }
                     } else {
@@ -207,14 +206,13 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             })
                         });
 
-                        //setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
-
-                        setOverlaysFetched((prev) => {
-                            const newSet = new Set(prev)
-                            newSet.add({ name: checkbox.name, geometry: _shape })
+                        setOverlaysFetched(prev => {
+                            const exists = Array.from(prev).some(ov => ov.name === checkbox.name);
+                            if (exists) return prev;
+                            const newSet = new Set(prev);
+                            newSet.add({ name: checkbox.name, geometry: _shape });
                             return newSet;
-                        })
-
+                        });
 
                     }
 
@@ -224,7 +222,6 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
                         // Só busca novos rios se for em outra coordenada
                         let overlay = Array.from(overlaysFetched).find(_ov => _ov.name === riversByCoordinates)
-
                         if (overlay === undefined) {
 
                             const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
@@ -234,13 +231,13 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                 })
                             });
 
-                            // setOverlaysFetched(prev => [...prev, { name: riversByCoordinates, geometry: _shape }]);
-
-                            setOverlaysFetched((prev) => {
-                                const newSet = new Set(prev)
-                                newSet.add({ name: riversByCoordinates, geometry: _shape })
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === riversByCoordinates);
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: riversByCoordinates, geometry: _shape });
                                 return newSet;
-                            })
+                            });
 
                         }
                     } else {
@@ -248,9 +245,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
                         // converte new Set() to array e busca um valor
                         let searchoverlaysFetched = Array.from(overlaysFetched).find(st => st.name === checkbox.name);
+
                         // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
                         // Assim, não se repete solicitação de camada no servidor.]
-
                         if (searchoverlaysFetched === undefined) {
                             const _shape = await fetchShape(checkbox.name).then(__shape => {
                                 return __shape.map(sh => {
@@ -259,15 +256,13 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                 })
                             });
 
-                            // { name: checkbox.name, geometry: _shape }
-
-                            //setOverlaysFetched(prev => [...prev, { name: checkbox.name, geometry: _shape }]);
-
-                            setOverlaysFetched((prev) => {
-                                const newSet = new Set(prev)
-                                newSet.add({ name: checkbox.name, geometry: _shape })
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === checkbox.name);
+                                if (exists) return prev;
+                                const newSet = new Set(prev);
+                                newSet.add({ name: checkbox.name, geometry: _shape });
                                 return newSet;
-                            })
+                            });
 
                         }
                     }
@@ -277,9 +272,15 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             }
         });
 
-        console.log(overlaysFetched)
+         console.log(overlaysFetched)
 
-    }, [checkboxes, overlaysFetched]);
+
+    }, [checkboxes]);
+
+useEffect(()=> {
+    console.log(overlaysFetched)
+}, [overlaysFetched])
+
 
     return (
         <ThemeProvider theme={theme}>

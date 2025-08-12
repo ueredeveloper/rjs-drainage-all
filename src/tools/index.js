@@ -454,6 +454,7 @@ const searchHydrograficUnit = async (fetchShape, overlaysFetched, setOverlaysFet
 
     // setOverlaysFetched(prev => [...prev, { name: 'unidades_hidrograficas', geometry: hydrographicBasins }]);
 
+    console.log('tools setOverlays fethced unidades hidro')
 
     setOverlaysFetched((prev) => {
       const newSet = new Set(prev)

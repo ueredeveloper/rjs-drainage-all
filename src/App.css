@@ -14,6 +14,29 @@
   /* Esta classe não é mais usada para posicionamento, que agora é
      tratado pela API de Controles do Google Maps.
      Usamos para adicionar uma margem inferior para espaçamento. */
-  margin-bottom: 5px !important;
+  margin-bottom: 7px !important;
   /* !important pode ser necessário para sobrescrever estilos do Google Maps */
 }
+/* tamanho do ícione do street view */
+.gm-svpc {
+  transform: scale(0.8); /* 70% do tamanho original */
+  transform-origin: bottom right; /* ajusta ponto de escala */
+}
+ /* tamanho do seletor de tela cheia (fullscreen) do mapa */
+.gm-fullscreen-control {
+  transform: scale(0.8); /* 70% do tamanho original */
+  transform-origin: top right; /* ajusta ponto de escala */
+}
+/* tamanho do seletor de tipo de mapa */
+.gm-style-mtc {
+  transform: scale(0.8); /* 70% do tamanho original */
+  transform-origin: top left; /* mantém alinhado ao canto */
+}
+
+gmp-internal-camera-control {
+  transform: scale(0.9);
+  transform-origin: center center;
+  display: inline-block;
+}
+
+/* gmnoprint gm-bundled-control gm-bundled-control-on-bottom */

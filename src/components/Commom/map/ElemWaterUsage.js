@@ -17,8 +17,10 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
     // Se tela cheia, mostra o slide que explica porcentagens de uso
     return (
         isFullscreen && isWaterAvailable ?
-            <Box sx={{ display: "flex", justifyContent: "center", 
-            backgroundColor: "#FFF", mx: 3, my: 0, width: 400, height: 50 }}>
+            <Box sx={{
+                display: "flex", justifyContent: "center",
+                backgroundColor: "#FFF", mx: 3, my: 0, width: "100%", height: 50
+            }}>
                 <Slider
                     aria-label="Custom marks"
                     marks={marks}
@@ -26,7 +28,7 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
                     disabled // não interativo
                     sx={{
                         height: 8,
-                        width: 370,
+                        width: "30dvw",
                         '& .MuiSlider-thumb': {
                             display: 'none'
                         },
