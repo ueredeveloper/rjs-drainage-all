@@ -17,7 +17,7 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
         new window.google.maps.Map(ref.current, {
           center,
           zoom,
-          mapTypeId: 'hybrid',
+          mapTypeId: 'satellite',
           
           mapTypeControlOptions: {
             mapTypeIds: ['hybrid', 'roadmap', 'satellite', 'terrain'],

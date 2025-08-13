@@ -41,9 +41,9 @@ const ElemMapOverlayControls = ({ map, position, isFullscreen, isWaterAvailable,
   useEffect(() => {
 
     if (isFullscreen) {
-      controlContainerRef.current.style.width = '75%';
+     // controlContainerRef.current.style.width = '75%';
     } else {
-      controlContainerRef.current.style.width = '70%';
+     // controlContainerRef.current.style.width = '70%';
     }
 
   }, [isFullscreen])
