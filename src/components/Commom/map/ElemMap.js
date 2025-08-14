@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { darkMap } from './mode/dark-map';
 import ElemStreeView from './ElemStreetView';
 
@@ -15,83 +15,64 @@ function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
-/**
-  * Elemento de renderização do mapa
-  * @component
-  */
 function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
-
   const ref = useRef();
-  const center = { lat: -15.78567469569133, lng: -47.83988126733556 }
+  const center = { lat: -15.78567469569133, lng: -47.83988126733556 };
 
-  const [streetViewLocation, setStreetViewLocation] = useState(streeViewLocations[getRandomArbitrary(0, 6)]);
+  const [streetViewLocation, setStreetViewLocation] = useState(streeViewLocations[getRandomArbitrary(0, streeViewLocations.length)]);
+
+
+  // Inicializa o mapa uma vez
+  useEffect(() => {
+    if (ref.current && !map) {
+      const newMap = new window.google.maps.Map(ref.current, {
+        center,
+        zoom,
+        mapTypeId: 'satellite',
+        mapTypeControlOptions: {
+          mapTypeIds: ['hybrid', 'roadmap', 'satellite', 'terrain'],
+          style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+        },
+      });
+      setMap(newMap);
+    }
+  }, [map, setMap, center, zoom]);
+
 
   useEffect(() => {
 
-    if (ref.current && !map) {
-      setMap(
-        new window.google.maps.Map(ref.current, {
-          center,
-          zoom,
-          mapTypeId: 'satellite',
+    console.log(streeViewLocations)
 
-          mapTypeControlOptions: {
-            mapTypeIds: ['hybrid', 'roadmap', 'satellite', 'terrain'],
-            style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-          },
-        })
-      );
-    }
+  }, [streeViewLocations])
 
-    if (map) {
+  // Configura listeners e modo do mapa
+  useEffect(() => {
+    if (!map) return;
 
-      // Adiciona listener para capturar o zoom do mapa.
-      map.addListener('zoom_changed', function () {
-        setZoom(map.getZoom())
-      });
+    const zoomListener = map.addListener('zoom_changed', () => setZoom(map.getZoom()));
+    const boundsListener = map.addListener('bounds_changed', () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    });
 
-      map.addListener('bounds_changed', () => {
-        // Verifica se o documento tem um elemento em tela cheia.
-        // Quando o mapa está em tela cheia, o elemento será o container do mapa.
-        setIsFullscreen(!!document.fullscreenElement);
-      });
+    // Aplica modo dark/light
+    map.setOptions({ styles: mode === "dark" ? darkMap : [] });
 
-      ["click"].forEach((e) =>
-        window.google.maps.event.clearListeners(map, e)
-      );
-      // mode light dark
-      mode === "dark" ? map.setOptions({ styles: darkMap }) : map.setOptions({ styles: [] });
-      // click no mapa
-      // map.addListener("click", onClick);
-      // centralizar
-      //map.setCenter({ lat: parseFloat(center.lat), lng: parseFloat(center.lng) })
-    }
-
-    console.log('Elem Map', ref, map, mode, streetViewLocation)
-  }, [ref, map, mode, streetViewLocation]);
+    return () => {
+      window.google.maps.event.removeListener(zoomListener);
+      window.google.maps.event.removeListener(boundsListener);
+    };
+  }, [map, mode, setZoom, setIsFullscreen]);
 
   return (
     <>
-      {!streetViewLocation &&
-        <div ref={ref} id="map" style={{ width: '100%', height: '100%', minHeight: '25rem', }} />
-
+      {!streetViewLocation && (
+        <div ref={ref} id="map" style={{ width: '100%', height: '100%', minHeight: '25rem' }} />
+      )}
+      {
+        streeViewLocations && <ElemStreeView streetViewLocation={streetViewLocation} setStreetViewLocation={setStreetViewLocation} />
       }
-
-      {streetViewLocation && <ElemStreeView location={streetViewLocation} onClose={() => setStreetViewLocation(null)} />}
-
     </>
   );
-
 }
 
 export default ElemMap;
-
-/*
-
- {!streetViewLocation && 
-    <div ref={ref} id="map" style={{ width: '100%', height: '100%', minHeight: '25rem', }} />
-
-    }
-
-    */
-
