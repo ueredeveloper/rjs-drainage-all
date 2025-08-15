@@ -4,6 +4,7 @@ import ElemWaterUsage from "./ElemWaterUsage";
 import MapControllers from "./MapControllers";
 import { Box } from "@mui/material";
 
+
 const ElemMapOverlayControls = ({ map, position, isFullscreen, isWaterAvailable, checkboxes, setCheckboxes }) => {
 
   const controlContainerRef = useRef(null);
@@ -21,6 +22,7 @@ const ElemMapOverlayControls = ({ map, position, isFullscreen, isWaterAvailable,
       return;
     }
 
+    
     const controlDiv = controlContainerRef.current;
     const controlPosition = window.google.maps.ControlPosition[position];
     // Adiciona nosso div aos controles do mapa. A API do Google Maps gerenciará sua posição.
