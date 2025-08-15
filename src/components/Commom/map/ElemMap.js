@@ -3,12 +3,17 @@ import { darkMap } from './mode/dark-map';
 import ElemStreeView from './ElemStreetView';
 
 const streeViewLocations = [
+  { lat: -15.8325514, lng: -47.8476695, descricao: "Lago Paranoá" },
+  { lat: -15.8209913, lng: -47.8279401, descricao: "3ª Ponte de Brasília" },
+  { lat: -15.7603064, lng: -48.0818471, descricao: "Floresta Nacional de Brasília" },
+  { lat: -15.777931, lng: -47.857934, descricao: "Iate Clube de Brasília" },
+  { lat: -15.777467, lng: -47.8575272, descricao: "Iate Clube de Brasília" },
+  { lat: -15.7331605, lng: -47.886387, descricao: "Park Deck Norte" },
+  { lat: -15.6985107, lng: -47.8297711, descricao: "Torre de TV Digital" },
+  { lat: -15.7858201, lng: -47.8332237, descricao: "Orla do Lago Paranoá" },
   { lat: -15.7856923, lng: -47.8291058, descricao: "Royal Tulip Brasília" },
-  { lat: -15.7802595, lng: -47.8592174 },
-  { lat: -15.7858201, lng: -47.8332237 },
-  { lat: -15.6985107, lng: -47.8297711 },
-  { lat: -15.7802595, lng: -47.9242975 },
-  { lat: -15.777467, lng: -47.8575272 },
+  { lat: -15.9647741, lng: -47.743557, descricao: "Núcleo Rural Aguilhada" },
+  { lat: -15.74754, lng: -47.8716051, descricao: "Crespom" },
 ];
 
 function getRandomArbitrary(min, max) {
@@ -18,8 +23,9 @@ function getRandomArbitrary(min, max) {
 function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
   const ref = useRef();
   const center = { lat: -15.78567469569133, lng: -47.83988126733556 };
-
-  const [streetViewLocation, setStreetViewLocation] = useState(streeViewLocations[getRandomArbitrary(0, streeViewLocations.length)]);
+  //Escolha randomizada da imagem do streetview
+  //const [streetViewLocation, setStreetViewLocation] = useState(streeViewLocations[getRandomArbitrary(0, streeViewLocations.length)]);
+  const [streetViewLocation, setStreetViewLocation] = useState(null);
 
 
   // Inicializa o mapa uma vez
@@ -37,13 +43,6 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
       setMap(newMap);
     }
   }, [map, setMap, center, zoom]);
-
-
-  useEffect(() => {
-
-    console.log(streeViewLocations)
-
-  }, [streeViewLocations])
 
   // Configura listeners e modo do mapa
   useEffect(() => {
@@ -65,11 +64,13 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
 
   return (
     <>
-      {!streetViewLocation && (
-        <div ref={ref} id="map" style={{ width: '100%', height: '100%', minHeight: '25rem' }} />
-      )}
       {
-        streeViewLocations && <ElemStreeView streetViewLocation={streetViewLocation} setStreetViewLocation={setStreetViewLocation} />
+        !streetViewLocation && (
+          <div ref={ref} id="map" style={{ width: '100%', height: '100%', minHeight: '25rem' }} />)
+      }
+      {
+        streeViewLocations && (
+          <ElemStreeView streetViewLocation={streetViewLocation} setStreetViewLocation={setStreetViewLocation} />)
       }
     </>
   );

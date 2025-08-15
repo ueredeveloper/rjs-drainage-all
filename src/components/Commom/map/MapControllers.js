@@ -272,15 +272,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             }
         });
 
-         console.log(overlaysFetched)
-
-
     }, [checkboxes]);
-
-useEffect(()=> {
-    console.log(overlaysFetched)
-}, [overlaysFetched])
-
 
     return (
         <ThemeProvider theme={theme}>

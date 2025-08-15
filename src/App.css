@@ -4,7 +4,7 @@
   height: 100vh;
 }
 
-.popup-container {
+.controlls-over-map-bottom {
   display: flex;
   flex-direction: row;
   height: 60px;

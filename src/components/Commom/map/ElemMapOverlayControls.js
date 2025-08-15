@@ -12,7 +12,7 @@ const ElemMapOverlayControls = ({ map, position, isFullscreen, isWaterAvailable,
   if (!controlContainerRef.current) {
     controlContainerRef.current = document.createElement("div");
     // Adiciona a classe para aplicar o espaçamento inferior do CSS
-    controlContainerRef.current.className = "popup-container";
+    controlContainerRef.current.className = "controlls-over-map-bottom";
   }
 
   useEffect(() => {
@@ -36,17 +36,6 @@ const ElemMapOverlayControls = ({ map, position, isFullscreen, isWaterAvailable,
       }
     };
   }, [map]);
-
-  // Faz o botão de camadas ir mais para a direito que em tela cheia
-  useEffect(() => {
-
-    if (isFullscreen) {
-     // controlContainerRef.current.style.width = '75%';
-    } else {
-     // controlContainerRef.current.style.width = '70%';
-    }
-
-  }, [isFullscreen])
 
   // Usa um portal para renderizar o componente do gráfico dentro do div de controle
   return createPortal(
