@@ -4,8 +4,6 @@
   height: 100vh;
 }
 
-
-
 .controlls-over-map-bottom {
   display: flex;
   flex-direction: row;
@@ -15,7 +13,7 @@
   /* Esta classe não é mais usada para posicionamento, que agora é
      tratado pela API de Controles do Google Maps.
      Usamos para adicionar uma margem inferior para espaçamento. */
-  margin-bottom: 7px !important;
+  margin-bottom: 10px !important;
   /* !important pode ser necessário para sobrescrever estilos do Google Maps */
 }
 
@@ -55,4 +53,35 @@ controles do mapa com as camadas */
 .gm-bundled-control {
   bottom: 12rem !important;
   /* aumenta esse valor para subir mais */
+}
+
+
+/* Balançar o mapa na entrada, depois de aparecer o streetview */
+
+.swing {
+  /* animação */
+  animation: swing 0.3s ease-in-out;
+}
+
+/* keyframes para balançar */
+@keyframes swing {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(1deg);
+  }
+
+  50% {
+    transform: rotate(-1deg);
+  }
+
+  75% {
+    transform: rotate(1deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
 }
