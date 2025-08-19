@@ -3,6 +3,11 @@ import { darkMap } from './mode/dark-map';
 import ElemStreeView from './ElemStreetView';
 
 const streeViewLocations = [
+  { lat: -15.7331605, lng: -47.886387, descricao: "Park Deck Norte" },
+  { lat: -15.6991739, lng: -47.8295777, descricao: "Torre de TV Digital (2)" },
+  { lat: -15.9299951, lng: -47.915462, descricao: "Campo dos Murundus" },
+  { lat: -15.8387876, lng: -47.902269, descricao: "Parque dos Pioneiros" },
+  { lat: -15.7603064, lng: -48.0818471, descricao: "Floresta Nacional de Brasília" },
   { lat: -15.777931, lng: -47.857934, descricao: "Iate Clube de Brasília" },
   { lat: -15.777467, lng: -47.8575272, descricao: "Iate Clube de Brasília" },
   { lat: -15.8325514, lng: -47.8476695, descricao: "Lago Paranoá" },
