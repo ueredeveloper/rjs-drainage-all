@@ -5,7 +5,7 @@ const ElemStreetView = ({ streetViewLocation, setStreetViewLocation }) => {
     const panoramaRef = useRef(null);
     const intervalRef = useRef(null);
 
-    
+
     useEffect(() => {
         if (!streetViewLocation || !ref.current) return;
 
@@ -15,9 +15,16 @@ const ElemStreetView = ({ streetViewLocation, setStreetViewLocation }) => {
             pov: { heading: 165, pitch: 0 },
             zoom: 0,
             addressControl: false,
-            linksControl: true,
-            panControl: true,
+            linksControl: false,
+            panControl: false,
             enableCloseButton: true,
+            zoomControl: false,
+        });
+
+        // Envento para fechar o streetview
+        panoramaRef.current.addListener("closeclick", () => {
+            console.log("Street View foi fechado pelo usuário");
+            setStreetViewLocation(null); // se quiser esconder o componente
         });
 
         let heading = 0;
