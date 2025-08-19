@@ -54,6 +54,10 @@ controles do mapa com as camadas */
   bottom: 12rem !important;
   /* aumenta esse valor para subir mais */
 }
+.gm-iv-container{
+  height: 2rem;
+  margin-left: 0.5rem;
+}
 
 
 /* Balançar o mapa na entrada, depois de aparecer o streetview */
