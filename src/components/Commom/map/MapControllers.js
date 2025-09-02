@@ -6,54 +6,50 @@ import {
     FormControlLabel,
     Paper,
     SpeedDial,
-    SpeedDialIcon,
     ClickAwayListener,
-    Button,
-    Icon,
     Typography
+    ,
+    TextField
 } from "@mui/material";
+import Tooltip from '@mui/material/Tooltip';
 import LayersClearIcon from "@mui/icons-material/LayersClear";
 import LayersIcon from "@mui/icons-material/Layers";
-import { Height, MarkEmailReadSharp } from "@mui/icons-material";
 import { converterPostgresToGmaps } from "../../../tools";
 import { useData } from "../../../hooks/analyse-hooks";
 import { fetchRiversByCoordinates, fetchShape } from "../../../services/shapes";
 import { initialsStates } from "../../../initials-states";
 
+import SearchIcon from '@mui/icons-material/Search';
+import IconButton from '@mui/material/IconButton';
+
+import { styled } from '@mui/material/styles';
+import ArrowForwardIosSharpIcon from '@mui/icons-material/ArrowForwardIosSharp';
+import MuiAccordion from '@mui/material/Accordion';
+import MuiAccordionSummary, { accordionSummaryClasses } from '@mui/material/AccordionSummary';
+import MuiAccordionDetails from '@mui/material/AccordionDetails';
+
+
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { fetchSuplySystemByPosition } from "../../../services/connection";
 
 const checkboxOptions = {
     Superficial: [
-        {
-            name: "bacias_hidrograficas",
-            alias: "Bacias Hidrográficas",
-            checked: false
-        },
-        {
-            name: "unidades_hidrograficas",
-            alias: "Unidades Hidrográficas",
-            checked: false
-        },
-        {
-            name: "rios_df",
-            alias: "Rios do DF",
-            checked: false
-        }
+        { name: "bacias_hidrograficas", alias: "Bacias Hidrográficas", checked: false },
+        { name: "unidades_hidrograficas", alias: "Unidades Hidrográficas", checked: false },
+        { name: "rios_df", alias: "Rios do DF", checked: false }
     ],
     Subterrânea: [
-        {
-            name: "hidrogeo_fraturado",
-            alias: "Fraturado",
-            checked: false,
-            isWaterAvailable: false
-        },
-        {
-            name: "hidrogeo_poroso",
-            alias: "Poroso",
-            checked: false,
-            isWaterAvailable: false
-        }
+        { name: "hidrogeo_fraturado", alias: "Fraturado", checked: false, isWaterAvailable: false },
+        { name: "hidrogeo_poroso", alias: "Poroso", checked: false, isWaterAvailable: false }
     ],
+    Geoportal: [
+        { name: "geoportal_checkox", alias: "Endereços no Ponto ou Camada", checked: false },
+        { name: "geoportal_input", alias: "Buscar Endereço no DF", checked: false },
+        { name: "geoportal_regioes_administrativas", alias: "Regiões Administrativas", checked: false },
+    ],
+    Caesb: [
+        { name: "caesb_df", alias: "Abastecimento", checked: false },
+    ]
 };
 
 // Copia profunda do objeto para o estado inicial
@@ -68,6 +64,33 @@ const getInitialCheckboxes = () => {
     return initial;
 };
 
+// Estilos do Accordion
+const Accordion = styled((props) => (
+    <MuiAccordion disableGutters elevation={0} square {...props} />
+))(({ theme }) => ({
+    border: `1px solid ${theme.palette.divider}`,
+    '&:not(:last-child)': { borderBottom: 0 },
+    '&::before': { display: 'none' },
+}));
+
+const AccordionSummary = styled((props) => (
+    <MuiAccordionSummary
+        expandIcon={<ArrowForwardIosSharpIcon sx={{ fontSize: '0.8rem' }} />}
+        {...props}
+    />
+))(({ theme }) => ({
+    backgroundColor: 'rgba(0, 0, 0, .03)',
+    flexDirection: 'row-reverse',
+    [`& .${accordionSummaryClasses.expandIconWrapper}.${accordionSummaryClasses.expanded}`]: {
+        transform: 'rotate(90deg)',
+    },
+    [`& .${accordionSummaryClasses.content}`]: { marginLeft: theme.spacing(1) },
+}));
+
+const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
+    padding: theme.spacing(1),
+    borderTop: '1px solid rgba(0, 0, 0, .125)',
+}));
 
 /**
  * Componente React responsável pelos controladores do mapa.
@@ -106,7 +129,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
     }, [])
 
-    const handleChange = (group, name, field) => (event) => {
+    const handleCheckboxChange = (group, name, field) => (event) => {
 
         const value = event.target.checked;
 
@@ -141,6 +164,13 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
     };
 
+    const [expanded, setExpanded] = useState('');
+
+    const handleExpandedAccordion = (panel) => (event, newExpanded) => {
+        setExpanded(newExpanded ? panel : false);
+    };
+
+
     const clearCheckboxes = () => {
         setCheckboxes(getInitialCheckboxes())
 
@@ -169,15 +199,16 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             if (checkbox.checked) {
 
                 let riversByCoordinates = "rios_df_" + marker.int_latitude + "_" + marker.int_longitude;
+                let supplySystemCoordinates = "caesb_df_" + marker.int_latitude + "_" + marker.int_longitude;
 
                 // verificar se overlaysFetched está vazio
-                if (overlaysFetched.length === 0) {
+                if (overlaysFetched.length === 0 || overlaysFetched.length === undefined) {
 
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = Array.from(overlaysFetched).find(_ov => _ov.name === riversByCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === riversByCoordinates)
 
                         if (overlay === undefined) {
 
@@ -197,7 +228,35 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             });
 
                         }
-                    } else {
+                    } else if (checkbox.name === "caesb_df") {
+
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === supplySystemCoordinates)
+
+                        if (overlay === undefined) {
+
+                            const _shape = await fetchSuplySystemByPosition({ lat: marker.int_latitude, lng: marker.int_longitude }).then(__shape => {
+                                return __shape.features.map(sh => {
+
+                                    return { ...sh, properties: sh.attributes, shapeName: supplySystemCoordinates, geometry: { type: 'LineString', coordinates: converterPostgresToGmaps(sh.geometry) } }
+
+
+                                })
+                            });
+
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === supplySystemCoordinates);
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: supplySystemCoordinates, geometry: _shape });
+                                return newSet;
+                            });
+
+                        }
+                    }
+
+
+                    else {
 
                         const _shape = await fetchShape(checkbox.name).then(__shape => {
                             // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
@@ -217,11 +276,12 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     }
 
                 } else {
+
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = Array.from(overlaysFetched).find(_ov => _ov.name === riversByCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === riversByCoordinates)
                         if (overlay === undefined) {
 
                             const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
@@ -240,7 +300,37 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             });
 
                         }
-                    } else {
+
+                    }
+                    else if (checkbox.name === "caesb_df") {
+
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === supplySystemCoordinates)
+
+                        if (overlay === undefined) {
+
+                            const _shape = await fetchSuplySystemByPosition({ lat: marker.int_latitude, lng: marker.int_longitude }).then(__shape => {
+                                return __shape.features.map(sh => {
+
+                                    return { ...sh, properties: sh.attributes, shapeName: supplySystemCoordinates, geometry: { type: 'LineString', coordinates: converterPostgresToGmaps(sh.geometry) } }
+
+
+                                })
+                            });
+
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === supplySystemCoordinates);
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: supplySystemCoordinates, geometry: _shape });
+                                return newSet;
+                            });
+
+                        }
+                    }
+
+
+                    else {
                         // verifica se a shape está presente na array overlaysFetched
 
                         // converte new Set() to array e busca um valor
@@ -272,7 +362,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             }
         });
 
+
     }, [checkboxes]);
+
 
     return (
         <ThemeProvider theme={theme}>
@@ -306,49 +398,75 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             elevation={6}
                             sx={{
                                 position: "absolute",
-                                bottom: 70,
-                                right: 4,
+                                bottom: 50,
+                                right: 14,
                                 p: 2,
-                                width: 250,
-                                maxHeight: 350,
+                                width: 300,
+                                maxHeight: 400,
                                 overflowY: "auto",
                                 borderRadius: 2,
                             }}
                         >
                             {Object.entries(checkboxOptions).map(([group, items]) => (
-                                <Box key={group} sx={{ my: 0, mx: 0 }}>
-                                    <Typography variant="h6">{group}</Typography>
-                                    {items.map((item) => {
+                                <Accordion key={group} expanded={expanded === group} onChange={handleExpandedAccordion(group)} sx={{ my: 0, py: 0 }}>
+                                    <AccordionSummary>
+                                        <Typography component="span" sx={{ fontSize: 12 }}>{group}</Typography>
+                                    </AccordionSummary>
 
+                                    {items.map((item, index) => {
                                         const state = checkboxes[group][item.name];
+
                                         return (
-                                            <Box key={item.name} sx={{ mb: 0 }}>
-                                                <FormControlLabel
-                                                    control={
-                                                        <Checkbox
-                                                            checked={state.checked}
-                                                            onChange={handleChange(group, item.name, 'checked')}
-                                                        />
-                                                    }
-                                                    label={item.alias}
-                                                />
-                                                {/* Exibe o checkbox adicional para qualquer item que tenha o campo isWaterAvailable */}
-                                                {'isWaterAvailable' in item && (
-                                                    <FormControlLabel
-                                                        control={
-                                                            <Checkbox
-                                                                checked={state.isWaterAvailable}
-                                                                onChange={handleChange(group, item.name, 'isWaterAvailable')}
+                                            <AccordionDetails sx={{ textAlign: "left", mx: 3 }} key={group + item.name + index}>
+                                                <Box>
+                                                    {item.name === 'geoportal_input' ? (
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <TextField
+                                                                label="Buscar endereço"
+                                                                variant="standard"
+                                                                size="small"
+                                                                sx={{ flex: 1 }}
                                                             />
-                                                        }
-                                                        label="Disponibilidade Hídrica"
-                                                        sx={{ ml: 1 }}
-                                                    />
-                                                )}
-                                            </Box>
+                                                            <IconButton aria-label="buscar" size="small">
+                                                                <SearchIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Box>
+                                                    ) : (
+                                                        <Box>
+                                                            <FormControlLabel
+                                                                control={
+                                                                    <Checkbox
+                                                                        sx={{ padding: 0.5 }}
+                                                                        checked={state.checked}
+                                                                        onChange={handleCheckboxChange(group, item.name, 'checked')}
+                                                                        size="small"
+                                                                    />
+                                                                }
+                                                                label={item.alias}
+                                                                sx={{ '.MuiTypography-root': { fontSize: 12 } }}
+                                                            />
+                                                            {('isWaterAvailable' in item) && (
+                                                                <FormControlLabel
+                                                                    control={
+                                                                        <Tooltip title="Disponibilidade Hídrica">
+                                                                            <Checkbox
+                                                                                checked={state.isWaterAvailable}
+                                                                                onChange={handleCheckboxChange(group, item.name, 'isWaterAvailable')}
+                                                                                size="small"
+                                                                            />
+                                                                        </Tooltip>
+                                                                    }
+                                                                    label="%"
+                                                                    sx={{ '.MuiTypography-root': { fontSize: 12 } }}
+                                                                />
+                                                            )}
+                                                        </Box>
+                                                    )}
+                                                </Box>
+                                            </AccordionDetails>
                                         );
                                     })}
-                                </Box>
+                                </Accordion>
                             ))}
 
                             <Box display="flex" justifyContent="flex-end" mt={1}></Box>

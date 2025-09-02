@@ -10,6 +10,7 @@ import { useData } from '../../../hooks/analyse-hooks';
 import ElemPolyline from './ElemPolyline';
 import ElemOttoPolyline from './ElemOthoPolyline';
 import ElemMapOverlayControls from './ElemMapOverlayControls';
+import ElemSupplyPolyline from './ElemSupplyPolyline';
 
 /**
  * Formata um valor numérico para string com casas decimais seguras.
@@ -146,8 +147,8 @@ function MapContent({ checkboxes, setCheckboxes }) {
     if (!Array.isArray(polylines) || polylines.length === 0) return null;
     if (polylines[0].shape.type === 'MultiPolygon') {
       return polylines[0].shape.coordinates.map((coord, i) =>
-        coord.map((_coord, ii) => (
-          <ElemPolyline key={ii} coord={_coord} map={map} zoom={zoom} />
+        coord.map((coord, index) => (
+          <ElemPolyline key={index} coord={coord} map={map} zoom={zoom} />
         ))
       );
     } else {
@@ -159,6 +160,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
+
       <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing", "geometry"]}>
         {/* Componentes relacionados ao mapa */}
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={zoom} setZoom={setZoom} setIsFullscreen={setIsFullscreen} />
@@ -211,7 +213,11 @@ function MapContent({ checkboxes, setCheckboxes }) {
             if ((cbState.checked === true && cbState.name === shape.name) || (cbState.checked === true && shape.name.startsWith(cbState.name))) {
               // Para cada geometria, renderiza polígono ou linha
               return shape.geometry.map((sh, ii) => {
-                if (sh.geometry.type === 'LineString') {
+
+                if (sh.geometry.type === 'LineString' && sh.shapeName.startsWith('caesb_df_')) {
+                  return <ElemSupplyPolyline key={'elem-supply-polyline-' + ii} shape={sh} map={map} zoom={zoom} index={ii} />;
+                }
+                else if (sh.geometry.type === 'LineString') {
                   return <ElemPolyline key={'elem-polyline-' + ii} shape={sh} map={map} zoom={zoom} />;
                 } else {
                   return <ElemPolygon key={'elem-polygon-' + ii} shape={sh} map={map} isWaterAvailable={cbState.isWaterAvailable} zoom={zoom} />;

@@ -50,8 +50,9 @@ const ElemPolyline = ({ shape, map, zoom }) => {
 
   if (polyline) {
 
+
     polyline.setOptions({
-      path: shape.geometry.coordinates,
+      path: shape.geometry?.coordinates,
       geodesic: true,
       strokeColor: strokeColor,
       strokeWeight: strokeWeight,

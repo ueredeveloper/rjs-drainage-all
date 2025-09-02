@@ -53,8 +53,12 @@ function converterPostgresToGmaps(geometry) {
     return geometry.coordinates.map(coord => { return { lat: coord[1], lng: coord[0] } })
   }
   else {
-
-    let _paths = geometry.coordinates.map(coord => {
+    // Há shapes que as coordenadas estão no atributo coordinates e outras no atributo paths (ex: caesb)
+    let _paths = geometry.coordinates?.map(coord => {
+      return coord.map(c => {
+        return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
+      })
+    }) || geometry.paths?.map(coord => {
       return coord.map(c => {
         return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
       })
