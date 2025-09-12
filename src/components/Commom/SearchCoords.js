@@ -13,7 +13,7 @@ import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolo
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
 import WellTypeSelector from "./Subterranean/WellTypeSelector";
-import { analyzeAvailability, calculateCircleArea, converterPostgresToGmaps, getMarkersInsideOttoBasins, searchHydrograficUnit } from "../../tools";
+import { analyzeAvailability, calculateCircleArea, convertGeometryToGmaps, getMarkersInsideOttoBasins, searchHydrograficUnit } from "../../tools";
 import AlertCommon from "./AlertCommon";
 import { initialsStates } from "../../initials-states";
 import ElemGrant from '../Connection/elem-grant';
@@ -161,7 +161,7 @@ function SearchCoords({ tabNumber }) {
           hg_analyse: hgAnalyse,
         }));
 
-        let coordinates = { shape: { type: markers._hg_shape.type, coordinates: converterPostgresToGmaps(markers._hg_shape) } }
+        let coordinates = { shape: { type: markers._hg_shape.type, coordinates: convertGeometryToGmaps(markers._hg_shape) } }
 
         let shape = {
           id: Date.now(),

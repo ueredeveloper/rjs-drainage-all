@@ -33,18 +33,19 @@ function createCircleRings(center, radius) {
  * @param {object} shape - Shape a ser convertido.
  * @returns {object[]} - Array de coordenadas no formato do Google Maps.
  */
-function converterPostgresToGmaps(geometry) {
+function convertGeometryToGmaps(geometry) {
 
   if (geometry.type === 'MultiPolygon') {
 
-    let _paths = geometry.coordinates.map(coord => {
+    let _coordinates = geometry.coordinates.map(coord => {
       return coord[0].map(c => {
         return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
       })
     })
-    return _paths
+    return _coordinates
+  }
 
-  } else if (geometry.type === 'LineString') {
+  else if (geometry.type === 'LineString') {
 
     return geometry.coordinates.map(coord => { return { lat: coord[1], lng: coord[0] } })
 
@@ -53,17 +54,26 @@ function converterPostgresToGmaps(geometry) {
     return geometry.coordinates.map(coord => { return { lat: coord[1], lng: coord[0] } })
   }
   else {
+
     // Há shapes que as coordenadas estão no atributo coordinates e outras no atributo paths (ex: caesb)
-    let _paths = geometry.coordinates?.map(coord => {
-      return coord.map(c => {
-        return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
-      })
-    }) || geometry.paths?.map(coord => {
+    let _coordinates = geometry.coordinates?.map(coord => {
       return coord.map(c => {
         return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
       })
     })
-    return _paths
+      // Shapes de abastecimento da Caesb
+      || geometry.paths?.map(coord => {
+        return coord.map(c => {
+          return { lat: parseFloat(c[1]), lng: parseFloat(c[0]) }
+        })
+      })
+      ||
+      // Shapes de endereço do geoportal
+      geometry.rings?.map(rings => rings.map(
+        _rings => { return { lat: _rings[1], lng: _rings[0] } })
+      )
+
+    return _coordinates
   }
 }
 
@@ -452,7 +462,7 @@ const searchHydrograficUnit = async (fetchShape, overlaysFetched, setOverlaysFet
     hydrographicBasins = await fetchShape('unidades_hidrograficas').then(__shape => {
       // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
       return __shape.map(sh => {
-        return { ...sh, shapeName: 'unidades_hidrograficas', geometry: { type: sh.shape.type, coordinates: converterPostgresToGmaps(sh.shape) } }
+        return { ...sh, shapeName: 'unidades_hidrograficas', geometry: { type: sh.shape.type, coordinates: convertGeometryToGmaps(sh.shape) } }
       })
     });
 
@@ -498,7 +508,7 @@ const convertM2ToKm2 = (areaM2) => {
 
 export {
   createCircleRings,
-  converterPostgresToGmaps, nFormatter,
+  convertGeometryToGmaps, nFormatter,
   analyzeAvailability, numberWithCommas,
   calculateCircleArea, calculateRectangleArea,
   calculatePolylineLength, calculatePolygonArea,

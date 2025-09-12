@@ -5,7 +5,7 @@ import { findPointsInASystem } from '../../services/geolocation'
 import { CircularProgress, Fade } from '@mui/material';
 import { useData } from '../../hooks/analyse-hooks';
 
-import { analyzeAvailability, converterPostgresToGmaps } from '../../tools';
+import { analyzeAvailability, convertGeometryToGmaps } from '../../tools';
 import { initialsStates } from '../../initials-states';
 
 export function ElemDemand({ demand, setUser }) {
@@ -100,7 +100,7 @@ export function ElemDemand({ demand, setUser }) {
                             }
                         });
 
-                        let coordinates = { shape: { type: _hg_shape.type, coordinates: converterPostgresToGmaps(_hg_shape) } }
+                        let coordinates = { shape: { type: _hg_shape.type, coordinates: convertGeometryToGmaps(_hg_shape) } }
 
                         let shape = {
                             id: Date.now(),

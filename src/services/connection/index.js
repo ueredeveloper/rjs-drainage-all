@@ -31,7 +31,7 @@ async function getUsers(keyword) {
 */
 async function findDemands(end_id) {
 
-    console.log('fetch find demands')
+  console.log('fetch find demands')
 
   let response = await fetch(url + `/interference/search-by-end-id?endId=${end_id}`, {
     method: 'GET',
@@ -50,147 +50,252 @@ async function findDemands(end_id) {
 
 const fetchAddressesByPolygon = async (polygon) => {
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
-    const urlencoded = new URLSearchParams();
-    urlencoded.append("geometry", JSON.stringify(polygon));
-    urlencoded.append("geometryType", "esriGeometryPolygon");
-    urlencoded.append("inSR", "4674");
-    urlencoded.append("spatialRel", "esriSpatialRelIntersects");
-    urlencoded.append("outFields", "*"); https://www.geoservicos.ide.df.gov.br
-    urlencoded.append("returnGeometry", "true");
-    urlencoded.append("outSR", "4674");
-    urlencoded.append("f", "json");
+  const urlencoded = new URLSearchParams();
+  urlencoded.append("geometry", JSON.stringify(polygon));
+  urlencoded.append("geometryType", "esriGeometryPolygon");
+  urlencoded.append("inSR", "4674");
+  urlencoded.append("spatialRel", "esriSpatialRelIntersects");
+  urlencoded.append("outFields", "*"); https://www.geoservicos.ide.df.gov.br
+  urlencoded.append("returnGeometry", "true");
+  urlencoded.append("outSR", "4674");
+  urlencoded.append("f", "json");
 
-    const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: urlencoded,
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: urlencoded,
 
-    };
+  };
 
-    let results = fetch("https://www.geoservicos.ide.df.gov.br/arcgis/rest/services/Aplicacoes/ENDERECAMENTO_ATIVIDADES_LUOS_PPCUB/FeatureServer/0/query", requestOptions)
-        .then((response) => response.json())
-        .then((results) => results)
-        .catch((error) => console.error(error));
+  let results = fetch("https://www.geoservicos.ide.df.gov.br/arcgis/rest/services/Aplicacoes/ENDERECAMENTO_ATIVIDADES_LUOS_PPCUB/FeatureServer/0/query", requestOptions)
+    .then((response) => response.json())
+    .then((results) => results)
+    .catch((error) => console.error(error));
 
-    return results;
+  return results;
 
 }
 
 
 const fetchAddressesByPosition = async (position) => {
 
-    let { lat, lng } = position;
+  console.log('fetch fetch address by position')
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+  let { lat, lng } = position;
 
-    // Objeto de parâmetros
-    const params = {
-        f: "json",
-        geometry: JSON.stringify({ x: lng, y: lat }),
-        geometryType: "esriGeometryPoint",
-        inSR: "4674",
-        spatialRel: "esriSpatialRelIntersects",
-        // distância de busca
-        distance: "15",
-        // unidade da distância de busca em metros
-        units: "esriSRUnit_Meter",
-        outFields: "*",
-        returnGeometry: "true",
-        where: "1=1",
-        outSR: "4674"
-    };
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
-    // Converte o objeto em URLSearchParams
-    const urlencoded = new URLSearchParams(params);
+  // Objeto de parâmetros
+  const params = {
+    f: "json",
+    geometry: JSON.stringify({ x: lng, y: lat }),
+    geometryType: "esriGeometryPoint",
+    inSR: "4674",
+    spatialRel: "esriSpatialRelIntersects",
+    // distância de busca
+    distance: "200",
+    // unidade da distância de busca em metros
+    units: "esriSRUnit_Meter",
+    outFields: "*",
+    returnGeometry: "true",
+    where: "1=1",
+    outSR: "4674"
+  };
 
-    const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: urlencoded
-    };
+  // Converte o objeto em URLSearchParams
+  const urlencoded = new URLSearchParams(params);
 
-    let results = await fetch("https://www.geoservicos.ide.df.gov.br/arcgis/rest/services/Aplicacoes/ENDERECAMENTO_ATIVIDADES_LUOS_PPCUB/FeatureServer/0/query", requestOptions)
-        .then((response) => response.json())
-        .then((results) => results)
-        .catch((error) => console.error(error));
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: urlencoded
+  };
 
-    return results;
+  let results = await fetch("https://www.geoservicos.ide.df.gov.br/arcgis/rest/services/Aplicacoes/ENDERECAMENTO_ATIVIDADES_LUOS_PPCUB/FeatureServer/0/query", requestOptions)
+    .then((response) => response.json())
+    .then((results) => results)
+    .catch((error) => console.error(error));
+
+  return results;
 
 }
 
 const fetchHydroByPolygon = async (polygon) => {
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
-    const urlencoded = new URLSearchParams();
-    urlencoded.append("geometry", JSON.stringify(polygon));
-    urlencoded.append("geometryType", "esriGeometryPolygon");
-    urlencoded.append("inSR", "4674");
-    urlencoded.append("spatialRel", "esriSpatialRelIntersects");
-    urlencoded.append("distance", "100")
-    urlencoded.append("units", "esriSRUnit_Meter")
-    urlencoded.append("units", "esriSRUnit_Meter")
-    urlencoded.append("outFields", "*");
-    urlencoded.append("returnGeometry", "true");
-    urlencoded.append("outSR", "4674");
-    urlencoded.append("f", "json");
+  const urlencoded = new URLSearchParams();
+  urlencoded.append("geometry", JSON.stringify(polygon));
+  urlencoded.append("geometryType", "esriGeometryPolygon");
+  urlencoded.append("inSR", "4674");
+  urlencoded.append("spatialRel", "esriSpatialRelIntersects");
+  urlencoded.append("distance", "100")
+  urlencoded.append("units", "esriSRUnit_Meter")
+  urlencoded.append("units", "esriSRUnit_Meter")
+  urlencoded.append("outFields", "*");
+  urlencoded.append("returnGeometry", "true");
+  urlencoded.append("outSR", "4674");
+  urlencoded.append("f", "json");
 
-    const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: urlencoded,
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: urlencoded,
 
-    };
+  };
 
-    let results = fetch("https://atlas.caesb.df.gov.br/server/rest/services/INTEGRACAO_GDF/SistemaAbastecimentoAguaDF/FeatureServer/92/query", requestOptions)
-        .then((response) => response.json())
-        .then((results) => results)
-        .catch((error) => console.error(error));
+  let results = fetch("https://atlas.caesb.df.gov.br/server/rest/services/INTEGRACAO_GDF/SistemaAbastecimentoAguaDF/FeatureServer/92/query", requestOptions)
+    .then((response) => response.json())
+    .then((results) => results)
+    .catch((error) => console.error(error));
 
-    return results;
+  return results;
 
 }
 
 const fetchSuplySystemByPosition = async (position) => {
-    const { lat, lng } = position;
 
-    const requestOptions = {
-        method: "GET"
-    };
+  console.log('fetch fetch supply system by position')
+  const { lat, lng } = position;
 
-    const baseUrl = "https://atlas.caesb.df.gov.br/server/rest/services/INTEGRACAO_GDF/SistemaAbastecimentoAguaDF/FeatureServer/92/query";
+  const requestOptions = {
+    method: "GET"
+  };
 
-    const params = {
-        geometry: JSON.stringify({ x: lng, y: lat }),
-        geometryType: "esriGeometryPoint",
-        inSR: "4674",
-        spatialRel: "esriSpatialRelIntersects",
-        distance: "200",
-        units: "esriSRUnit_Meter",
-        outFields: "*",
-        returnGeometry: "true",
-        outSR: "4674",
-        f: "json"
-    };
+  const baseUrl = "https://atlas.caesb.df.gov.br/server/rest/services/INTEGRACAO_GDF/SistemaAbastecimentoAguaDF/FeatureServer/92/query";
 
-    // Monta a query string a partir do objeto
-    const queryString = new URLSearchParams(params).toString();
+  const params = {
+    geometry: JSON.stringify({ x: lng, y: lat }),
+    geometryType: "esriGeometryPoint",
+    inSR: "4674",
+    spatialRel: "esriSpatialRelIntersects",
+    distance: "1000",
+    units: "esriSRUnit_Meter",
+    outFields: "*",
+    returnGeometry: "true",
+    outSR: "4674",
+    f: "json"
+  };
 
-    // URL completa
-    const url = `${baseUrl}?${queryString}`;
+  // Monta a query string a partir do objeto
+  const queryString = new URLSearchParams(params).toString();
 
-    let results = await fetch(url, requestOptions)
-        .then(response => response.json())
-        .then(results => results)
-        .catch(error => console.error(error));
+  // URL completa
+  const url = `${baseUrl}?${queryString}`;
 
-    return results;
+  let results = await fetch(url, requestOptions)
+    .then(response => response.json())
+    .then(results => results)
+    .catch(error => console.error(error));
+
+  return results;
 
 }
 
-export { getUsers, findDemands, fetchSuplySystemByPosition }
+const fetchAdministrativeRegions = async () => {
+
+  console.log('fetch administrative regions')
+  const requestOptions = {
+    method: "GET",
+    redirect: "follow"
+  };
+
+  const params = {
+    where: "1=1",
+    geometryType: "esriGeometryEnvelope",
+    outSR: 4674,
+    spatialRel: "esriSpatialRelIntersects",
+    units: "esriSRUnit_Foot",
+    outFields: "objectid,ra_cira,ra_codigo,ra_nome,ra_areakm2",
+    returnGeometry: true,
+    f: "json"
+  };
+
+  const baseUrl = "https://www.geoservicos.ide.df.gov.br/arcgis/rest/services/Aplicacoes/HISTORICO_RA/FeatureServer/7/query";
+  const url = `${baseUrl}?${new URLSearchParams(params).toString()}`;
+
+  let results = await fetch(url, requestOptions)
+    .then((response) => response.json()) // melhor já transformar em JSON
+    .then((results) => results)
+    .catch((error) => console.error(error));
+
+  return results;
+
+}
+
+async function fetchAddressByKeyword(keyword) {
+
+  let where = `pu_end_usual LIKE '%${keyword.toUpperCase()}%'`
+
+  const requestOptions = {
+    method: "GET",
+    redirect: "follow"
+  };
+
+  const params = {
+    where: where,
+    geometryType: "esriGeometryEnvelope",
+    spatialRel: "esriSpatialRelIntersects",
+    units: "esriSRUnit_Foot",
+    returnGeometry: true,
+    returnDistinctValues: false,
+    returnIdsOnly: false,
+    returnCountOnly: false,
+    returnExtentOnly: false,
+    returnZ: false,
+    returnM: false,
+    multipatchOption: "xyFootprint",
+    returnTrueCurves: false,
+    returnExceededLimitFeatures: false,
+    returnCentroid: false,
+    sqlFormat: "none",
+    featureEncoding: "esriDefault",
+    f: "json",
+    outFields: "*"
+  };
+
+  // monta a query string
+  const queryString = new URLSearchParams(params).toString();
+
+  // monta a URL final
+  const url = `https://www.geoservicos.ide.df.gov.br/arcgis/rest/services/Aplicacoes/ENDERECAMENTO_ATIVIDADES_LUOS_PPCUB/FeatureServer/0/query?${queryString}`;
+
+  let results = await fetch(url, requestOptions)
+    .then((response) => response.json())
+    .then((result) => result)
+    .catch((error) => console.error(error));
+
+
+  /* example: 
+  [
+      {
+          "objectid": 1389,
+          "pu_ciu": "00135I1C0107",
+          "pu_end_cart": "SETOR G NORTE QNG AE 30",
+          "pu_end_usual": "SETOR G NORTE QNG AE 30",
+          "pu_cep": "72130002",
+          "x": 172283.92420000024,
+          "y": 8251091.5246,
+          "pn_norma_vg": "LC 948/2019 alterada pela LC 1007/2022",
+          "pn_uso": "CSIIR 3",
+          "pn_alt_max": 29.5,
+          "pu_cipu": 67218,
+          "pu_ra": 3
+      },
+      ...
+  ]
+  */
+  return results.features.map((f) => ({
+    ...f.attributes,
+    geometry: f.geometry, // se precisar da geometria também
+  }));
+
+}
+
+
+export { getUsers, findDemands, fetchSuplySystemByPosition, fetchAddressesByPosition, fetchAdministrativeRegions, fetchAddressByKeyword }

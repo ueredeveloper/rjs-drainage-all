@@ -1,26 +1,39 @@
 
 import React, { useEffect, useState } from "react";
+
+
 import {
     Box,
-    Checkbox,
-    FormControlLabel,
     Paper,
     SpeedDial,
-    ClickAwayListener,
-    Typography
-    ,
-    TextField
+    SpeedDialAction,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Autocomplete,
+    TextField,
+    Typography,
+    IconButton,
+    Fade,
 } from "@mui/material";
-import Tooltip from '@mui/material/Tooltip';
+import SpeedDialIcon from "@mui/material/SpeedDialIcon";
+
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SettingsIcon from "@mui/icons-material/Settings";
+
+import TuneIcon from "@mui/icons-material/Tune";
+import SearchIcon from "@mui/icons-material/Search";
+
 import LayersClearIcon from "@mui/icons-material/LayersClear";
-import LayersIcon from "@mui/icons-material/Layers";
-import { converterPostgresToGmaps } from "../../../tools";
+import CloseIcon from '@mui/icons-material/Close';
+import LayersIcon from '@mui/icons-material/Layers';
+
+
+import { convertGeometryToGmaps } from "../../../tools";
 import { useData } from "../../../hooks/analyse-hooks";
 import { fetchRiversByCoordinates, fetchShape } from "../../../services/shapes";
 import { initialsStates } from "../../../initials-states";
 
-import SearchIcon from '@mui/icons-material/Search';
-import IconButton from '@mui/material/IconButton';
 
 import { styled } from '@mui/material/styles';
 import ArrowForwardIosSharpIcon from '@mui/icons-material/ArrowForwardIosSharp';
@@ -30,25 +43,30 @@ import MuiAccordionDetails from '@mui/material/AccordionDetails';
 
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { fetchSuplySystemByPosition } from "../../../services/connection";
+import { fetchAddressesByPosition, fetchAdministrativeRegions, fetchSuplySystemByPosition } from "../../../services/connection";
+import { AddressControllers, SupplySystemControllers, SurfaceControllers } from "./controllers";
+import SubterraneanControlllers from "./controllers/SubterraneanControllers";
+
 
 const checkboxOptions = {
     Superficial: [
-        { name: "bacias_hidrograficas", alias: "Bacias Hidrográficas", checked: false },
-        { name: "unidades_hidrograficas", alias: "Unidades Hidrográficas", checked: false },
-        { name: "rios_df", alias: "Rios do DF", checked: false }
+        { name: "bacias_hidrograficas", alias: "Bacias Hidrográficas", checked: false, meters: 200 },
+        { name: "unidades_hidrograficas", alias: "Unidades Hidrográficas", checked: false, meters: 200 },
+        { name: "rios_df", alias: "Rios do DF", checked: false, meters: 200 }
     ],
     Subterrânea: [
-        { name: "hidrogeo_fraturado", alias: "Fraturado", checked: false, isWaterAvailable: false },
-        { name: "hidrogeo_poroso", alias: "Poroso", checked: false, isWaterAvailable: false }
+        { name: "hidrogeo_fraturado", alias: "Fraturado", checked: false, isWaterAvailable: false, meters: 200 },
+        { name: "hidrogeo_poroso", alias: "Poroso", checked: false, isWaterAvailable: false, meters: 200 }
     ],
     Geoportal: [
-        { name: "geoportal_checkox", alias: "Endereços no Ponto ou Camada", checked: false },
-        { name: "geoportal_input", alias: "Buscar Endereço no DF", checked: false },
-        { name: "geoportal_regioes_administrativas", alias: "Regiões Administrativas", checked: false },
+        // A busca engloba com quantos metros de distância
+        { name: "enderecos_df", alias: "Endereços pela Coordenada", checked: false, meters: 200 },
+        { name: "geoportal_input", alias: "Buscar Endereço no DF", checked: false, meters: 200 },
+        { name: "regioes_administrativas", alias: "Regiões Administrativas", checked: false, meters: 200 },
     ],
     Caesb: [
-        { name: "caesb_df", alias: "Abastecimento", checked: false },
+        // A busca engloba com quantos metros de distância
+        { name: "caesb_df", alias: "Abastecimento", checked: false, meters: 200 },
     ]
 };
 
@@ -58,39 +76,11 @@ const getInitialCheckboxes = () => {
     for (const [group, items] of Object.entries(checkboxOptions)) {
         initial[group] = {};
         items.forEach((item) => {
-            initial[group][item.name] = { ...item };
+            initial[group][item?.name] = { ...item };
         });
     }
     return initial;
 };
-
-// Estilos do Accordion
-const Accordion = styled((props) => (
-    <MuiAccordion disableGutters elevation={0} square {...props} />
-))(({ theme }) => ({
-    border: `1px solid ${theme.palette.divider}`,
-    '&:not(:last-child)': { borderBottom: 0 },
-    '&::before': { display: 'none' },
-}));
-
-const AccordionSummary = styled((props) => (
-    <MuiAccordionSummary
-        expandIcon={<ArrowForwardIosSharpIcon sx={{ fontSize: '0.8rem' }} />}
-        {...props}
-    />
-))(({ theme }) => ({
-    backgroundColor: 'rgba(0, 0, 0, .03)',
-    flexDirection: 'row-reverse',
-    [`& .${accordionSummaryClasses.expandIconWrapper}.${accordionSummaryClasses.expanded}`]: {
-        transform: 'rotate(90deg)',
-    },
-    [`& .${accordionSummaryClasses.content}`]: { marginLeft: theme.spacing(1) },
-}));
-
-const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
-    padding: theme.spacing(1),
-    borderTop: '1px solid rgba(0, 0, 0, .125)',
-}));
 
 /**
  * Componente React responsável pelos controladores do mapa.
@@ -148,7 +138,21 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                 },
             }));
 
-        } else {
+        } else if (field === 'meters') {
+
+            setCheckboxes((prev) => ({
+                ...prev,
+                [group]: {
+                    ...prev[group],
+                    [name]: {
+                        ...prev[group][name],
+                        [field]: event.target.value,
+                    },
+                },
+            }));
+
+        }
+        else {
             setCheckboxes((prev) => ({
                 ...prev,
                 [group]: {
@@ -184,13 +188,16 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
     useEffect(() => {
 
+        console.log('checkboxes', checkboxes['Caesb'])
+
         // Converter objeto em array com os valores name, alias e checked
         const listCheckboxes = Object.values(checkboxes).flatMap(group =>
             Object.values(group).map(item => ({
-                name: item.name,
-                alias: item.alias,
-                checked: item.checked,
-                isWaterAvailable: item.isWaterAvailable || null
+                name: item?.name,
+                alias: item?.alias,
+                checked: item?.checked,
+                meters: item?.meters || null,
+                isWaterAvailable: item?.isWaterAvailable || null
             }))
         );
 
@@ -198,8 +205,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
             if (checkbox.checked) {
 
-                let riversByCoordinates = "rios_df_" + marker.int_latitude + "_" + marker.int_longitude;
-                let supplySystemCoordinates = "caesb_df_" + marker.int_latitude + "_" + marker.int_longitude;
+                let riversCoord = "rios_df_" + marker.int_latitude + "_" + marker.int_longitude;
+                let supplyCoords = "caesb_df_" + marker.int_latitude + "_" + marker.int_longitude;
+                let addressCoords = "enderecos_df_" + marker.int_latitude + "_" + marker.int_longitude;
 
                 // verificar se overlaysFetched está vazio
                 if (overlaysFetched.length === 0 || overlaysFetched.length === undefined) {
@@ -208,22 +216,22 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     if (checkbox.name === "rios_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === riversByCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === riversCoord)
 
                         if (overlay === undefined) {
 
                             const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
                                 return __shape.map(sh => {
 
-                                    return { ...sh, shapeName: riversByCoordinates, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
+                                    return { ...sh, shapeName: riversCoord, geometry: { type: sh.geometry.type, coordinates: convertGeometryToGmaps(sh.geometry) } }
                                 })
                             });
 
                             setOverlaysFetched(prev => {
-                                const exists = Array.from(prev).some(ov => ov.name === riversByCoordinates);
+                                const exists = Array.from(prev).some(ov => ov.name === riversCoord);
                                 if (exists) return prev; // não adiciona
                                 const newSet = new Set(prev);
-                                newSet.add({ name: riversByCoordinates, geometry: _shape });
+                                newSet.add({ name: riversCoord, geometry: _shape });
                                 return newSet;
                             });
 
@@ -231,37 +239,93 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     } else if (checkbox.name === "caesb_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === supplySystemCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === supplyCoords)
 
                         if (overlay === undefined) {
 
                             const _shape = await fetchSuplySystemByPosition({ lat: marker.int_latitude, lng: marker.int_longitude }).then(__shape => {
                                 return __shape.features.map(sh => {
 
-                                    return { ...sh, properties: sh.attributes, shapeName: supplySystemCoordinates, geometry: { type: 'LineString', coordinates: converterPostgresToGmaps(sh.geometry) } }
+                                    return { ...sh, properties: sh.attributes, shapeName: supplyCoords, geometry: { type: 'LineString', coordinates: convertGeometryToGmaps(sh.geometry) } }
 
 
                                 })
                             });
 
                             setOverlaysFetched(prev => {
-                                const exists = Array.from(prev).some(ov => ov.name === supplySystemCoordinates);
+                                const exists = Array.from(prev).some(ov => ov.name === supplyCoords);
                                 if (exists) return prev; // não adiciona
                                 const newSet = new Set(prev);
-                                newSet.add({ name: supplySystemCoordinates, geometry: _shape });
+                                newSet.add({ name: supplyCoords, geometry: _shape });
                                 return newSet;
                             });
 
                         }
                     }
 
+                    else if (checkbox.name === "enderecos_df") {
+
+                        console.log('address, if')
+
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === addressCoords)
+
+                        if (overlay === undefined) {
+
+                            const _shape = await fetchAddressesByPosition({ lat: marker.int_latitude, lng: marker.int_longitude }).then(__shape => {
+                                return __shape.features.map(sh => {
+                                    return { ...sh, properties: sh.attributes, shapeName: addressCoords, geometry: { type: 'Polygon', coordinates: convertGeometryToGmaps(sh.geometry) } }
+                                })
+                            });
+
+                            console.log(_shape)
+
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === addressCoords);
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: addressCoords, geometry: _shape });
+                                return newSet;
+                            });
+
+                        }
+                    }
+                    else if (checkbox.name === "regioes_administrativas") {
+                        console.log('if -> regiões administrativas')
+
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === "regioes_administrativas")
+
+                        if (overlay === undefined) {
+
+                            const _shape = await fetchAdministrativeRegions().then(__shape => {
+                                return __shape.features.map(sh => {
+                                    return { ...sh, properties: sh.attributes, shapeName: "regioes_administrativas", geometry: { type: 'Polygon', coordinates: convertGeometryToGmaps(sh.geometry) } }
+                                })
+                            });
+
+                            console.log(_shape)
+
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === "regioes_administrativas");
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: "regioes_administrativas", geometry: _shape });
+                                return newSet;
+                            });
+
+                        }
+
+                    }
 
                     else {
+
+
 
                         const _shape = await fetchShape(checkbox.name).then(__shape => {
                             // converter posgress para gmaps. ex: [-47.000, -15.000] => {lat: -15.000, lng: -47.000}
                             return __shape.map(sh => {
-                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
+                                return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: convertGeometryToGmaps(sh.shape) } }
                             })
                         });
 
@@ -281,21 +345,21 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     if (checkbox.name === "rios_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === riversByCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === riversCoord)
                         if (overlay === undefined) {
 
                             const _shape = await fetchRiversByCoordinates(marker.int_latitude, marker.int_longitude).then(__shape => {
                                 return __shape.map(sh => {
 
-                                    return { ...sh, shapeName: riversByCoordinates, geometry: { type: sh.geometry.type, coordinates: converterPostgresToGmaps(sh.geometry) } }
+                                    return { ...sh, shapeName: riversCoord, geometry: { type: sh.geometry.type, coordinates: convertGeometryToGmaps(sh.geometry) } }
                                 })
                             });
 
                             setOverlaysFetched(prev => {
-                                const exists = Array.from(prev).some(ov => ov.name === riversByCoordinates);
+                                const exists = Array.from(prev).some(ov => ov.name === riversCoord);
                                 if (exists) return prev; // não adiciona
                                 const newSet = new Set(prev);
-                                newSet.add({ name: riversByCoordinates, geometry: _shape });
+                                newSet.add({ name: riversCoord, geometry: _shape });
                                 return newSet;
                             });
 
@@ -305,28 +369,83 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     else if (checkbox.name === "caesb_df") {
 
                         // Só busca novos rios se for em outra coordenada
-                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === supplySystemCoordinates)
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === supplyCoords)
 
                         if (overlay === undefined) {
 
                             const _shape = await fetchSuplySystemByPosition({ lat: marker.int_latitude, lng: marker.int_longitude }).then(__shape => {
                                 return __shape.features.map(sh => {
 
-                                    return { ...sh, properties: sh.attributes, shapeName: supplySystemCoordinates, geometry: { type: 'LineString', coordinates: converterPostgresToGmaps(sh.geometry) } }
+                                    return { ...sh, properties: sh.attributes, shapeName: supplyCoords, geometry: { type: 'LineString', coordinates: convertGeometryToGmaps(sh.geometry) } }
 
 
                                 })
                             });
 
                             setOverlaysFetched(prev => {
-                                const exists = Array.from(prev).some(ov => ov.name === supplySystemCoordinates);
+                                const exists = Array.from(prev).some(ov => ov.name === supplyCoords);
                                 if (exists) return prev; // não adiciona
                                 const newSet = new Set(prev);
-                                newSet.add({ name: supplySystemCoordinates, geometry: _shape });
+                                newSet.add({ name: supplyCoords, geometry: _shape });
                                 return newSet;
                             });
 
                         }
+                    }
+
+                    else if (checkbox.name === "enderecos_df") {
+
+                        console.log('address, else')
+
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === addressCoords)
+
+                        if (overlay === undefined) {
+
+                            const _shape = await fetchAddressesByPosition({ lat: marker.int_latitude, lng: marker.int_longitude }).then(__shape => {
+                                return __shape.features.map(sh => {
+                                    return { ...sh, properties: sh.attributes, shapeName: addressCoords, geometry: { type: 'Polygon', coordinates: convertGeometryToGmaps(sh.geometry) } }
+                                })
+                            });
+
+                            console.log(_shape)
+
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === addressCoords);
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: addressCoords, geometry: _shape });
+                                return newSet;
+                            });
+
+                        }
+                    }
+                    else if (checkbox.name === "regioes_administrativas") {
+                        console.log('else -> regiões administrativas')
+
+                        // Só busca novos rios se for em outra coordenada
+                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === "regioes_administrativas")
+
+                        if (overlay === undefined) {
+
+                            const _shape = await fetchAdministrativeRegions().then(__shape => {
+                                return __shape.features.map(sh => {
+                                    return { ...sh, properties: sh.attributes, shapeName: "regioes_administrativas", geometry: { type: 'Polygon', coordinates: convertGeometryToGmaps(sh.geometry) } }
+                                })
+                            });
+
+                            console.log(_shape)
+
+                            setOverlaysFetched(prev => {
+                                const exists = Array.from(prev).some(ov => ov.name === "regioes_administrativas");
+                                if (exists) return prev; // não adiciona
+                                const newSet = new Set(prev);
+                                newSet.add({ name: "regioes_administrativas", geometry: _shape });
+                                return newSet;
+                            });
+
+                        }
+
                     }
 
 
@@ -336,13 +455,14 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         // converte new Set() to array e busca um valor
                         let searchoverlaysFetched = Array.from(overlaysFetched).find(st => st.name === checkbox.name);
 
+                        console.log(searchoverlaysFetched)
                         // verificar se a shapeState já foi solicitada, bacias_hidorograficas ou outra, se não, solicitar.
                         // Assim, não se repete solicitação de camada no servidor.]
                         if (searchoverlaysFetched === undefined) {
                             const _shape = await fetchShape(checkbox.name).then(__shape => {
                                 return __shape.map(sh => {
 
-                                    return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: converterPostgresToGmaps(sh.shape) } }
+                                    return { ...sh, shapeName: checkbox.name, geometry: { type: sh.type, coordinates: convertGeometryToGmaps(sh.shape) } }
                                 })
                             });
 
@@ -362,7 +482,6 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             }
         });
 
-
     }, [checkboxes]);
 
 
@@ -374,12 +493,16 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     flexDirection: "row",
                     alignItems: "center",
                     position: "absolute",
-                    right: 0,
-                    bottom: 10
-
+                    right: 25,
+                    bottom: 20,
+                    padding: 0,
+                    margin: 0
                 }}
             >
+
+                {/* Floating SpeedDial in the bottom-right */}
                 <SpeedDial
+                    ariaLabel="SpeedDial Accordion Combo"
                     sx={{
                         "& .MuiFab-primary": {
                             width: 45, // Metade do tamanho padrão (56px)
@@ -387,104 +510,111 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             mx: 0.5
                         }
                     }}
-                    ariaLabel="Show Filters"
                     icon={<LayersIcon />}
                     onClick={() => setOpenPanel((prev) => !prev)}
-                />
+                    open={openPanel}
+                >
+                    {/* A single action that toggles a small panel */}
+                    <SpeedDialAction
+                        id="speed-dial-action-clear"
+                        key="panel"
+                        icon={<LayersClearIcon />}
+                        tooltipTitle="Limpar o Mapa"
+                        onClick={() => clearCheckboxes() && setOpenPanel((s) => !s)}
+                    />
+                </SpeedDial>
 
-                {openPanel && (
-                    <ClickAwayListener onClickAway={() => setOpenPanel(false)}>
-                        <Paper
-                            elevation={6}
-                            sx={{
-                                position: "absolute",
-                                bottom: 50,
-                                right: 14,
-                                p: 2,
-                                width: 300,
-                                maxHeight: 400,
-                                overflowY: "auto",
-                                borderRadius: 2,
-                            }}
-                        >
-                            {Object.entries(checkboxOptions).map(([group, items]) => (
-                                <Accordion key={group} expanded={expanded === group} onChange={handleExpandedAccordion(group)} sx={{ my: 0, py: 0 }}>
-                                    <AccordionSummary>
-                                        <Typography component="span" sx={{ fontSize: 12 }}>{group}</Typography>
-                                    </AccordionSummary>
+                {/* The floating panel: use Fade for a smooth appear */}
+                <Fade in={openPanel} id="fade-map-controllers">
+                    <Paper
+                        elevation={6}
+                        sx={{
+                            width: 320,
+                            maxHeight: "300px",
+                            position: "absolute",
+                            overflow: "auto",
+                            bottom: 82,
+                            right: 16,
+                            p: 1,
+                            borderRadius: 2,
+                        }}
+                    >
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Painel de Camadas</Typography>
+                            <IconButton size="small" onClick={() => setOpenPanel(false)} aria-label="fechar painel">
+                                <CloseIcon />
+                            </IconButton>
+                        </Box>
 
-                                    {items.map((item, index) => {
-                                        const state = checkboxes[group][item.name];
+                        {Object.entries(checkboxOptions).map(([group, items]) => (
+                            <Accordion id="accordion" key={group} expanded={expanded === group} onChange={handleExpandedAccordion(group)} sx={{ my: 0, p: 0 }}>
+                                <AccordionSummary id="accordion-summary" sx={{
+                                    "&.Mui-expanded": {
+                                        minHeight: 0,        // remove min-height
+                                    },
+                                    "& .MuiAccordionSummary-content.Mui-expanded": {
+                                        margin: 0,           // opcional: remove margin que aumenta altura
+                                    }
+                                }}>
+                                    <Typography id="typography" component="span" sx={{ fontSize: 12, p: 0, m: 0, fontWeight: 'bold' }}>{group}</Typography>
+                                </AccordionSummary>
 
-                                        return (
-                                            <AccordionDetails sx={{ textAlign: "left", mx: 3 }} key={group + item.name + index}>
-                                                <Box>
-                                                    {item.name === 'geoportal_input' ? (
-                                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                                            <TextField
-                                                                label="Buscar endereço"
-                                                                variant="standard"
-                                                                size="small"
-                                                                sx={{ flex: 1 }}
-                                                            />
-                                                            <IconButton aria-label="buscar" size="small">
-                                                                <SearchIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Box>
-                                                    ) : (
-                                                        <Box>
-                                                            <FormControlLabel
-                                                                control={
-                                                                    <Checkbox
-                                                                        sx={{ padding: 0.5 }}
-                                                                        checked={state.checked}
-                                                                        onChange={handleCheckboxChange(group, item.name, 'checked')}
-                                                                        size="small"
-                                                                    />
-                                                                }
-                                                                label={item.alias}
-                                                                sx={{ '.MuiTypography-root': { fontSize: 12 } }}
-                                                            />
-                                                            {('isWaterAvailable' in item) && (
-                                                                <FormControlLabel
-                                                                    control={
-                                                                        <Tooltip title="Disponibilidade Hídrica">
-                                                                            <Checkbox
-                                                                                checked={state.isWaterAvailable}
-                                                                                onChange={handleCheckboxChange(group, item.name, 'isWaterAvailable')}
-                                                                                size="small"
-                                                                            />
-                                                                        </Tooltip>
-                                                                    }
-                                                                    label="%"
-                                                                    sx={{ '.MuiTypography-root': { fontSize: 12 } }}
-                                                                />
-                                                            )}
-                                                        </Box>
-                                                    )}
-                                                </Box>
-                                            </AccordionDetails>
-                                        );
-                                    })}
-                                </Accordion>
-                            ))}
-
-                            <Box display="flex" justifyContent="flex-end" mt={1}></Box>
-                        </Paper>
-                    </ClickAwayListener>
-                )}
-                <SpeedDial
-                    sx={{
-                        "& .MuiFab-primary": {
-                            width: 35, // Metade do tamanho padrão (56px)
-                            height: 20,
-                            mx: 0.5,
-                        },
-                    }}
-                    ariaLabel="Show Filters"
-                    icon={<LayersClearIcon sx={{ fontSize: 20 }} />}
-                    onClick={() => clearCheckboxes()}
-                />
+                                {items.map((item, index) => {
+                                    if (!checkboxes[group] || !checkboxes[group][item.name]) return null;
+                                    const state = checkboxes[group][item.name];
+                                    return (
+                                        <AccordionDetails id="accordion-details" sx={{ textAlign: "left", my: 0, mx: 2, p: 0 }} key={group + item.name + index}>
+                                            <Box id="first-box" key={'box-controlls' + group + item.name + index} sx={{ p: 0, height: "2rem" }}>
+                                                {(group === "Superficial") && (
+                                                    <SurfaceControllers
+                                                        key={'surf-controlls' + group + item.name + index}
+                                                        group={group}
+                                                        name={item.name}
+                                                        alias={item.alias}
+                                                        checked={state?.checked}
+                                                        handleCheckboxChange={handleCheckboxChange}
+                                                    />
+                                                )}
+                                                {(group === "Subterrânea") && (
+                                                    <SubterraneanControlllers
+                                                        key={'subt-controlls' + group + item.name + index}
+                                                        group={group}
+                                                        name={item.name}
+                                                        alias={item.alias}
+                                                        checked={state?.checked}
+                                                        isWaterAvailable={state?.isWaterAvailable}
+                                                        handleCheckboxChange={handleCheckboxChange}
+                                                    />
+                                                )}
+                                                {(group === "Caesb") && (
+                                                    <SupplySystemControllers
+                                                        key={'supply-controlls' + group + item.name + index}
+                                                        group={group}
+                                                        name={item.name}
+                                                        alias={item.alias}
+                                                        checked={state?.checked}
+                                                        meters={state?.meters}
+                                                        handleCheckboxChange={handleCheckboxChange}
+                                                    />
+                                                )}
+                                                {(group === "Geoportal") && (
+                                                    <AddressControllers
+                                                        key={'address-controlls' + group + item.name + index}
+                                                        group={group}
+                                                        name={item.name}
+                                                        alias={item.alias}
+                                                        checked={state?.checked}
+                                                        meters={state?.meters}
+                                                        handleCheckboxChange={handleCheckboxChange} />
+                                                )}
+                                            </Box>
+                                        </AccordionDetails>
+                                    );
+                                })}
+                            </Accordion>
+                        ))}
+                    </Paper>
+                </Fade>
             </Box>
         </ThemeProvider>
 

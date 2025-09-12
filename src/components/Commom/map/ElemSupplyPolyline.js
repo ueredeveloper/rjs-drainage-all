@@ -85,15 +85,17 @@ const ElemSupplyPolyline = ({ shape, map, zoom, index }) => {
             polyline.setOptions({
                 icons: [{
                     icon: polylineIcon,
-                    offset: '50%' // posição do ícone no meio da linha
+                    offset: '100%' // posição do ícone no meio da linha
                 }]
             })
         }
     }
 
-    return polyline ? (
-        <ElemPolylineInfoWindow polyline={polyline} shape={shape} map={map} />
-    ) : null;
+    // Se houver infowindow
+    /*return polyline ? (
+         <ElemPolylineInfoWindow polyline={polyline} shape={shape} map={map} />
+     ) : null;*/
+    return null;
 };
 
 export default ElemSupplyPolyline;

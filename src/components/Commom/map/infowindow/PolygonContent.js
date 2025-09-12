@@ -89,6 +89,7 @@ const PolygonInfoContent = ({
 
     // Títulos conforme o shape
     let title1, title2;
+
     if (get("shapeName") === "bacias_hidrograficas") {
         title1 = `Nome da Bacia: ${get("bacia_nome")}`;
         title2 = `Bacia Código: ${get("bacia_cod")}`;
@@ -97,10 +98,19 @@ const PolygonInfoContent = ({
         title2 = `${get("uh_label")}`;
     } else if (get("shapeName") === "hidrogeo_poroso") {
         title1 = `Sistema: ${get("sistema")}`;
-        
+
+    }
+    //GeoPortal: Shapes das Regiões Administrativas do DF
+    else if (get("shapeName") === "regioes_administrativas") {
+        title1 = `${get("ra_codigo")}`;
+        title2 = ` ${get("ra_nome")}`;
+        //GeoPortal: Shapes dos endereços do DF
+    } else if (get("shapeName").startsWith("enderecos_df")) {
+        title1 = `Endereço: ${get("pu_end_usual")}`;
+
     } else {
         title1 = `Sistema: ${get("sistema")}, Subsistema: ${get("subsistema")}`;
-        
+
     }
 
     // Botão de busca de outorgas

@@ -54,7 +54,8 @@ controles do mapa com as camadas */
   bottom: 12rem !important;
   /* aumenta esse valor para subir mais */
 }
-.gm-iv-container{
+
+.gm-iv-container {
   height: 2rem;
   margin-left: 0.5rem;
 }
@@ -89,3 +90,4 @@ controles do mapa com as camadas */
     transform: rotate(0deg);
   }
 }
+
