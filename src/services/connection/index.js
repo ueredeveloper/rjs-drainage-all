@@ -82,9 +82,9 @@ const fetchAddressesByPolygon = async (polygon) => {
 
 const fetchAddressesByPosition = async (position) => {
 
-  console.log('fetch fetch address by position')
+  let { lat, lng, meters } = position;
 
-  let { lat, lng } = position;
+  console.log('fetch fetchAddressesByPosition ', lat, lng, meters)
 
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
@@ -97,7 +97,7 @@ const fetchAddressesByPosition = async (position) => {
     inSR: "4674",
     spatialRel: "esriSpatialRelIntersects",
     // distância de busca
-    distance: "200",
+    distance: meters,
     // unidade da distância de busca em metros
     units: "esriSRUnit_Meter",
     outFields: "*",
@@ -160,8 +160,8 @@ const fetchHydroByPolygon = async (polygon) => {
 
 const fetchSuplySystemByPosition = async (position) => {
 
-  console.log('fetch fetch supply system by position')
-  const { lat, lng } = position;
+  const { lat, lng, meters } = position;
+  console.log('fetch fetchSuplySystemByPosition ', lat, lng, meters)
 
   const requestOptions = {
     method: "GET"
@@ -174,7 +174,7 @@ const fetchSuplySystemByPosition = async (position) => {
     geometryType: "esriGeometryPoint",
     inSR: "4674",
     spatialRel: "esriSpatialRelIntersects",
-    distance: "1000",
+    distance: meters,
     units: "esriSRUnit_Meter",
     outFields: "*",
     returnGeometry: "true",
@@ -256,7 +256,8 @@ async function fetchAddressByKeyword(keyword) {
     sqlFormat: "none",
     featureEncoding: "esriDefault",
     f: "json",
-    outFields: "*"
+    outFields: "*",
+    outSR: "4674"
   };
 
   // monta a query string

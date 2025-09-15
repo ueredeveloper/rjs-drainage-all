@@ -34,7 +34,7 @@ export default function SubterraneanControlllers({ group, name, alias, checked, 
                         />
                     </Tooltip>
                 }
-                label="% Cálculo de Uso"
+                label="(%) Cálculo de Uso"
                 sx={{ p: 0, mx: 2, '.MuiTypography-root': { fontSize: 12, p: 0, m: 0 } }}
             />
         </Box>

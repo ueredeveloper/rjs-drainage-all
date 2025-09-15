@@ -140,3 +140,6 @@ Permitir números float no Superficial, na aba de tabelas, QSS
 
 - [] Testar o salvamento de documento quando há duas interferências cadastradas
 
+📅 **Data:** 12 de Setembro de 2025 
+- [] A busca por endereço está fucionando, mas é preciso verificar como mostar o polígono do endereço quando
+pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no mapa.

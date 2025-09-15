@@ -91,3 +91,6 @@ controles do mapa com as camadas */
   }
 }
 
+.MuiInputBase-root {
+  padding: 0 !important;
+}

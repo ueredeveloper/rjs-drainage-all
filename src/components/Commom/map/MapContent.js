@@ -213,7 +213,6 @@ function MapContent({ checkboxes, setCheckboxes }) {
             if ((cbState.checked === true && cbState.name === shape.name) || (cbState.checked === true && shape.name.startsWith(cbState.name))) {
               // Para cada geometria, renderiza polígono ou linha
               return shape.geometry.map((sh, ii) => {
-
                 if (sh.geometry.type === 'LineString' && sh.shapeName.startsWith('caesb_df_')) {
                   return <ElemSupplyPolyline key={'elem-supply-polyline-' + ii} shape={sh} map={map} zoom={zoom} index={ii} />;
                 }

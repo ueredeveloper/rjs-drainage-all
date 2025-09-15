@@ -26,7 +26,7 @@ export default function SupplySystemControllers({ group, name, alias, checked, m
                 label={alias}
                 sx={{ '.MuiTypography-root': { fontSize: 12 } }}
             />
-            <FormControl sx={{ my: 0, py: 0 }}>
+            <FormControl sx={{ my: 0, py: 0, marginRight: 4 }}>
                 <InputLabel id="demo-simple-select-label">Metros</InputLabel>
                 <Select
                     label={"Metros"}
@@ -35,7 +35,7 @@ export default function SupplySystemControllers({ group, name, alias, checked, m
                     id="demo-simple-select"
                     onClick={(e) => e.stopPropagation()}
                     onChange={handleCheckboxChange(group, name, 'meters')}
-                    sx={{ minWidth: 80, height: 35, bgcolor: "white" }}
+                    sx={{ minWidth: 80, height: 30, bgcolor: "white" }}
 
                 >
                     <MenuItem value="200">200</MenuItem>
