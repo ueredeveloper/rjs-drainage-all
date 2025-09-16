@@ -87,6 +87,25 @@ function MapContent({ checkboxes, setCheckboxes }) {
       }))
     ).some(item => item.isWaterAvailable === true))
 
+
+    // Busca o checkbox editado no componente {AddressController} ao pesquisar um endereço no geoportal, centraliza e dá zoom no map
+    let addressByPointCheckbox =
+      Object.values(checkboxes) // pega cada grupo
+        .flatMap(group => Object.values(group)) // pega os itens de cada grupo
+        .find(item => item.name === "enderecos_por_logradouro" && item.checked === true) || null;
+
+    // Se encontrar o chekbox centraliza e dá zoom no mapa
+    if (addressByPointCheckbox) {
+      if (map) {
+        let center = addressByPointCheckbox.point;
+        if (center) {
+          map.setCenter(center);
+          map.setZoom(19);
+        }
+
+      }
+    }
+
   }, [checkboxes])
 
 
@@ -210,6 +229,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
           // Para cada checkbox marcado, verifica se o nome bate com o shape
           return listCheckBoxes.map(cbState => {
+
             if ((cbState.checked === true && cbState.name === shape.name) || (cbState.checked === true && shape.name.startsWith(cbState.name))) {
               // Para cada geometria, renderiza polígono ou linha
               return shape.geometry.map((sh, ii) => {

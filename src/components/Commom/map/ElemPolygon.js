@@ -78,7 +78,7 @@ const ElemPolygon = ({ shape, map, isWaterAvailable, zoom }) => {
         paths: shape.geometry.coordinates,
         strokeColor: isWaterAvailable ? "#FFFFFF" : color,
         strokeOpacity: 0.8,
-        strokeWeight: 1,
+        strokeWeight: 2,
         fillColor: color,
         fillOpacity: 0.45,
         map: map

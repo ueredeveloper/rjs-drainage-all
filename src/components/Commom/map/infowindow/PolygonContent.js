@@ -105,7 +105,7 @@ const PolygonInfoContent = ({
         title1 = `${get("ra_codigo")}`;
         title2 = ` ${get("ra_nome")}`;
         //GeoPortal: Shapes dos endereços do DF
-    } else if (get("shapeName").startsWith("enderecos_df")) {
+    } else if (get("shapeName").startsWith("enderecos_")) {
         title1 = `Endereço: ${get("pu_end_usual")}`;
 
     } else {

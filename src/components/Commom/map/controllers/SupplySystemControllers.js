@@ -36,6 +36,12 @@ export default function SupplySystemControllers({ group, name, alias, checked, m
                     onClick={(e) => e.stopPropagation()}
                     onChange={handleCheckboxChange(group, name, 'meters')}
                     sx={{ minWidth: 80, height: 30, bgcolor: "white" }}
+                    MenuProps={{
+                        disablePortal: true,
+                        PaperProps: {
+                            sx: { zIndex: 2000 },
+                        },
+                    }}
 
                 >
                     <MenuItem value="200">200</MenuItem>

@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from "react";
 
-
 import {
     Box,
     Paper,
@@ -35,9 +34,11 @@ import { SurfaceControllers, AddressControllers, SubterraneanControllers, Supply
 
 const checkboxOptions = {
     Geoportal: [
+        
+        { name: "enderecos_por_logradouro", alias: "Buscar Endereço no DF", checked: false, meters: 200, point: null },
         // A busca engloba com quantos metros de distância
-        { name: "enderecos_df", alias: "Endereços pela Coordenada", checked: false, meters: 200 },
-        { name: "geoportal_input", alias: "Buscar Endereço no DF", checked: false, meters: 200 },
+        { name: "enderecos_por_coordenada", alias: "Endereços pela Coordenada", checked: false, meters: 200,  point: null  },
+        
         { name: "regioes_administrativas", alias: "Regiões Administrativas", checked: false, meters: 200 },
     ],
     Superficial: [
@@ -108,6 +109,8 @@ function MapControllers({ checkboxes, setCheckboxes }) {
     const handleCheckboxChange = (group, name, field) => (event) => {
 
         const value = event.target.checked;
+
+        console.log(group, name, field, value)
 
         // Se fechar a camada, não precisa mostrar a disponibilidade (cores, nº poços e porcentagem)
         if (field === 'checked' && !value) {
@@ -191,7 +194,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
                 let riversCoord = "rios_df_" + marker.int_latitude + "_" + marker.int_longitude;
                 let supplyCoords = "caesb_df_" + marker.int_latitude + "_" + marker.int_longitude + "_" + checkbox.meters;
-                let addressCoords = "enderecos_df_" + marker.int_latitude + "_" + marker.int_longitude + "_" + checkbox.meters;
+                let addressCoords = "enderecos_por_coordenada_" + marker.int_latitude + "_" + marker.int_longitude + "_" + checkbox.meters;
 
                 // verificar se overlaysFetched está vazio
                 if (overlaysFetched.length === 0 || overlaysFetched.length === undefined) {
@@ -249,7 +252,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         }
                     }
 
-                    else if (checkbox.name === "enderecos_df") {
+                    else if (checkbox.name === "enderecos_por_coordenada") {
 
                         // Só busca novos rios se for em outra coordenada
                         let overlay = Array.from(overlaysFetched).find(_of => _of.name === addressCoords)
@@ -374,7 +377,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         }
                     }
 
-                    else if (checkbox.name === "enderecos_df") {
+                    else if (checkbox.name === "enderecos_por_coordenada") {
 
                         // Só busca novos rios se for em outra coordenada
                         let overlay = Array.from(overlaysFetched).find(_of => _of.name === addressCoords)
@@ -493,6 +496,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         id="speed-dial-action-clear"
                         key="panel"
                         icon={<LayersClearIcon />}
+                        sx={{ marginRight: 0 }}
                         tooltipTitle="Limpar o Mapa"
                         onClick={() => clearCheckboxes() && setOpenPanel((s) => !s)}
                     />
@@ -539,13 +543,23 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                     <Typography id="typography" component="span" sx={{ fontSize: 12, p: 0, m: 0, fontWeight: 'bold' }}>{group}</Typography>
                                 </AccordionSummary>
 
-                                {items.map((item, index) => {
-                                    if (!checkboxes[group] || !checkboxes[group][item.name]) return null;
-                                    const state = checkboxes[group][item.name];
-                                    return (
-                                        <AccordionDetails id="accordion-details" sx={{
-                                            textAlign: "left", my: 0, mx: 2, p: 0
-                                        }} key={group + item.name + index}>
+                                <AccordionDetails id="accordion-details"
+                                    sx={{
+                                        textAlign: "left",
+                                        my: 0,
+                                        mx: 2,
+                                        p: 0,
+                                        // Altura maior para o endereço do geoportal
+                                        ...(group === "Geoportal" && { height: "8rem" }),
+                                    }} key={group + '-details'}>
+
+                                    {items.map((item, index) => {
+                                        if (!checkboxes[group] || !checkboxes[group][item.name]) return null;
+                                        const state = checkboxes[group][item.name];
+                                        return (
+
+
+
                                             <Box key={'box-controlls' + group + item.name + index} sx={{ p: 0, height: "2rem" }}>
                                                 {(group === "Superficial") && (
                                                     <SurfaceControllers
@@ -586,13 +600,16 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                                         name={item.name}
                                                         alias={item.alias}
                                                         checked={state?.checked}
+                                                        setCheckboxes={setCheckboxes}
                                                         meters={state?.meters}
                                                         handleCheckboxChange={handleCheckboxChange} />
                                                 )}
                                             </Box>
-                                        </AccordionDetails>
-                                    );
-                                })}
+
+
+                                        );
+
+                                    })}</AccordionDetails>
                             </Accordion>
                         ))}
                     </Paper>

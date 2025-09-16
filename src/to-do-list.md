@@ -143,3 +143,7 @@ Permitir números float no Superficial, na aba de tabelas, QSS
 📅 **Data:** 12 de Setembro de 2025 
 - [] A busca por endereço está fucionando, mas é preciso verificar como mostar o polígono do endereço quando
 pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no mapa.
+
+📅 **Data:** 16 de Setembro de 2025 
+- [] Melhorar a busca por rios, melhorar a performance de pesquisa
+- [] Nos polígonos de endereço, buscar o centro do polígono para centralizar o mapa.
