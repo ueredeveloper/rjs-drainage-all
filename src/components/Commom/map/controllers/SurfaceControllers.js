@@ -2,8 +2,7 @@
 import {
     Box,
     Checkbox,
-    FormControlLabel,
-    Tooltip
+    FormControlLabel
 } from "@mui/material";
 
 export default function SurfaceControllers({ group, name, alias, checked, handleCheckboxChange }) {

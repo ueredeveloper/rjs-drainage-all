@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
 
 function getPolygonCenter(coords) {
@@ -87,62 +87,6 @@ const ElemPolygon = ({ shape, map, isWaterAvailable, zoom }) => {
 
 
   }
-
-  /*
-  useEffect(() => {
-
-    if (zoom > 13) {
-
-      shape.geometry.coordinates.forEach((coords) => {
-
-        const center = getPolygonCenter(coords);
-
-        // Criar um popup customizado
-        const popupDiv = document.createElement("div");
-        popupDiv.style.background = "white";
-        popupDiv.style.padding = "5px";
-        popupDiv.style.borderRadius = "8px";
-        popupDiv.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
-        popupDiv.innerHTML = `
-              <strong>${shape.qtd_pocos} Poços</strong> <br/>
-              <strong>Porcentagem de utilização: ${shape.pct_utilizada}%</strong> <br/>
-              <strong>Código: ${shape.cod_plan}</strong>
-          `;
-
-        const overlay = new window.google.maps.OverlayView();
-
-        overlay.onAdd = function () {
-          this.getPanes().floatPane.appendChild(popupDiv);
-        };
-
-        overlay.draw = function () {
-          const projection = this.getProjection();
-          const pos = projection.fromLatLngToDivPixel(
-            new window.google.maps.LatLng(center)
-          );
-          popupDiv.style.position = "absolute";
-          popupDiv.style.left = pos.x + "px";
-          popupDiv.style.top = pos.y + "px";
-        };
-
-        overlay.onRemove = function () {
-          popupDiv.remove();
-        };
-
-        overlay.setMap(map);
-        overlays.push(overlay)
-
-      });
-
-      return () => {
-        overlays.forEach(overlay => overlay.setMap(null));
-      };
-
-    } else {
-      overlays.forEach(overlay => overlay.setMap(null));
-    }
-  }, [zoom])
-  */
 
   return <div><ElemPolygonInfoWindow polygon={polygon} shape={shape} map={map} /></div>;
 

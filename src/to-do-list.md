@@ -147,3 +147,4 @@ pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no
 📅 **Data:** 16 de Setembro de 2025 
 - [] Melhorar a busca por rios, melhorar a performance de pesquisa
 - [] Nos polígonos de endereço, buscar o centro do polígono para centralizar o mapa.
+- [] Adicionar no polígono de endereço busca por outorgas.

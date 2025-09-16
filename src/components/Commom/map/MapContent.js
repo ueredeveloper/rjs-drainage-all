@@ -67,7 +67,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
   const [popups, setPopups] = useState([]);
 
   // Obtém os estados do contexto de análise
-  const { map, setMap, marker, overlays, setOverlays, overlaysFetched } = useData();
+  const { map, setMap, marker, overlays, overlaysFetched } = useData();
 
   const [zoom, setZoom] = useState(11);
 
@@ -249,7 +249,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
         {/* Renderização de polilinhas Otto e shapes hidrogeo */}
         {Array.isArray(overlays.shapes) && overlays.shapes.map(sh => {
-          if (sh.name != undefined && sh.name === 'otto-bacias') {
+          if (sh.name !== undefined && sh.name === 'otto-bacias') {
             return sh.map((_sh, index) => (
               <ElemOttoPolyline key={`elem-otto-${index}`} geometry={_sh.geometry} map={map} zoom={zoom} />
             ));

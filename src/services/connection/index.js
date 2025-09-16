@@ -299,4 +299,8 @@ async function fetchAddressByKeyword(keyword) {
 }
 
 
-export { getUsers, findDemands, fetchSuplySystemByPosition, fetchAddressesByPosition, fetchAdministrativeRegions, fetchAddressByKeyword }
+export {
+  getUsers, findDemands,
+  fetchAddressesByPolygon, fetchHydroByPolygon,
+  fetchSuplySystemByPosition, fetchAddressesByPosition, fetchAdministrativeRegions, fetchAddressByKeyword
+}

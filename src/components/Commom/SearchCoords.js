@@ -38,7 +38,7 @@ function SearchCoords({ tabNumber }) {
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
   const {
     map, marker, setMarker, overlays, setOverlays,
-    radius, setHgAnalyse, subsystem, setSubsystem,
+    radius, setHgAnalyse, setSubsystem,
     setOttoBasins,
     surfaceAnalyse, setSurfaceAnalyse,
     overlaysFetched, setOverlaysFetched } = useData(); // Hook para estado global
