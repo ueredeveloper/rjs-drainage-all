@@ -17,7 +17,7 @@ import {
 
 import { fetchAddressByKeyword } from "../../../../services/connection";
 import { useData } from "../../../../hooks/analyse-hooks";
-import { convertGeometryToGmaps } from "../../../../tools";
+import { convertGeometryToGmaps, getPolygonEsriCentroid } from "../../../../tools";
 
 export default function AddressControllers({ group, name, alias, checked, setCheckboxes, meters, handleCheckboxChange }) {
 
@@ -27,6 +27,8 @@ export default function AddressControllers({ group, name, alias, checked, setChe
   const [inputValue, setInputValue] = useState("");
 
   const handleInputSearch = async (value) => {
+
+    console.log('handleInputSearch', value);
     if (!value || value.length < 3) {
       setOptions([]);
       return;
@@ -64,8 +66,8 @@ export default function AddressControllers({ group, name, alias, checked, setChe
         newSet.add({ name: "enderecos_por_logradouro" + option?.pu_end_usual, geometry: _shape });
         return newSet;
       });
-      // Verificar depois de buscar o centro do polígono ao invés do primeiro ponto, com está agora.
-      let pointToCenteralizeMap = _shape[0].geometry.coordinates[0][0] || null;
+
+      let centroid = getPolygonEsriCentroid(_shape[0].properties.geometry) || null;
 
       setCheckboxes((prev) => ({
         ...prev,
@@ -75,7 +77,7 @@ export default function AddressControllers({ group, name, alias, checked, setChe
             ...prev[group][name],
             ["checked"]: true,
             // Primeira coordenada do polígono para centralizar o mapa
-            point: pointToCenteralizeMap
+            point: centroid
           },
         },
       }));
@@ -104,21 +106,9 @@ export default function AddressControllers({ group, name, alias, checked, setChe
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start", // melhor alinhamento que "center"
-        gap: 1.5, // espaçamento uniforme entre blocos
-        p: 1.5,
-        bgcolor: "background.paper",
-        borderRadius: 2,
-
-      }}
-    >
-
+    <Box sx={{ width: "100%", '.MuiTypography-root': { fontSize: 12 } }}>
       {name === "enderecos_por_logradouro" && (
-        <Box sx={{ width: "100%", marginTop: 0 }}>
+        <Box sx={{ width: "100%", marginTop: 1 }}>
           <Autocomplete
             disablePortal
             PopperComponent={CustomPopper}
@@ -138,16 +128,15 @@ export default function AddressControllers({ group, name, alias, checked, setChe
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Endereço"
+                label={alias}
                 variant="outlined"
                 size="small"
                 sx={{
                   bgcolor: "white",
                   borderRadius: 1,
                   "& .MuiInputBase-root": {
-                    height: 38,
-
-
+                    height: 30,
+                    my: 0.5
                   },
                 }}
               />
@@ -196,7 +185,7 @@ export default function AddressControllers({ group, name, alias, checked, setChe
             p: 1,
             borderRadius: 1.5,
             bgcolor: "grey.50",
-            marginTop: 2
+            marginTop: 1,
           }}
         >
           <FormControlLabel
@@ -217,7 +206,7 @@ export default function AddressControllers({ group, name, alias, checked, setChe
               ".MuiTypography-root": { fontSize: 13, fontWeight: 500 },
             }}
           />
-          <FormControl size="small" sx={{ minWidth: 90 }}>
+          <FormControl size="small" sx={{ minWidth: 80 }}>
             <InputLabel id="metros-label">Metros</InputLabel>
             <Select
               label="Metros"
@@ -245,6 +234,40 @@ export default function AddressControllers({ group, name, alias, checked, setChe
               ))}
             </Select>
           </FormControl>
+        </Box>
+      )}
+
+      {name === "regioes_administrativas" && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            p: 1,
+            borderRadius: 1.5,
+            bgcolor: "grey.50",
+            marginTop: 2
+          }}
+        >
+          <FormControlLabel
+            control={
+              <Checkbox
+                sx={{
+                  p: 0.5,
+                  color: "primary.main",
+                  "&.Mui-checked": { color: "primary.main" },
+                }}
+                checked={checked}
+                onChange={handleCheckboxChange(group, name, "checked")}
+                size="small"
+              />
+            }
+            label={alias}
+            sx={{
+              ".MuiTypography-root": { fontSize: 13, fontWeight: 500 },
+            }}
+          />
+
         </Box>
       )}
 

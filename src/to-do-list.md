@@ -148,3 +148,4 @@ pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no
 - [] Melhorar a busca por rios, melhorar a performance de pesquisa
 - [] Nos polígonos de endereço, buscar o centro do polígono para centralizar o mapa.
 - [] Adicionar no polígono de endereço busca por outorgas.
+- [] Verificar polilinhas das ottobacias, se estão ficando mais largas ao dar o zoom

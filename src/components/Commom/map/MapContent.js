@@ -67,7 +67,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
   const [popups, setPopups] = useState([]);
 
   // Obtém os estados do contexto de análise
-  const { map, setMap, marker, overlays, overlaysFetched } = useData();
+  const { map, setMap, marker, setMarker, overlays, overlaysFetched } = useData();
 
   const [zoom, setZoom] = useState(11);
 
@@ -101,10 +101,21 @@ function MapContent({ checkboxes, setCheckboxes }) {
         if (center) {
           map.setCenter(center);
           map.setZoom(19);
+
+          // Atualiza o marcador global
+          setMarker(prev => ({
+            ...prev,
+            int_latitude: center.lat,
+            int_longitude: center.lng
+          }));
+
+
         }
 
       }
     }
+
+
 
   }, [checkboxes])
 

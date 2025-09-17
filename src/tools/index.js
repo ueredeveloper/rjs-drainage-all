@@ -506,6 +506,25 @@ const convertM2ToKm2 = (areaM2) => {
   return areaM2 / 1000000;
 }
 
+const getPolygonEsriCentroid = (polygonEsri) => {
+
+  console.log('getPolygonEsriCentroid', polygonEsri)  
+  // Convert Esri "rings" → GeoJSON polygon
+  const polygonGeoJSON = {
+    type: "Feature",
+    geometry: {
+      type: "Polygon",
+      coordinates: polygonEsri.rings,
+    },
+  };
+
+  // Get centroid
+  const centroid = turf.centroid(polygonGeoJSON);
+  const centerCoords = centroid.geometry.coordinates; // [lng, lat]
+
+  return { lat: centerCoords[1], lng: centerCoords[0] };
+}
+
 export {
   createCircleRings,
   convertGeometryToGmaps, nFormatter,
@@ -515,7 +534,7 @@ export {
   setInfoMarkerIcon,
   convertOthoCoordToGmaps,
   calculateContributingArea,
-  calculateCentroid,
+  getPolygonEsriCentroid,
   joinOttoBasins,
   getMarkersInsideOttoBasins,
   searchHydrograficUnit,

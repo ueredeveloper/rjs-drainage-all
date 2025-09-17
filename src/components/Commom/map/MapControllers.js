@@ -32,11 +32,11 @@ import { SurfaceControllers, AddressControllers, SubterraneanControllers, Supply
 
 const checkboxOptions = {
     Geoportal: [
-        
-        { name: "enderecos_por_logradouro", alias: "Buscar Endereço no DF", checked: false, meters: 200, point: null },
+
+        { name: "enderecos_por_logradouro", alias: "Endereço por Logradouro", checked: false, meters: 200, point: null },
         // A busca engloba com quantos metros de distância
-        { name: "enderecos_por_coordenada", alias: "Endereços pela Coordenada", checked: false, meters: 200,  point: null  },
-        
+        { name: "enderecos_por_coordenada", alias: "Endereços por Coordenada", checked: false, meters: 200, point: null },
+
         { name: "regioes_administrativas", alias: "Regiões Administrativas", checked: false, meters: 200 },
     ],
     Superficial: [
@@ -197,6 +197,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                 // verificar se overlaysFetched está vazio
                 if (overlaysFetched.length === 0 || overlaysFetched.length === undefined) {
 
+                    // Não busca shape de endereço por logradouro aqui
+                    if (checkbox.name === "enderecos_por_logradouro") return null;
+
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
 
@@ -221,7 +224,8 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             });
 
                         }
-                    } else if (checkbox.name === "caesb_df") {
+                    }
+                    else if (checkbox.name === "caesb_df") {
 
                         console.log('fetch caesb by position', checkbox.meters)
 
@@ -249,7 +253,6 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
                         }
                     }
-
                     else if (checkbox.name === "enderecos_por_coordenada") {
 
                         // Só busca novos rios se for em outra coordenada
@@ -299,7 +302,6 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         }
 
                     }
-
                     else {
 
 
@@ -322,6 +324,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     }
 
                 } else {
+
+                    // Não busca shape de endereço por logradouro aqui
+                    if (checkbox.name === "enderecos_por_logradouro") return null;
 
                     // A busca dos rios é em outro método
                     if (checkbox.name === "rios_df") {
@@ -374,7 +379,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
                         }
                     }
+                    else if (checkbox.name === "regioes_administrativas") {
 
+                    }
                     else if (checkbox.name === "enderecos_por_coordenada") {
 
                         // Só busca novos rios se for em outra coordenada
@@ -398,34 +405,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
 
                         }
                     }
-                    else if (checkbox.name === "regioes_administrativas") {
-
-
-                        // Só busca novos rios se for em outra coordenada
-                        let overlay = Array.from(overlaysFetched).find(_of => _of.name === "regioes_administrativas")
-
-                        if (overlay === undefined) {
-
-                            const _shape = await fetchAdministrativeRegions().then(__shape => {
-                                return __shape.features.map(sh => {
-                                    return { ...sh, properties: sh.attributes, shapeName: "regioes_administrativas", geometry: { type: 'Polygon', coordinates: convertGeometryToGmaps(sh.geometry) } }
-                                })
-                            });
-
-                            setOverlaysFetched(prev => {
-                                const exists = Array.from(prev).some(ov => ov.name === "regioes_administrativas");
-                                if (exists) return prev; // não adiciona
-                                const newSet = new Set(prev);
-                                newSet.add({ name: "regioes_administrativas", geometry: _shape });
-                                return newSet;
-                            });
-
-                        }
-
-                    }
-
-
                     else {
+
+                        console.log('else checkbox', checkbox.name)
                         // verifica se a shape está presente na array overlaysFetched
 
                         // converte new Set() to array e busca um valor
@@ -496,7 +478,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         icon={<LayersClearIcon />}
                         sx={{ marginRight: 0 }}
                         tooltipTitle="Limpar o Mapa"
-                        onClick={() => clearCheckboxes() && setOpenPanel((s) => !s)}
+                        onClick={() => clearCheckboxes()}
                     />
                 </SpeedDial>
 
@@ -513,6 +495,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                             right: 16,
                             p: 1,
                             borderRadius: 2,
+
                         }}
                     >
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
@@ -548,7 +531,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                         mx: 2,
                                         p: 0,
                                         // Altura maior para o endereço do geoportal
-                                        ...(group === "Geoportal" && { height: "8rem" }),
+                                        ...(group === "Geoportal" && { height: "8.5rem" }),
                                     }} key={group + '-details'}>
 
                                     {items.map((item, index) => {

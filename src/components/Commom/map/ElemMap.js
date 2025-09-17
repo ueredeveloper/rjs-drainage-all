@@ -39,9 +39,11 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
   const center = { lat: -15.78567469569133, lng: -47.83988126733556 };
   //Escolha randomizada da imagem do streetview
 
-  const [streetViewLocation, setStreetViewLocation] = useState(locations[getRandomArbitrary(0, locations.length)]);
+  //const [streetViewLocation, setStreetViewLocation] = useState(locations[getRandomArbitrary(0, locations.length)]);
+  // Busca o primeiro link da array de links
   //const [streetViewLocation, setStreetViewLocation] = useState(locations[0]);
-  //const [streetViewLocation, setStreetViewLocation] = useState(null);
+  // Remove o street view
+  const [streetViewLocation, setStreetViewLocation] = useState(null);
 
   // Inicializa o mapa uma vez
   useEffect(() => {
