@@ -149,3 +149,20 @@ pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no
 - [] Nos polígonos de endereço, buscar o centro do polígono para centralizar o mapa.
 - [] Adicionar no polígono de endereço busca por outorgas.
 - [] Verificar polilinhas das ottobacias, se estão ficando mais largas ao dar o zoom
+
+-----------------------------------------------------------------------------------------------
+
+📅 **Data:** 04 de julho de 2025  
+👨‍💻 **Responsável:** [Luan Carvalho]  
+
+## ✅ Objetivo  
+criar uma aba utilizando o Drawer para adicionar videos de tutoriais para utilização do app 
+
+---
+
+## 🔹 Tarefas
+
+### 1️⃣ Permitir a digitação de números com casas decimais (float) nos inputs das tabelas de QSS  
+- [x] criar um novo componente react (Drawer)
+- [x] renderizar no menuAppBar.js
+- [x] aidcionar vvideo de tutorial

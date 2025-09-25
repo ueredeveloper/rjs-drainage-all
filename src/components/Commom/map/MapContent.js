@@ -14,9 +14,11 @@ import ElemSupplyPolyline from './ElemSupplyPolyline';
 
 /**
  * Formata um valor numérico para string com casas decimais seguras.
- * @param {any} val - Valor a ser convertido.
- * @param {number} [decimals=2] - Número de casas decimais.
- * @returns {string} Valor formatado.
+ *
+ * @function safeNumber
+ * @param {any} val - Valor a ser convertido para número.
+ * @param {number} [decimals=2] - Número de casas decimais desejadas.
+ * @returns {string} Valor formatado como string (ou '0.00' caso inválido).
  */
 function safeNumber(val, decimals = 2) {
   const num = Number(val);
@@ -25,9 +27,12 @@ function safeNumber(val, decimals = 2) {
 }
 
 /**
- * Gera o conteúdo do popup de cálculo de área/comprimento para cada tipo de shape.
- * @param {Object} draw - Objeto da shape desenhada.
- * @returns {string} Texto formatado para o popup.
+ * Gera o conteúdo textual do popup de cálculo de área/comprimento
+ * para cada tipo de shape desenhada.
+ *
+ * @function setContent
+ * @param {Object} draw - Objeto da shape desenhada (polygon, circle, polyline, etc).
+ * @returns {string} Texto formatado para exibir no popup.
  */
 function setContent(draw) {
   if (!draw) return '';
@@ -50,34 +55,46 @@ function setContent(draw) {
 }
 
 /**
- * Componente que representa o conteúdo do mapa.
- * Gerencia a renderização de marcadores, polígonos, polilinhas, popups e overlays
- * de acordo com o estado global e as opções selecionadas pelo usuário.
+ * Componente principal do conteúdo do mapa.
+ *
+ * Responsável por:
+ * - Inicializar e renderizar o mapa do Google.
+ * - Gerenciar marcadores, polígonos, polilinhas e overlays.
+ * - Exibir popups de área e comprimento.
+ * - Controlar renderização com base em checkboxes e gráficos selecionados.
  *
  * @component
- * @param {Object} props - As propriedades do componente.
- * @param {Object} props.checkboxes - O estado das caixas de seleção agrupadas.
- * @param {Function} props.setCheckboxes - Função para atualizar o estado dos checkboxes.
- * @returns {JSX.Element} O componente de conteúdo do mapa.
+ * @param {Object} props - Propriedades do componente.
+ * @param {Object} props.checkboxes - Estado das caixas de seleção agrupadas.
+ * @param {Function} props.setCheckboxes - Função para atualizar estado dos checkboxes.
+ * @returns {JSX.Element} O conteúdo renderizado do mapa.
  */
 function MapContent({ checkboxes, setCheckboxes }) {
-  /** @type {string} Modo do mapa (ex: 'light') */
+  /** @type {string} Modo do mapa (light/dark). */
   const [mode] = useState('light');
-  /** @type {Array} Estado dos popups ativos */
+
+  /** @type {Array} Lista de popups ativos no mapa. */
   const [popups, setPopups] = useState([]);
 
-  // Obtém os estados do contexto de análise
+  // Hook global que provê estados e setters relacionados ao mapa
   const { map, setMap, marker, setMarker, overlays, overlaysFetched } = useData();
 
+  /** @type {number} Zoom atual do mapa. */
   const [zoom, setZoom] = useState(11);
 
+  /** @type {boolean} Estado fullscreen do mapa. */
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const [isWaterAvailable, setIsWaterAvailable] = useState(false)
+  /** @type {boolean} Indica se há disponibilidade de água marcada nos checkboxes. */
+  const [isWaterAvailable, setIsWaterAvailable] = useState(false);
 
+  /**
+   * Efeito que reage às mudanças de checkboxes.
+   * - Atualiza disponibilidade de água.
+   * - Centraliza e dá zoom quando o usuário busca um endereço.
+   */
   useEffect(() => {
-
-    // Busca nos checkboxes se foi solicitado disponibilidade de água nos subsistemas
+    // Verifica checkboxes de disponibilidade de água
     setIsWaterAvailable(Object.values(checkboxes).flatMap(group =>
       Object.values(group).map(item => ({
         name: item.name,
@@ -85,46 +102,36 @@ function MapContent({ checkboxes, setCheckboxes }) {
         checked: item.checked,
         isWaterAvailable: item.isWaterAvailable
       }))
-    ).some(item => item.isWaterAvailable === true))
+    ).some(item => item.isWaterAvailable === true));
 
-
-    // Busca o checkbox editado no componente {AddressController} ao pesquisar um endereço no geoportal, centraliza e dá zoom no map
+    // Busca checkbox de endereços e centraliza o mapa
     let addressByPointCheckbox =
-      Object.values(checkboxes) // pega cada grupo
-        .flatMap(group => Object.values(group)) // pega os itens de cada grupo
+      Object.values(checkboxes)
+        .flatMap(group => Object.values(group))
         .find(item => item.name === "enderecos_por_logradouro" && item.checked === true) || null;
 
-    // Se encontrar o chekbox centraliza e dá zoom no mapa
-    if (addressByPointCheckbox) {
-      if (map) {
-        let center = addressByPointCheckbox.point;
-        if (center) {
-          map.setCenter(center);
-          map.setZoom(19);
+    if (addressByPointCheckbox && map) {
+      let center = addressByPointCheckbox.point;
+      if (center) {
+        map.setCenter(center);
+        map.setZoom(19);
 
-          // Atualiza o marcador global
-          setMarker(prev => ({
-            ...prev,
-            int_latitude: center.lat,
-            int_longitude: center.lng
-          }));
-
-
-        }
-
+        // Atualiza marcador global
+        setMarker(prev => ({
+          ...prev,
+          int_latitude: center.lat,
+          int_longitude: center.lng
+        }));
       }
     }
-
-
-
-  }, [checkboxes])
-
-
+  }, [checkboxes]);
 
   /**
-   * Converte o nome de um dado para o nome da shape correspondente.
-   * @param {string} dataName - Nome do dado.
-   * @returns {string} Nome da shape.
+   * Converte um nome de dado (do backend) para nome interno de shape.
+   *
+   * @function convertToShapeName
+   * @param {string} dataName - Nome do dado original.
+   * @returns {string} Nome padronizado da shape.
    */
   function convertToShapeName(dataName) {
     switch (dataName) {
@@ -137,12 +144,12 @@ function MapContent({ checkboxes, setCheckboxes }) {
     }
   }
 
-  // Estados do contexto para seleção de gráficos
+  // Seleção de gráficos (estado global)
   const { selectedsCharts } = useData();
 
   /**
-   * Estado das shapes selecionadas para renderização de marcadores.
-   * Inicialmente inclui todas as opções.
+   * Lista de shapes selecionadas para renderização.
+   * Inicialmente contém todas as opções.
    * @type {Array<string>}
    */
   const [selectedsShapes, setSelectedsShapes] = useState([
@@ -150,7 +157,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
   ]);
 
   /**
-   * Atualiza as shapes selecionadas conforme o estado dos gráficos selecionados.
+   * Efeito que sincroniza as shapes com os gráficos selecionados.
    */
   useEffect(() => {
     let keys = Object.keys(selectedsCharts);
@@ -168,10 +175,11 @@ function MapContent({ checkboxes, setCheckboxes }) {
   }, [selectedsCharts]);
 
   /**
-   * Renderiza polilinhas a partir de uma estrutura de dados de polilinhas.
-   * Suporta MultiPolygon e LineString.
-   * @param {Array} polylines - Array de polilinhas.
-   * @returns {JSX.Element|null} Elementos de polilinha ou null.
+   * Renderiza polilinhas genéricas (hidrogeo ou multipolygon).
+   *
+   * @function RenderPolylines
+   * @param {Array} polylines - Estrutura de polilinhas.
+   * @returns {JSX.Element|null} Elementos renderizados ou null.
    */
   const RenderPolylines = (polylines) => {
     if (!Array.isArray(polylines) || polylines.length === 0) return null;
@@ -190,18 +198,27 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
   return (
     <Box id="map-box" sx={{ height: '100%', width: '100%' }}>
-
-      <Wrapper apiKey={"AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w"} libraries={["drawing", "geometry"]}>
-        {/* Componentes relacionados ao mapa */}
+      <Wrapper apiKey={""} libraries={["drawing", "geometry"]}>
+        {/* Mapa principal */}
         <ElemMap mode={mode} map={map} setMap={setMap} zoom={zoom} setZoom={setZoom} setIsFullscreen={setIsFullscreen} />
-        {/* Gerenciador de desenho de shapes */}
+
+        {/* Ferramentas de desenho de shapes */}
         <ElemDrawManager map={map} />
-        {/* Marcador principal (ex: marcador de busca) */}
+
+        {/* Marcador principal (ex: busca de endereço) */}
         <ElemMarker info={marker} map={map} />
 
-        <ElemMapOverlayControls map={map} position={"BOTTOM_CENTER"} isFullscreen={isFullscreen} isWaterAvailable={isWaterAvailable} checkboxes={checkboxes} setCheckboxes={setCheckboxes} />
+        {/* Controles de overlay no mapa */}
+        <ElemMapOverlayControls
+          map={map}
+          position={"BOTTOM_CENTER"}
+          isFullscreen={isFullscreen}
+          isWaterAvailable={isWaterAvailable}
+          checkboxes={checkboxes}
+          setCheckboxes={setCheckboxes}
+        />
 
-        {/* Renderização dos marcadores de acordo com as shapes selecionadas */}
+        {/* Marcadores de acordo com shapes selecionadas */}
         {Array.isArray(overlays.shapes) && overlays.shapes.map(shape =>
           selectedsShapes.map(type =>
             shape.markers?.[type]?.map((marker, i) => (
@@ -210,7 +227,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
           )
         )}
 
-        {/* Popups de cálculo de área/comprimento para shapes desenhadas */}
+        {/* Popups de área/comprimento em shapes desenhadas */}
         {Array.isArray(overlays.shapes) &&
           overlays.shapes.map((shape, i) =>
             shape.calculoAreaAtivo && (
@@ -226,9 +243,8 @@ function MapContent({ checkboxes, setCheckboxes }) {
           )
         }
 
-        {/* Renderização de shapes (polígonos e linhas) conforme checkboxes marcados */}
+        {/* Renderização de shapes a partir de checkboxes */}
         {Array.isArray(Array.from(overlaysFetched)) && Array.from(overlaysFetched).map((shape) => {
-          // Transforma os checkboxes agrupados em uma lista simples
           let listCheckBoxes = Object.values(checkboxes).flatMap(group =>
             Object.values(group).map(item => ({
               name: item.name,
@@ -238,11 +254,9 @@ function MapContent({ checkboxes, setCheckboxes }) {
             }))
           );
 
-          // Para cada checkbox marcado, verifica se o nome bate com o shape
           return listCheckBoxes.map(cbState => {
-
-            if ((cbState.checked === true && cbState.name === shape.name) || (cbState.checked === true && shape.name.startsWith(cbState.name))) {
-              // Para cada geometria, renderiza polígono ou linha
+            if ((cbState.checked === true && cbState.name === shape.name) ||
+                (cbState.checked === true && shape.name.startsWith(cbState.name))) {
               return shape.geometry.map((sh, ii) => {
                 if (sh.geometry.type === 'LineString' && sh.shapeName.startsWith('caesb_df_')) {
                   return <ElemSupplyPolyline key={'elem-supply-polyline-' + ii} shape={sh} map={map} zoom={zoom} index={ii} />;
