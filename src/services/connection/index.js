@@ -126,6 +126,8 @@ const fetchAddressesByPosition = async (position) => {
 
 const fetchHydroByPolygon = async (polygon) => {
 
+  console.log(polygon)
+
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
@@ -154,6 +156,8 @@ const fetchHydroByPolygon = async (polygon) => {
     .then((results) => results)
     .catch((error) => console.error(error));
 
+    console.log(results)
+
   return results;
 
 }
@@ -179,7 +183,9 @@ const fetchSuplySystemByPosition = async (position) => {
     outFields: "*",
     returnGeometry: "true",
     outSR: "4674",
-    f: "json"
+    f: "json",
+    // remover adultoras
+    where: "tipoSistema NOT IN ('p', 'sp')"
   };
 
   // Monta a query string a partir do objeto
@@ -192,6 +198,8 @@ const fetchSuplySystemByPosition = async (position) => {
     .then(response => response.json())
     .then(results => results)
     .catch(error => console.error(error));
+
+    console.log(results)
 
   return results;
 

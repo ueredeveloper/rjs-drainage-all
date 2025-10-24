@@ -12,6 +12,7 @@ import {
     Typography,
     IconButton,
     Fade,
+    Tooltip
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -458,30 +459,36 @@ function MapControllers({ checkboxes, setCheckboxes }) {
             >
 
                 {/* Floating SpeedDial in the bottom-right */}
-                <SpeedDial
-                    ariaLabel="SpeedDial Accordion Combo"
-                    sx={{
-                        "& .MuiFab-primary": {
-                            width: 45, // Metade do tamanho padrão (56px)
-                            height: 45,
-                            mx: 0.5
-                        }
-                    }}
-                    icon={<LayersIcon />}
-                    onClick={() => setOpenPanel((prev) => !prev)}
-                    open={openPanel}
-                >
-                    {/* A single action that toggles a small panel */}
-                    <SpeedDialAction
-                        id="speed-dial-action-clear"
-                        key="panel"
-                        icon={<LayersClearIcon />}
-                        sx={{ marginRight: 0 }}
-                        tooltipTitle="Limpar o Mapa"
-                        onClick={() => clearCheckboxes()}
-                    />
-                </SpeedDial>
+                <Tooltip title={"Camadas do Mapa"}>
+                    <SpeedDial
+                        ariaLabel=""
+                        sx={{
+                            "& .MuiFab-primary": {
+                                width: 45, // Metade do tamanho padrão (56px)
+                                height: 45,
+                                mx: 0.5
+                            }
+                        }}
+                        icon={<LayersIcon />}
+                        onClick={() => setOpenPanel((prev) => !prev)}
+                        open={openPanel}
 
+                    >
+                        {/* A single action that toggles a small panel */}
+                        <SpeedDialAction
+                            id="speed-dial-action-clear"
+                            key="panel"
+                            icon={<LayersClearIcon className={openPanel ? "speeddial-swing" : ""} />}
+
+                            sx={{ marginRight: 0 }}
+                            tooltipTitle="Limpar o Mapa"
+                            onClick={() => clearCheckboxes()}
+                            
+
+
+                        />
+                    </SpeedDial>
+                </Tooltip>
                 {/* The floating panel: use Fade for a smooth appear */}
                 <Fade in={openPanel} id="fade-map-controllers">
                     <Paper

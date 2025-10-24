@@ -62,13 +62,12 @@ controles do mapa com as camadas */
 
 
 /* Balançar o mapa na entrada, depois de aparecer o streetview */
-
 .swing {
   /* animação */
   animation: swing 0.3s ease-in-out;
 }
 
-/* keyframes para balançar */
+/* Balançar o ícone de limpeza de camadas do mapa */
 @keyframes swing {
   0% {
     transform: rotate(0deg);
@@ -91,7 +90,35 @@ controles do mapa com as camadas */
   }
 }
 
-.MuiInputBase-root {
-  padding: 0 !important;
+/* Faz balançar o ícone de limpeza de camadas do mapa */
+.speeddial-swing {
+  animation: speedDialSwing 0.45s ease-in-out;
+  transform-origin: center;
+  will-change: transform;
 }
 
+@keyframes speedDialSwing {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(30deg);
+  }
+
+  40% {
+    transform: rotate(-10deg);
+  }
+
+  60% {
+    transform: rotate(30deg);
+  }
+
+  80% {
+    transform: rotate(-30deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}

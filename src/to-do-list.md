@@ -149,3 +149,6 @@ pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no
 - [] Nos polígonos de endereço, buscar o centro do polígono para centralizar o mapa.
 - [] Adicionar no polígono de endereço busca por outorgas.
 - [] Verificar polilinhas das ottobacias, se estão ficando mais largas ao dar o zoom
+
+📅 **Data:** 06 de Outubro de 2025 
+- [] Mover o botão de camadas mais para a esquerda. Está atrapalhando o botão do streetview. 
