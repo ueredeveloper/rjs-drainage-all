@@ -165,4 +165,4 @@ criar uma aba utilizando o Drawer para adicionar videos de tutoriais para utiliz
 ### 1️⃣ Permitir a digitação de números com casas decimais (float) nos inputs das tabelas de QSS  
 - [x] criar um novo componente react (Drawer)
 - [x] renderizar no menuAppBar.js
-- [x] aidcionar vvideo de tutorial
+- [x] aidcionar video de tutorial
