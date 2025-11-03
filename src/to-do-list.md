@@ -134,7 +134,7 @@ Permitir números float no Superficial, na aba de tabelas, QSS
 - [x] Garantir que os cálculos e atualizações funcionem corretamente com valores float  
 - [x] Padronizar a exibição dos valores nas tabelas (usar sempre ponto como separador)  
 
-
+---------------------------------------------------------------------------------
 
 📅 **Data:** 01 de Agosto de 2025 
 
@@ -149,3 +149,25 @@ pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no
 - [] Nos polígonos de endereço, buscar o centro do polígono para centralizar o mapa.
 - [] Adicionar no polígono de endereço busca por outorgas.
 - [] Verificar polilinhas das ottobacias, se estão ficando mais largas ao dar o zoom
+---------------------------------------------------------------------------------
+📅 **Data:** 03 de novembro de 2025  
+👨‍💻 **Responsável:** [Luan Carvalho]  
+
+## ✅ Objetivo  
+adicionar um conversor de coordenadas no padão wgs84, para conversão de utm -> decimal e gms -> decimal.
+
+---
+
+## 🔹 Tarefas
+
+### 1️⃣ fazer o conversor de utm para decimal
+ 
+- [x] Ajustar os campos para aceitar leste, norte, zona e direção 
+- [x] Garantir que a coneversão esteja correta
+- [x] ao converter o output será o propio input de coordenadas decimal
+
+### 1️⃣ fazer o conversor de gms para decimal
+ 
+- [x] Ajustar os campos para aceitar graus, minutos, segundos e direção
+- [x] Garantir que a coneversão esteja correta
+- [x] ao converter o output será o propio input de coordenadas decimal

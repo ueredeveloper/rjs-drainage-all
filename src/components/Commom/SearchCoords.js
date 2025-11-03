@@ -19,7 +19,7 @@ import { initialsStates } from "../../initials-states";
 import ElemGrant from '../Connection/elem-grant';
 import { fetchShape, fetchMarkersByUH, fetchOttoBasins } from "../../services/shapes";
 import { calculateQOutorgadaSecao, calculateQIndividualSecao, calculateQOutorgavelSecao, calculateQReferenciaSecao, calculateQDisponivelSecao, calculateQOutorgadaUH, calculateQReferenciaUH, calculateQRemanescenteUH, calculateQOutorgavelUH, calculateQDisponivelUH, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual } from "../../tools/surface-tools";
-
+import SpeedDialConverter from "./converter/SpeedDialConverter";
 
 
 
@@ -390,6 +390,17 @@ function SearchCoords({ tabNumber }) {
     });
   };
 
+  const setCoordinate = ({ lat, lng }) => {
+    const newPosition = {
+      ...position,
+      int_latitude: lat,
+      int_longitude: lng,
+    };
+    setPosition(newPosition);
+    setMarker(newPosition);
+  }
+
+
 
   return (
     <>
@@ -436,7 +447,7 @@ function SearchCoords({ tabNumber }) {
             ) : null}
 
             {/* Botões de busca e cópia */}
-            <Box sx={{ display: "flex", minWidth: 100 }}>
+            <Box sx={{ display: "flex", minWidth: 100, alignItems: "center" }}>
               {loading ? (
                 <Fade
                   sx={{ color: "secondary.main" }}
@@ -467,12 +478,11 @@ function SearchCoords({ tabNumber }) {
                   color="secondary"
                   size="large"
                   onClick={handleCopy}>
-
-
                   <ContentCopyIcon />
                 </IconButton>
+                                 
               </Tooltip>
-
+               <SpeedDialConverter setCoords={setCoordinate}/>
 
             </Box>
 
