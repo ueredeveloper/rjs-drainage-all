@@ -1,68 +1,62 @@
 /* General container for the converter component */
 #converter {
+  display: flex;
   flex-direction: column;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  max-width: 100%; /* Ensure converter itself is responsive */
-  padding: 0.5rem; /* Add some padding to the converter container */
+  padding: 1rem;
   box-sizing: border-box;
-  text-align: right;
+  border-radius: 8px;
 }
 
-/* Title */
+/* WGS84 Title */
 h1 {
-  color: black;
-  font-size: 0.6rem; /* Smaller font size */
-  margin: 0;
-  margin-bottom: 0.2rem; /* Smaller margin */
+  color: #333;
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+  text-align: center;
 }
 
 /* Input and button container */
 #input-container {
   display: flex;
-  flex-direction: column; /* Stack inputs and button vertically */
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
-  gap: 0.5rem; /* Smaller gap */
+  gap: 0.8rem;
 }
-
-/* Remove these specific IDs as they are not used in the new HTML structure */
-/* #utm-input, #sutm-input {
-  display: flex;
-  gap: 0.5rem;
-  width: 10vw;
-} */
 
 /* Input fields styling */
-#converter input {
-  flex-grow: 1;
-  font-size: 0.7rem; /* Smaller font size */
-  /* margin-top: 0.5rem; Removed, handled by gap */
+#converter input,
+#converter select {
+  width: 100%;
+  font-size: 0.9rem;
   border: 1px solid #ddd;
-  border-radius: 6px; /* Slightly smaller border-radius */
+  border-radius: 6px;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  padding: 0.4rem; /* Smaller padding */
+  padding: 0.6rem;
 }
 
-#converter input:focus {
+#converter input:focus,
+#converter select:focus {
   outline: none;
   border-color: #007BFF;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Smaller shadow */
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
 
 /* General button styling */
 #converter button {
-  padding: 0.4rem 0.8rem; /* Smaller padding */
+  padding: 0.7rem 1.2rem;
   cursor: pointer;
-  font-size: 0.6rem; /* Smaller font size */
+  font-size: 0.9rem;
   font-weight: bold;
   border: none;
-  border-radius: 6px; /* Slightly smaller border-radius */
+  border-radius: 6px;
   background-color: #007BFF;
   color: white;
   transition: background-color 0.2s ease, transform 0.1s ease;
+  width: 100%;
 }
 
 #converter button:hover {
@@ -77,155 +71,95 @@ h1 {
 #btn-container {
   display: flex;
   justify-content: center;
-  gap: 0.4rem; /* Smaller gap */
+  gap: 0.5rem;
   width: 100%;
-  margin-bottom: 0.5rem; /* Add some space below buttons */
+  margin-bottom: 0.8rem;
 }
 
 #btn-container button {
   flex-grow: 1;
-  padding: 0.4rem; /* Smaller padding for mode buttons */
-  font-size: 0.6rem; /* Smaller font size */
+  padding: 0.6rem;
+  font-size: 0.8rem;
+  background-color: #e9ecef;
+  color: #495057;
+  border: 1px solid #ced4da;
 }
 
-/* Output text styling */
-#output {
-  margin-top: 0.8rem; /* Smaller margin */
-  font-weight: bold;
-  font-size: 0.65rem; /* Smaller font size */
-  white-space: pre-wrap;
-  color: #333;
-  background: #f3f4f6;
-  border-radius: 6px; /* Slightly smaller border-radius */
-  padding: 0.8rem; /* Smaller padding */
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
+#btn-container button.active {
+  background-color: #007BFF;
+  color: white;
+  border-color: #007BFF;
 }
 
 /* Error message styling */
 .error-message {
   color: #d93025;
-  border-radius: 6px; /* Slightly smaller border-radius */
   font-weight: 500;
   text-align: center;
   width: 100%;
   box-sizing: border-box;
-  font-size: 0.65rem; /* Smaller font size */
-  padding: 0.4rem; /* Add padding to error message */
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
 }
 
-.utm-inputs {
-  display: flex;
-  flex-wrap: nowrap; /* Explicitly prevent wrapping */
-  gap: 0.4rem; /* Smaller gap */
-  width: 100%;
-  margin-top: 0.4rem; /* Smaller margin */
-}
-
+.utm-inputs,
 .gms-inputs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem; /* Smaller gap */
+  flex-direction: column;
+  gap: 0.6rem;
   width: 100%;
-  margin-top: 0.4rem; /* Smaller margin */
 }
 
 .gms-row {
   display: flex;
-  align-items: center;
-  gap: 0.2rem; /* Even smaller gap for GMS row items */
+  flex-direction: column;
+  gap: 0.6rem;
   width: 100%;
-  flex-wrap: wrap; /* Ensure GMS row wraps */
 }
 
 .gms-row span {
-  font-size: 0.7rem; /* Smaller font size */
+  font-size: 0.9rem;
   color: #333;
   white-space: nowrap;
+  margin-bottom: -0.4rem;
 }
 
 .utm-inputs input,
-.utm-inputs select {
-  flex: 1; /* Make them share space equally */
-  min-width: 0; /* Allow them to shrink to minimum content size */
-  padding: 0.4rem; /* Smaller padding */
-  font-size: 0.7rem; /* Smaller font size */
-  border: 1px solid #ddd;
-  border-radius: 6px; /* Slightly smaller border-radius */
-  box-sizing: border-box;
-}
-
+.utm-inputs select,
 .gms-inputs input,
 .gms-inputs select {
-  flex: 1;
-  min-width: 60px; /* Allow inputs to shrink more */
-  padding: 0.4rem; /* Smaller padding */
-  font-size: 0.7rem; /* Smaller font size */
-  border: 1px solid #ddd;
-  border-radius: 6px; /* Slightly smaller border-radius */
-  box-sizing: border-box;
+  font-size: 0.9rem;
+  padding: 0.6rem;
 }
 
-.gms-inputs select {
-  flex: 0.5;
-  min-width: 50px; /* Allow selects to shrink more */
-}
-
-/* Adjust input container for the new layout */
-#input-container {
-  flex-direction: column; /* Stack inputs and button vertically */
-  gap: 0.6rem; /* Smaller gap */
-}
-
-#input-container button {
-  width: 100%; /* Make convert button full width */
-  margin-top: 0.4rem; /* Smaller margin */
-}
-
-/* Active button style */
-#btn-container button.active {
-  background-color: #0056b3; /* Darker blue for active button */
-  color: white;
-}
-
-/* Media queries for even smaller screens if needed */
-@media (max-width: 480px) {
-  #converter {
-    padding: 0.3rem;
-  }
-
-  h1 {
-    font-size: 0.6rem;
-  }
-
-  #converter input,
-  #converter button,
-  .utm-inputs select,
-  .gms-inputs select,
-  #output,
-  .error-message {
-    font-size: 0.6rem;
-    padding: 0.3rem;
-  }
-
+/* Media queries for responsiveness */
+@media (min-width: 480px) {
   .utm-inputs {
-    flex-wrap: wrap; /* Allow UTM inputs to wrap on very small screens */
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
-  .utm-inputs input,
-  .utm-inputs select {
-    flex: 1 1 45%; /* Allow UTM inputs to wrap on very small screens */
+  .gms-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .gms-row span {
+    margin-bottom: 0;
   }
 
   .gms-inputs input,
   .gms-inputs select {
-    min-width: unset; /* Allow inputs to shrink to content size */
-    flex: 1 1 auto; /* Allow items to grow and shrink, but wrap */
+    flex: 1;
+    min-width: 60px;
   }
 
-  .gms-row {
-    flex-direction: column; /* Stack GMS items vertically on very small screens */
-    align-items: flex-start;
+  .gms-inputs select {
+    flex: 0.5;
+    min-width: 50px;
   }
 }

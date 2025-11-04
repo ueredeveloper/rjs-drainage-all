@@ -19,7 +19,7 @@ import Popover from '@mui/material/Popover';
  * @param {SpeedDialConverterProps} props - As propriedades do componente.
  * @returns {React.ReactElement} O componente React renderizado.
  */
-export default function SpeedDialConverter({ setCoords }) {
+export default function SpeedDialConverter({ setCoords, width }) {
     /**
      * O elemento de âncora para o Popover.
      * @type {[HTMLElement | null, React.Dispatch<React.SetStateAction<HTMLElement | null>>]}
@@ -71,8 +71,19 @@ export default function SpeedDialConverter({ setCoords }) {
                 anchorEl={anchorEl}
                 onClose={handleClose}
                 anchorOrigin={{
-                    vertical: 'bottom',
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
                     horizontal: 'left',
+                }}
+
+                PaperProps={{
+                    sx: {
+                        mt:8,
+                        width: width,
+                    },
                 }}
             >
                 <Box sx={{ p: 2 }}>

@@ -2,7 +2,7 @@
  * Componente para entrada e manipulação de coordenadas.
  * @returns {JSX.Element} O elemento React que representa o componente.
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import { CircularProgress, Fade, FormControl, FormLabel, TextField, Tooltip } from "@mui/material";
@@ -43,6 +43,27 @@ function SearchCoords({ tabNumber }) {
     surfaceAnalyse, setSurfaceAnalyse,
     overlaysFetched, setOverlaysFetched } = useData(); // Hook para estado global
   const [position, setPosition] = useState(marker); // Estado local da posição (lat/lng)
+  const paperRef = useRef(null);
+  const [paperWidth, setPaperWidth] = useState(0);
+
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        setPaperWidth(entry.contentRect.width);
+      }
+    });
+
+    if (paperRef.current) {
+      resizeObserver.observe(paperRef.current);
+    }
+
+    return () => {
+      if (paperRef.current) {
+        resizeObserver.unobserve(paperRef.current);
+      }
+    };
+  }, []);
 
   // Estados para o controle do alerta
   const [openAlert, setOpenAlert] = useState(false); // Visibilidade do alerta
@@ -409,7 +430,7 @@ function SearchCoords({ tabNumber }) {
 
       <FormControl style={{ display: "flex", flexDirection: "column" }}>
         <FormLabel sx={{ my: 1 }}>Coordenadas</FormLabel>
-        <Paper elevation={3} sx={{ margin: 0 }}>
+        <Paper ref={paperRef} elevation={3} sx={{ margin: 0 }}>
           <Box sx={{ display: "flex", flexFlow: "row wrap" }}>
             {/* Campos de entrada de latitude e longitude */}
             <Box sx={{ display: "flex", flex: 4, flexDirection: "row" }}>
@@ -482,7 +503,7 @@ function SearchCoords({ tabNumber }) {
                 </IconButton>
                                  
               </Tooltip>
-               <SpeedDialConverter setCoords={setCoordinate}/>
+               <SpeedDialConverter setCoords={setCoordinate} width={paperWidth} />
 
             </Box>
 
