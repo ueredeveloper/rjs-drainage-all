@@ -1,10 +1,10 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
-import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import Converter from './Converter.js';
 import Tooltip from '@mui/material/Tooltip';
 import Popover from '@mui/material/Popover';
+import ArchitectureIcon from '@mui/icons-material/Architecture';
 
 /**
  * @typedef {object} SpeedDialConverterProps
@@ -62,7 +62,7 @@ export default function SpeedDialConverter({ setCoords, width }) {
                     size="large"
                     onClick={handleClick}
                 >
-                    <TravelExploreIcon />
+                    <ArchitectureIcon/>
                 </IconButton>
             </Tooltip>
             <Popover
@@ -82,7 +82,7 @@ export default function SpeedDialConverter({ setCoords, width }) {
                 PaperProps={{
                     sx: {
                         mt:8,
-                        width: width,
+                        width: width / 2.8,
                     },
                 }}
             >

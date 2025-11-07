@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import './Converter.css';
 import { UtmToDec, GmsToDec } from './ConverterUtils.js';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import { Alert, TextField } from "@mui/material";
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+
 
 /**
  * @typedef {object} ConverterProps
@@ -110,7 +118,7 @@ const Converter = ({ setMapCoords }) => {
 
         // Validação básica para GMS
         if (!latDeg || !lonDeg) {
-            throw new Error("Pelo menos os graus de latitude e longitude devem ser preenchidos.");
+          throw new Error("Pelo menos os graus de latitude e longitude devem ser preenchidos.");
         }
 
         // Conversão GMS para Decimal. Valores vazios são tratados como 0.
@@ -153,71 +161,130 @@ const Converter = ({ setMapCoords }) => {
   // --------------------------------------------------
 
   return (
-    <div id="converter">
-      <h1>WGS84</h1>
 
-      {/* Container de botões para alternar o modo */}
-      <div id="btn-container">
-        <button
-          onClick={() => switchMode('utm')}
-          className={mode === 'utm' ? 'active' : ''}
-        >
-          UTM → Decimal
-        </button>
-        <button
-          onClick={() => switchMode('gms')}
-          className={mode === 'gms' ? 'active' : ''}
-        >
-          GMS → Decimal
-        </button>
-      </div>
 
-      {/* Container principal dos campos de entrada */}
-      <div id="input-container">
-        {mode === 'utm' ? (
-          /* Inputs para o modo UTM */
-          <div className="utm-inputs">
-            <input name="easting" placeholder="Leste" value={utmInputs.easting} onChange={handleUtmChange} type="number" />
-            <input name="northing" placeholder="Norte" value={utmInputs.northing} onChange={handleUtmChange} type="number" />
-            <input name="zone" placeholder="Zona" value={utmInputs.zone} onChange={handleUtmChange} type="number" />
-            <select name="hemisphere" value={utmInputs.hemisphere} onChange={handleUtmChange}>
-              <option value="N">N</option>
-              <option value="S">S</option>
-            </select>
-          </div>
-        ) : (
-          /* Inputs para o modo GMS */
-          <div className="gms-inputs">
-            {/* Linha de Latitude */}
-            <div className="gms-row">
-              <span>Lat:</span>
-              <input name="latDeg" placeholder="Graus" value={gmsInputs.latDeg} onChange={handleGmsChange} type="number"/>
-              <input name="latMin" placeholder="Minutos" value={gmsInputs.latMin} onChange={handleGmsChange} type="number" />
-              <input name="latSec" placeholder="Seg" value={gmsInputs.latSec} onChange={handleGmsChange} type="number" />
-              <select name="latDir" value={gmsInputs.latDir} onChange={handleGmsChange}>
-                <option value="N">N</option>
-                <option value="S">S</option>
-              </select>
-            </div>
-            {/* Linha de Longitude */}
-            <div className="gms-row">
-              <span>Lon:</span>
-              <input name="lonDeg" placeholder="Graus" value={gmsInputs.lonDeg} onChange={handleGmsChange} type="number" />
-              <input name="lonMin" placeholder="Min" value={gmsInputs.lonMin} onChange={handleGmsChange} type="number" />
-              <input name="lonSec" placeholder="Seg" value={gmsInputs.lonSec} onChange={handleGmsChange} type="number" />
-              <select name="lonDir" value={gmsInputs.lonDir} onChange={handleGmsChange}>
-                <option value="L">L</option>
-                <option value="O">O</option>
-              </select>
-            </div>
-          </div>
-        )}
-        <button onClick={handleConvert}>Converter</button>
-      </div>
+    {/* Container de botões para alternar o modo */ },
+
+    <Box component="section">
+
+      {/*box de seleção de conversor*/}
+      <Box component="section" sx={{textAlign: 'center'}}>
+
+        <ButtonGroup variant="contained" aria-label="Basic button group">
+          <Button onClick={() => switchMode('utm')} className={mode === 'utm' ? 'active' : ''}>UTM → Decimal</Button>
+          <Button onClick={() => switchMode('gms')} className={mode === 'gms' ? 'active' : ''}>GMS → Decimal</Button>
+        </ButtonGroup>
+
+      </Box>
+
+      {mode === 'utm' ? (
+        /* Inputs para o modo UTM */
+        <Box component="section" className="container" >
+          <TextField className="textfield-clean" name="easting" label="Leste" variant="outlined" value={utmInputs.easting} onChange={handleUtmChange} type="number" />
+          <TextField className="textfield-clean" name="northing" label="Norte" variant="outlined" value={utmInputs.northing} onChange={handleUtmChange} type="number" />
+          <TextField className="textfield-clean" name="zone" label="Zona" variant="outlined"
+            type="number"
+            value={utmInputs.zone}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              if (value >= 1 && value <= 60) handleUtmChange(e);
+            }}
+            inputProps={{
+              min: 1,
+              max: 60,
+              step: 1,
+            }}
+            sx={{
+              width: 100,
+              '& input': { textAlign: 'center' },
+            }}
+          />
+
+          <Select
+            name="hemisphere"
+            className="input"
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            value={utmInputs.hemisphere}
+            label="Age"
+            onChange={handleUtmChange}
+          >
+            <MenuItem value="N">N</MenuItem>
+            <MenuItem value="S">S</MenuItem>
+          </Select>
+
+        </Box>
+      ) : (
+        /* Inputs para o modo GMS */
+        {/* Linha de Latitude */ },
+        <Box component="section">
+
+          <Box component="section" className="container">
+            <Typography variant="body1" component="span">Lat:</Typography>
+            <TextField className="textfield-clean" name="latDeg" label="Graus" variant="outlined" value={gmsInputs.latDeg} onChange={handleGmsChange} type="number" />
+            <TextField className="textfield-clean" name="latMin" label="Minutos" variant="outlined" value={gmsInputs.latMin} onChange={handleGmsChange} type="number" />
+            <TextField className="textfield-clean" name="latSec" label="Segundos" variant="outlined" value={gmsInputs.latSec} onChange={handleGmsChange} type="number" />
+            <Select
+              className="input"
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              name="latDir"
+              value={gmsInputs.latDir}
+              onChange={handleGmsChange}
+            >
+              <MenuItem value="N">N</MenuItem>
+              <MenuItem value="S">S</MenuItem>
+            </Select>
+
+          </Box>
+
+          {/* Linha de Longitude */}
+
+          <Box component="section" className="container">
+            <Typography variant="body1" component="span">Lon:</Typography>
+            <TextField className="textfield-clean" name="lonDeg" label="Graus" variant="outlined" value={gmsInputs.lonDeg} onChange={handleGmsChange} type="number" />
+            <TextField className="textfield-clean" name="lonMin" label="Minutos" variant="outlined" value={gmsInputs.lonMin} onChange={handleGmsChange} type="number" />
+            <TextField className="textfield-clean" name="lonSec" label="Segundos" variant="outlined" value={gmsInputs.lonSec} onChange={handleGmsChange} type="number" />
+
+            <Select
+              className="input"
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              name="lonDir"
+              value={gmsInputs.lonDir}
+              onChange={handleGmsChange}
+            >
+              <MenuItem value="L">L</MenuItem>
+              <MenuItem value="O">O</MenuItem>
+            </Select>
+
+          </Box>
+
+        </Box>
+
+      )}
+
+      {/* Botão centralizado */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+        <Button variant="contained" onClick={handleConvert}>
+          Converter
+        </Button>
+      </Box>
+
+      <Typography sx={{ textAlign: 'right' }}>
+        WGS84
+      </Typography>
 
       {/* Mensagens de feedback */}
-      {error && <p className="error-message">{error}</p>}
-    </div>
+
+      {error && (
+        <Alert severity="error" variant="filled">
+          {error}
+        </Alert>
+      )}
+
+    </Box>
+
   );
 };
 
