@@ -61,6 +61,7 @@ export default function SpeedDialConverter({ setCoords, width }) {
                     aria-label="converter"
                     size="large"
                     onClick={handleClick}
+                    sx={{ mr: 1.5 }}
                 >
                     <ArchitectureIcon/>
                 </IconButton>
@@ -86,7 +87,7 @@ export default function SpeedDialConverter({ setCoords, width }) {
                     },
                 }}
             >
-                <Box sx={{ p: 2 }}>
+                <Box sx={{ p: 2}}>
                     <Converter setMapCoords={setCoords} />
                 </Box>
             </Popover>

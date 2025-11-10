@@ -169,10 +169,10 @@ const Converter = ({ setMapCoords }) => {
 
       {/*box de seleção de conversor*/}
       <Box component="section" sx={{textAlign: 'center'}}>
-
-        <ButtonGroup variant="contained" aria-label="Basic button group">
-          <Button onClick={() => switchMode('utm')} className={mode === 'utm' ? 'active' : ''}>UTM → Decimal</Button>
-          <Button onClick={() => switchMode('gms')} className={mode === 'gms' ? 'active' : ''}>GMS → Decimal</Button>
+ 
+        <ButtonGroup variant="contained" aria-label="Basic button group" sx={{gap: 1, boxShadow:'none'}} >
+          <Button onClick={() => switchMode('utm')} sx={{ borderRadius: 2 }} className={mode === 'utm' ? 'active' : ''}>UTM → Decimal</Button>
+          <Button onClick={() => switchMode('gms')} sx={{ borderRadius: 2 }} className={mode === 'gms' ? 'active' : ''}>GMS → Decimal</Button>
         </ButtonGroup>
 
       </Box>
@@ -265,7 +265,7 @@ const Converter = ({ setMapCoords }) => {
       )}
 
       {/* Botão centralizado */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <Button variant="contained" onClick={handleConvert}>
           Converter
         </Button>

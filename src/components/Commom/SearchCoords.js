@@ -48,22 +48,23 @@ function SearchCoords({ tabNumber }) {
 
 
   useEffect(() => {
+    const node = paperRef.current; // snapshot do valor atual
+
+    if (!node) return;
+
     const resizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         setPaperWidth(entry.contentRect.width);
       }
     });
 
-    if (paperRef.current) {
-      resizeObserver.observe(paperRef.current);
-    }
+    resizeObserver.observe(node);
 
     return () => {
-      if (paperRef.current) {
-        resizeObserver.unobserve(paperRef.current);
-      }
+      resizeObserver.unobserve(node); // garante que usa o mesmo nó
     };
   }, []);
+
 
   // Estados para o controle do alerta
   const [openAlert, setOpenAlert] = useState(false); // Visibilidade do alerta
@@ -501,13 +502,11 @@ function SearchCoords({ tabNumber }) {
                   onClick={handleCopy}>
                   <ContentCopyIcon />
                 </IconButton>
-                                 
+
               </Tooltip>
-               <SpeedDialConverter setCoords={setCoordinate} width={paperWidth} />
+              <SpeedDialConverter setCoords={setCoordinate} width={paperWidth} />
 
             </Box>
-
-
 
           </Box>
         </Paper>
