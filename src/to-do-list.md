@@ -171,3 +171,11 @@ adicionar um conversor de coordenadas no padão wgs84, para conversão de utm ->
 - [x] Ajustar os campos para aceitar graus, minutos, segundos e direção
 - [x] Garantir que a coneversão esteja correta
 - [x] ao converter o output será o propio input de coordenadas decimal
+
+-----------------------------------------------------------------------------------------------------------------------
+📅 **Data:** 11 de novembro de 2025  
+👨‍💻 **Responsável:** [Luan Carvalho]  
+
+## ✅ Objetivo  
+atualizar o conversor de coordenadas e padroniza-lo de acordo com o mui. 
+-----------------------------------------------------------------------------------------------------------------------

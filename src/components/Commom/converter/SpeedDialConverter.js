@@ -61,7 +61,7 @@ export default function SpeedDialConverter({ setCoords, width }) {
                     aria-label="converter"
                     size="large"
                     onClick={handleClick}
-                    sx={{ mr: 1.5 }}
+                    sx={{ mr: 1 }}
                 >
                     <ArchitectureIcon/>
                 </IconButton>
@@ -83,7 +83,7 @@ export default function SpeedDialConverter({ setCoords, width }) {
                 PaperProps={{
                     sx: {
                         mt:8,
-                        width: width / 2.8,
+                        width: width / 1.5,
                     },
                 }}
             >

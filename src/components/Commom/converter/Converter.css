@@ -48,16 +48,7 @@
    ============================ */
 .input {
   background-color: transparent !important;
-  color: #fff;
   text-align: center;
-}
-
-/* Remove bordas e contornos do Select MUI */
-.input .MuiOutlinedInput-notchedOutline {
-  border: none !important;
-}
-
-.input:hover .MuiOutlinedInput-notchedOutline,
-.input.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border: none !important;
+  height: 5vh;
+  width: 5.2vw;
 }
