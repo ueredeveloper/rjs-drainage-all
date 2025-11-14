@@ -14,9 +14,9 @@ import TableRow from '@mui/material/TableRow';
 import FormLabel from '@mui/material/FormLabel';
 /* icons */
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
-import {ElemListFlow} from '../Connection/elem-list-flow';
+import { ElemListFlow } from '../Connection/elem-list-flow';
 
-import {ElemSearchUsers} from '../Connection/elem-search-users';
+import { ElemSearchUsers } from '../Connection/elem-search-users';
 
 import './elem-grant.css';
 import { Tooltip } from '@mui/material';
@@ -41,13 +41,7 @@ function ElemGrant() {
     const handleClose = () => setOpen(false);
 
     //"demandas": [{ "dt_demandas": { "demanda": [] } }]
-    const [search, setSearch] = useState({
-        us_nome: "",
-        us_cpf_cnpj: "",
-        doc_end: 0,
-        doc_sei: "",
-        proc_sei: "",
-    })
+    const [keyword, setKeyword] = useState('');
 
     const [users, setUsers] = useState([
         {
@@ -111,7 +105,7 @@ function ElemGrant() {
                 <Box sx={style}>
 
                     {/** Pesquisar usuários */}
-                    {<ElemSearchUsers search={search} setSearch={setSearch} setUsers={setUsers} />}
+                    {<ElemSearchUsers keyword={keyword} setKeyword={setKeyword} users={users}  setUsers={setUsers} />}
                     {/* Listar usuários */}
                     <Box>
                         <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Usuário</FormLabel>
@@ -131,8 +125,8 @@ function ElemGrant() {
                                             <TableCell>Endereço</TableCell></TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        
-                                        {users.length>0 && (users.map((user, i) => (
+
+                                        {users.length > 0 && (users.map((user, i) => (
                                             <ElemShowUser
                                                 key={'_' + i}
                                                 user={user}

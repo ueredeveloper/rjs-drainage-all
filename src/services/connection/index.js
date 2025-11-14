@@ -11,6 +11,8 @@ const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.
   */
 async function getUsers(param) {
 
+  console.log('fetch getUsers ', param)
+
   let response = await fetch(url + `/users/search-users-with-doc-by-param?param=${param}`, {
     method: 'GET',
     headers: {

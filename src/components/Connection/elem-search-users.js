@@ -9,37 +9,31 @@ import { getUsers } from '../../services/connection';
 import { blue } from '@mui/material/colors';
 import { CircularProgress, Fade } from '@mui/material';
 
-function ElemSearchUsers({ search, setSearch, setUsers }) {
+function ElemSearchUsers({ keyword, setKeyword, setUsers }) {
 
   // mostrar barra de progresso ao clicar
   const [loading, setLoading] = useState(false);
 
   const handleUserChange = (event) => {
 
-    setSearch(prev => {
-      return {
-        ...prev,
-        [event.target.name]: event.target.value
-      }
-    });
+    let keyword = event.target.value;
+
+    setKeyword(keyword);
   };
 
   /**
   * Buscar pontos de outorga no banco de dados azure, utilizado para criar parecer e outros atos.
   * @param {string} us_nome Nome do usuário.
-  * @param {string} us_cpf_cnpj CPF ou CNPJ do usuário.
-  * @param {string} doc_sei Documento no sistema SEI.
-  * @param {string} prc_sei Processo.
+
   */
   async function searchUsers() {
-    setLoading((prevLoading) => !prevLoading);
 
-    let keyword = search.us_nome || search.us_cpf_cnpj || search.doc_sei || search.proc_sei;
+    setLoading((prevLoading) => !prevLoading);
 
     await getUsers(keyword)
       .then((users) => {
 
-        if (users.length>0){
+        if (users.length > 0) {
           let _users = users?.map(user => {
             user.dt_demanda = {
               "demandas": [],
@@ -49,7 +43,7 @@ function ElemSearchUsers({ search, setSearch, setUsers }) {
           })
           setUsers(_users)
         }
-        
+
       }
       ).then(() =>
         setLoading(false));
@@ -60,44 +54,21 @@ function ElemSearchUsers({ search, setSearch, setUsers }) {
       <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Pesquisa</FormLabel>
       <Box sx={{ display: 'flex', flexDirection: 'flex-row', justifyContent: 'space-between', marginTop: 2, marginBottom: 2 }}>
         {/* Pesquisa de Usários*/}
-        <Box sx={{ display: 'flex', flexDirection: 'flex-row' }}>
-          <Box sx={{ marginLeft: '1rem', marginRight: '1rem' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'flex-row', width: '50%', justifyContent: 'center', alignItems: 'center' }}>
+          <Box sx={{ marginLeft: '1rem', marginRight: '1rem', width: '100%' }}>
             <TextField id="us_nome"
               color="secondary"
               name="us_nome"
-              value={search.us_nome}
-              label="Usuário"
+              value={keyword}
+              label="Usuário, Cpf/Cnpj, Documento ou Processo"
               variant="standard"
-              onChange={handleUserChange} />
+              onChange={handleUserChange}
+              sx={{ width: '100%' }}
+            />
+
           </Box>
-          <Box sx={{ marginLeft: '1rem', marginRight: '1rem' }}>
-            <TextField id="us_cpf_cnpj"
-              color="secondary"
-              name="us_cpf_cnpj"
-              value={search.us_cpf_cnpj}
-              label="CPF/CNPJ"
-              variant="standard"
-              onChange={handleUserChange} />
-          </Box>
-          <Box sx={{ marginLeft: '1rem', marginRight: '1rem' }}>
-            <TextField id="doc_sei"
-              color="secondary"
-              name="doc_sei"
-              value={search.doc_sei}
-              label="Documento"
-              variant="standard"
-              onChange={handleUserChange} />
-          </Box>
-          <Box sx={{ marginLeft: '1rem', marginRight: '1rem' }}>
-            <TextField id="proc_sei"
-              color="secondary"
-              name="proc_sei"
-              value={search.proc_sei}
-              label="Processo"
-              variant="standard"
-              onChange={handleUserChange} />
-          </Box>
-          <Box sx={{ display: 'flex' }}>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', marginRight: '1rem' }}>
             {loading ?
               <Fade
                 sx={{ alignSelf: 'center', color: "secondary.main", backgroundColor: blue }}
