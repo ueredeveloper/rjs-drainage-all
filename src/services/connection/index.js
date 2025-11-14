@@ -1,4 +1,5 @@
-const url = 'https://j-sb-drainage-ueredeveloper.replit.app';
+
+const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
 /**
 * Buscar a shape solicitada no servidor
@@ -8,11 +9,9 @@ const url = 'https://j-sb-drainage-ueredeveloper.replit.app';
 * @param proc_sei Número do processo.
 *
   */
-async function getUsers(keyword) {
+async function getUsers(param) {
 
-  console.log('fetch get Users')
-
-  let response = await fetch(url + `/user/list-by-keyword?keyword=${keyword}`, {
+  let response = await fetch(url + `/users/search-users-with-doc-by-param?param=${param}`, {
     method: 'GET',
     headers: {
       Accept: 'application/JSON',
@@ -20,6 +19,8 @@ async function getUsers(keyword) {
     }
 
   }).then(res => {
+
+    console.log(res.status, res)
     return res.json();
   })
 
@@ -29,11 +30,9 @@ async function getUsers(keyword) {
 /** 
 * Buscar as demandas de vazões de acordo com o usuário solicitado.
 */
-async function findDemands(end_id) {
+async function findDemands(addId) {
 
-  console.log('fetch find demands')
-
-  let response = await fetch(url + `/interference/search-by-end-id?endId=${end_id}`, {
+  let response = await fetch(url + `/interferences/search-interferences-by-address-id?addId=${addId}`, {
     method: 'GET',
     headers: {
       Accept: 'application/JSON',
