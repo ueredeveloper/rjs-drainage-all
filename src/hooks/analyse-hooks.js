@@ -25,15 +25,15 @@ const DataContext = createContext();
 export const DataProvider = ({ children }) => {
   // Inicializa o estado 'selectedsCharts' com valores padrão
   const [selectedsCharts, setSelectedsCharts] = useState(initialsStates.selectedsCharts);
-  // inicialização do mapa
+  // inicialização do map
   const [map, setMap] = useState();
 
   // Estado para o marcador inicial
   const [marker, setMarker] = useState(initialsStates.marker);
-
+  
   // Estado para sobreposições (polígonos, círculos etc).
   const [overlays, setOverlays] = useState(initialsStates.overlays);
-
+  
   // Estado para o sistema fraturado e poroso
   const [subsystem, setSubsystem] = useState(initialsStates.subsystem);
 
