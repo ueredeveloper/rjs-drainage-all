@@ -1,6 +1,10 @@
+import packageJson from '../package.json';
+
+import { Link, Typography } from '@mui/material';
 import './App.css';
 import MenuAppBar from './components/Commom/MenuAppBar';
 import Analyse from './components/MainFlow/Analyse';
+import Footer from './Footer';
 
 /**
  * Componente principal da aplicação.
@@ -14,6 +18,7 @@ function App() {
     <div className="App">
       <MenuAppBar />
       <Analyse />
+      <Footer/>
     </div>
   );
 }

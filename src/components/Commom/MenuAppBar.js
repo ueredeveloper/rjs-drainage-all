@@ -2,6 +2,8 @@
  * @description Este módulo contém o componente de barra de navegação do aplicativo.
  */
 
+
+
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -31,9 +33,10 @@ function MenuAppBar() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Sistema de Apoio à Decisão - SAD/DF
+            SAD/DF - Sistema de Apoio à Decisão
           </Typography>
           <Button color="inherit">Login</Button>
+          
         </Toolbar>
       </AppBar>
     </Box>
