@@ -1,7 +1,6 @@
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
-
 async function findAllPointsInASubsystem(tp_id, lat, lng) {
 
   try {
@@ -68,8 +67,6 @@ async function findAllPointsInRectangle(nex, ney, swx, swy) {
  */
 async function findAllPointsInPolygon(polygon) {
 
-  console.log('findAllPointsInPolygon')
-
   try {
     const response = await fetch(url + '/find-points-inside-polygon', {
       method: 'POST',
@@ -99,9 +96,6 @@ async function findAllPointsInPolygon(polygon) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findAllPointsInCircle(circle) {
-
-    console.log('findAllPointsInCircle')
-
 
   try {
     const response = await fetch(url + '/find-points-inside-circle', {
@@ -138,8 +132,6 @@ async function findAllPointsInCircle(circle) {
 
 async function findPointsInASystem(tp_id, lat, lng) {
 
-    console.log('findPointsInASystem')
-
   //  Tipo de poço na forma antiga 1 - Manual e 2 - Tubular
   //      opções neste sistema
   //          1 - Manual e (antigo 1)
@@ -147,9 +139,7 @@ async function findPointsInASystem(tp_id, lat, lng) {
   //          3 - Tubular Profundo (antito 2)
   let _tp_id = (tp_id === 1 || tp_id === 2) ? 1 : 2;
 
-  let url = 'https://njs-drainage-ueredeveloper.replit.app';
-
-  let response = await fetch(url + `/findPointsInASystem?tp_id=${_tp_id}&lat=${lat}&lng=${lng}`, {
+  let response = await fetch(url + `/find-points-inside-subsystem?tp_id=${_tp_id}&lat=${lat}&lng=${lng}`, {
     method: 'GET',
     headers: {
       Accept: 'application/JSON',
@@ -159,6 +149,7 @@ async function findPointsInASystem(tp_id, lat, lng) {
   }).then(res => {
     return res.json();
   })
+
 
   return response;
 }

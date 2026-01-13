@@ -1,12 +1,10 @@
 
-const njs_drainage_url = 'https://njs-drainage-ueredeveloper.replit.app'
+const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
 
-async function findByColumn(searchQuery) {
+async function findByColumn(keyword) {
 
-  console.log('fetch find by column')
-
-  const urlWithParams = `${njs_drainage_url}/findAllPoints?searchQuery=${searchQuery}`;
+  const urlWithParams = `${url}/find-points-by-keyword?keyword=${keyword}`;
 
   try {
     const response = await fetch(urlWithParams, {

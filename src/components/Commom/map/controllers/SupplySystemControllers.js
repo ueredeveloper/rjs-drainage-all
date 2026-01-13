@@ -49,6 +49,8 @@ export default function SupplySystemControllers({ group, name, alias, checked, m
                     <MenuItem value="1000">1000</MenuItem>
                     <MenuItem value="3000">3000</MenuItem>
                     <MenuItem value="5000">5000</MenuItem>
+                    <MenuItem value="10000">10000</MenuItem>
+                    <MenuItem value="20000">20000</MenuItem>
                 </Select>
             </FormControl>
         </Box>

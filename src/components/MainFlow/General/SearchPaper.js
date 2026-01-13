@@ -13,6 +13,7 @@ import { useData } from "../../../hooks/analyse-hooks";
 /**
  * 
  * Buscador de outorgas por coordenadas
+ * Renomear para: SearchUsersByKeyword
  * @component
  * @requires findByColumn
  * @requires useData

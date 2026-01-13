@@ -10,8 +10,6 @@ const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.
   */
 async function fetchShape(shape_name) {
 
-console.log('shape by name', shape_name)
-
   let response = await fetch(url + `/find-shape-by-name?shape_name=${shape_name}`, {
     method: 'GET',
     headers: {
@@ -37,9 +35,6 @@ console.log('shape by name', shape_name)
  * @throws {Error} Se ocorrer algum erro durante a busca.
  */
 async function fetchGrantsInsideShape(shapeName, shapeCode) {
-
-  
-console.log('fetchGrantsInsideShape')
 
   try {
     const response = await fetch(url + `/find_points-inside-shape?shapeName=${shapeName}&shapeCode=${shapeCode}`, {
@@ -67,9 +62,6 @@ console.log('fetchGrantsInsideShape')
  * Busca as ottobacias e converte para o formato gmaps api.
  */
 async function fetchOttoBasins(lat, lng) {
-
-
-  console.log('fetchOttoBasins')
 
   let params = new URLSearchParams({
     lat: lat,
@@ -118,8 +110,6 @@ async function fetchOttoBasins(lat, lng) {
  */
 async function fetchMarkersByUH(uh_codigo) {
 
-console.log('fetchMarkersByUH')
-
   let points = await fetch(`${url}/find-surface-pointos-inside-uh?uh_codigo=${uh_codigo}`,
     {
       method: 'GET',
@@ -144,12 +134,7 @@ console.log('fetchMarkersByUH')
  */
 async function fetchRiversByCoordinates(lat, lng) {
 
-  console.log('fetchRiversByCoordinates')
-
-  let url = 'https://njs-drainage-ueredeveloper.replit.app';
-
-
-  let response = await fetch(url + `/rivers/filterRiversByCoordinates?lat=${lat}&lng=${lng}`, {
+  let response = await fetch(url + `/rivers/filter-rivers-by-lat-lng?lat=${lat}&lng=${lng}`, {
     method: 'GET',
     headers: {
       Accept: 'application/JSON',

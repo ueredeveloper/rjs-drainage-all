@@ -468,8 +468,6 @@ const searchHydrograficUnit = async (fetchShape, overlaysFetched, setOverlaysFet
 
     // setOverlaysFetched(prev => [...prev, { name: 'unidades_hidrograficas', geometry: hydrographicBasins }]);
 
-    console.log('tools setOverlays fethced unidades hidro')
-
     setOverlaysFetched((prev) => {
       const newSet = new Set(prev)
       newSet.add({ name: 'unidades_hidrograficas', geometry: hydrographicBasins })
@@ -507,8 +505,7 @@ const convertM2ToKm2 = (areaM2) => {
 }
 
 const getPolygonEsriCentroid = (polygonEsri) => {
-
-  console.log('getPolygonEsriCentroid', polygonEsri)  
+ 
   // Convert Esri "rings" → GeoJSON polygon
   const polygonGeoJSON = {
     type: "Feature",

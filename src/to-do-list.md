@@ -151,4 +151,12 @@ pesquisado pelo input. Está pesquisando, clicando, mas não está aparecendo no
 - [] Verificar polilinhas das ottobacias, se estão ficando mais largas ao dar o zoom
 
 📅 **Data:** 06 de Outubro de 2025 
-- [] Mover o botão de camadas mais para a esquerda. Está atrapalhando o botão do streetview. 
+- [X] Mover o botão de camadas mais para a esquerda. Está atrapalhando o botão do streetview. 
+
+
+📅 **Data:** 04 de Dezembro de 2025 
+- [X] Aumentar o raio de busca do abastecimento da Caesb (10000 e 20000) - v1.26.1
+
+
+📅 **Data:** 09 de Janeiro de 2026
+- [] Há três endpoints finais para migrar para o azure.

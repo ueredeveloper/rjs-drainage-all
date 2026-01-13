@@ -134,6 +134,10 @@ function SearchCoords({ tabNumber }) {
 
         let hidrogeoInfo = markers._hg_info;
 
+        if (hidrogeoInfo) {
+          
+       
+
         // Cria um primeiro marcador com dados vazios, pois não foi buscado usuário específico
         let _markers = [
           {
@@ -191,6 +195,8 @@ function SearchCoords({ tabNumber }) {
           ...prev,
           shapes: [...prev.shapes, shape]
         }));
+
+         }
 
       });
 
