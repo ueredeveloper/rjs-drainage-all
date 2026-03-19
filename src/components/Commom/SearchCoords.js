@@ -221,6 +221,8 @@ function SearchCoords({ tabNumber }) {
 
       let uhGrants = await fetchMarkersByUH(uhRotulo);
 
+      // É preciso converter as otto bacias para o formato do google maps para conseguir fazer a interseção com os marcadores de outorga, 
+      // pois eles estão em formato de pontos (lat, lng) e as otto bacias estão em formato de polígonos (geojson)
       let sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, map)
 
       let hydrographicBasin = await searchHydrograficUnit(fetchShape, overlaysFetched, setOverlaysFetched, uhRotulo)

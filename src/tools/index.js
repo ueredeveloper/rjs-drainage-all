@@ -360,6 +360,13 @@ const joinOttoBasins = (polygons) => {
   return unionGmapsPolygon;
 };
 
+/**
+ * 
+ * @param {*} polygons São os polígonos das OttoBacias em formato gmaps
+ * @param {*} markers Marcadores presentes na Unidade Hidrográfica.
+ * @param {*} map Caso precise mostrar no mapa, no momento não é utilizado.
+ * @returns 
+ */
 const getMarkersInsideOttoBasins = (polygons, markers, map) => {
 
   let result = {
@@ -393,7 +400,7 @@ const getMarkersInsideOttoBasins = (polygons, markers, map) => {
         new window.google.maps.LatLng(marker.int_latitude, marker.int_longitude),
         gmapsPolygon));
 
-
+    // Adição dos marcadores presentes polígono por polígno da OttoBacia.    
     if (surfaceMarkers.length > 0) {
       result.superficial.push(...surfaceMarkers)
     }
