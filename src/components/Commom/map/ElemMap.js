@@ -27,6 +27,7 @@ const locations = [
 
   { lat: -15.7331605, lng: -47.886387, descricao: "Park Deck Norte" },
   { lat: -15.7603064, lng: -48.0818471, descricao: "Floresta Nacional de Brasília" },
+  { lat: -15.794565, lng: -47.77701, descricao: "Panteão da Patria e ..." },
 ];
 
 

@@ -161,14 +161,15 @@ function analyzeAvailability(_info, _points) {
  * @param {*} x - O número a ser formatado.
  * @returns {string} - O número formatado com os pontos separadores.
  */
-function numberWithCommas(x) {
+function numberWithCommas(x, fixed) {
   // Converte para float e define a precisão de 4 casas decimais
-  x = parseFloat(x).toFixed(4);
+  x = parseFloat(x).toFixed(fixed || 4);
   // Divide o número em partes inteira e decimal
   var parts = x.toString().split(".");
   // Adiciona os pontos separadores de milhares à parte inteira
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   // Junta novamente as partes inteira e decimal com o ponto decimal
+
   return parts.join(",");
 }
 

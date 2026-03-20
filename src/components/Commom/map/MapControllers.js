@@ -174,6 +174,15 @@ function MapControllers({ checkboxes, setCheckboxes }) {
         setOverlays(initialsStates.overlays);
     };
 
+    const clearMap = () => {
+        setSubsystem(initialsStates.subsystem);
+        setHgAnalyse(initialsStates.subsystem.hg_analyse);
+        overlays.shapes.forEach(shape => {
+            if (shape.draw !== null) shape?.draw?.setMap(null)
+        });
+        setOverlays(initialsStates.overlays);
+    };
+
     useEffect(() => {
 
         // Converter objeto em array com os valores name, alias e checked
@@ -461,6 +470,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                 {/* Floating SpeedDial in the bottom-right */}
                 <Tooltip title={"Camadas do Mapa"}>
                     <SpeedDial
+                        id="speedial-open-close"
                         ariaLabel=""
                         sx={{
                             "& .MuiFab-primary": {
@@ -474,21 +484,31 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         open={openPanel}
 
                     >
-                        {/* A single action that toggles a small panel */}
-                        <SpeedDialAction
-                            id="speed-dial-action-clear"
-                            key="panel"
-                            icon={<LayersClearIcon className={openPanel ? "speeddial-swing" : ""} />}
-
-                            sx={{ marginRight: 0 }}
-                            tooltipTitle="Limpar o Mapa"
-                            onClick={() => clearCheckboxes()}
-                            
-
-
-                        />
+                        
                     </SpeedDial>
                 </Tooltip>
+
+                <SpeedDial
+                    id="speed-dial-clear"
+                    ariaLabel=""
+                    sx={{
+                        "& .MuiFab-primary": {
+                            width: 35, // Metade do tamanho padrão (56px)
+                            height: 35,
+                            minHeight: 35,
+                            mx: 0.5,
+                            
+                            backgroundColor: "white",
+                            color: "gray",
+                            "&:hover": {
+                                backgroundColor: "white",
+                            }
+                        }
+                    }}
+                    icon={<LayersClearIcon sx={{ fontSize: 20 }} className={openPanel ? "speeddial-swing" : ""} />}
+                    onClick={() => clearCheckboxes()}
+                    open={openPanel}
+                />
                 {/* The floating panel: use Fade for a smooth appear */}
                 <Fade in={openPanel} id="fade-map-controllers">
                     <Paper

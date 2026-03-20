@@ -14,7 +14,10 @@ import Box from "@mui/material/Box";
 import GeneralAnalysePanel from "./General/GeneralAnalysePanel";
 import SubterraneanAnalysePanel from "./Subterranean/SubterraneanAnalysePanel";
 import SurfaceAnalysePanel from "./Surface/SurfaceAnalysePanel";
+import GeneralBarragePanel from "./Barrage/GeneralBarragePanel";
+
 import { DataProvider } from "../../hooks/analyse-hooks";
+
 
 
 /**
@@ -97,6 +100,7 @@ function Analyse() {
                                 <Tab label="Geral" {...a11yProps(0)} />
                                 <Tab label="Subterrâneo" {...a11yProps(1)} />
                                 <Tab label="Superficial" {...a11yProps(2)} />
+                                <Tab label="Barragem" {...a11yProps(3)} />
                             </Tabs>
                         </Box>
                         <TabPanel value={tabValue} index={0}>
@@ -107,6 +111,9 @@ function Analyse() {
                         </TabPanel>
                         <TabPanel value={tabValue} index={2}>
                             <SurfaceAnalysePanel />
+                        </TabPanel>
+                        <TabPanel value={tabValue} index={3}>
+                            <GeneralBarragePanel />
                         </TabPanel>
                     </Box>
                 </Box>
