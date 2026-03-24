@@ -75,9 +75,10 @@ export default function SurfaceTabs() {
 
   return (
     <FormControl sx={{ display: "flex", flex: 1, m: 0 }}>
-      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}></FormLabel>
+      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 2 }}>Análise </FormLabel>
       <Box sx={{ width: '100%' }}>
 
+      
         <Box sx={{ p: 0 }}>
           {tabValue === "0" && <Box>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>

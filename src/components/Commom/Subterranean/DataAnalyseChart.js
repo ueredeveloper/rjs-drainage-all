@@ -190,13 +190,14 @@ const DataAnalyseChart = () => {
     setChecked(event.target.checked);
   };
 
+  //<Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, height: '17rem' }}>
+
     return (
         <FormControl sx={{ display: "flex", flex: 1 , m:0}}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
-            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1}}>
-                <div id="e-grants-sub-chart" style={{ margin: 10, width: '100%', height: '10rem' }}></div>
-                
-            </Paper>
+            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, height: '17rem', py: 5, px: 2 }}>
+                    <div id="e-grants-sub-chart" style={{ margin: 10, width: '100%', height: '10rem' }}></div>
+                  </Paper>
             <Tooltip title="Escala logarítimica">
                     <Switch
                         checked={checked}

@@ -179,7 +179,7 @@ const SurfaceChart = ({ analyse }) => {
     },
   };
 
-  return (<Line data={data} options={options} style={{ maxHeight: '185px' }} />);
+  return (<Line data={data} options={options} style={{marginBottom: 10, maxHeight: '185px' }} />);
 };
 
 export default SurfaceChart;
