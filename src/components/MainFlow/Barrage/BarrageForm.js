@@ -42,13 +42,13 @@ export default function BarrageForm() {
   const [highlightUpdatedRows, setHighlightUpdatedRows] = useState(false);
 
   const [damData, setDamData] = useState({
-    Max_Volume: 173000,
-    Min_Volume: 0,
-    Tot_Area: 40520.46,
-    M_Infiltration: 0.1,
-    Q_Reg: 0.034,
+    Max_Volume: 468765.21,
+    Min_Volume: 363293.04,
+    Tot_Area: 114703.3,
+    M_Infiltration: 0.00000022219,
+    Q_Reg: 0,
     Min_Vol_Observed: 0,
-    Q_Cap: 104
+    Q_Cap: 800
   });
 
   const [operacao, setOperacao] = useState({
@@ -94,6 +94,8 @@ export default function BarrageForm() {
 
     try {
       const data = await calculateReservoirBalance(payload);
+
+      console.log("Resultado do cálculo do balanço hídrico:", data);
       setResult(data);
       setHighlightUpdatedRows(true);
       setTimeout(() => setHighlightUpdatedRows(false), 4000);
