@@ -21,9 +21,13 @@ import {
   TableRow,
   CircularProgress,
   Alert,
-  FormLabel
+  FormLabel,
+  Chip,
+  Avatar
 } from '@mui/material';
 
+import WallpaperIcon from '@mui/icons-material/Wallpaper';
+import LayersIcon from '@mui/icons-material/Layers';
 import { useData } from '../../../hooks/analyse-hooks';
 import { calculateReservoirBalance } from '../../../services/barrage';
 import { numberWithCommas } from '../../../tools';
@@ -42,13 +46,13 @@ export default function BarrageForm() {
   const [highlightUpdatedRows, setHighlightUpdatedRows] = useState(false);
 
   const [damData, setDamData] = useState({
-    Max_Volume: 468765.21,
-    Min_Volume: 363293.04,
-    Tot_Area: 114703.3,
+    Max_Volume: 374411.5,
+    Min_Volume: 374411.5,
+    Tot_Area: 10.02,
     M_Infiltration: 0.00000022219,
-    Q_Reg: 0,
-    Min_Vol_Observed: 0,
-    Q_Cap: 800
+    Q_Reg: 0.0341987545584542,
+    Min_Vol_Observed: 359643.6073,
+    Q_Cap: 1.9178
   });
 
   const [operacao, setOperacao] = useState({
@@ -115,6 +119,29 @@ export default function BarrageForm() {
       <Grid container spacing={2}>
         {/* Dam Data Section */}
         <Grid item xs={12}>
+          {result?.dbResult?.informacoes_adicionais && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Chip
+                avatar={
+                  <Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}>
+                    <WallpaperIcon sx={{ fontSize: 18 }} />
+                  </Avatar>
+                }
+                sx={{ m: 1, fontSize: "12px" }}
+                label={`Área de Contribuição: ${result.dbResult.informacoes_adicionais.area_contribuicao?.toFixed(4)} km²`}
+              />
+
+              <Chip
+                avatar={
+                  <Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}>
+                    <LayersIcon sx={{ fontSize: 18 }} />
+                  </Avatar>
+                }
+                sx={{ m: 1, fontSize: "12px" }}
+                label={`Unidade Hidrográfica: ${result.dbResult.informacoes_adicionais.uh_nome || ""} - UH ${result.dbResult.informacoes_adicionais.uh_rotulo || ""}`}
+              />
+            </Box>
+          )}
           <FormLabel sx={{py: 4}} >Dados da Barragem</FormLabel>
           <Paper elevation={3} sx={{ p: 1 }}>
             
@@ -318,7 +345,7 @@ export default function BarrageForm() {
                           {months.map((_, i) => {
                             const v = result?.dbResult?.operacao?.QmmRegionalizada?.[i];
                             return (
-                              <TableCell key={i} padding="none" align="center" sx={{ fontSize: '0.8rem' }}>{v !== undefined ? numberWithCommas(v, 2) : ''}</TableCell>
+                              <TableCell key={i} padding="none" align="center" sx={{ fontSize: '0.8rem' }}>{v !== undefined ? numberWithCommas(v, 4) : ''}</TableCell>
                             );
                           })}
                         </TableRow>
@@ -337,7 +364,7 @@ export default function BarrageForm() {
                           {months.map((_, i) => {
                             const v = result?.dbResult?.operacao?.Q_defluente?.[i];
                             return (
-                              <TableCell key={i} padding="none" align="center" sx={{ fontSize: '0.8rem' }}>{v !== undefined ? numberWithCommas(v, 2) : ''}</TableCell>
+                              <TableCell key={i} padding="none" align="center" sx={{ fontSize: '0.8rem' }}>{v !== undefined ? numberWithCommas(v, 4) : ''}</TableCell>
                             );
                           })}
                         </TableRow>
@@ -357,7 +384,7 @@ export default function BarrageForm() {
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ fontSize: '0.75rem' }}>Mês</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Qmmm</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Qmm</TableCell>
                           <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Entrada</TableCell>
                           <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Infilt.</TableCell>
                           <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Evap.</TableCell>
@@ -370,7 +397,7 @@ export default function BarrageForm() {
                         {result.resultadoCalculo.planilha.map((row, index) => (
                           <TableRow key={index} hover>
                             <TableCell sx={{ fontSize: '0.75rem' }}>{row.Mes}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem', p:2 }}>{numberWithCommas(row.Qmmm_m3s, 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.75rem', p:2 }}>{numberWithCommas(row.Qmmm_m3s, 4)}</TableCell>
                             <TableCell align="right" sx={{ fontSize: '0.75rem', p:2 }}>{numberWithCommas(row.Entrada_m3_mes, 2)}</TableCell>
                             <TableCell align="right" sx={{ fontSize: '0.75rem', p:2 }}>{numberWithCommas(row.Infiltracao_m3_mes, 2)}</TableCell>
                             <TableCell align="right" sx={{ fontSize: '0.75rem', p:2 }}>{numberWithCommas(row.Evaporacao_m3_mes, 2)}</TableCell>
