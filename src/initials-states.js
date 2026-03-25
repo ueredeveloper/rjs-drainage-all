@@ -6,8 +6,8 @@ const initialsStates = {
         tp_id: 1,
         // subterrâneo
         ti_id: 2,
-        int_latitude: -15.973561, //-15.775139, ADASA
-        int_longitude: -47.629522 //-47.939599, ADASA
+        int_latitude: -15.775139,  //barragem -15.973561, 
+        int_longitude: -47.939599,  //-47.629522 //
     },
     /* desenhos feitos pelo usuário no mapa (cículos, polígonos, retângulos)*/
     overlays: {
