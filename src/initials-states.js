@@ -1,3 +1,6 @@
+/*
+Valores iniciais dos estados do aplicativo, para serem usados no reducer e no contexto.
+*/
 
 const initialsStates = {
     marker: {
@@ -7,7 +10,7 @@ const initialsStates = {
         // subterrâneo
         ti_id: 2,
         int_latitude: -15.775139,  //barragem -15.973561, 
-        int_longitude: -47.939599,  //-47.629522 //
+        int_longitude: -47.939599,  //barragem -47.629522
     },
     /* desenhos feitos pelo usuário no mapa (cículos, polígonos, retângulos)*/
     overlays: {
