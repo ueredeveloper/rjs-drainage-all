@@ -24,8 +24,6 @@ ChartJS.register(
   Legend
 );
 
-
-
 /**
  * Chart Superficial
  * @returns 

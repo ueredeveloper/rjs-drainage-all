@@ -16,6 +16,7 @@ import { useData } from '../../../hooks/analyse-hooks';
 
 
 
+
 function DataAnalyseTable() {
   /**
     * Dados sobre a disponibilidade.

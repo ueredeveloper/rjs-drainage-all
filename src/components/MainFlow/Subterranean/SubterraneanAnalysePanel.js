@@ -4,8 +4,6 @@ import SearchCoords from '../../Commom/SearchCoords'
 import DataAnalyseTable from '../../Commom/Subterranean/DataAnalyseTable';
 import DataAnalyseChart from '../../Commom/Subterranean/DataAnalyseChart';
 
-
-
 /**
  * Painel de análise de dados subterrãneos
  * @component

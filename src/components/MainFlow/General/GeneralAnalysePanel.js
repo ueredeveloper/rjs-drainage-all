@@ -4,8 +4,6 @@ import SearchCoords from "../../Commom/SearchCoords";
 import SearchPaper from "./SearchPaper";
 import NumberOfGrantsChart from "../../Commom/General/NumberOfGrantsChart";
 
-
-
 /**
  * Renderiza painel geral de análise de dados.
  * @component
