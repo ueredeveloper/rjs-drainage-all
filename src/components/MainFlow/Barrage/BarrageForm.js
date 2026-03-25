@@ -37,6 +37,7 @@ import { calculateReservoirBalance } from '../../../services/barrage';
 import { numberWithCommas } from '../../../tools';
 import { exportBarrageToCsv } from '../../../tools/export-barrage-to-csv';
 
+
 const months = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
   "Jul", "Ago", "Set", "Out", "Nov", "Dez"

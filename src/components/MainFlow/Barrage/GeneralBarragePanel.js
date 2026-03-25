@@ -4,6 +4,7 @@ import SearchCoords from "../../Commom/SearchCoords";
 import BarrageForm from "./BarrageForm";
 
 
+
 /**
  * Renderiza painel geral de análise de dados.
  * @component

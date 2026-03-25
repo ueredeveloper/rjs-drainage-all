@@ -3,6 +3,7 @@ import * as echarts from 'echarts';
 import { FormControl, FormLabel, Paper, Switch, Tooltip } from '@mui/material';
 import { useData } from '../../../hooks/analyse-hooks';
 
+
 /**
  * Componente para renderizar um gráfico de análise de dados usando ECharts.
  * @component
