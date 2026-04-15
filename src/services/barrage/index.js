@@ -2,6 +2,8 @@ const API_URL = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth
 //const API_URL = 'http://localhost:3001';
 
 export const calculateReservoirBalance = async (payload) => {
+
+  console.log("Calculating reservoir balance with payload:", payload);
   try {
     const response = await fetch(`${API_URL}/barrage/calculate-reservoir-balance`, {
       method: 'POST',

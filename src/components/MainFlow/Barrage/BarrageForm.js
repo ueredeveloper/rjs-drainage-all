@@ -4,7 +4,6 @@ import {
   Paper,
   TextField,
   Input,
-  Typography,
   Button,
   Grid,
   Tabs,
@@ -25,7 +24,9 @@ import {
   Chip,
   Avatar,
   IconButton,
-  Tooltip
+  Tooltip,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 
 
@@ -54,7 +55,7 @@ export default function BarrageForm() {
 
   const [damData, setDamData] = useState({
     Max_Volume: 374411.5,
-    Min_Volume: 374411.5,
+    Min_Volume: 0.0,
     Tot_Area: 10.02,
     M_Infiltration: 0.00000022219,
     Q_Reg: 0.0341987545584542,
@@ -69,7 +70,8 @@ export default function BarrageForm() {
     Evaporacao: [130.06, 141.88, 136.4, 126.0, 108.5, 99.0, 105.4, 133.3, 147.0, 155.0, 135.0, 127.1],
     tempDia: [21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21],
     qmm: Array(12).fill(0),
-    vazao_l_s: Array(12).fill(5.5)
+    vazao_l_s: Array(12).fill(5.5),
+    fillQmm: false
   });
 
   const handleDamChange = (e) => {
@@ -91,7 +93,8 @@ export default function BarrageForm() {
 
   const handleArrayChange = (arrayName, index, value) => {
     const newArray = [...operacao[arrayName]];
-    newArray[index] = parseFloat(value);
+    const parsed = parseFloat(value);
+    newArray[index] = isNaN(parsed) ? 0 : parsed;
     setOperacao(prev => ({ ...prev, [arrayName]: newArray }));
   };
 
@@ -264,7 +267,18 @@ export default function BarrageForm() {
                 <Tab label="Planilha" disabled={!result} />
                 <Tab label="Bruta" disabled={!result} />
               </Tabs>
-              <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={operacao.fillQmm}
+                      onChange={(e) => handleOperacaoChange('fillQmm', e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label="Preencher Qmm"
+                  sx={{ mr: 0, '& .MuiFormControlLabel-label': { fontSize: '0.8rem' } }}
+                />
                 <Tooltip title="Calcular">
                   <IconButton id="calculate-button" onClick={handleCalculate} color="primary" disabled={loading}>
                     {loading ? <CircularProgress size={24} /> : <CalculateIcon />}
@@ -332,7 +346,7 @@ export default function BarrageForm() {
                                 disableUnderline
                                 sx={{ fontSize: '0.8rem', '& .MuiSelect-select': { py: 0.5 } }}
                               >
-                                {[...Array(31)].map((_, i) => <MenuItem key={i + 1} value={i + 1}>{i + 1}</MenuItem>)}
+                                {[...Array(32)].map((_, i) => <MenuItem key={i} value={i}>{i}</MenuItem>)}
                               </Select>
                             </TableCell>
                           ))}
