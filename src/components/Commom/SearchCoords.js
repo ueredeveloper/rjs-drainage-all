@@ -8,7 +8,9 @@ import Paper from "@mui/material/Paper";
 import { CircularProgress, Fade, FormControl, FormLabel, TextField, Tooltip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import TransformIcon from "@mui/icons-material/Transform";
 import IconButton from "@mui/material/IconButton";
+import CoordConverter from "./CoordConverter";
 import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolocation";
 import { useData } from "../../hooks/analyse-hooks";
 import CircleRadiusSelector from "./CircleRadiusSelector";
@@ -36,6 +38,7 @@ import { calculateQOutorgadaSecao, calculateQIndividualSecao, calculateQOutorgav
 function SearchCoords({ tabNumber }) {
 
   const [loading, setLoading] = useState(false); // Estado de carregamento da busca
+  const [openConverter, setOpenConverter] = useState(false); // Controle do modal de conversão
   const {
     map, marker, setMarker, overlays, setOverlays,
     radius, setHgAnalyse, setSubsystem,
@@ -392,17 +395,34 @@ function SearchCoords({ tabNumber }) {
   }
 
   const handleCopy = () => {
-
     navigator.clipboard.writeText(`${position.int_latitude}, ${position.int_longitude}`).then(() => {
       console.log(`${position.int_latitude}, ${position.int_longitude}`);
     });
   };
+
+  /**
+   * Aplica as coordenadas convertidas nos inputs e fecha o modal do conversor.
+   * @param {{ lat: number, lng: number }} coords
+   */
+  function handleConvert({ lat, lng }) {
+    const latStr = String(lat.toFixed(7));
+    const lngStr = String(lng.toFixed(7));
+    setPosition((prev) => ({ ...prev, int_latitude: latStr, int_longitude: lngStr }));
+    setMarker((prev) => ({ ...prev, int_latitude: latStr, int_longitude: lngStr }));
+    setOpenConverter(false);
+  }
 
 
   return (
     <>
       {/* Componente de alerta exibido quando necessário */}
       <AlertCommon openAlert={openAlert} alertMessage={alertMessage} setOpen={setOpenAlert} />
+
+      <CoordConverter
+        open={openConverter}
+        onClose={() => setOpenConverter(false)}
+        onConvert={handleConvert}
+      />
 
       <FormControl style={{ display: "flex", flexDirection: "column" }}>
         <FormLabel sx={{ my: 1 }}>Coordenadas</FormLabel>
@@ -470,14 +490,21 @@ function SearchCoords({ tabNumber }) {
 
               {tabNumber === 1 ? <ElemGrant /> : null}
 
-              <Tooltip title="Copiar coordenada">
+              <Tooltip title="Copiar coordenadas decimais">
                 <IconButton
                   color="secondary"
                   size="large"
                   onClick={handleCopy}>
-
-
                   <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
+                <IconButton
+                  color="secondary"
+                  size="large"
+                  onClick={() => setOpenConverter(true)}>
+                  <TransformIcon />
                 </IconButton>
               </Tooltip>
 
