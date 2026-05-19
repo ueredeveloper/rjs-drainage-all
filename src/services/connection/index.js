@@ -1,4 +1,6 @@
 
+import { getAuthHeaders } from '../auth/headers';
+
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
 /**
@@ -18,6 +20,7 @@ async function getUsers(param) {
     headers: {
       Accept: 'application/JSON',
       'Content-Type': 'application/JSON',
+      ...getAuthHeaders()
     }
 
   }).then(res => {
@@ -39,6 +42,7 @@ async function findDemands(addId) {
     headers: {
       Accept: 'application/JSON',
       'Content-Type': 'application/JSON',
+      ...getAuthHeaders()
     }
 
   }).then(res => {

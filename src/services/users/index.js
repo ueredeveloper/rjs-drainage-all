@@ -1,4 +1,6 @@
 
+import { getAuthHeaders } from '../auth/headers';
+
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
 
@@ -10,7 +12,8 @@ async function findByColumn(keyword) {
     const response = await fetch(urlWithParams, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       }
     });
 

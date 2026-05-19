@@ -1,5 +1,6 @@
 import { calculateContributingArea, convertOthoCoordToGmaps } from "../../tools";
 import { joinPolygons } from "../../tools/surface-tools";
+import { getAuthHeaders } from '../auth/headers';
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
@@ -15,6 +16,7 @@ async function fetchShape(shape_name) {
     headers: {
       Accept: 'application/JSON',
       'Content-Type': 'application/JSON',
+      ...getAuthHeaders()
     }
 
   }).then(res => {
@@ -40,7 +42,8 @@ async function fetchGrantsInsideShape(shapeName, shapeCode) {
     const response = await fetch(url + `/find_points-inside-shape?shapeName=${shapeName}&shapeCode=${shapeCode}`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
     });
 
@@ -77,7 +80,8 @@ async function fetchOttoBasins(lat, lng) {
    */
   let features = await fetch(`${url}/find-otto-basins-by-lat-lng?${params}`,
     {
-      method: "GET"
+      method: "GET",
+      headers: { ...getAuthHeaders() }
     })
     .then((features) => {
       let ottoBasins = features.json();
@@ -116,6 +120,7 @@ async function fetchMarkersByUH(uh_codigo) {
       headers: {
         "Content-type": "application/json",
         "Accept": "application/json",
+        ...getAuthHeaders()
       },
 
     }).then(response => {
@@ -139,6 +144,7 @@ async function fetchRiversByCoordinates(lat, lng) {
     headers: {
       Accept: 'application/JSON',
       'Content-Type': 'application/JSON',
+      ...getAuthHeaders()
     }
   }).then(res => {
     return res.json();

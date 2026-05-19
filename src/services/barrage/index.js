@@ -1,3 +1,5 @@
+import { getAuthHeaders } from '../auth/headers';
+
 const API_URL = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 //const API_URL = 'http://localhost:3001';
 
@@ -9,6 +11,7 @@ export const calculateReservoirBalance = async (payload) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(payload),
     });

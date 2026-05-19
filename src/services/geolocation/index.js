@@ -1,4 +1,6 @@
 
+import { getAuthHeaders } from '../auth/headers';
+
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
 async function findAllPointsInASubsystem(tp_id, lat, lng) {
@@ -7,7 +9,8 @@ async function findAllPointsInASubsystem(tp_id, lat, lng) {
     const response = await fetch(url + `/find-points-inside-subsystem?tp_id=${tp_id}&lat=${lat}&lng=${lng}`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       }
     });
     if (!response.ok) {
@@ -36,7 +39,8 @@ async function findAllPointsInRectangle(nex, ney, swx, swy) {
     const response = await fetch(url + '/find-points-inside-rectangle', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify({
         nex,
@@ -71,7 +75,8 @@ async function findAllPointsInPolygon(polygon) {
     const response = await fetch(url + '/find-points-inside-polygon', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(polygon)
     });
@@ -97,11 +102,18 @@ async function findAllPointsInPolygon(polygon) {
  */
 async function findAllPointsInCircle(circle) {
 
+ 
+  const circleJson = JSON.stringify(circle);
+
+
+  console.log(circleJson);
+
   try {
     const response = await fetch(url + '/find-points-inside-circle', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(circle)
     });
@@ -144,6 +156,7 @@ async function findPointsInASystem(tp_id, lat, lng) {
     headers: {
       Accept: 'application/JSON',
       'Content-Type': 'application/JSON',
+      ...getAuthHeaders()
     }
 
   }).then(res => {
