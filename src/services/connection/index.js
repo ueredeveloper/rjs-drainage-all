@@ -24,8 +24,6 @@ async function getUsers(param) {
     }
 
   }).then(res => {
-
-    console.log(res.status, res)
     return res.json();
   })
 

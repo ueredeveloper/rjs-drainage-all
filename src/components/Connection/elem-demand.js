@@ -75,9 +75,13 @@ export function ElemDemand({ demand, setUser }) {
                             int_longitude: demand.int_longitude
                         }
 
+                        console.log(marker)
+
                         let markers = [marker, ...points._points || []]
 
                         let { _hg_info, _hg_shape } = points
+
+                        console.log("points, _hg_info, _hg_shape", points, _hg_info, _hg_shape)
                         // verificar disponibilidade com o ponto (user) adicionado.
                         let _hg_analyse = analyzeAvailability(_hg_info, markers);
 

@@ -33,6 +33,8 @@ function ElemSearchUsers({ keyword, setKeyword, setUsers }) {
     await getUsers(keyword)
       .then((users) => {
 
+        console.log("users", users)
+
         if (users.length > 0) {
           let _users = users?.map(user => {
             user.dt_demanda = {

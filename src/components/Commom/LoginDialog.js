@@ -196,7 +196,7 @@ function LoginDialog() {
             SAD / DF
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Sistema de Apoio à Decisão — ADASA
+            Sistema de Apoio à Decisão — OUTORGA
           </Typography>
         </Box>
 

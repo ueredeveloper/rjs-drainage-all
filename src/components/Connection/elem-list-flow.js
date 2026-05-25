@@ -55,6 +55,8 @@ function ElemListFlow({ user, setUser }) {
       
       setDemands(newDem);
 
+      console.log("elem list dem, new newDem", newDem);
+
       setUser(prev => {
         return {
           ...prev,
