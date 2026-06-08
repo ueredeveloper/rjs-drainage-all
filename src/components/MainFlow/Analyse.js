@@ -46,11 +46,12 @@ function Analyse() {
                 hidden={value !== index}
                 id={`simple-tabpanel-${index}`}
                 aria-labelledby={`simple-tab-${index}`}
+                style={{ flex: 1, overflow: "hidden", display: value === index ? "flex" : undefined, flexDirection: "column" }}
                 {...other}
             >
                 {value === index && (
-                    <Box sx={{ p: 2 }}>
-                        <Box>{children}</Box>
+                    <Box sx={{ p: 1.5, flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
+                        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>{children}</Box>
                     </Box>
                 )}
             </div>
@@ -89,14 +90,34 @@ function Analyse() {
 
     return (
         <DataProvider>
-            <Box sx={{ display: "flex", flex: 1, flexDirection: "column" }}>
-                <Box sx={{ display: "flex", flex: 1, flexWrap: "wrap" }}>
-                    <Box sx={{ display: "flex", flex: 1, minWidth: 200 }} >
+            <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, overflow: "auto" }}>
+                {/* Linha principal: lado a lado no desktop, empilhado no mobile */}
+                <Box sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", md: "row" },
+                    height: { md: "82vh" },
+                    minHeight: { xs: 0, md: "480px" },
+                    flexShrink: 0,
+                }}>
+                    {/* Mapa: 1/3 no desktop, altura fixa no mobile */}
+                    <Box sx={{
+                        flex: { md: 1 },
+                        height: { xs: "260px", sm: "320px", md: "100%" },
+                        flexShrink: 0,
+                    }}>
                         <MapPanel />
                     </Box>
-                    <Box sx={{ display: "flex", flex: 2, flexDirection: "column", minWidth: 200 }}>
-                        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                            <Tabs value={tabValue} onChange={handleChange} aria-label="basic tabs example">
+                    {/* Painel de análise: 2/3 no desktop, abaixo no mobile */}
+                    <Box sx={{
+                        flex: { md: 2 },
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: { md: "auto" },
+                        flexShrink: 0,
+                    }}>
+                        <Box sx={{ borderBottom: 1, borderColor: "divider", flexShrink: 0 }}>
+                            <Tabs value={tabValue} onChange={handleChange} aria-label="basic tabs example"
+                                variant="scrollable" scrollButtons="auto">
                                 <Tab label="Geral" {...a11yProps(0)} />
                                 <Tab label="Subterrâneo" {...a11yProps(1)} />
                                 <Tab label="Superficial" {...a11yProps(2)} />
@@ -117,7 +138,8 @@ function Analyse() {
                         </TabPanel>
                     </Box>
                 </Box>
-                <Box sx={{ flex: 1 }}>
+                {/* GrantsPanel sempre abaixo */}
+                <Box sx={{ flexShrink: 0 }}>
                     <GrantsPanel />
                 </Box>
             </Box>

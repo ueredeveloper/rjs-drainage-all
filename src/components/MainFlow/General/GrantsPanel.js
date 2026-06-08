@@ -23,7 +23,7 @@ function TabPanel(props) {
             {...other}
         >
             {value === index && (
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 1.5 }}>
                     <Box>{children}</Box>
                 </Box>
             )}
@@ -71,11 +71,13 @@ function GrantsPanel() {
     return (
         <Box sx={{ width: "100%" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+                <Tabs value={value} onChange={handleChange} aria-label="basic tabs example"
+                    variant="scrollable" scrollButtons="auto"
+                    sx={{ '& .MuiTab-root': { fontSize: '0.72rem', minWidth: 0, px: 1.5, py: 0.75 } }}>
                     <Tab label="Subterrâneas" {...a11yProps(0)} />
                     <Tab label="Superficiais" {...a11yProps(1)} />
-                    <Tab label="Lançamentos Pluviais" {...a11yProps(2)} />
-                    <Tab label="Lançamentos Efluentes" {...a11yProps(3)} />
+                    <Tab label="Pluviais" {...a11yProps(2)} />
+                    <Tab label="Efluentes" {...a11yProps(3)} />
                     <Tab label="Barragens" {...a11yProps(4)} />
                 </Tabs>
             </Box>
@@ -84,7 +86,7 @@ function GrantsPanel() {
                     overlays.shapes?.map((shape, i) => {
                         if (page===++i)
                         return (
-                            <div id="div-panel" key={i} style={{ height: '500px' }}>
+                            <div id="div-panel" key={i} style={{ height: '360px', overflow: 'auto' }}>
                                 <TabPanel value={value} index={0}>
                                     <GrantsTable name={"subterranea"} markers={shape.markers !==undefined && shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
                                 </TabPanel>

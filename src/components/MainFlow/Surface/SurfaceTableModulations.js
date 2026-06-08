@@ -293,32 +293,28 @@ export default function SurfaceTableModulations({
 
   // Renderização da tabela de modulação
   return (
-    <Paper
-      id="paper"
-      elevation={3}
-      sx={{ my: 2, height: 120, overflow: "auto" }}
-    >
-      <Table id="table" size="small">
+    <Paper id="paper" elevation={3} sx={{ my: 3 }}>
+      <Table id="table" size="small" sx={{ tableLayout: "fixed", width: "100%" }}>
+        <colgroup>
+          <col style={{ width: "320px" }} />
+        </colgroup>
         <TableHead>
           <TableRow>
             <TableCell
               sx={{
-                padding: "0px",
-                px: "5px",
-                fontSize: "12px",
-                width: "60rem",
-                lineHeight: "1.1rem",
-                textAlign: "center",
+                py: "11px", px: "4px",
+                fontSize: "10px", fontWeight: 700,
+                lineHeight: "1.2",
+                textAlign: "center", verticalAlign: "middle",
+                whiteSpace: "normal", wordBreak: "break-word",
+                backgroundColor: "grey.200",
               }}
             >
               {analyse.alias}
             </TableCell>
             {months.map((value) => (
-              <TableCell
-                key={value}
-                align="right"
-                sx={{ lineHeight: "1.1rem" }}
-              >
+              <TableCell key={value} align="center"
+                sx={{ py: "11px", px: "2px", fontSize: "10px", lineHeight: "1.2", fontWeight: 600, verticalAlign: "middle" }}>
                 {value}
               </TableCell>
             ))}
@@ -326,92 +322,52 @@ export default function SurfaceTableModulations({
         </TableHead>
         <TableBody>
           {rows.map((row, rowIndex) => (
-            <TableRow
-              key={row.alias + rowIndex}
-              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-            >
-              <TableCell
-                component="th"
-                scope="row"
+            <TableRow key={row.alias + rowIndex}
+              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+              <TableCell component="th" scope="row"
                 sx={{
-                  padding: "1px",
-                  px: "5px",
-                  fontSize: "12px",
-                  lineHeight: "1.1rem",
-                  width: "100px",
-                  textAlign: "center",
-                }}
-              >
+                  py: "11px", px: "4px",
+                  fontSize: "10px", lineHeight: "1.2",
+                  textAlign: "left", verticalAlign: "middle",
+                  whiteSpace: "normal", wordBreak: "break-word",
+                  backgroundColor: "grey.50",
+                }}>
                 {row.alias}
               </TableCell>
               {row.alias !== "Horas de bombeamento (Requerimento)"
                 ? row.values.map((value, index) => (
-                    <TableCell
-                      key={row.alias.substring(0, 5) + index}
-                      align="right"
+                    <TableCell key={row.alias.substring(0, 5) + index} align="center"
                       sx={{
-                        padding: "0px",
-                        px: "5px",
-                        fontSize: "12px",
-                        lineHeight: "1.1rem",
-                        textAlign: "center",
+                        py: "11px", px: "2px",
+                        fontSize: "10px", lineHeight: "1.2", verticalAlign: "middle",
                         backgroundColor: highlighted[index] && rowIndex === 0 ? "#e3f2fd" : "inherit",
-                      }}
-                    >
-                      {typeof value === "number" && !isNaN(value)
-                        ? value
-                        : value}
+                      }}>
+                      {typeof value === "number" && !isNaN(value) ? value : value}
                     </TableCell>
                   ))
                 : row.values.map((value, index) => (
-                    <TableCell
-                      key={row.alias.substring(0, 5) + index}
-                      align="right"
+                    <TableCell key={row.alias.substring(0, 5) + index} align="center"
                       sx={{
-                        padding: "0px",
-                        px: "5px",
-                        fontSize: "12px",
-                        lineHeight: "1.1rem",
-                        textAlign: "center",
+                        py: "11px", px: "2px",
+                        fontSize: "10px", lineHeight: "1.2", verticalAlign: "middle",
                         backgroundColor: highlighted[index] ? "#ffe082" : (inputErrors[index] ? "#ffcdd2" : "inherit"),
                         transition: "background-color 0.5s",
-                      }}
-                    >
+                      }}>
                       <Tooltip title="Informe as horas de bombeamento (0 a 24)">
                         <TextField
                           type="number"
-                          inputProps={{
-                            min: 0,
-                            max: 24,
-                            step: 1,
-                            pattern: "[0-9]*",
-                            maxLength: 2,
-                            placeholder: "0-24",
-                          }}
+                          inputProps={{ min: 0, max: 24, step: 1, pattern: "[0-9]*", maxLength: 2, placeholder: "0-24" }}
                           value={value}
                           variant="standard"
                           error={inputErrors[index]}
-                          helperText={inputErrors[index] ? "Valor inválido" : ""}
+                          helperText={inputErrors[index] ? "Inválido" : ""}
                           InputProps={{
                             disableUnderline: false,
-                            sx: {
-                              padding: 0,
-                              fontSize: "12px",
-                              textAlign: "center",
-                              input: {
-                                textAlign: "center",
-                              },
-                            },
+                            sx: { padding: 0, fontSize: "10px", input: { textAlign: "center" } },
                           }}
-                          onChange={(e) =>
-                            handleOnTextFieldChange(index, e.target.value)
-                          }
+                          onChange={(e) => handleOnTextFieldChange(index, e.target.value)}
                           autoComplete="off"
-                          sx={{
-                            p: 0,
-                            m: 0,
-                            minWidth: 0,
-                          }}
+                          sx={{ p: 0, m: 0, minWidth: 0 }}
                         />
                       </Tooltip>
                     </TableCell>

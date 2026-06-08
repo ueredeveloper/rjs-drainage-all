@@ -191,8 +191,8 @@ export default function BarrageForm() {
                   value={damData.Max_Volume}
                   onChange={handleDamChange}
                   size="small"
-                  InputProps={{ style: { fontSize: '0.8rem' } }}
-                  InputLabelProps={{ style: { fontSize: '0.8rem' } }}
+                  InputProps={{ style: { fontSize: '0.72rem' } }}
+                  InputLabelProps={{ style: { fontSize: '0.72rem' } }}
                 />
               </Grid>
               <Grid item xs={6} md>
@@ -204,8 +204,8 @@ export default function BarrageForm() {
                   value={damData.Min_Volume}
                   onChange={handleDamChange}
                   size="small"
-                  InputProps={{ style: { fontSize: '0.8rem' } }}
-                  InputLabelProps={{ style: { fontSize: '0.8rem' } }}
+                  InputProps={{ style: { fontSize: '0.72rem' } }}
+                  InputLabelProps={{ style: { fontSize: '0.72rem' } }}
                 />
               </Grid>
               <Grid item xs={6} md>
@@ -217,8 +217,8 @@ export default function BarrageForm() {
                   value={damData.Tot_Area}
                   onChange={handleDamChange}
                   size="small"
-                  InputProps={{ style: { fontSize: '0.8rem' } }}
-                  InputLabelProps={{ style: { fontSize: '0.8rem' } }}
+                  InputProps={{ style: { fontSize: '0.72rem' } }}
+                  InputLabelProps={{ style: { fontSize: '0.72rem' } }}
                 />
               </Grid>
               <Grid item xs={6} md>
@@ -230,18 +230,18 @@ export default function BarrageForm() {
                   value={damData.M_Infiltration}
                   onChange={handleDamChange}
                   size="small"
-                  InputProps={{ style: { fontSize: '0.8rem' } }}
-                  InputLabelProps={{ style: { fontSize: '0.8rem' } }}
+                  InputProps={{ style: { fontSize: '0.72rem' } }}
+                  InputLabelProps={{ style: { fontSize: '0.72rem' } }}
                 />
               </Grid>
               <Grid item xs={6} md>
                 <FormControl fullWidth size="small">
-                  <InputLabel sx={{ fontSize: '0.8rem' }}>Anos</InputLabel>
+                  <InputLabel sx={{ fontSize: '0.72rem', py: 0 }}>Anos</InputLabel>
                   <Select
                     value={operacao.anos}
                     label="Anos"
                     onChange={(e) => handleOperacaoChange('anos', e.target.value)}
-                    sx={{ fontSize: '0.8rem' }}
+                    sx={{ fontSize: '0.72rem', py: 0 }}
                   >
                     {[...Array(10)].map((_, i) => (
                       <MenuItem key={i + 1} value={i + 1}>{i + 1} Ano(s)</MenuItem>
@@ -259,37 +259,30 @@ export default function BarrageForm() {
 
         <Grid item xs={12}>
           <FormLabel sx={{ py: 0 }} >Tabelas</FormLabel>
-          <Paper elevation={3} sx={{ p: 1 }}>
+          <Paper elevation={3} sx={{ p: 1, display: 'flex', flexDirection: 'column' }}>
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pr: 1 }}>
-              <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Abas de Dados e Resultado" variant="scrollable" scrollButtons="auto">
-                <Tab label="Operação" />
-                <Tab label="Planilha" disabled={!result} />
-                <Tab label="Bruta" disabled={!result} />
-              </Tabs>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={operacao.fillQmm}
-                      onChange={(e) => handleOperacaoChange('fillQmm', e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label="Preencher Qmm"
-                  sx={{ mr: 0, '& .MuiFormControlLabel-label': { fontSize: '0.8rem' } }}
-                />
-                <Tooltip title="Calcular">
-                  <IconButton id="calculate-button" onClick={handleCalculate} color="primary" disabled={loading}>
-                    {loading ? <CircularProgress size={24} /> : <CalculateIcon />}
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Exportar dados (CSV)">
-                  <IconButton id="export-button" onClick={handleExport} color="primary" disabled={!marker?.int_latitude}>
-                    <GetAppIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', pr: 1, borderBottom: 1, borderColor: 'divider', pb: 0.5 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={operacao.fillQmm}
+                    onChange={(e) => handleOperacaoChange('fillQmm', e.target.checked)}
+                    size="small"
+                  />
+                }
+                label="Preencher Qmm"
+                sx={{ mr: 0, '& .MuiFormControlLabel-label': { fontSize: '0.72rem' } }}
+              />
+              <Tooltip title="Calcular">
+                <IconButton id="calculate-button" onClick={handleCalculate} color="primary" disabled={loading}>
+                  {loading ? <CircularProgress size={24} /> : <CalculateIcon />}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Exportar dados (CSV)">
+                <IconButton id="export-button" onClick={handleExport} color="primary" disabled={!marker?.int_latitude}>
+                  <GetAppIcon />
+                </IconButton>
+              </Tooltip>
             </Box>
 
             {/* Tab Panel: Operação */}
@@ -301,42 +294,42 @@ export default function BarrageForm() {
                     <Table size="small" stickyHeader aria-label="tabela de operação">
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold', minWidth: 150, fontSize: '0.8rem', backgroundColor: 'background.paper' }}>Parâmetro</TableCell>
-                          {months.map((m) => <TableCell key={m} align="center" sx={{ minWidth: 40, p: 0.5, fontSize: '0.8rem', backgroundColor: 'background.paper' }}>{m}</TableCell>)}
+                          <TableCell sx={{ fontWeight: 'bold', minWidth: 150, fontSize: '0.72rem', py: 0, backgroundColor: 'background.paper' }}>Parâmetro</TableCell>
+                          {months.map((m) => <TableCell key={m} align="center" sx={{ minWidth: 40, p: 0.5, fontSize: '0.72rem', backgroundColor: 'background.paper' }}>{m}</TableCell>)}
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {/* Linha Vazão (L/s) */}
                         <TableRow hover>
-                          <TableCell component="th" scope="row" sx={{ fontSize: '0.8rem' }}>Vazão (L/s)</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontSize: '0.72rem', py: 0 }}>Vazão (L/s)</TableCell>
                           {operacao.vazao_l_s.map((v, i) => (
                             <TableCell key={i} padding="none" align="center">
                               <Input
                                 value={v}
                                 onChange={(e) => handleArrayChange('vazao_l_s', i, e.target.value)}
                                 disableUnderline
-                                inputProps={{ style: { textAlign: 'center', fontSize: '0.8rem', padding: '4px 0' }, type: 'number' }}
+                                inputProps={{ style: { textAlign: 'center', fontSize: '0.72rem', padding: '1px 0' }, type: 'number' }}
                               />
                             </TableCell>
                           ))}
                         </TableRow>
                         {/* Linha Temp Capt */}
                         <TableRow hover>
-                          <TableCell component="th" scope="row" sx={{ fontSize: '0.8rem' }}>T. Cap (h)</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontSize: '0.72rem', py: 0 }}>T. Cap (h)</TableCell>
                           {operacao.tempDia.map((v, i) => (
                             <TableCell key={i} padding="none" align="center">
                               <Input
                                 value={v}
                                 onChange={(e) => handleArrayChange('tempDia', i, e.target.value)}
                                 disableUnderline
-                                inputProps={{ style: { textAlign: 'center', fontSize: '0.8rem', padding: '4px 0' }, type: 'number' }}
+                                inputProps={{ style: { textAlign: 'center', fontSize: '0.72rem', padding: '1px 0' }, type: 'number' }}
                               />
                             </TableCell>
                           ))}
                         </TableRow>
                         {/* Linha Dias */}
                         <TableRow hover>
-                          <TableCell component="th" scope="row" sx={{ fontSize: '0.8rem' }}>Dias</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontSize: '0.72rem', py: 0 }}>Dias</TableCell>
                           {operacao.Dias.map((d, i) => (
                             <TableCell key={i} padding="none" align="center">
                               <Select
@@ -344,7 +337,7 @@ export default function BarrageForm() {
                                 onChange={(e) => handleArrayChange('Dias', i, e.target.value)}
                                 variant="standard"
                                 disableUnderline
-                                sx={{ fontSize: '0.8rem', '& .MuiSelect-select': { py: 0.5 } }}
+                                sx={{ fontSize: '0.72rem', '& .MuiSelect-select': { py: 0 } }}
                               >
                                 {[...Array(32)].map((_, i) => <MenuItem key={i} value={i}>{i}</MenuItem>)}
                               </Select>
@@ -353,14 +346,14 @@ export default function BarrageForm() {
                         </TableRow>
                         {/* Linha Evaporação */}
                         <TableRow hover>
-                          <TableCell component="th" scope="row" sx={{ fontSize: '0.8rem' }}>Evap. (mm)</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontSize: '0.72rem', py: 0 }}>Evap. (mm)</TableCell>
                           {operacao.Evaporacao.map((v, i) => (
                             <TableCell key={i} padding="none" align="center">
                               <Input
                                 value={v}
                                 onChange={(e) => handleArrayChange('Evaporacao', i, e.target.value)}
                                 disableUnderline
-                                inputProps={{ style: { textAlign: 'center', fontSize: '0.8rem', padding: '4px 0' }, type: 'number' }}
+                                inputProps={{ style: { textAlign: 'center', fontSize: '0.72rem', padding: '1px 0' }, type: 'number' }}
                               />
                             </TableCell>
                           ))}
@@ -374,14 +367,14 @@ export default function BarrageForm() {
                             }
                           })
                         }}>
-                          <TableCell component="th" scope="row" sx={{ fontSize: '0.8rem' }}>Qmm (Reg.) (m³/s)</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontSize: '0.72rem', py: 0 }}>Qmm (Reg.) (m³/s)</TableCell>
                           {operacao.qmm.map((v, i) => (
                             <TableCell key={i} padding="none" align="center">
                               <Input
                                 value={v}
                                 onChange={(e) => handleArrayChange('qmm', i, e.target.value)}
                                 disableUnderline
-                                inputProps={{ style: { textAlign: 'center', fontSize: '0.8rem', padding: '4px 0' }, type: 'number' }}
+                                inputProps={{ style: { textAlign: 'center', fontSize: '0.72rem', padding: '1px 0' }, type: 'number' }}
                               />
                             </TableCell>
                           ))}
@@ -395,11 +388,11 @@ export default function BarrageForm() {
                             }
                           })
                         }}>
-                          <TableCell component="th" scope="row" sx={{ fontSize: '0.8rem' }}>Q Defluente (m³/s)</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontSize: '0.72rem', py: 0 }}>Q Defluente (m³/s)</TableCell>
                           {months.map((_, i) => {
                             const v = result?.dbResult?.operacao?.Q_defluente?.[i];
                             return (
-                              <TableCell key={i} padding="none" align="center" sx={{ fontSize: '0.8rem' }}>{v !== undefined ? numberWithCommas(v, 4) : ''}</TableCell>
+                              <TableCell key={i} padding="none" align="center" sx={{ fontSize: '0.72rem', py: 0 }}>{v !== undefined ? numberWithCommas(v, 4) : ''}</TableCell>
                             );
                           })}
                         </TableRow>
@@ -418,30 +411,30 @@ export default function BarrageForm() {
                     <Table stickyHeader size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontSize: '0.75rem' }}>Mês</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Qmm</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Entrada</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Infilt.</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Evap.</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Capt.</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>V. Final</TableCell>
-                          <TableCell align="center" sx={{ fontSize: '0.75rem' }}>Status</TableCell>
+                          <TableCell sx={{ fontSize: '0.68rem', py: 0 }}>Mês</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Qmm</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Entrada</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Infilt.</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Evap.</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Capt.</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>V. Final</TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.68rem', py: 0 }}>Status</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {result.resultadoCalculo.planilha.map((row, index) => (
                           <TableRow key={index} hover>
-                            <TableCell sx={{ fontSize: '0.75rem' }}>{row.Mes}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem', p: 2 }}>{numberWithCommas(row.Qmmm_m3s, 4)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem', p: 2 }}>{numberWithCommas(row.Entrada_m3_mes, 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem', p: 2 }}>{numberWithCommas(row.Infiltracao_m3_mes, 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem', p: 2 }}>{numberWithCommas(row.Evaporacao_m3_mes, 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem', p: 2 }}>{numberWithCommas(row.Captacao_m3_mes, 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem', p: 2 }}>{numberWithCommas(row.Vol_Final, 2)}</TableCell>
+                            <TableCell sx={{ fontSize: '0.68rem', py: 0 }}>{row.Mes}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', p: 0.25 }}>{numberWithCommas(row.Qmmm_m3s, 4)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', p: 0.25 }}>{numberWithCommas(row.Entrada_m3_mes, 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', p: 0.25 }}>{numberWithCommas(row.Infiltracao_m3_mes, 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', p: 0.25 }}>{numberWithCommas(row.Evaporacao_m3_mes, 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', p: 0.25 }}>{numberWithCommas(row.Captacao_m3_mes, 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', p: 0.25 }}>{numberWithCommas(row.Vol_Final, 2)}</TableCell>
                             <TableCell align="center" sx={{
                               color: row.CHECK === "OK" ? 'green' : 'red',
                               fontWeight: 'bold',
-                              fontSize: '0.75rem'
+                              fontSize: '0.68rem'
                             }}>
                               {row.CHECK}
                             </TableCell>
@@ -462,30 +455,30 @@ export default function BarrageForm() {
                     <Table stickyHeader size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontSize: '0.75rem' }}>Mês</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Entr. Méd</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Evap.</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>Infilt.</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>QCap</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>V. Final</TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.75rem' }}>V. Prob</TableCell>
-                          <TableCell align="center" sx={{ fontSize: '0.75rem' }}>Chk</TableCell>
+                          <TableCell sx={{ fontSize: '0.68rem', py: 0 }}>Mês</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Entr. Méd</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Evap.</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>Infilt.</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>QCap</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>V. Final</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>V. Prob</TableCell>
+                          <TableCell align="center" sx={{ fontSize: '0.68rem', py: 0 }}>Chk</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {result.resultadoCalculo.bruta.meses.map((mes, idx) => (
                           <TableRow key={idx} hover>
-                            <TableCell sx={{ fontSize: '0.75rem' }}>{mes}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>{numberWithCommas(result.resultadoCalculo.bruta.entrada_media[idx], 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>{numberWithCommas(result.resultadoCalculo.bruta.evaporacao_m3[idx], 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>{numberWithCommas(result.resultadoCalculo.bruta.infiltracao[idx], 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>{numberWithCommas(result.resultadoCalculo.bruta.qcap_total[idx], 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>{numberWithCommas(result.resultadoCalculo.bruta.volume_final[idx], 2)}</TableCell>
-                            <TableCell align="right" sx={{ fontSize: '0.75rem' }}>{numberWithCommas(result.resultadoCalculo.bruta.volume_prob[idx], 2)}</TableCell>
+                            <TableCell sx={{ fontSize: '0.68rem', py: 0 }}>{mes}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>{numberWithCommas(result.resultadoCalculo.bruta.entrada_media[idx], 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>{numberWithCommas(result.resultadoCalculo.bruta.evaporacao_m3[idx], 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>{numberWithCommas(result.resultadoCalculo.bruta.infiltracao[idx], 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>{numberWithCommas(result.resultadoCalculo.bruta.qcap_total[idx], 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>{numberWithCommas(result.resultadoCalculo.bruta.volume_final[idx], 2)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.68rem', py: 0 }}>{numberWithCommas(result.resultadoCalculo.bruta.volume_prob[idx], 2)}</TableCell>
                             <TableCell align="center" sx={{
                               color: result.resultadoCalculo.bruta.CHECK[idx] === "OK" ? 'green' : 'red',
                               fontWeight: 'bold',
-                              fontSize: '0.75rem'
+                              fontSize: '0.68rem'
                             }}>
                               {result.resultadoCalculo.bruta.CHECK[idx]}
                             </TableCell>
@@ -497,6 +490,12 @@ export default function BarrageForm() {
                 </Box>
               )}
             </div>
+
+            <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Abas de Dados e Resultado" variant="scrollable" scrollButtons="auto" sx={{ borderTop: 1, borderColor: 'divider', mt: 0 }}>
+              <Tab label="Operação" />
+              <Tab label="Planilha" disabled={!result} />
+              <Tab label="Bruta" disabled={!result} />
+            </Tabs>
 
           </Paper>
 

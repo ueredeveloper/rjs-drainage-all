@@ -15,7 +15,7 @@ import {
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import LayersClearIcon from "@mui/icons-material/LayersClear";
+import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from '@mui/icons-material/Close';
 import LayersIcon from '@mui/icons-material/Layers';
 
@@ -507,7 +507,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                 "&:hover": { background: "#fdf0ef" },
                             }}
                         >
-                            <LayersClearIcon
+                            <DeleteIcon
                                 sx={{ fontSize: 15 }}
                                 className={openPanel ? "speeddial-swing" : ""}
                             />

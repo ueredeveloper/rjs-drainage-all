@@ -171,13 +171,13 @@ const SurfaceChart = ({ analyse }) => {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: 'top' },
-
     },
   };
 
-  return (<Line data={data} options={options} style={{marginBottom: 10, maxHeight: '185px' }} />);
+  return (<Line data={data} options={options} style={{ width: '100%', height: '100%' }} />);
 };
 
 export default SurfaceChart;

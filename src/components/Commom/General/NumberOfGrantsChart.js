@@ -60,8 +60,8 @@ function NumberOfGrantsChart() {
     },
     toolbox: {
       show: true,
+      right: '4%',
       feature: {
-        mark: { show: true },
         dataView: { show: true, readOnly: false },
         restore: { show: false },
         saveAsImage: { show: false }
@@ -95,22 +95,26 @@ function NumberOfGrantsChart() {
   const [myChart, setMyChart] = useState(null)
 
   useEffect(() => {
-    // Cria uma instância do ECharts
-    let myChart = echarts.init(document.getElementById('e-grants-chart'));
+    const el = document.getElementById('e-grants-chart');
+    let myChart = echarts.init(el);
 
-    // Define as opções para o gráfico
     myChart.setOption(options);
 
     myChart.on('legendselectchanged', function (event) {
-
       setSelectedsCharts(event.selected)
-
     });
 
-    setMyChart(myChart)
+    setMyChart(myChart);
 
-    // Limpa a instância do gráfico quando o componente é desmontado
+    const ro = new ResizeObserver(() => {
+      window.requestAnimationFrame(() => {
+        if (!myChart.isDisposed()) myChart.resize();
+      });
+    });
+    ro.observe(el);
+
     return () => {
+      ro.disconnect();
       myChart.dispose();
     };
   }, []);
@@ -146,10 +150,10 @@ function NumberOfGrantsChart() {
 
   return (
 
-    <FormControl sx={{ display: "flex", flex: 1 }}>
-      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
-      <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, height: '17rem' }}>
-        <div id="e-grants-chart" style={{ margin: 10, width: '100%', height: '20rem' }}></div>
+    <FormControl sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
+      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ mb: 0.5 }}>Gráfico</FormLabel>
+      <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, minHeight: { xs: '20rem', md: 0 } }}>
+        <div id="e-grants-chart" style={{ width: '100%', height: '100%' }}></div>
       </Paper>
     </FormControl>
 

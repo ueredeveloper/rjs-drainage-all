@@ -48,7 +48,7 @@ const BUTTONS = [
   },
   {
     mode: "rectangle",
-    title: "Retângulo: 1º clique = canto, 2º clique = canto oposto",
+    title: "Retângulo: clique e arraste",
     svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>`,
   },
   {
@@ -274,35 +274,11 @@ const ElemDrawManager = ({ map }) => {
         return;
       }
 
-      if (mode === "rectangle") {
-        if (!startPoint) {
-          startPoint = e.latLng;
-        } else {
-          const s = startPoint, end = e.latLng;
-          setMode(null);
-          const SW = new window.google.maps.LatLng(
-            Math.min(s.lat(), end.lat()), Math.min(s.lng(), end.lng())
-          );
-          const NE = new window.google.maps.LatLng(
-            Math.max(s.lat(), end.lat()), Math.max(s.lng(), end.lng())
-          );
-          const rectangle = new window.google.maps.Rectangle({
-            bounds: new window.google.maps.LatLngBounds(SW, NE),
-            map,
-            strokeColor: "#ff0000",
-            strokeWeight: 2,
-            fillOpacity: 0.1,
-            editable: true,
-            clickable: true,
-          });
-          await finalizeShape("rectangle", rectangle);
-        }
-        return;
-      }
+      if (mode === "rectangle") return;
     };
 
     const handleMouseDown = (e) => {
-      if (mode !== "circle") return;
+      if (mode !== "circle" && mode !== "rectangle") return;
       startPoint = e.latLng;
       isDragging = true;
       map.setOptions({ draggable: false });
@@ -314,35 +290,61 @@ const ElemDrawManager = ({ map }) => {
       isDragging = false;
       map.setOptions({ draggable: true });
 
-      if (mode !== "circle" || !startPoint || !lastDragLatLng) {
+      if (mode === "circle") {
+        if (!startPoint || !lastDragLatLng) { clearPreview(); startPoint = null; lastDragLatLng = null; return; }
+        const radius = haversineDistance(
+          startPoint.lat(), startPoint.lng(),
+          lastDragLatLng.lat(), lastDragLatLng.lng()
+        );
+        if (radius < 50) { clearPreview(); startPoint = null; lastDragLatLng = null; return; }
+        const s = startPoint;
         clearPreview();
-        startPoint = null;
-        lastDragLatLng = null;
+        setMode(null);
+        startPoint = null; lastDragLatLng = null;
+        const circle = new window.google.maps.Circle({
+          center: { lat: s.lat(), lng: s.lng() },
+          radius,
+          map,
+          fillColor: "#ffff00",
+          fillOpacity: 0.2,
+          strokeColor: "#ff0000",
+          strokeWeight: 3,
+          clickable: true,
+          editable: true,
+          zIndex: 1,
+        });
+        await finalizeShape("circle", circle);
         return;
       }
 
-      const radius = haversineDistance(
-        startPoint.lat(), startPoint.lng(),
-        lastDragLatLng.lat(), lastDragLatLng.lng()
-      );
-      if (radius < 50) { clearPreview(); startPoint = null; lastDragLatLng = null; return; }
+      if (mode === "rectangle") {
+        if (!startPoint || !lastDragLatLng) { clearPreview(); startPoint = null; lastDragLatLng = null; return; }
+        const s = startPoint, end = lastDragLatLng;
+        clearPreview();
+        setMode(null);
+        startPoint = null; lastDragLatLng = null;
+        const SW = new window.google.maps.LatLng(
+          Math.min(s.lat(), end.lat()), Math.min(s.lng(), end.lng())
+        );
+        const NE = new window.google.maps.LatLng(
+          Math.max(s.lat(), end.lat()), Math.max(s.lng(), end.lng())
+        );
+        const rectangle = new window.google.maps.Rectangle({
+          bounds: new window.google.maps.LatLngBounds(SW, NE),
+          map,
+          strokeColor: "#ff0000",
+          strokeWeight: 2,
+          fillOpacity: 0.1,
+          editable: true,
+          clickable: true,
+        });
+        await finalizeShape("rectangle", rectangle);
+        return;
+      }
 
-      const s = startPoint;
       clearPreview();
-      setMode(null);
-      const circle = new window.google.maps.Circle({
-        center: { lat: s.lat(), lng: s.lng() },
-        radius,
-        map,
-        fillColor: "#ffff00",
-        fillOpacity: 0.2,
-        strokeColor: "#ff0000",
-        strokeWeight: 3,
-        clickable: true,
-        editable: true,
-        zIndex: 1,
-      });
-      await finalizeShape("circle", circle);
+      startPoint = null;
+      lastDragLatLng = null;
     };
 
     // dblclick é precedido por UM click (que já adicionou o ponto final), então usamos todos os pontos
@@ -460,7 +462,7 @@ const ElemDrawManager = ({ map }) => {
 
     const clearBtn = document.createElement("button");
     clearBtn.title = "Limpar todas as camadas desenhadas";
-    clearBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/><path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v2"/></svg>`;
+    clearBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
     clearBtn.style.cssText =
       "display:flex;align-items:center;justify-content:center;" +
       "width:26px;height:26px;background:#fff;border:1px solid #ccc;" +

@@ -7,11 +7,12 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
-//import ElemGrant from './grant/elem-grant';
 import { numberWithCommas } from '../../../tools';
-//import { makeStyles } from '@mui/styles';
-import { Paper, Typography } from '@mui/material';
+import { Avatar, Chip, Paper } from '@mui/material';
 import { useData } from '../../../hooks/analyse-hooks';
+import WallpaperIcon from '@mui/icons-material/Wallpaper';
+import LayersIcon from '@mui/icons-material/Layers';
+import TagIcon from '@mui/icons-material/Tag';
 //import { SystemContext } from './elem-content';
 
 
@@ -43,25 +44,37 @@ function DataAnalyseTable() {
     <Box sx={{ display: "flex", flexDirection: 'column'}}>
       <FormControl >
         <Box sx={{ display: 'flex', flexDirection: 'flex-row', justifyContent: 'space-between' }}>
-          <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Análise</FormLabel>
+          <FormLabel id="demo-controlled-radio-buttons-group" sx={{ mb: 0.5 }}>Análise</FormLabel>
         </Box>
 
         <Paper elevation={3} sx={{ margin: 0, overflow: 'auto' }}>
-          <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', my: 1 }}>
-            <Typography sx={{ fontSize: 14 }}>Bacia Hidrográfica: {hgAnalyse.bacia_nome}</Typography>
-            <Typography sx={{ fontSize: 14 }}>Unidade Hidrográfica: {hgAnalyse.uh_nome} </Typography>
-            <Typography sx={{ fontSize: 14 }}>{hgAnalyse.uh_label} </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 0.5, py: 1 }}>
+            <Chip
+              avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}><WallpaperIcon sx={{ fontSize: 18 }} /></Avatar>}
+              sx={{ fontSize: '12px' }}
+              label={`Bacia Hidrográfica: ${hgAnalyse.bacia_nome || ""}`}
+            />
+            <Chip
+              avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}><LayersIcon sx={{ fontSize: 18 }} /></Avatar>}
+              sx={{ fontSize: '12px' }}
+              label={`Unidade Hidrográfica: ${hgAnalyse.uh_nome || ""}`}
+            />
+            <Chip
+              avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}><TagIcon sx={{ fontSize: 18 }} /></Avatar>}
+              sx={{ fontSize: '12px' }}
+              label={hgAnalyse.uh_label || ""}
+            />
           </Box>
           <Table sx={{ minWidth: 100, width: "100%" }} aria-label="simple table" size="small">
             <TableHead>
               <TableRow>
-                <TableCell align="center" sx={{ p: 2, fontSize: 12 }}>Sistema</TableCell>
-                <TableCell align="center" sx={{ p: 2, fontSize: 12 }}>Código</TableCell>
-                <TableCell align="center" sx={{ p: 2, fontSize: 12 }}>Q Explotável (m³/ano)</TableCell>
-                <TableCell align="center" sx={{ p: 2, fontSize: 12 }}>N° Poços</TableCell>
-                <TableCell align="center" sx={{ p: 2, fontSize: 12 }}>Q Total Outorgada (m³/ano)</TableCell>
-                <TableCell align="center" sx={{ p: 2, fontSize: 12 }}>% UTILIZADA</TableCell>
-                <TableCell align="center" sx={{ p: 2, fontSize: 12 }}>Vol. Disponível (m³/ano)</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Sistema</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Código</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Q Explotável (m³/ano)</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>N° Poços</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Q Total Outorgada (m³/ano)</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>% UTILIZADA</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Vol. Disponível (m³/ano)</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

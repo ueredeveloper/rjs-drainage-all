@@ -17,14 +17,14 @@ export default function Footer() {
         alignItems: "center",
       }}
     >
-      <Typography sx={{ fontSize: 10, color: "text.secondary" }}>
+      <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
         SAD/DF – Versão {packageJson.version}
       </Typography>
 
       <Link
         href="mailto:outorga@adasa.df.gov.br"
         underline="none"
-        sx={{ fontSize: 10 }}
+        sx={{ fontSize: 12 }}
       >
         outorga@adasa.df.gov.br
       </Link>

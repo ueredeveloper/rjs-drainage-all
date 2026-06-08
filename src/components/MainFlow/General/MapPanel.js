@@ -16,11 +16,10 @@ function TabPanel(props) {
             id={`simple-tabpanel-${index}`}
             aria-labelledby={`simple-tab-${index}`}
             {...other}
-            style={{ height: "85%" }}
         >
             {value === index && (
-                <Box sx={{ p: 2, height: "100%" }}>
-                    <Box sx={{height: "100%"}}>{children}</Box>
+                <Box sx={{ height: "100%", boxSizing: "border-box" }}>
+                    {children}
                 </Box>
             )}
         </div>
@@ -64,13 +63,13 @@ function MapPanel() {
     };
 
     return (
-        <Box sx={{ width: "100%" }} >
-            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }} >
+            <Box sx={{ borderBottom: 1, borderColor: "divider", flexShrink: 0 }}>
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
                     <Tab label="Mapa" {...a11yProps(0)} />
                 </Tabs>
             </Box>
-            <TabPanel value={value} index={0} >
+            <TabPanel value={value} index={0} style={{ flex: 1, overflow: "hidden" }}>
                     <MapContainer />
             </TabPanel>
         </Box>

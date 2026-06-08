@@ -35,11 +35,6 @@ const DataAnalyseChart = () => {
             data: ['Q explotável', 'Q outorgada', 'Q Disponível', 'Q Usuário'],
             left: '5%',
         },
-        brush: {
-            // toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
-            //xAxisIndex: 0,
-        },
-        
         tooltip: {},
         xAxis: {
             data: [],
@@ -53,8 +48,9 @@ const DataAnalyseChart = () => {
         },
         grid: {
             left: 30,
-            top: 150,
-            bottom: 110,
+            right: 20,
+            top: 80,
+            bottom: 40,
         },
         series: [
             {
@@ -100,39 +96,24 @@ const DataAnalyseChart = () => {
 
 
     useEffect(() => {
-
-        /**
-        * Inicializa uma instância do gráfico ECharts no elemento com ID 'e-grants-sub-chart'.
-        * @type {echarts.ECharts}
-        */
-        let subChart = echarts.init(document.getElementById('e-grants-sub-chart'));
+        const el = document.getElementById('e-grants-sub-chart');
+        let subChart = echarts.init(el);
 
         subChart.setOption(options);
 
-        // manipulação das opções no gráfico 
-        subChart.on('brushSelected', function (params) {
-            var brushed = [];
-            var brushComponent = params.batch[0];
-            for (var sIdx = 0; sIdx < brushComponent.selected.length; sIdx++) {
-                var rawIndices = brushComponent.selected[sIdx].dataIndex;
-                brushed.push('[Series ' + sIdx + '] ' + rawIndices.join(', '));
-            }
-            subChart.setOption({
-                title: {
-                    backgroundColor: '#333',
-                    // text: 'SELECTED DATA INDICES: \n' + brushed.join('\n'),
-                    bottom: 0,
-                    right: '10%',
-                    width: 100,
-                    textStyle: {
-                        fontSize: 12,
-                        color: '#fff',
-                    },
-                },
+setsubChart(subChart);
+
+        const ro = new ResizeObserver(() => {
+            window.requestAnimationFrame(() => {
+                if (!subChart.isDisposed()) subChart.resize();
             });
         });
-        // Define a instância do gráfico no estado
-        setsubChart(subChart)
+        ro.observe(el);
+
+        return () => {
+            ro.disconnect();
+            subChart.dispose();
+        };
     }, []);
 
     useEffect(() => {
@@ -195,20 +176,20 @@ const DataAnalyseChart = () => {
   //<Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, height: '17rem' }}>
 
     return (
-        <FormControl sx={{ display: "flex", flex: 1 , m:0}}>
-            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Gráfico</FormLabel>
-            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, height: '17rem', py: 5, px: 2 }}>
-                    <div id="e-grants-sub-chart" style={{ marginLeft: 10, width: '100%', height: '10rem' }}></div>
-                  </Paper>
+        <FormControl sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, m: 0 }}>
+            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ mb: 0.5 }}>Gráfico</FormLabel>
+            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, minHeight: { xs: '17rem', md: '250px' }, p: 1 }}>
+                <div id="e-grants-sub-chart" style={{ width: '100%', height: '100%' }}></div>
+            </Paper>
             <Tooltip title="Escala logarítimica">
-                    <Switch
-                        checked={checked}
-                        size="small"
-                        onChange={handleChange}
-                        color="secondary"
-                        inputProps={{ 'aria-label': 'controlled' }}
-                    />
-                </Tooltip>
+                <Switch
+                    checked={checked}
+                    size="small"
+                    onChange={handleChange}
+                    color="secondary"
+                    inputProps={{ 'aria-label': 'controlled' }}
+                />
+            </Tooltip>
         </FormControl>
 
     );

@@ -14,7 +14,7 @@ import NumberOfGrantsChart from "../../Commom/General/NumberOfGrantsChart";
 function GeneralAnalysePanel() {
 
     return (
-        <Box sx={{ width: "100%" }}>
+        <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 1.5, flex: 1 }}>
             <SearchCoords tabNumber={0} />
             <SearchPaper value={0} />
             <NumberOfGrantsChart />

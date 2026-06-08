@@ -50,12 +50,12 @@ const ElemPopupOverlay = ({
                         left: 0;
                         transform: translate(-50%, -100%);
                         background-color: white;
-                        padding: 5px;
-                        border-radius: 5px;
+                        padding: 2px 4px;
+                        border-radius: 3px;
                         font-family: sans-serif;
                         overflow-y: auto;
-                        max-height: 60px;
-                        box-shadow: 0px 2px 10px 1px rgba(0, 0, 0, 0.5);
+                        max-height: 22px;
+                        box-shadow: 0px 2px 8px 1px rgba(0, 0, 0, 0.4);
                     }`,
           `.popup-bubble-anchor {
                         position: absolute;
@@ -79,7 +79,7 @@ const ElemPopupOverlay = ({
                         cursor: auto;
                         height: 0;
                         position: absolute;
-                        width: 200px;
+                        width: 160px;
                     }`,
         ];
 
@@ -177,19 +177,21 @@ const setContent = (draw) => {
             display: flex;
             flex-direction: column;
             text-align: center;
-            overflow-y: scroll;
-            font-size: 12px;
-            width: 17rem;
-            min-height: 5rem;
+            overflow-y: auto;
+            font-size: 10px;
+            width: 11rem;
+            min-height: 3.5rem;
+            padding: 4px 6px;
             background-color: #000;
             color: #fff;
             opacity: 0.8;
+            border-radius: 4px;
         }
         .overlay-info::-webkit-scrollbar {
-            width: 10px;
+            width: 4px;
         }
         .overlay-info::-webkit-scrollbar-thumb {
-            background: red;
+            background: #888;
         }
     `;
   document.head.appendChild(thumbStyle);
@@ -206,9 +208,11 @@ const setContent = (draw) => {
 
     const h3Element = document.createElement("h4");
     h3Element.textContent = `Informações do ${type}`;
+    h3Element.style.cssText = "margin:0;font-size:10px;font-weight:700;line-height:1.1;";
     const innerDivElement = document.createElement("div");
     const bElement = document.createElement("b");
     bElement.textContent = content;
+    bElement.style.cssText = "font-size:10px;font-weight:600;line-height:1.1;";
 
     innerDivElement.appendChild(bElement);
     divElement.appendChild(h3Element);

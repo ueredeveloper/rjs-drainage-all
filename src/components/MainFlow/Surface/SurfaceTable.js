@@ -366,10 +366,10 @@ export default function SurfaceTable({
           key={row.alias.substring(0, 5) + index}
           align="right"
           sx={{
-            padding: "0px",
-            px: "5px",
-            fontSize: "12px",
-            lineHeight: "1.1rem",
+            py: "5px",
+            px: "2px",
+            fontSize: "10px",
+            lineHeight: "1.1",
             textAlign: "center",
           }}
         >
@@ -517,10 +517,10 @@ export default function SurfaceTable({
           key={row.alias.substring(0, 5) + index}
           align="right"
           sx={{
-            padding: "0px",
-            px: "5px",
-            fontSize: "12px",
-            lineHeight: "1.1rem",
+            py: "5px",
+            px: "2px",
+            fontSize: "10px",
+            lineHeight: "1.1",
             textAlign: "center",
           }}
         >
@@ -534,19 +534,25 @@ export default function SurfaceTable({
     <Paper
       id="paper"
       elevation={3}
-      sx={{ my: 2, height: 190, overflow: "auto" }}
+      sx={{ my: 3 }}
     >
-      <Table id="table" size="small">
+      <Table id="table" size="small" sx={{ tableLayout: "fixed", width: "100%" }}>
+        <colgroup>
+          <col style={{ width: "320px" }} />
+        </colgroup>
         <TableHead>
           <TableRow>
             <TableCell
               sx={{
-                padding: "0px",
-                px: "5px",
-                fontSize: "12px",
-                width: "60rem",
-                lineHeight: "1.1rem",
+                py: "5px",
+                px: "4px",
+                fontSize: "10px",
+                fontWeight: 700,
+                lineHeight: "1.1",
                 textAlign: "center",
+                whiteSpace: "normal",
+                wordBreak: "break-word",
+                backgroundColor: "grey.200",
               }}
             >
               Quadro de Vazões (L/s)
@@ -554,8 +560,8 @@ export default function SurfaceTable({
             {months.map((value) => (
               <TableCell
                 key={value}
-                align="right"
-                sx={{ lineHeight: "1.1rem" }}
+                align="center"
+                sx={{ py: "5px", px: "2px", fontSize: "10px", lineHeight: "1.1", fontWeight: 600 }}
               >
                 {value}
               </TableCell>
@@ -580,12 +586,14 @@ export default function SurfaceTable({
                   component="th"
                   scope="row"
                   sx={{
-                    padding: "0px",
-                    px: "5px",
-                    fontSize: "12px",
-                    lineHeight: "1.1rem",
-                    width: "100px",
-                    textAlign: "center",
+                    py: "5px",
+                    px: "4px",
+                    fontSize: "10px",
+                    lineHeight: "1.1",
+                    textAlign: "left",
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                    backgroundColor: "grey.50",
                   }}
                 >
                   {row.alias}

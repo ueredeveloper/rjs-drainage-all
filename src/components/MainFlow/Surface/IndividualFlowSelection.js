@@ -136,10 +136,10 @@ export default function IndividualFlowSelection({ setSurfaceAnalyse }) {
                     name={selected.name}
                     value={selected.value}
                     onChange={handleChange}
-                    sx={{ height: 20, fontSize: 12 }}
+                    sx={{ height: 20, fontSize: 10 }}
                 >
                     {options.map((option) => (
-                        <MenuItem key={'menu-' + option.value} value={option.value} sx={{ fontSize: 12 }}>
+                        <MenuItem key={'menu-' + option.value} value={option.value} sx={{ fontSize: 10 }}>
                             {option.name}
                         </MenuItem>
                     ))}

@@ -10,7 +10,7 @@ import SurfaceTabs from './SurfaceTabs'
 export default function SurfaceAnalysePanel() {
 
     return (
-        <Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: 1, minHeight: 0 }}>
             <SearchCoords tabNumber={2} />
             <SurfaceTabs />
         </Box>

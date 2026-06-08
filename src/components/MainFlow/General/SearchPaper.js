@@ -59,7 +59,7 @@ function SearchPaper () {
 
     return (
         <FormControl style={{ display: "flex", flexDirection: 'column' }}>
-            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 1 }}>Buscador</FormLabel>
+            <FormLabel id="demo-controlled-radio-buttons-group" sx={{ mb: 0.5 }}>Buscador</FormLabel>
             <Paper elevation={3} sx={{ margin: 0 }}>
                 {/* Caixas de entrada: latitude e longitude */}
                 <Box sx={{ display: 'flex', flexFlow: 'row wrap' }}
@@ -96,11 +96,11 @@ function SearchPaper () {
                                     <CircularProgress size={25} />
                                 </Fade>
                                 :
-                                <IconButton color="secondary" size="large" onClick={() => { findByColumnHandler().then(() => { setLoading(false); }); }}>
+                                <IconButton color="secondary" size="small" onClick={() => { findByColumnHandler().then(() => { setLoading(false); }); }}>
                                     <SearchIcon />
                                 </IconButton>
                         }
-                        <IconButton color="secondary" size="large">
+                        <IconButton color="secondary" size="small">
                             <ContentCopyIcon />
                         </IconButton>
                     </Box>

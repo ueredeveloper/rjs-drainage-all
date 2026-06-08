@@ -36,7 +36,7 @@ function CustomTabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 1.5 }}>{children}</Box>}
     </div>
   );
 }
@@ -74,39 +74,30 @@ export default function SurfaceTabs() {
   };
 
   return (
-    <FormControl sx={{ display: "flex", flex: 1, m: 0 }}>
-      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ my: 2 }}>Análise </FormLabel>
-      <Box sx={{ width: '100%' }}>
-
-      
-        <Box sx={{ p: 0 }}>
-          {tabValue === "0" && <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-
+    <FormControl sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, m: 0 }}>
+      <FormLabel id="demo-controlled-radio-buttons-group" sx={{ mb: 0.5, flexShrink: 0 }}>Análise</FormLabel>
+      <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
+        {/* Conteúdo da aba ativa — cresce até o limite */}
+        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+          {tabValue === "0" && <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
               <Chip
-                avatar={
-                  <Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}>
-                    <WallpaperIcon sx={{ fontSize: 18 }} />
-                  </Avatar>
-                }
+                avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}><WallpaperIcon sx={{ fontSize: 18 }} /></Avatar>}
                 sx={{ m: 1, fontSize: "12px" }}
                 label={`Área de Contribuição: ${ottoBasins.area.toFixed(4)} km²`}
               />
-
               <Chip
-                avatar={
-                  <Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}>
-                    <LayersIcon sx={{ fontSize: 18 }} />
-                  </Avatar>
-                }
+                avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}><LayersIcon sx={{ fontSize: 18 }} /></Avatar>}
                 sx={{ m: 1, fontSize: "12px" }}
                 label={`Unidade Hidrográfica: ${ottoBasins.uhNome || ""} - UH ${ottoBasins.uhRotulo || ""}`}
               />
-
             </Box>
-            <Paper elevation={3} sx={{ marginBottom: 1 }}><SurfaceChart analyse={surfaceAnalyse.secao} /></Paper>
-            <Paper elevation={3}><SurfaceChart analyse={surfaceAnalyse.uh} /></Paper>
-
+            <Paper elevation={3} sx={{ height: '180px', flexShrink: 0, overflow: "hidden" }}>
+              <SurfaceChart analyse={surfaceAnalyse.secao} />
+            </Paper>
+            <Paper elevation={3} sx={{ height: '180px', flexShrink: 0, overflow: "hidden" }}>
+              <SurfaceChart analyse={surfaceAnalyse.uh} />
+            </Paper>
           </Box>}
           {tabValue === "1" && <Box>
             <SurfaceTable q_solicitada={surfaceAnalyse.q_solicitada} analyse={surfaceAnalyse.secao} setSurfaceAnalyse={setSurfaceAnalyse} />
@@ -114,15 +105,16 @@ export default function SurfaceTabs() {
           </Box>}
           {tabValue === "2" && <Box>
             <SurfaceTableModulations analyse={surfaceAnalyse.h_ajuste} setSurfaceAnalyse={setSurfaceAnalyse} />
-            <SurfaceTableModulations analyse={surfaceAnalyse.h_modula} setSurfaceAnalyse={setSurfaceAnalyse}/>
-            <SurfaceTableModulations analyse={surfaceAnalyse.q_modula} setSurfaceAnalyse={setSurfaceAnalyse}/>
-
+            <SurfaceTableModulations analyse={surfaceAnalyse.h_modula} setSurfaceAnalyse={setSurfaceAnalyse} />
+            <SurfaceTableModulations analyse={surfaceAnalyse.q_modula} setSurfaceAnalyse={setSurfaceAnalyse} />
           </Box>}
         </Box>
+        {/* Abas de navegação fixas no rodapé */}
         <Tabs
           value={tabValue}
           onChange={handleChange}
           aria-label="wrapped label tabs example"
+          sx={{ flexShrink: 0, borderTop: 1, borderColor: "divider" }}
         >
           <Tab value="0" label="Gráficos" wrapped />
           <Tab value="1" label="Tabelas" wrapped />

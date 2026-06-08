@@ -9,6 +9,7 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField, Tooltip } fr
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import TransformIcon from "@mui/icons-material/Transform";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
 import IconButton from "@mui/material/IconButton";
 import CoordConverter from "./CoordConverter";
 import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolocation";
@@ -425,11 +426,11 @@ function SearchCoords({ tabNumber }) {
       />
 
       <FormControl style={{ display: "flex", flexDirection: "column" }}>
-        <FormLabel sx={{ my: 1 }}>Coordenadas</FormLabel>
+        <FormLabel sx={{ mb: 0.5 }}>Coordenadas</FormLabel>
         <Paper elevation={3} sx={{ margin: 0 }}>
           <Box sx={{ display: "flex", flexFlow: "row wrap" }}>
             {/* Campos de entrada de latitude e longitude */}
-            <Box sx={{ display: "flex", flex: 4, flexDirection: "row" }}>
+            <Box sx={{ display: "flex", flex: { xs: tabNumber === 1 ? "1 1 auto" : "1 1 100%", md: 4 }, flexDirection: "row" }}>
               <TextField
                 onKeyDown={handlekeydown}
                 sx={{ my: 1, mx: 1, minWidth: "3rem", flex: 1 }}
@@ -458,13 +459,13 @@ function SearchCoords({ tabNumber }) {
                 <CircleRadiusSelector />
               </Box>
             ) : tabNumber === 1 ? (
-              <Box sx={{ display: "flex", flex: 2, flexDirection: "row", alignItems: "center" }}>
+              <Box sx={{ display: "flex", flex: { xs: "0 0 140px", md: 2 }, flexDirection: "row", alignItems: "center" }}>
                 <WellTypeSelector />
               </Box>
             ) : null}
 
             {/* Botões de busca e cópia */}
-            <Box sx={{ display: "flex", minWidth: 100 }}>
+            <Box sx={{ display: "flex", ml: "auto" }}>
               {loading ? (
                 <Fade
                   sx={{ color: "secondary.main" }}
@@ -478,7 +479,7 @@ function SearchCoords({ tabNumber }) {
                 <Tooltip title="Buscar por coordenada">
                   <IconButton
                     color="secondary"
-                    size="large"
+                    size="small"
                     onClick={() => {
                       handleOnClick().then(() => setLoading(false));
                     }}
@@ -493,7 +494,7 @@ function SearchCoords({ tabNumber }) {
               <Tooltip title="Copiar coordenadas decimais">
                 <IconButton
                   color="secondary"
-                  size="large"
+                  size="small"
                   onClick={handleCopy}>
                   <ContentCopyIcon />
                 </IconButton>
@@ -502,12 +503,36 @@ function SearchCoords({ tabNumber }) {
               <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
                 <IconButton
                   color="secondary"
-                  size="large"
+                  size="small"
                   onClick={() => setOpenConverter(true)}>
                   <TransformIcon />
                 </IconButton>
               </Tooltip>
 
+              <Tooltip title="Usar localização atual">
+                <IconButton
+                  color="secondary"
+                  size="small"
+                  sx={{ display: { xs: "inline-flex", md: "none" } }}
+                  onClick={() => {
+                    if (!navigator.geolocation) return;
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        setPosition((prev) => ({ ...prev, int_latitude: lat, int_longitude: lng }));
+                        setMarker((prev) => ({ ...prev, int_latitude: lat, int_longitude: lng }));
+                      },
+                      () => {
+                        setAlertMessage("Não foi possível obter a localização.");
+                        setOpenAlert(true);
+                      }
+                    );
+                  }}
+                >
+                  <MyLocationIcon />
+                </IconButton>
+              </Tooltip>
 
             </Box>
 
