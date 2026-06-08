@@ -74,7 +74,7 @@ const ElemSupplyPolyline = ({ shape, map, zoom, index }) => {
             geodesic: true,
             strokeColor: " #134FAF",
             strokeOpacity: 1,
-            strokeWeight: 3,
+            strokeWeight: 5,
             map: map,
         });
 

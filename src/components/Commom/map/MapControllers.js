@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 import {
     Box,
     Paper,
-    SpeedDial,
-    SpeedDialAction,
     Accordion,
     AccordionSummary,
     AccordionDetails,
@@ -100,9 +98,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
     const [openPanel, setOpenPanel] = useState(false);
 
     useEffect(() => {
-        // Inicialização da variável checkboxes
         setCheckboxes(getInitialCheckboxes())
-
     }, [])
 
     const handleCheckboxChange = (group, name, field) => (event) => {
@@ -173,6 +169,11 @@ function MapControllers({ checkboxes, setCheckboxes }) {
         });
         setOverlays(initialsStates.overlays);
     };
+
+    useEffect(() => {
+        window.addEventListener("clear-all-map", clearCheckboxes);
+        return () => window.removeEventListener("clear-all-map", clearCheckboxes);
+    }, [overlays]);
 
     const clearMap = () => {
         setSubsystem(initialsStates.subsystem);
@@ -460,55 +461,59 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                     flexDirection: "row",
                     alignItems: "center",
                     position: "absolute",
-                    right: 25,
+                    right: 10,
                     bottom: 20,
                     padding: 0,
                     margin: 0
                 }}
             >
+                <Box sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    background: "white",
+                    borderRadius: "2px",
+                    boxShadow: "0 1px 4px rgba(0,0,0,.3)",
+                    padding: "2px",
+                    gap: "2px",
+                }}>
+                    <Tooltip title="Camadas do Mapa">
+                        <IconButton
+                            id="speedial-open-close"
+                            onClick={() => setOpenPanel((prev) => !prev)}
+                            sx={{
+                                width: 26, height: 26,
+                                borderRadius: "2px",
+                                color: openPanel ? "#4a90d9" : "#444",
+                                background: openPanel ? "#d8e8f8" : "transparent",
+                                border: `1px solid ${openPanel ? "#4a90d9" : "#ccc"}`,
+                                padding: 0,
+                                "&:hover": { background: openPanel ? "#d8e8f8" : "#f5f5f5" },
+                            }}
+                        >
+                            <LayersIcon sx={{ fontSize: 15 }} />
+                        </IconButton>
+                    </Tooltip>
 
-                {/* Floating SpeedDial in the bottom-right */}
-                <Tooltip title={"Camadas do Mapa"}>
-                    <SpeedDial
-                        id="speedial-open-close"
-                        ariaLabel=""
-                        sx={{
-                            "& .MuiFab-primary": {
-                                width: 45, // Metade do tamanho padrão (56px)
-                                height: 45,
-                                mx: 0.5
-                            }
-                        }}
-                        icon={<LayersIcon />}
-                        onClick={() => setOpenPanel((prev) => !prev)}
-                        open={openPanel}
-
-                    >
-                        
-                    </SpeedDial>
-                </Tooltip>
-
-                <SpeedDial
-                    id="speed-dial-clear"
-                    ariaLabel=""
-                    sx={{
-                        "& .MuiFab-primary": {
-                            width: 35, // Metade do tamanho padrão (56px)
-                            height: 35,
-                            minHeight: 35,
-                            mx: 0.5,
-                            
-                            backgroundColor: "white",
-                            color: "gray",
-                            "&:hover": {
-                                backgroundColor: "white",
-                            }
-                        }
-                    }}
-                    icon={<LayersClearIcon sx={{ fontSize: 20 }} className={openPanel ? "speeddial-swing" : ""} />}
-                    onClick={() => clearCheckboxes()}
-                    open={openPanel}
-                />
+                    <Tooltip title="Limpar camadas">
+                        <IconButton
+                            id="speed-dial-clear"
+                            onClick={() => clearCheckboxes()}
+                            sx={{
+                                width: 26, height: 26,
+                                borderRadius: "2px",
+                                color: "#c0392b",
+                                border: "1px solid #ccc",
+                                padding: 0,
+                                "&:hover": { background: "#fdf0ef" },
+                            }}
+                        >
+                            <LayersClearIcon
+                                sx={{ fontSize: 15 }}
+                                className={openPanel ? "speeddial-swing" : ""}
+                            />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
                 {/* The floating panel: use Fade for a smooth appear */}
                 <Fade in={openPanel} id="fade-map-controllers">
                     <Paper

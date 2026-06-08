@@ -13,7 +13,6 @@ import {
 } from "../../../tools";
 import { useData } from "../../../hooks/analyse-hooks";
 import InfoWindowContent from "./infowindow/InfoWindowContent";
-import { initialsStates } from "../../../initials-states";
 
 const haversineDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371000;
@@ -39,13 +38,13 @@ const BUTTONS = [
   },
   {
     mode: "circle",
-    title: "Círculo: 1º clique = centro, 2º clique = raio",
+    title: "Círculo: clique e arraste",
     svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>`,
   },
   {
     mode: "polygon",
     title: "Polígono: clique nos vértices, duplo-clique para finalizar",
-    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,3 21,20 3,20"/></svg>`,
+    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,2 21,8 18,20 6,20 3,8"/></svg>`,
   },
   {
     mode: "rectangle",
@@ -77,6 +76,8 @@ const ElemDrawManager = ({ map }) => {
     let mode = null;
     let points = [];
     let startPoint = null;
+    let isDragging = false;
+    let lastDragLatLng = null;
     let previewShapes = [];
     let currentInfoWindow = null;
 
@@ -91,6 +92,11 @@ const ElemDrawManager = ({ map }) => {
     };
 
     const setMode = (newMode) => {
+      if (isDragging) {
+        isDragging = false;
+        lastDragLatLng = null;
+        map.setOptions({ draggable: true });
+      }
       mode = newMode;
       clearPreview();
       points = [];
@@ -177,6 +183,35 @@ const ElemDrawManager = ({ map }) => {
           center: { lat: center.lat(), lng: center.lng() },
           radius: parseInt(radius),
         });
+
+        // Re-busca outorgas quando o usuário redimensiona o círculo
+        let resizeTimer = null;
+        window.google.maps.event.addListener(overlay, "radius_changed", () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(async () => {
+            const newCenter = overlay.getCenter();
+            const newRadius = overlay.getRadius();
+            const newBounds = overlay.getBounds();
+            const newMarkers = await findAllPointsInCircle({
+              center: { lat: newCenter.lat(), lng: newCenter.lng() },
+              radius: parseInt(newRadius),
+            });
+            setOverlays((prev) => ({
+              ...prev,
+              shapes: prev.shapes.map((s) =>
+                s.id === shape.id
+                  ? {
+                      ...s,
+                      radius: newRadius,
+                      area: calculateCircleArea(newRadius),
+                      markers: newMarkers,
+                      position: { lat: newBounds.getNorthEast().lat(), lng: newCenter.lng() },
+                    }
+                  : s
+              ),
+            }));
+          }, 800);
+        });
       }
 
       if (type === "polygon") {
@@ -239,30 +274,6 @@ const ElemDrawManager = ({ map }) => {
         return;
       }
 
-      if (mode === "circle") {
-        if (!startPoint) {
-          startPoint = e.latLng;
-        } else {
-          const s = startPoint, end = e.latLng;
-          setMode(null);
-          const radius = haversineDistance(s.lat(), s.lng(), end.lat(), end.lng());
-          const circle = new window.google.maps.Circle({
-            center: { lat: s.lat(), lng: s.lng() },
-            radius,
-            map,
-            fillColor: "#ffff00",
-            fillOpacity: 0.2,
-            strokeColor: "#ff0000",
-            strokeWeight: 1,
-            clickable: true,
-            editable: true,
-            zIndex: 1,
-          });
-          await finalizeShape("circle", circle);
-        }
-        return;
-      }
-
       if (mode === "rectangle") {
         if (!startPoint) {
           startPoint = e.latLng;
@@ -279,7 +290,7 @@ const ElemDrawManager = ({ map }) => {
             bounds: new window.google.maps.LatLngBounds(SW, NE),
             map,
             strokeColor: "#ff0000",
-            strokeWeight: 1,
+            strokeWeight: 2,
             fillOpacity: 0.1,
             editable: true,
             clickable: true,
@@ -288,6 +299,50 @@ const ElemDrawManager = ({ map }) => {
         }
         return;
       }
+    };
+
+    const handleMouseDown = (e) => {
+      if (mode !== "circle") return;
+      startPoint = e.latLng;
+      isDragging = true;
+      map.setOptions({ draggable: false });
+    };
+
+    // Usa window.mouseup para garantir disparo mesmo com draggable: false
+    const handleWindowMouseUp = async () => {
+      if (!isDragging) return;
+      isDragging = false;
+      map.setOptions({ draggable: true });
+
+      if (mode !== "circle" || !startPoint || !lastDragLatLng) {
+        clearPreview();
+        startPoint = null;
+        lastDragLatLng = null;
+        return;
+      }
+
+      const radius = haversineDistance(
+        startPoint.lat(), startPoint.lng(),
+        lastDragLatLng.lat(), lastDragLatLng.lng()
+      );
+      if (radius < 50) { clearPreview(); startPoint = null; lastDragLatLng = null; return; }
+
+      const s = startPoint;
+      clearPreview();
+      setMode(null);
+      const circle = new window.google.maps.Circle({
+        center: { lat: s.lat(), lng: s.lng() },
+        radius,
+        map,
+        fillColor: "#ffff00",
+        fillOpacity: 0.2,
+        strokeColor: "#ff0000",
+        strokeWeight: 3,
+        clickable: true,
+        editable: true,
+        zIndex: 1,
+      });
+      await finalizeShape("circle", circle);
     };
 
     // dblclick é precedido por UM click (que já adicionou o ponto final), então usamos todos os pontos
@@ -299,20 +354,20 @@ const ElemDrawManager = ({ map }) => {
           paths: finalPts,
           map,
           strokeColor: "#ff0000",
-          strokeWeight: 1,
+          strokeWeight: 3,
           fillOpacity: 0.1,
           editable: true,
           clickable: true,
         });
         await finalizeShape("polygon", polygon);
-      } else if (mode === "polyline" && points.length >= 3) {
-        const finalPts = points.slice(0, -1);
+      } else if (mode === "polyline" && points.length >= 2) {
+        const finalPts = points;
         setMode(null);
         const polyline = new window.google.maps.Polyline({
           path: finalPts,
           map,
           strokeColor: "#ff0000",
-          strokeWeight: 2,
+          strokeWeight: 3,
           editable: true,
           clickable: true,
         });
@@ -321,6 +376,7 @@ const ElemDrawManager = ({ map }) => {
     };
 
     const handleMouseMove = (e) => {
+      if (isDragging) lastDragLatLng = e.latLng;
       if (!mode) return;
       clearPreview();
 
@@ -375,6 +431,8 @@ const ElemDrawManager = ({ map }) => {
     const clickL = map.addListener("click", handleClick);
     const dblClickL = map.addListener("dblclick", handleDblClick);
     const mouseMoveL = map.addListener("mousemove", handleMouseMove);
+    const mouseDownL = map.addListener("mousedown", handleMouseDown);
+    window.addEventListener("mouseup", handleWindowMouseUp);
     window.addEventListener("keydown", handleKeyDown);
 
     BUTTONS.forEach(({ mode: btnMode, title, svg }) => {
@@ -411,12 +469,7 @@ const ElemDrawManager = ({ map }) => {
     clearBtn.onmouseleave = () => { clearBtn.style.background = "#fff"; };
     clearBtn.onclick = () => {
       setMode(null);
-      setOverlays((prev) => {
-        prev.shapes.forEach((shape) => {
-          if (shape?.draw) shape.draw.setMap(null);
-        });
-        return initialsStates.overlays;
-      });
+      window.dispatchEvent(new Event("clear-all-map"));
     };
     toolbar.appendChild(clearBtn);
 
@@ -432,9 +485,12 @@ const ElemDrawManager = ({ map }) => {
       window.google.maps.event.removeListener(clickL);
       window.google.maps.event.removeListener(dblClickL);
       window.google.maps.event.removeListener(mouseMoveL);
+      window.google.maps.event.removeListener(mouseDownL);
+      window.removeEventListener("mouseup", handleWindowMouseUp);
       window.removeEventListener("keydown", handleKeyDown);
+      if (isDragging) map.setOptions({ draggable: true });
     };
-  }, [map]);
+  }, [map, setMarker, setOverlays]);
 
   return null;
 };

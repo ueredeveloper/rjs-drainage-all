@@ -33,15 +33,15 @@ const ElemPolyline = ({ shape, map, zoom }) => {
 
     let newWeight;
     if (zoom <= 10) {
-      newWeight = 1;
-    } else if (zoom <= 12) {
       newWeight = 2;
+    } else if (zoom <= 12) {
+      newWeight = 3;
     } else if (zoom <= 15) {
-      newWeight = 4;
-    } else if (zoom <= 17) {
       newWeight = 6;
+    } else if (zoom <= 17) {
+      newWeight = 9;
     } else {
-      newWeight = 8;
+      newWeight = 12;
     }
 
     setStrokeWeight(newWeight);

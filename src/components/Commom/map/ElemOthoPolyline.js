@@ -30,7 +30,7 @@ const ElemOttoPolyline = ({ geometry, map, zoom }) => {
     useEffect(() => {
 
         // Se o usuário aproximar mais o mapa, a linha cresce a largura de aocrdo com o zoom
-        const newWeight = zoom <= 12 ? 1.5 : 4;
+        const newWeight = zoom <= 12 ? 3 : 7;
         setStrokeWeight(newWeight);
 
     }, [zoom])

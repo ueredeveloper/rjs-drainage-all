@@ -17,33 +17,27 @@
   /* !important pode ser necessário para sobrescrever estilos do Google Maps */
 }
 
-/* tamanho do ícione do street view */
+/* tamanho do ícone do street view */
 .gm-svpc {
-  transform: scale(0.8);
-  /* 70% do tamanho original */
+  transform: scale(0.7);
   transform-origin: bottom right;
-  /* ajusta ponto de escala */
 }
 
 /* tamanho do seletor de tela cheia (fullscreen) do mapa */
 .gm-fullscreen-control {
-  transform: scale(0.8);
-  /* 70% do tamanho original */
+  transform: scale(0.7);
   transform-origin: top right;
-  /* ajusta ponto de escala */
 }
 
 /* tamanho do seletor de tipo de mapa */
 .gm-style-mtc {
-  transform: scale(0.8);
-  /* 70% do tamanho original */
+  transform: scale(0.7);
   transform-origin: top left;
-  /* mantém alinhado ao canto */
 }
 
-/* tamanho dos controles direita, esquerda, cima e embaixo */
+/* tamanho dos controles de zoom/pan */
 gmp-internal-camera-control {
-  transform: scale(0.9);
+  transform: scale(0.75);
   transform-origin: center center;
   display: inline-block;
 }
