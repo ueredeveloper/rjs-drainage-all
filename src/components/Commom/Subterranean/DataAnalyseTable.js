@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -19,9 +21,8 @@ import TagIcon from '@mui/icons-material/Tag';
 
 
 function DataAnalyseTable() {
-  /**
-    * Dados sobre a disponibilidade.
-    */
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   /*
   const [hgAnalyse, setHGAnalyse ] = useState({
@@ -72,7 +73,7 @@ function DataAnalyseTable() {
                 <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Código</TableCell>
                 <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Q Explotável (m³/ano)</TableCell>
                 <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>N° Poços</TableCell>
-                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Q Total Outorgada (m³/ano)</TableCell>
+                <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>{isMobile ? "Q. Total Out. (m³/ano)" : "Q Total Outorgada (m³/ano)"}</TableCell>
                 <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>% UTILIZADA</TableCell>
                 <TableCell align="center" sx={{ p: 2, fontSize: 10 }}>Vol. Disponível (m³/ano)</TableCell>
               </TableRow>

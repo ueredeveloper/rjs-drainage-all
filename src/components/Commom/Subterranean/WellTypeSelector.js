@@ -4,21 +4,13 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import { Box } from '@mui/system';
 import { useData } from '../../../hooks/analyse-hooks';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 
-/**
- * Lista de tipos de poços.
- * @type {Array<Object>}
- */
 const wellType = [
-  {
-    value: "1",
-    label: 'Manual/Tubular Raso',
-  },
-  {
-    value: "3",
-    label: 'Tubular Profundo',
-  }
+  { value: "1", label: 'Manual/Tubular Raso', labelMobile: 'Man./Tub. Raso' },
+  { value: "3", label: 'Tubular Profundo',    labelMobile: 'Tub. Profundo'   },
 ];
 
 /**
@@ -28,8 +20,9 @@ const wellType = [
  */
 function WellTypeSelector() {
 
-  // Obtém a função setMarker do hook useData.
   const { setMarker, tpId, setTpId } = useData();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   /**
    * Manipula o evento de alteração do input select e atualiza o estado tpId.
@@ -58,7 +51,7 @@ function WellTypeSelector() {
     <Box component="form"
       sx={{
         width: '100%',
-        mx: 1,
+        mx: 0.5,
         '& .MuiInputBase-root': { height: '2.5rem' },
       }}
       noValidate
@@ -72,9 +65,8 @@ function WellTypeSelector() {
         onChange={onHandleChange}
       >
         {wellType.map((option) => (
-          <MenuItem key={option.value} value={option.value}
-          >
-            {option.label}
+          <MenuItem key={option.value} value={option.value}>
+            {isMobile ? option.labelMobile : option.label}
           </MenuItem>
         ))}
       </TextField>

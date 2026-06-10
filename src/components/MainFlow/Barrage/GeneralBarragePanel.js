@@ -14,7 +14,7 @@ import BarrageForm from "./BarrageForm";
 function GeneralBarragePanel() {
 
     return (
-        <Box sx={{ width: "100%" }}>
+        <Box sx={{ width: "100%", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
             <SearchCoords tabNumber={3} />
             <BarrageForm />
            

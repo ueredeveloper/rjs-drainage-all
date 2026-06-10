@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 
 import TableContainer from '@mui/material/TableContainer';
 import Paper from '@mui/material/Paper';
@@ -87,12 +88,12 @@ function ElemGrant() {
         });
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }} >
-                <Tooltip title="Buscar usuário de água subterrânea">
-                    <Button color="secondary" onClick={handleOpen}><PersonAddAltIcon /></Button>
-                </Tooltip>
-            </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Tooltip title="Buscar usuário de água subterrânea">
+                <IconButton color="secondary" size="small" onClick={handleOpen}>
+                    <PersonAddAltIcon />
+                </IconButton>
+            </Tooltip>
 
             <Modal
                 keepMounted

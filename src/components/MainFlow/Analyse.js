@@ -46,7 +46,7 @@ function Analyse() {
                 hidden={value !== index}
                 id={`simple-tabpanel-${index}`}
                 aria-labelledby={`simple-tab-${index}`}
-                style={{ flex: 1, overflow: "hidden", display: value === index ? "flex" : undefined, flexDirection: "column" }}
+                style={{ flex: 1, overflow: "hidden", height: "100%", display: value === index ? "flex" : undefined, flexDirection: "column" }}
                 {...other}
             >
                 {value === index && (
@@ -102,7 +102,7 @@ function Analyse() {
                     {/* Mapa: 1/3 no desktop, altura fixa no mobile */}
                     <Box sx={{
                         flex: { md: 1 },
-                        height: { xs: "260px", sm: "320px", md: "100%" },
+                        height: { xs: "420px", sm: "460px", md: "100%" },
                         flexShrink: 0,
                     }}>
                         <MapPanel />

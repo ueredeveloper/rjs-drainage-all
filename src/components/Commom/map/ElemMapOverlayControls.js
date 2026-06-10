@@ -43,7 +43,7 @@ const ElemMapOverlayControls = ({ map, position, isFullscreen, isWaterAvailable,
   return createPortal(
     <Box>
       <ElemWaterUsage isFullscreen={isFullscreen} isWaterAvailable={isWaterAvailable} />
-      <MapControllers checkboxes={checkboxes} setCheckboxes={setCheckboxes} />
+      <MapControllers map={map} checkboxes={checkboxes} setCheckboxes={setCheckboxes} />
     </Box>, controlContainerRef.current);
 };
 

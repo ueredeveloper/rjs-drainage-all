@@ -9,7 +9,6 @@ import { CircularProgress, Fade, FormControl, FormLabel, TextField, Tooltip } fr
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import TransformIcon from "@mui/icons-material/Transform";
-import MyLocationIcon from "@mui/icons-material/MyLocation";
 import IconButton from "@mui/material/IconButton";
 import CoordConverter from "./CoordConverter";
 import { findAllPointsInCircle, findPointsInASystem } from "../../services/geolocation";
@@ -428,12 +427,12 @@ function SearchCoords({ tabNumber }) {
       <FormControl style={{ display: "flex", flexDirection: "column" }}>
         <FormLabel sx={{ mb: 0.5 }}>Coordenadas</FormLabel>
         <Paper elevation={3} sx={{ margin: 0 }}>
-          <Box sx={{ display: "flex", flexFlow: "row wrap" }}>
+          <Box sx={{ display: "flex", flexFlow: "row wrap", minWidth: 0 }}>
             {/* Campos de entrada de latitude e longitude */}
-            <Box sx={{ display: "flex", flex: { xs: tabNumber === 1 ? "1 1 auto" : "1 1 100%", md: 4 }, flexDirection: "row" }}>
+            <Box sx={{ display: "flex", flex: { xs: tabNumber === 1 ? "1 1 0" : "1 1 100%", md: 4 }, flexDirection: "row", minWidth: 0 }}>
               <TextField
                 onKeyDown={handlekeydown}
-                sx={{ my: 1, mx: 1, minWidth: "3rem", flex: 1 }}
+                sx={{ my: 1, mx: 0.5, minWidth: 0, flex: 1 }}
                 label="Latitude"
                 color="secondary"
                 name="int_latitude"
@@ -443,7 +442,7 @@ function SearchCoords({ tabNumber }) {
               />
               <TextField
                 onKeyDown={handlekeydown}
-                sx={{ my: 1, mx: 1, minWidth: "3rem", flex: 1 }}
+                sx={{ my: 1, mx: 0.5, minWidth: 0, flex: 1 }}
                 color="secondary"
                 label="Longitude"
                 name="int_longitude"
@@ -459,13 +458,38 @@ function SearchCoords({ tabNumber }) {
                 <CircleRadiusSelector />
               </Box>
             ) : tabNumber === 1 ? (
-              <Box sx={{ display: "flex", flex: { xs: "0 0 140px", md: 2 }, flexDirection: "row", alignItems: "center" }}>
+              <Box sx={{ display: "flex", flex: { xs: "0 0 65px", md: 2 }, flexDirection: "row", alignItems: "center" }}>
                 <WellTypeSelector />
               </Box>
             ) : null}
 
             {/* Botões de busca e cópia */}
-            <Box sx={{ display: "flex", ml: "auto" }}>
+            <Box sx={{
+              display: "flex",
+              ml: { xs: tabNumber === 1 ? 0 : "auto", md: "auto" },
+              width: { xs: tabNumber === 1 ? "100%" : "auto", md: "auto" },
+              justifyContent: { xs: tabNumber === 1 ? "flex-end" : "flex-start", md: "flex-start" },
+            }}>
+              {tabNumber === 1 ? <ElemGrant /> : null}
+
+              <Tooltip title="Copiar coordenadas decimais">
+                <IconButton
+                  color="secondary"
+                  size="small"
+                  onClick={handleCopy}>
+                  <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
+                <IconButton
+                  color="secondary"
+                  size="small"
+                  onClick={() => setOpenConverter(true)}>
+                  <TransformIcon />
+                </IconButton>
+              </Tooltip>
+
               {loading ? (
                 <Fade
                   sx={{ color: "secondary.main" }}
@@ -489,50 +513,6 @@ function SearchCoords({ tabNumber }) {
                 </Tooltip>
               )}
 
-              {tabNumber === 1 ? <ElemGrant /> : null}
-
-              <Tooltip title="Copiar coordenadas decimais">
-                <IconButton
-                  color="secondary"
-                  size="small"
-                  onClick={handleCopy}>
-                  <ContentCopyIcon />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
-                <IconButton
-                  color="secondary"
-                  size="small"
-                  onClick={() => setOpenConverter(true)}>
-                  <TransformIcon />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Usar localização atual">
-                <IconButton
-                  color="secondary"
-                  size="small"
-                  sx={{ display: { xs: "inline-flex", md: "none" } }}
-                  onClick={() => {
-                    if (!navigator.geolocation) return;
-                    navigator.geolocation.getCurrentPosition(
-                      (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-                        setPosition((prev) => ({ ...prev, int_latitude: lat, int_longitude: lng }));
-                        setMarker((prev) => ({ ...prev, int_latitude: lat, int_longitude: lng }));
-                      },
-                      () => {
-                        setAlertMessage("Não foi possível obter a localização.");
-                        setOpenAlert(true);
-                      }
-                    );
-                  }}
-                >
-                  <MyLocationIcon />
-                </IconButton>
-              </Tooltip>
 
             </Box>
 

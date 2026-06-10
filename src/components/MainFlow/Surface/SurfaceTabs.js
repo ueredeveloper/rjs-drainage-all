@@ -92,10 +92,10 @@ export default function SurfaceTabs() {
                 label={`Unidade Hidrográfica: ${ottoBasins.uhNome || ""} - UH ${ottoBasins.uhRotulo || ""}`}
               />
             </Box>
-            <Paper elevation={3} sx={{ height: '180px', flexShrink: 0, overflow: "hidden" }}>
+            <Paper elevation={3} sx={{ height: '220px', flexShrink: 0, overflow: "hidden" }}>
               <SurfaceChart analyse={surfaceAnalyse.secao} />
             </Paper>
-            <Paper elevation={3} sx={{ height: '180px', flexShrink: 0, overflow: "hidden" }}>
+            <Paper elevation={3} sx={{ height: '220px', flexShrink: 0, overflow: "hidden" }}>
               <SurfaceChart analyse={surfaceAnalyse.uh} />
             </Paper>
           </Box>}

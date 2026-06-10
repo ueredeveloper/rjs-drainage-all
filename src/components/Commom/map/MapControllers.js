@@ -15,16 +15,18 @@ import {
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import DeleteIcon from "@mui/icons-material/Delete";
+import LayersClearIcon from "@mui/icons-material/LayersClear";
 import CloseIcon from '@mui/icons-material/Close';
 import LayersIcon from '@mui/icons-material/Layers';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
 
 import { convertGeometryToGmaps } from "../../../tools";
 import { useData } from "../../../hooks/analyse-hooks";
 import { fetchRiversByCoordinates, fetchShape } from "../../../services/shapes";
 import { initialsStates } from "../../../initials-states";
 
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { fetchAddressesByPosition, fetchAdministrativeRegions, fetchSuplySystemByPosition } from "../../../services/connection";
 import { SurfaceControllers, AddressControllers, SubterraneanControllers, SupplySystemControllers } from "./controllers";
 
@@ -32,15 +34,13 @@ import { SurfaceControllers, AddressControllers, SubterraneanControllers, Supply
 const checkboxOptions = {
     Geoportal: [
 
-        { name: "enderecos_por_logradouro", alias: "Endereço por Logradouro", checked: false, meters: 200, point: null },
-        // A busca engloba com quantos metros de distância
-        { name: "enderecos_por_coordenada", alias: "Endereços por Coordenada", checked: false, meters: 200, point: null },
-
-        { name: "regioes_administrativas", alias: "Regiões Administrativas", checked: false, meters: 200 },
+        { name: "enderecos_por_logradouro", alias: "Endereço por Logradouro",  aliasMobile: "End. Logradouro",   checked: false, meters: 200, point: null },
+        { name: "enderecos_por_coordenada", alias: "Endereços por Coordenada", aliasMobile: "End. Coordenada",   checked: false, meters: 200, point: null },
+        { name: "regioes_administrativas",  alias: "Regiões Administrativas",  aliasMobile: "Reg. Administrativas", checked: false, meters: 200 },
     ],
     Superficial: [
-        { name: "bacias_hidrograficas", alias: "Bacias Hidrográficas", checked: false, meters: 200 },
-        { name: "unidades_hidrograficas", alias: "Unidades Hidrográficas", checked: false, meters: 200 },
+        { name: "bacias_hidrograficas",   alias: "Bacias Hidrográficas",   aliasMobile: "Bac. Hidrog.",   checked: false, meters: 200 },
+        { name: "unidades_hidrograficas", alias: "Unidades Hidrográficas", aliasMobile: "Unid. Hidrog.",  checked: false, meters: 200 },
         { name: "rios_df", alias: "Rios do DF", checked: false, meters: 200 }
     ],
     Subterrânea: [
@@ -85,7 +85,7 @@ const getInitialCheckboxes = () => {
  *
  * @returns {JSX.Element} Elemento JSX que renderiza o painel de controle do mapa.
  */
-function MapControllers({ checkboxes, setCheckboxes }) {
+function MapControllers({ map, checkboxes, setCheckboxes }) {
 
     const theme = createTheme({
         typography: {
@@ -94,6 +94,9 @@ function MapControllers({ checkboxes, setCheckboxes }) {
     });
 
     const { marker, overlaysFetched, setOverlaysFetched, setSubsystem, setHgAnalyse, overlays, setOverlays } = useData();
+
+    const muiTheme = useTheme();
+    const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
     const [openPanel, setOpenPanel] = useState(false);
 
@@ -174,6 +177,16 @@ function MapControllers({ checkboxes, setCheckboxes }) {
         window.addEventListener("clear-all-map", clearCheckboxes);
         return () => window.removeEventListener("clear-all-map", clearCheckboxes);
     }, [overlays]);
+
+    const handleMyLocation = () => {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(({ coords }) => {
+            if (map) {
+                map.panTo({ lat: coords.latitude, lng: coords.longitude });
+                map.setZoom(15);
+            }
+        });
+    };
 
     const clearMap = () => {
         setSubsystem(initialsStates.subsystem);
@@ -494,6 +507,23 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                         </IconButton>
                     </Tooltip>
 
+                    <Tooltip title="Minha localização">
+                        <IconButton
+                            id="speed-dial-my-location"
+                            onClick={handleMyLocation}
+                            sx={{
+                                width: 26, height: 26,
+                                borderRadius: "2px",
+                                color: "#1a73e8",
+                                border: "1px solid #ccc",
+                                padding: 0,
+                                "&:hover": { background: "#e8f0fe" },
+                            }}
+                        >
+                            <MyLocationIcon sx={{ fontSize: 15 }} />
+                        </IconButton>
+                    </Tooltip>
+
                     <Tooltip title="Limpar camadas">
                         <IconButton
                             id="speed-dial-clear"
@@ -507,7 +537,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                 "&:hover": { background: "#fdf0ef" },
                             }}
                         >
-                            <DeleteIcon
+                            <LayersClearIcon
                                 sx={{ fontSize: 15 }}
                                 className={openPanel ? "speeddial-swing" : ""}
                             />
@@ -569,6 +599,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                     {items.map((item, index) => {
                                         if (!checkboxes[group] || !checkboxes[group][item.name]) return null;
                                         const state = checkboxes[group][item.name];
+                                        const displayAlias = isMobile && item.aliasMobile ? item.aliasMobile : item.alias;
                                         return (
 
 
@@ -579,7 +610,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                                         key={'surf-controlls' + group + item.name + index}
                                                         group={group}
                                                         name={item.name}
-                                                        alias={item.alias}
+                                                        alias={displayAlias}
                                                         checked={state?.checked}
                                                         handleCheckboxChange={handleCheckboxChange}
                                                     />
@@ -589,7 +620,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                                         key={'subt-controlls' + group + item.name + index}
                                                         group={group}
                                                         name={item.name}
-                                                        alias={item.alias}
+                                                        alias={displayAlias}
                                                         checked={state?.checked}
                                                         isWaterAvailable={state?.isWaterAvailable}
                                                         handleCheckboxChange={handleCheckboxChange}
@@ -600,7 +631,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                                         key={'supply-controlls' + group + item.name + index}
                                                         group={group}
                                                         name={item.name}
-                                                        alias={item.alias}
+                                                        alias={displayAlias}
                                                         checked={state?.checked}
                                                         meters={state?.meters}
                                                         handleCheckboxChange={handleCheckboxChange}
@@ -611,7 +642,7 @@ function MapControllers({ checkboxes, setCheckboxes }) {
                                                         key={'address-controlls' + group + item.name + index}
                                                         group={group}
                                                         name={item.name}
-                                                        alias={item.alias}
+                                                        alias={displayAlias}
                                                         checked={state?.checked}
                                                         setCheckboxes={setCheckboxes}
                                                         meters={state?.meters}

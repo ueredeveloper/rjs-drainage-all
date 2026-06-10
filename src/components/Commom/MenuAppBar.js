@@ -28,7 +28,8 @@ function MenuAppBar() {
       <AppBar position="static">
         <Toolbar variant="dense">
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600, letterSpacing: '0.02em' }}>
-            SAD/DF - Sistema de Apoio à Decisão
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>SAD/DF - Sistema de Apoio à Decisão</Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>SAD/DF</Box>
           </Typography>
           <Tooltip title={session?.colaborador?.email ?? ''}>
             <Button

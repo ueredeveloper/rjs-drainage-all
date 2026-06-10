@@ -29,32 +29,32 @@ const BUTTONS = [
   {
     mode: null,
     title: "Parar desenho (Esc)",
-    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M4 0l16 12.28-6.95 1.17 4.32 8.82-3.6 1.73-4.35-8.88-5.42 4.7z"/></svg>`,
+    svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4 0l16 12.28-6.95 1.17 4.32 8.82-3.6 1.73-4.35-8.88-5.42 4.7z"/></svg>`,
   },
   {
     mode: "marker",
     title: "Marcador",
-    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`,
+    svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`,
   },
   {
     mode: "circle",
     title: "Círculo: clique e arraste",
-    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>`,
+    svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>`,
   },
   {
     mode: "polygon",
     title: "Polígono: clique nos vértices, duplo-clique para finalizar",
-    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,2 21,8 18,20 6,20 3,8"/></svg>`,
+    svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,2 21,8 18,20 6,20 3,8"/></svg>`,
   },
   {
     mode: "rectangle",
     title: "Retângulo: clique e arraste",
-    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>`,
+    svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>`,
   },
   {
     mode: "polyline",
     title: "Linha: clique nos pontos, duplo-clique para finalizar",
-    svg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3,17 8,9 13,14 18,6 21,10"/></svg>`,
+    svg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3,17 8,9 13,14 18,6 21,10"/></svg>`,
   },
 ];
 
@@ -462,7 +462,7 @@ const ElemDrawManager = ({ map }) => {
 
     const clearBtn = document.createElement("button");
     clearBtn.title = "Limpar todas as camadas desenhadas";
-    clearBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+    clearBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19.81 14.99l1.19-.92-1.43-1.43-1.19.92 1.43 1.43zm-.45-4.72L21 9l-9-7-2.91 2.27 7.87 7.88 2.4-1.88zM3.27 1L2 2.27l4.22 4.22L3 9l1.63 1.27L12 16l2.1-1.63 1.43 1.43L12 18.54l-7.37-5.73L3 14.07l9 7 4.95-3.85L20.73 21 22 19.73 3.27 1z"/></svg>`;
     clearBtn.style.cssText =
       "display:flex;align-items:center;justify-content:center;" +
       "width:26px;height:26px;background:#fff;border:1px solid #ccc;" +
