@@ -259,7 +259,7 @@ export default function BarrageForm() {
 
         <Grid item xs={12}>
           <FormLabel sx={{ py: 0 }} >Tabelas</FormLabel>
-          <Paper elevation={3} sx={{ p: 1, display: 'flex', flexDirection: 'column', height: { md: 'calc(82vh - 380px)' }, minHeight: 220 }}>
+          <Paper elevation={3} sx={{ p: 1, display: 'flex', flexDirection: 'column', height: { md: 'calc(82vh - 350px)' }, minHeight: 220 }}>
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', pr: 1, borderBottom: 1, borderColor: 'divider', pb: 0.5 }}>
               <FormControlLabel
@@ -286,7 +286,7 @@ export default function BarrageForm() {
             </Box>
 
             {/* Tab Panel: Operação */}
-            <div role="tabpanel" hidden={tabIndex !== 0} style={{ height: "100%" }}>
+            <div role="tabpanel" hidden={tabIndex !== 0} style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
               {tabIndex === 0 && (
                 <Box sx={{ p: 1, height: "100%", display: "flex", flexDirection: "column" }}>
 
@@ -404,7 +404,7 @@ export default function BarrageForm() {
             </div>
 
             {/* Tab Panel: Planilha */}
-            <div role="tabpanel" hidden={tabIndex !== 1} style={{ height: "100%" }}>
+            <div role="tabpanel" hidden={tabIndex !== 1} style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
               {tabIndex === 1 && result && result.resultadoCalculo && (
                 <Box sx={{ p: 1, height: "100%", display: "flex", flexDirection: "column" }}>
                   <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, overflowY: 'auto' }}>
@@ -448,7 +448,7 @@ export default function BarrageForm() {
             </div>
 
             {/* Tab Panel: Bruta */}
-            <div role="tabpanel" hidden={tabIndex !== 2} style={{ height: "100%" }}>
+            <div role="tabpanel" hidden={tabIndex !== 2} style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
               {tabIndex === 2 && result && result.resultadoCalculo && (
                 <Box sx={{ p: 1, height: "100%", display: "flex", flexDirection: "column" }}>
                   <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, overflowY: 'auto' }}>
