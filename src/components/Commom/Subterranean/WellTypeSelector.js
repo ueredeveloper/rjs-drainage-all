@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import { Box } from '@mui/system';
@@ -45,7 +45,7 @@ function WellTypeSelector() {
     })
 
 
-  }, [tpId])
+  }, [tpId, setMarker])
 
   return (
     <Box component="form"

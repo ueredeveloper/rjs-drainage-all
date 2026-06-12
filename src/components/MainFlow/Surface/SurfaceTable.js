@@ -6,7 +6,6 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import { TextField } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useData } from "../../../hooks/analyse-hooks";
 import {
   calculateDemandaAjustada,
   calculateDisponibilidadeHidrica,

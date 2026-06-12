@@ -3,32 +3,24 @@ import * as echarts from 'echarts';
 import { FormControl, FormLabel, Paper, Switch, Tooltip } from '@mui/material';
 import { useData } from '../../../hooks/analyse-hooks';
 
-
+const emphasisStyle = {
+    itemStyle: {
+        shadowBlur: 10,
+        shadowColor: 'rgba(0,0,0,0.3)',
+    },
+};
 
 /**
  * Componente para renderizar um gráfico de análise de dados usando ECharts.
  * @component
  */
 const DataAnalyseChart = () => {
-    
 
-
-    /**
-    * Estado para armazenar a instância do gráfico ECharts.
-    * @type {echarts.ECharts | null}
-    */
     const [subChart, setsubChart] = useState(null);
 
     const { subsystem } = useData();
 
     const [checked, setChecked] = useState(false);
-
-    const emphasisStyle = {
-        itemStyle: {
-            shadowBlur: 10,
-            shadowColor: 'rgba(0,0,0,0.3)',
-        },
-    };
 
     const options = {
         legend: {
@@ -114,6 +106,7 @@ setsubChart(subChart);
             ro.disconnect();
             subChart.dispose();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -162,7 +155,8 @@ setsubChart(subChart);
             subChart.setOption(newOptions)
         }
 
-    }, [subsystem]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [subsystem, subChart]);
 
     /**
    * Função chamada quando o valor do Switch é alterado.
@@ -178,7 +172,7 @@ setsubChart(subChart);
     return (
         <FormControl sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0, m: 0 }}>
             <FormLabel id="demo-controlled-radio-buttons-group" sx={{ mb: 0.5 }}>Gráfico</FormLabel>
-            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, minHeight: { xs: '17rem', md: '250px' }, p: 1 }}>
+            <Paper id="dac-paper-container" elevation={3} sx={{ display: "flex", flex: 1, minHeight: { xs: '12rem', md: '180px' }, p: 1 }}>
                 <div id="e-grants-sub-chart" style={{ width: '100%', height: '100%' }}></div>
             </Paper>
             <Tooltip title="Escala logarítimica">

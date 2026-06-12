@@ -108,50 +108,33 @@ function nFormatter(num, digits) {
  */
 
 function analyzeAvailability(_info, _points) {
+  if (!_info) return null;
 
-  let _Q = 0;
-  _points.map((_point) => {
+  const points = _points ?? [];
 
-    if (typeof _point.dt_demanda?.vol_anual_ma === 'undefined') {
-      return _Q += 0;
-    } else {
-      return _Q += parseFloat(_point.dt_demanda.vol_anual_ma);
-    }
-  });
+  // soma a vazão anual de todos os pontos; ignora valores ausentes ou não-numéricos
+  const q_points = points.reduce((sum, point) => {
+    const vol = parseFloat(point.dt_demanda?.vol_anual_ma);
+    return sum + (isNaN(vol) ? 0 : vol);
+  }, 0);
 
-  // vazão explotável/ ano
-  let _q_ex = _info.re_cm_ano;
-  // nº de pontos
-  let _n_points = _points.length;
-  // somatório de vazão anual
-  let _q_points = _Q;
-  // percentual de vazão utilizada
-  let _q_points_per = (Number(_Q) * 100 / Number(_q_ex)).toFixed(4);
-  if (isNaN(_q_points_per)) {
-    console.log('análise, porcentagem, NaN')
-    _q_points_per = 0;
-  }
+  const q_ex = Number(_info.re_cm_ano) || 0;
+  // evita divisão por zero
+  const q_points_per = q_ex > 0
+    ? ((q_points * 100) / q_ex).toFixed(4)
+    : '0.0000';
 
   return {
-    bacia_nome: _info.bacia_nome,
-    // Unidade Hidrográfica
-    uh_label: _info.uh_label,
-    // Nome da UH
-    uh_nome: _info.uh_nome,
-    // Sitema (R3, P1)
-    sistema: _info.sistema,
-    // Código do Sitema
-    cod_plan: _info.cod_plan,
-    // Q explotável
-    q_ex: _q_ex,
-    // nº pontos
-    n_points: _n_points,
-    // Q outorgada
-    q_points: _q_points,
-    // % utilizada
-    q_points_per: _q_points_per,
-    // vol disponível
-    vol_avaiable: (Number(_q_ex) - Number(_q_points)).toFixed(4)
+    bacia_nome:   _info.bacia_nome,
+    uh_label:     _info.uh_label,
+    uh_nome:      _info.uh_nome,
+    sistema:      _info.sistema,
+    cod_plan:     _info.cod_plan,
+    q_ex,
+    n_points:     points.length,
+    q_points,
+    q_points_per,
+    vol_avaiable: (q_ex - q_points).toFixed(4),
   };
 }
 
@@ -412,34 +395,6 @@ const getMarkersInsideOttoBasins = (polygons, markers, map) => {
 
 }
 
-
-/**
- * Calcula o centroide de um polígono.
- * @param {Array<object>} vertices Lista de caminhos (vértices) do polígono.
- * @returns {object} Objeto contendo as coordenadas do centroide (lat, lng).
- */
-const calculateCentroid = (vertices) => {
-
-  // Verifica se a lista de vertices está vazia ou nula.
-  if (!vertices || vertices.length === 0) {
-    alert("Nenhum polígono encontrado.");
-    return null;
-  }
-
-  let latSum = 0;
-  let lngSum = 0;
-  const numVertices = vertices.length;
-
-  for (const vertex of vertices) {
-    latSum += vertex.lat();
-    lngSum += vertex.lng();
-  }
-
-  const centroidLat = latSum / numVertices;
-  const centroidLng = lngSum / numVertices;
-
-  return { lat: centroidLat, lng: centroidLng };
-};
 
 /**
  * Busca uma unidade hidrográfica com base no código informado (`uhCodigo`).

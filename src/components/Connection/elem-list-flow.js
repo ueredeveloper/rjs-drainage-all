@@ -25,7 +25,7 @@ function ElemListFlow({ user, setUser }) {
   }, [user]);
 
 
-  const [isEditable, setIsEditable] = useState({
+  const [isEditable] = useState({
     vazao_lh: false,
     tempo_h: false,
     periodo_d: false

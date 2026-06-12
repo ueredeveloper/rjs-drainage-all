@@ -12,7 +12,7 @@ import DataAnalyseChart from '../../Commom/Subterranean/DataAnalyseChart';
  */
 function SubterraneanAnalysePanel() {
     return (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: 1 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: 1, minHeight: 0 }}>
             <SearchCoords tabNumber={1} />
             <DataAnalyseTable />
             <DataAnalyseChart />

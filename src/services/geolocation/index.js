@@ -35,6 +35,8 @@ async function findAllPointsInASubsystem(tp_id, lat, lng) {
  */
 async function findAllPointsInRectangle(nex, ney, swx, swy) {
 
+  console.log('nex, ney, swx, swy:', nex, ney, swx, swy);
+
   try {
     const response = await fetch(url + '/find-points-inside-rectangle', {
       method: 'POST',
@@ -70,6 +72,8 @@ async function findAllPointsInRectangle(nex, ney, swx, swy) {
  * @returns {Promise<Array>} Uma Promise que resolve para uma matriz de pontos encontrados.
  */
 async function findAllPointsInPolygon(polygon) {
+
+  console.log(polygon);
 
   try {
     const response = await fetch(url + '/find-points-inside-polygon', {
@@ -124,6 +128,8 @@ async function findAllPointsInCircle(circle) {
 
     const data = await response.json();
 
+    console.log(data[0])
+
     // obter primeiro índice da matriz
     return data[0];
   } catch (error) {
@@ -142,29 +148,33 @@ async function findAllPointsInCircle(circle) {
   */
 
 
+/**
+ * Busca o subsistema hidrogeológico a partir de uma coordenada e tipo de poço.
+ *
+ * Mapeamento de tp_id:
+ *   1 (Manual) ou 2 (Tubular Raso)  → sistema poroso  (id interno 1)
+ *   3 (Tubular Profundo)             → sistema fraturado (id interno 2)
+ *
+ * @param {number|string} tp_id - Tipo do poço (1, 2 ou 3).
+ * @param {number} lat - Latitude decimal.
+ * @param {number} lng - Longitude decimal.
+ * @returns {Promise<object>} Objeto com _hg_info, _points e _hg_shape.
+ */
 async function findPointsInASystem(tp_id, lat, lng) {
+  const id = Number(tp_id);
+  const systemId = (id === 1 || id === 2) ? 1 : 2;
 
-  //  Tipo de poço na forma antiga 1 - Manual e 2 - Tubular
-  //      opções neste sistema
-  //          1 - Manual e (antigo 1)
-  //          2 - Tubular Raso (antigo 1)
-  //          3 - Tubular Profundo (antito 2)
-  let _tp_id = (tp_id === 1 || tp_id === 2) ? 1 : 2;
-
-  let response = await fetch(url + `/find-points-inside-subsystem?tp_id=${_tp_id}&lat=${lat}&lng=${lng}`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/JSON',
-      'Content-Type': 'application/JSON',
-      ...getAuthHeaders()
+  const response = await fetch(
+    `${url}/find-points-inside-subsystem?tp_id=${systemId}&lat=${lat}&lng=${lng}`,
+    {
+      method: 'GET',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...getAuthHeaders() },
     }
+  );
 
-  }).then(res => {
-    return res.json();
-  })
+  if (!response.ok) throw new Error(`findPointsInASystem: HTTP ${response.status}`);
 
-
-  return response;
+  return response.json();
 }
 
 export {

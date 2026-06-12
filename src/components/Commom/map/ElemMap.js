@@ -31,23 +31,13 @@ const locations = [
 ];
 
 
-function getRandomArbitrary(min, max) {
-  return Math.floor(Math.random() * (max - min) + min);
-}
-
 function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
   const ref = useRef();
-  const center = { lat: -15.78567469569133, lng: -47.83988126733556 };
-  //Escolha randomizada da imagem do streetview
-
-  //const [streetViewLocation, setStreetViewLocation] = useState(locations[getRandomArbitrary(0, locations.length)]);
-  // Busca o primeiro link da array de links
-  //const [streetViewLocation, setStreetViewLocation] = useState(locations[0]);
-  // Remove o street view
   const [streetViewLocation, setStreetViewLocation] = useState(null);
 
   // Inicializa o mapa uma vez
   useEffect(() => {
+    const center = { lat: -15.78567469569133, lng: -47.83988126733556 };
     if (ref.current && !map) {
       const newMap = new window.google.maps.Map(ref.current, {
         center,
@@ -60,7 +50,7 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
       });
       setMap(newMap);
     }
-  }, [map, setMap, center, zoom]);
+  }, [map, setMap, zoom]);
 
   // Configura listeners e modo do mapa
   useEffect(() => {

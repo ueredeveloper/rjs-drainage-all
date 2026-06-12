@@ -61,7 +61,7 @@ const fetchAddressesByPolygon = async (polygon) => {
   urlencoded.append("geometryType", "esriGeometryPolygon");
   urlencoded.append("inSR", "4674");
   urlencoded.append("spatialRel", "esriSpatialRelIntersects");
-  urlencoded.append("outFields", "*"); https://www.geoservicos.ide.df.gov.br
+  urlencoded.append("outFields", "*");
   urlencoded.append("returnGeometry", "true");
   urlencoded.append("outSR", "4674");
   urlencoded.append("f", "json");

@@ -225,14 +225,9 @@ const setContent = (draw) => {
   // Polilinha
   if (draw.type === "polyline") {
     let coordinates = [];
-    let htmlCoords = "";
 
     draw.draw.getPath().forEach((latLng) => {
       coordinates.push({ lat: latLng.lat(), lng: latLng.lng() });
-    });
-
-    coordinates.forEach((coordinate, index) => {
-      htmlCoords += `${index + 1}: ${coordinate.lat}, ${coordinate.lng}`;
     });
 
     let meters = draw.meters.toFixed(3);

@@ -102,7 +102,7 @@ function MapControllers({ map, checkboxes, setCheckboxes }) {
 
     useEffect(() => {
         setCheckboxes(getInitialCheckboxes())
-    }, [])
+    }, [setCheckboxes])
 
     const handleCheckboxChange = (group, name, field) => (event) => {
 
@@ -120,7 +120,7 @@ function MapControllers({ map, checkboxes, setCheckboxes }) {
                     [name]: {
                         ...prev[group][name],
                         [field]: value,
-                        ['isWaterAvailable']: false
+                        isWaterAvailable: false
                     },
                 },
             }));
@@ -162,7 +162,7 @@ function MapControllers({ map, checkboxes, setCheckboxes }) {
     };
 
 
-    const clearCheckboxes = () => {
+    const clearCheckboxes = React.useCallback(() => {
         setCheckboxes(getInitialCheckboxes())
 
         setSubsystem(initialsStates.subsystem);
@@ -171,12 +171,12 @@ function MapControllers({ map, checkboxes, setCheckboxes }) {
             if (shape.draw !== null) shape?.draw?.setMap(null)
         });
         setOverlays(initialsStates.overlays);
-    };
+    }, [overlays, setCheckboxes, setSubsystem, setHgAnalyse, setOverlays]);
 
     useEffect(() => {
         window.addEventListener("clear-all-map", clearCheckboxes);
         return () => window.removeEventListener("clear-all-map", clearCheckboxes);
-    }, [overlays]);
+    }, [clearCheckboxes]);
 
     const handleMyLocation = () => {
         if (!navigator.geolocation) return;
@@ -186,15 +186,6 @@ function MapControllers({ map, checkboxes, setCheckboxes }) {
                 map.setZoom(15);
             }
         });
-    };
-
-    const clearMap = () => {
-        setSubsystem(initialsStates.subsystem);
-        setHgAnalyse(initialsStates.subsystem.hg_analyse);
-        overlays.shapes.forEach(shape => {
-            if (shape.draw !== null) shape?.draw?.setMap(null)
-        });
-        setOverlays(initialsStates.overlays);
     };
 
     useEffect(() => {
@@ -463,7 +454,7 @@ function MapControllers({ map, checkboxes, setCheckboxes }) {
             }
         });
 
-    }, [checkboxes]);
+    }, [checkboxes, marker.int_latitude, marker.int_longitude, overlaysFetched, setOverlaysFetched]);
 
 
     return (

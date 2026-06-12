@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -47,15 +47,8 @@ CustomTabPanel.propTypes = {
   value: PropTypes.number.isRequired,
 };
 
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
-  };
-}
-
 /**
- * Tabs 
+ * Tabs
  * @returns 
  */
 export default function SurfaceTabs() {
@@ -78,8 +71,8 @@ export default function SurfaceTabs() {
       <FormLabel id="demo-controlled-radio-buttons-group" sx={{ mb: 0.5, flexShrink: 0 }}>Análise</FormLabel>
       <Box sx={{ display: "flex", flex: 1, flexDirection: "column", minHeight: 0 }}>
         {/* Conteúdo da aba ativa — cresce até o limite */}
-        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-          {tabValue === "0" && <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex", flexDirection: "column" }}>
+          {tabValue === "0" && <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 1 }}>
             <Box sx={{ display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
               <Chip
                 avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}><WallpaperIcon sx={{ fontSize: 18 }} /></Avatar>}
@@ -92,10 +85,10 @@ export default function SurfaceTabs() {
                 label={`Unidade Hidrográfica: ${ottoBasins.uhNome || ""} - UH ${ottoBasins.uhRotulo || ""}`}
               />
             </Box>
-            <Paper elevation={3} sx={{ height: '220px', flexShrink: 0, overflow: "hidden" }}>
+            <Paper elevation={3} sx={{ flex: 1, minHeight: '130px', overflow: "hidden" }}>
               <SurfaceChart analyse={surfaceAnalyse.secao} />
             </Paper>
-            <Paper elevation={3} sx={{ height: '220px', flexShrink: 0, overflow: "hidden" }}>
+            <Paper elevation={3} sx={{ flex: 1, minHeight: '130px', overflow: "hidden" }}>
               <SurfaceChart analyse={surfaceAnalyse.uh} />
             </Paper>
           </Box>}

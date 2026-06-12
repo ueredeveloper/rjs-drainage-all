@@ -50,8 +50,8 @@ function Analyse() {
                 {...other}
             >
                 {value === index && (
-                    <Box sx={{ p: 1.5, flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
-                        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>{children}</Box>
+                    <Box sx={{ p: 1.5, flex: 1, display: "flex", flexDirection: "column", overflow: "auto", minHeight: 0 }}>
+                        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>{children}</Box>
                     </Box>
                 )}
             </div>

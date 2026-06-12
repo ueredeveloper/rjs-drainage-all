@@ -3,47 +3,18 @@ import * as echarts from 'echarts';
 import { useData } from '../../../hooks/analyse-hooks';
 import { FormControl, FormLabel, Paper } from '@mui/material';
 
-/**
- * Componente que exibe um gráfico com contagem de concessões de outorga por tipo.
- * @component
- */
-function NumberOfGrantsChart() {
-
-
-
-  // Estado para armazenar informações do contexto de análise.
-  const { overlays, setSelectedsCharts } = useData();
-
-  /**
-   * Converte o nome de uma forma (shape) em um nome mais legível.
-   *
-   * @param {string} shapeName - O nome da forma a ser convertido.
-   * @returns {string} O nome legível da forma.
-   */
-  function convertOptionsDataName(shapeName) {
-    switch (shapeName) {
-      case 'subterranea':
-        return 'Subterrâneas';
-
-      case 'superficial':
-        return 'Superficiais';
-
-      case 'lancamento_pluviais':
-        return 'Pluviais';
-
-      case 'lancamento_efluentes':
-        return 'Efluentes';
-
-      case 'barragem':
-        return 'Barragens';
-
-      default:
-        return 'Desconhecido';
-    }
+function convertOptionsDataName(shapeName) {
+  switch (shapeName) {
+    case 'subterranea': return 'Subterrâneas';
+    case 'superficial': return 'Superficiais';
+    case 'lancamento_pluviais': return 'Pluviais';
+    case 'lancamento_efluentes': return 'Efluentes';
+    case 'barragem': return 'Barragens';
+    default: return 'Desconhecido';
   }
+}
 
-  // Opções iniciais para o gráfico.
-  let options = {
+const chartOptions = {
     color: [
       "#5470c6", // azul -> subterrânea
       "#91cc75", // verde -> superficial
@@ -90,7 +61,15 @@ function NumberOfGrantsChart() {
 
       }
     ]
-  };
+};
+
+/**
+ * Componente que exibe um gráfico com contagem de concessões de outorga por tipo.
+ * @component
+ */
+function NumberOfGrantsChart() {
+
+  const { overlays, setSelectedsCharts } = useData();
 
   const [myChart, setMyChart] = useState(null)
 
@@ -98,9 +77,9 @@ function NumberOfGrantsChart() {
     const el = document.getElementById('e-grants-chart');
     let myChart = echarts.init(el);
 
-    myChart.setOption(options);
+    myChart.setOption(chartOptions);
 
-    myChart.on('legendselectchanged', function (event) {
+    myChart.on('legendselectchanged', (event) => {
       setSelectedsCharts(event.selected)
     });
 
@@ -117,19 +96,18 @@ function NumberOfGrantsChart() {
       ro.disconnect();
       myChart.dispose();
     };
-  }, []);
+  }, [setSelectedsCharts]);
 
   // Efeito para atualizar o gráfico com base no estado das caixas de seleção.
   useEffect(() => {
 
-    const newOptions = { ...options }; // Cria uma cópia das opções
+    const newOptions = { ...chartOptions };
     let newOptionsData = [];
 
-    overlays.shapes.map((shape, i) => {
+    overlays.shapes.forEach((shape) => {
 
-
-      let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName, i) => {
-        let _data = options.series[0].data.find(item => item.name === convertOptionsDataName(shapeName))
+      let newData = ['subterranea', 'superficial', 'lancamento_pluviais', 'lancamento_efluentes', 'barragem'].map((shapeName) => {
+        let _data = chartOptions.series[0].data.find(item => item.name === convertOptionsDataName(shapeName))
         if (shape.markers !== undefined && shape.markers[shapeName] !== null) {
           return { ..._data, value: shape.markers[shapeName].length };
         }
@@ -146,7 +124,7 @@ function NumberOfGrantsChart() {
       myChart.setOption(newOptions)
     }
 
-  }, [overlays]);
+  }, [overlays, myChart]);
 
   return (
 

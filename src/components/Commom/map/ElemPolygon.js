@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react';
 import ElemPolygonInfoWindow from './infowindow/ElemPolygonInfoWindow';
 
-function getPolygonCenter(coords) {
-  const latSum = coords.reduce((sum, p) => sum + p.lat, 0);
-  const lngSum = coords.reduce((sum, p) => sum + p.lng, 0);
-  return {
-    lat: latSum / coords.length,
-    lng: lngSum / coords.length,
-  };
-}
-
 function setColorByPercentage(shape) {
 
   const percentage = shape.pct_utilizada;
@@ -41,9 +32,6 @@ const ElemPolygon = ({ shape, map, isWaterAvailable, zoom }) => {
 
   const [polygon, setPolygon] = useState();
 
-  // Captura popups para remover depois todos do mapa
-  let overlays = []
-
   useEffect(() => {
 
     if (!polygon) {
@@ -51,11 +39,8 @@ const ElemPolygon = ({ shape, map, isWaterAvailable, zoom }) => {
     }
 
     return () => {
-
       if (polygon) {
         polygon.setMap(null);
-        overlays.forEach(overlay => overlay.setMap(null));
-
       }
     };
 
