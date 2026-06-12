@@ -37,7 +37,7 @@ const CHART_ITEMS = [
   { key: '_qUsuario',    label: 'Q Usuário',      color: '#6a1b9a' },
 ];
 
-function AvailChart({ avail, qUsuario }) {
+function AvailChart({ avail, qUsuario, logScale }) {
   const values = [
     avail.q_ex,
     avail.q_points,
@@ -75,7 +75,9 @@ function AvailChart({ avail, qUsuario }) {
             grid: { display: false },
           },
           y: {
-            beginAtZero: true,
+            type: logScale ? 'logarithmic' : 'linear',
+            beginAtZero: !logScale,
+            min: logScale ? 0.1 : 0,
             ticks: {
               font: { size: 9 }, color: '#78909c',
               callback: v => nFormatter(v, 1),
@@ -102,6 +104,7 @@ export default function SubterraneanTab({
   const [qUsuario, setQUsuario]         = useState(0);
   const [selUser, setSelUser]           = useState(null);
   const [dialogOpen, setDialogOpen]     = useState(false);
+  const [logScale, setLogScale]         = useState(true);
 
   const handleSearch = useCallback(async () => {
     const latN = parseFloat(lat);
@@ -207,12 +210,44 @@ export default function SubterraneanTab({
         </Typography>
 
         {!avail && !loading && (
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.disabled', py: 0.5 }}>
-            <MyLocationIcon sx={{ fontSize: 16 }} />
-            <Typography variant="caption" sx={{ fontSize: '0.72rem' }}>
-              Busque por coordenadas para calcular a disponibilidade do subsistema.
-            </Typography>
-          </Stack>
+          <Box>
+            <Stack direction="row" alignItems="center" spacing={0.8} mb={1} sx={{ color: 'text.disabled' }}>
+              <MyLocationIcon sx={{ fontSize: 14 }} />
+              <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                Busque por coordenadas para calcular a disponibilidade do subsistema.
+              </Typography>
+            </Stack>
+            {/* placeholder chart */}
+            <Box sx={{ height: 140, opacity: 0.25, pointerEvents: 'none' }}>
+              <Bar
+                data={{
+                  labels: CHART_ITEMS.map(c => c.label),
+                  datasets: [{
+                    data: [18000, 6500, 11500, 0],
+                    backgroundColor: CHART_ITEMS.map(c => `${c.color}55`),
+                    borderColor:     CHART_ITEMS.map(c => c.color),
+                    borderWidth: 1.5,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: false,
+                  plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                  scales: {
+                    x: { ticks: { font: { size: 10 }, color: '#90a4ae' }, grid: { display: false } },
+                    y: {
+                      type: 'logarithmic', min: 0.1,
+                      ticks: { font: { size: 9 }, color: '#90a4ae', callback: v => nFormatter(v, 1) },
+                      grid: { color: '#f0f0f0' },
+                    },
+                  },
+                }}
+              />
+            </Box>
+          </Box>
         )}
 
         {avail && (
@@ -255,7 +290,7 @@ export default function SubterraneanTab({
               </Table>
             </Paper>
 
-            {/* Chart + botão Adicionar Usuário */}
+            {/* Chart: título + botão Adicionar Usuário */}
             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.8}>
               <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#546e7a', textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 Vazões (m³/ano)
@@ -281,8 +316,24 @@ export default function SubterraneanTab({
               </Stack>
             </Stack>
 
-            <Box sx={{ height: 130 }}>
-              <AvailChart avail={avail} qUsuario={qUsuario} />
+            <Box sx={{ position: 'relative', height: 140 }}>
+              <AvailChart avail={avail} qUsuario={qUsuario} logScale={logScale} />
+              <ToggleButtonGroup
+                value={logScale ? 'log' : 'lin'} exclusive size="small"
+                onChange={(_, v) => v && setLogScale(v === 'log')}
+                sx={{
+                  position: 'absolute', bottom: 4, right: 4, zIndex: 10,
+                  bgcolor: 'rgba(255,255,255,0.88)', borderRadius: 1,
+                  '& .MuiToggleButton-root': {
+                    fontSize: '0.58rem', textTransform: 'none', py: 0.15, px: 0.7, lineHeight: 1.4,
+                    borderColor: '#b0bec5', color: '#607d8b',
+                    '&.Mui-selected': { bgcolor: '#e3f2fd', color: '#0277bd', fontWeight: 700, borderColor: '#90caf9' },
+                  },
+                }}
+              >
+                <ToggleButton value="log">Log</ToggleButton>
+                <ToggleButton value="lin">Linear</ToggleButton>
+              </ToggleButtonGroup>
             </Box>
           </>
         )}

@@ -1,12 +1,12 @@
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, BarElement,
+  Chart as ChartJS, CategoryScale, LinearScale, LogarithmicScale, BarElement,
   LineElement, PointElement, ArcElement, RadialLinearScale,
   Title, Tooltip, Legend, Filler,
 } from 'chart.js';
 import { TI_CATS } from './constants';
 
 ChartJS.register(
-  CategoryScale, LinearScale, BarElement, LineElement,
+  CategoryScale, LinearScale, LogarithmicScale, BarElement, LineElement,
   PointElement, ArcElement, RadialLinearScale,
   Title, Tooltip, Legend, Filler,
 );
