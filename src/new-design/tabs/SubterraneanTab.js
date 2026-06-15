@@ -16,13 +16,17 @@ import CompactTable      from '../components/CompactTable';
 import UserSearchDialog  from '../components/UserSearchDialog';
 import { findPointsInASystem } from '../../services/geolocation';
 import { analyzeAvailability, numberWithCommas, nFormatter } from '../../tools';
+import { MESES } from '../constants';
+import { PT_SUFFIXES, ptFormatter, makeBarValuesPlugin } from '../chartSetup';
+
+const barValuesPlugin = makeBarValuesPlugin('m³/ano');
 
 const WELL_TYPES = [
   { value: '1', label: 'Manual / Tubular Raso' },
   { value: '3', label: 'Tubular Profundo'       },
 ];
 
-const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', 'Bacia'];
+const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', ...MESES];
 
 const AVAIL_COLS = [
   'Sistema', 'Código', 'Q Explotável (m³/ano)',
@@ -47,6 +51,7 @@ function AvailChart({ avail, qUsuario, logScale }) {
 
   return (
     <Bar
+      plugins={[barValuesPlugin]}
       data={{
         labels: CHART_ITEMS.map(c => c.label),
         datasets: [{
@@ -80,7 +85,12 @@ function AvailChart({ avail, qUsuario, logScale }) {
             min: logScale ? 0.1 : 0,
             ticks: {
               font: { size: 9 }, color: '#78909c',
-              callback: v => nFormatter(v, 1),
+              callback: v => {
+                const abs = Math.abs(v);
+                const { value, symbol } = PT_SUFFIXES.find(s => abs >= s.value) ?? PT_SUFFIXES.at(-1);
+                const n = (v / value).toFixed(1).replace('.', ',').replace(/,0$/, '');
+                return symbol ? `${n} ${symbol}` : n;
+              },
             },
             grid: { color: '#f0f0f0' },
           },
@@ -209,21 +219,72 @@ export default function SubterraneanTab({
           Análise de disponibilidade
         </Typography>
 
+        {/* Título + botão Adicionar Usuário — sempre visível */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.8}>
+          <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#546e7a', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            Vazões (m³/ano)
+          </Typography>
+          <Stack direction="row" spacing={0.6} alignItems="center">
+            {selUser && (
+              <Chip
+                size="small"
+                label={selUser.us_nome}
+                onDelete={() => { setQUsuario(0); setSelUser(null); }}
+                deleteIcon={<CloseIcon sx={{ fontSize: '0.75rem !important' }} />}
+                sx={{ height: 18, fontSize: '0.6rem', bgcolor: '#ede7f6', color: '#4a148c', maxWidth: 140 }}
+              />
+            )}
+            <Button
+              size="small" variant="outlined"
+              startIcon={<PersonSearchIcon sx={{ fontSize: '0.9rem !important' }} />}
+              onClick={() => setDialogOpen(true)}
+              sx={{ textTransform: 'none', fontSize: '0.65rem', py: 0.3, px: 1, borderColor: '#6a1b9a', color: '#6a1b9a', '&:hover': { bgcolor: '#f3e5f5' } }}
+            >
+              Adicionar usuário
+            </Button>
+          </Stack>
+        </Stack>
+
         {!avail && !loading && (
           <Box>
+            {/* tabela sample com linhas vazias */}
+            <Paper variant="outlined" sx={{ overflow: 'auto', mb: 1.5, opacity: 0.45 }}>
+              <Table size="small" sx={{ minWidth: 500 }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: '#f0f4ff' }}>
+                    {AVAIL_COLS.map(h => (
+                      <TableCell key={h} align="center" sx={{ fontSize: '0.63rem', fontWeight: 700, py: 0.8, px: 1, whiteSpace: 'nowrap' }}>
+                        {h}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    {AVAIL_COLS.map((_, i) => (
+                      <TableCell key={i} align="center" sx={{ py: 0.8, px: 1 }}>
+                        <Box sx={{ height: 10, borderRadius: 1, bgcolor: '#cfd8dc', mx: 'auto', width: i === 0 ? 60 : i === 1 ? 40 : 50 }} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Paper>
+
             <Stack direction="row" alignItems="center" spacing={0.8} mb={1} sx={{ color: 'text.disabled' }}>
               <MyLocationIcon sx={{ fontSize: 14 }} />
               <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
                 Busque por coordenadas para calcular a disponibilidade do subsistema.
               </Typography>
             </Stack>
-            {/* placeholder chart */}
-            <Box sx={{ height: 140, opacity: 0.25, pointerEvents: 'none' }}>
+            {/* placeholder chart com valores sample — exibido normalmente */}
+            <Box sx={{ height: 140 }}>
               <Bar
+                plugins={[barValuesPlugin]}
                 data={{
                   labels: CHART_ITEMS.map(c => c.label),
                   datasets: [{
-                    data: [18000, 6500, 11500, 0],
+                    data: [95000, 12400, 82600, 3800],
                     backgroundColor: CHART_ITEMS.map(c => `${c.color}55`),
                     borderColor:     CHART_ITEMS.map(c => c.color),
                     borderWidth: 1.5,
@@ -240,7 +301,15 @@ export default function SubterraneanTab({
                     x: { ticks: { font: { size: 10 }, color: '#90a4ae' }, grid: { display: false } },
                     y: {
                       type: 'logarithmic', min: 0.1,
-                      ticks: { font: { size: 9 }, color: '#90a4ae', callback: v => nFormatter(v, 1) },
+                      ticks: {
+                        font: { size: 9 }, color: '#90a4ae',
+                        callback: v => {
+                          const abs = Math.abs(v);
+                          const { value, symbol } = PT_SUFFIXES.find(s => abs >= s.value) ?? PT_SUFFIXES.at(-1);
+                          const n = (v / value).toFixed(1).replace('.', ',').replace(/,0$/, '');
+                          return symbol ? `${n} ${symbol}` : n;
+                        },
+                      },
                       grid: { color: '#f0f0f0' },
                     },
                   },
@@ -280,41 +349,15 @@ export default function SubterraneanTab({
                   <TableRow>
                     <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{avail.sistema  ?? '—'}</TableCell>
                     <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{avail.cod_plan ?? '—'}</TableCell>
-                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.q_ex)}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.q_ex, 2)}</TableCell>
                     <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{avail.n_points}</TableCell>
-                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.q_points)}</TableCell>
-                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.q_points_per)} %</TableCell>
-                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.vol_avaiable)}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.q_points, 2)}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.q_points_per, 2)} %</TableCell>
+                    <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.8, px: 1 }}>{numberWithCommas(avail.vol_avaiable, 2)}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
             </Paper>
-
-            {/* Chart: título + botão Adicionar Usuário */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.8}>
-              <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#546e7a', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                Vazões (m³/ano)
-              </Typography>
-              <Stack direction="row" spacing={0.6} alignItems="center">
-                {selUser && (
-                  <Chip
-                    size="small"
-                    label={selUser.us_nome}
-                    onDelete={() => { setQUsuario(0); setSelUser(null); }}
-                    deleteIcon={<CloseIcon sx={{ fontSize: '0.75rem !important' }} />}
-                    sx={{ height: 18, fontSize: '0.6rem', bgcolor: '#ede7f6', color: '#4a148c', maxWidth: 140 }}
-                  />
-                )}
-                <Button
-                  size="small" variant="outlined"
-                  startIcon={<PersonSearchIcon sx={{ fontSize: '0.9rem !important' }} />}
-                  onClick={() => setDialogOpen(true)}
-                  sx={{ textTransform: 'none', fontSize: '0.65rem', py: 0.3, px: 1, borderColor: '#6a1b9a', color: '#6a1b9a', '&:hover': { bgcolor: '#f3e5f5' } }}
-                >
-                  Adicionar usuário
-                </Button>
-              </Stack>
-            </Stack>
 
             <Box sx={{ position: 'relative', height: 140 }}>
               <AvailChart avail={avail} qUsuario={qUsuario} logScale={logScale} />
@@ -355,11 +398,13 @@ export default function SubterraneanTab({
 
       <Box sx={{ flex: 1, overflow: 'auto', '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
         {subPoints === null ? (
-          <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-            <WaterDropIcon sx={{ fontSize: 32, color: '#b0bec5', mb: 1 }} />
-            <Typography variant="body2" sx={{ fontSize: '0.78rem' }}>
-              Busque por coordenadas para ver as outorgas subterrâneas do subsistema.
-            </Typography>
+          <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
+            <CompactTable
+              headers={TABLE_HEADERS}
+              rows={Array.from({ length: 5 }, () => TABLE_HEADERS.map((_, j) => (
+                <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
+              )))}
+            />
           </Box>
         ) : subPoints.length === 0 ? (
           <Box sx={{ py: 5, textAlign: 'center' }}>
@@ -370,10 +415,16 @@ export default function SubterraneanTab({
         ) : (
           <CompactTable
             headers={TABLE_HEADERS}
-            rows={subPoints.map(m => [
-              m.us_nome ?? '—', m.us_cpf_cnpj ?? '—',
-              m.int_processo ?? '—', m.emp_endereco ?? '—', m.bh_nome ?? '—',
-            ])}
+            rows={subPoints.map(m => {
+              const demandas = m.dt_demanda?.demandas ?? [];
+              const monthly = MESES.map((_, i) => {
+                const d = demandas.find(d => parseInt(d.mes) === i + 1);
+                if (!d) return '—';
+                const v = parseFloat(d.vazao_ld);
+                return isNaN(v) ? '—' : numberWithCommas(v, 2);
+              });
+              return [m.us_nome ?? '—', m.us_cpf_cnpj ?? '—', m.int_processo ?? '—', m.emp_endereco ?? '—', ...monthly];
+            })}
             onRowClick={i => onMarkerSelect?.({ ...subPoints[i], _catColor: '#0277bd', _catLabel: 'Subterrânea' })}
           />
         )}

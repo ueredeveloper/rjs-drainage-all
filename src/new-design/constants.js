@@ -3,9 +3,8 @@ import WavesIcon       from '@mui/icons-material/Waves';
 import AssessmentIcon  from '@mui/icons-material/Assessment';
 import WaterIcon       from '@mui/icons-material/Water';
 
-// ─── Auth de desenvolvimento ─── substituir token quando expirar ──────────────
-export const DEV_SESSION =
-  '{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJlbWFpbCI6ImZhYnJpY2lvLmJhcnJvem9AYWRhc2EuZGYuZ292LmJyIiwiYWRtaW4iOnRydWUsImlhdCI6MTc4MTI3NzA5NywiZXhwIjoxNzgxMjkxNDk3fQ.Slx7WbyGTmY3jVX-vIlGvyd44QVg8-bkLnAf8ebGNec","colaborador":{"id":"1","email":"fabricio.barrozo@adasa.df.gov.br","admin":true}}';
+// ─── Auth: lê a sessão salva pelo login do site principal ─────────────────────
+export const DEV_SESSION = localStorage.getItem('rjs_session');
 
 
 // ─── Categorias de outorga ────────────────────────────────────────────────────

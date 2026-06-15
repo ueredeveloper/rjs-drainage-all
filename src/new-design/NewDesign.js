@@ -12,7 +12,7 @@ import BarragemTab      from './tabs/BarragemTab';
 
 import { findAllPointsInCircle, findAllPointsInPolygon, findAllPointsInRectangle } from '../services/geolocation';
 import { findByColumn } from '../services/users';
-import { TI_CATS, MAIN_TABS, DEV_SESSION } from './constants';
+import { TI_CATS, MAIN_TABS } from './constants';
 
 export default function NewDesign() {
   const [tabIndex, setTabIndex]               = useState(0);
@@ -30,6 +30,7 @@ export default function NewDesign() {
   const [textLoading, setTextLoading]         = useState(false);
   const [textError, setTextError]             = useState(null);
   const [subShape, setSubShape]               = useState(null);
+  const [userMarker, setUserMarker]           = useState(null);
   const [mapProvider, setMapProvider]         = useState('leaflet');
 
   const handleToggleCat = useCallback((key) => {
@@ -39,8 +40,6 @@ export default function NewDesign() {
       return next;
     });
   }, []);
-
-  useEffect(() => { localStorage.setItem('rjs_session', DEV_SESSION); }, []);
 
   // ── Normaliza as chaves da API para os nomes internos ────────────────────
   // A API retorna lancamento_efluentes / lancamento_pluviais; o resto do código
@@ -169,12 +168,21 @@ export default function NewDesign() {
     }
   }, [normalizeResult, updateAllMarkers]);
 
+  const handleClearAll = useCallback(() => {
+    setCircleData(null);
+    setUserMarker(null);
+    setSubShape(null);
+    setAllMarkers([]);
+    setSearchResult(null);
+    setSelectedMarker(null);
+    setError(null);
+  }, []);
+
   const handlePickCoordinate = useCallback(({ lat: pLat, lng: pLng }) => {
     setLat(pLat.toFixed(6));
     setLng(pLng.toFixed(6));
-    setTabIndex(0);
-    doCircleSearch({ lat: pLat, lng: pLng }, radius, 'Coordenada');
-  }, [radius, doCircleSearch]);
+    setUserMarker({ lat: pLat, lng: pLng });
+  }, []);
 
   const handleMapShape = useCallback(async (shape) => {
     if (shape.type === 'circle') {
@@ -252,7 +260,9 @@ export default function NewDesign() {
               circleData,
               onShapeCreated: handleMapShape,
               markerData: selectedMarker,
+              userMarker,
               onPickCoordinate: handlePickCoordinate,
+              onClearAll: handleClearAll,
               allMarkers: hiddenCats.size === 0 ? allMarkers : allMarkers.filter(m => !hiddenCats.has(m._catKey)),
               subShape,
             };

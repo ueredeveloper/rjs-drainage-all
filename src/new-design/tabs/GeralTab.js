@@ -8,9 +8,10 @@ import { PolarArea } from 'react-chartjs-2';
 import CompactTable from '../components/CompactTable';
 import TextSearchBar from '../components/TextSearchBar';
 import { polarCenteredLabelsPlugin } from '../chartSetup';
-import { TI_CATS } from '../constants';
+import { TI_CATS, MESES } from '../constants';
+import { numberWithCommas } from '../../tools';
 
-const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', 'Bacia Hidrográfica'];
+const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', ...MESES];
 
 export default function GeralTab({
   lat, lng, onLatChange, onLngChange,
@@ -201,7 +202,7 @@ export default function GeralTab({
       <Divider />
 
       {/* ── Resultados (geográficos ou por texto) — mesma tabela categorizada ── */}
-      {searchResult && !loading && (
+      {searchResult && !loading ? (
         <>
           <Box sx={{ borderBottom: '1px solid #e0e0e0', flexShrink: 0 }}>
             <Tabs
@@ -231,10 +232,16 @@ export default function GeralTab({
             ) : (
               <CompactTable
                 headers={TABLE_HEADERS}
-                rows={activeRows.map(m => [
-                  m.us_nome ?? '—', m.us_cpf_cnpj ?? '—',
-                  m.int_processo ?? '—', m.emp_endereco ?? '—', m.bh_nome ?? '—',
-                ])}
+                rows={activeRows.map(m => {
+                  const demandas = m.dt_demanda?.demandas ?? [];
+                  const monthly = MESES.map((_, i) => {
+                    const d = demandas.find(d => parseInt(d.mes) === i + 1);
+                    if (!d) return '—';
+                    const v = parseFloat(d.vazao_ld);
+                    return isNaN(v) ? '—' : numberWithCommas(v, 2);
+                  });
+                  return [m.us_nome ?? '—', m.us_cpf_cnpj ?? '—', m.int_processo ?? '—', m.emp_endereco ?? '—', ...monthly];
+                })}
                 onRowClick={i => onMarkerSelect?.({
                   ...activeRows[i],
                   _catColor: activeCat?.color,
@@ -244,6 +251,15 @@ export default function GeralTab({
             )}
           </Box>
         </>
+      ) : !loading && (
+        <Box sx={{ opacity: 0.4, pointerEvents: 'none', flex: 1, overflow: 'hidden' }}>
+          <CompactTable
+            headers={TABLE_HEADERS}
+            rows={Array.from({ length: 5 }, () => TABLE_HEADERS.map((_, j) => (
+              <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
+            )))}
+          />
+        </Box>
       )}
     </Box>
   );

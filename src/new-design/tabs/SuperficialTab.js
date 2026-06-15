@@ -2,19 +2,19 @@ import React from 'react';
 import { Box, Divider, Typography } from '@mui/material';
 import { Bar, Line } from 'react-chartjs-2';
 import WavesIcon from '@mui/icons-material/Waves';
-import MyLocationIcon from '@mui/icons-material/MyLocation';
 
 import CoordSearchBar from '../components/CoordSearchBar';
 import ChartSection from '../components/ChartSection';
 import SectionLabel from '../components/SectionLabel';
-import ScrollList from '../components/OutorgaList';
 import CompactTable from '../components/CompactTable';
 import { MOCK_SUP, MESES } from '../constants';
-import { chartOpts } from '../chartSetup';
+import { chartOpts, makeBarValuesPlugin } from '../chartSetup';
+import { numberWithCommas } from '../../tools';
 
 const BAR_COLORS  = ['#2e7d3288', '#388e3c88', '#43a04788', '#558b2f88', '#33691e88'];
 const BAR_BORDERS = ['#2e7d32',   '#388e3c',   '#43a047',   '#558b2f',   '#33691e'];
-const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', 'Bacia'];
+const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', ...MESES];
+const barValuesPlugin = makeBarValuesPlugin('m³/mês');
 
 export default function SuperficialTab({
   lat, lng, onLatChange, onLngChange,
@@ -60,15 +60,6 @@ export default function SuperficialTab({
         title="Busca por coordenada — Superficial"
       />
 
-      {!searchResult && !loading && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, color: 'text.secondary', px: 3, py: 2, textAlign: 'center' }}>
-          <MyLocationIcon sx={{ fontSize: 36, color: '#bdbdbd' }} />
-          <Typography variant="body2" sx={{ fontSize: '0.78rem' }}>
-            Busque por coordenadas para carregar as captações superficiais da área.
-          </Typography>
-        </Box>
-      )}
-
       <ChartSection title="Vazão Mensal — Principais Mananciais (L/s)" height={140}>
         <Line data={lineData} options={lineOpts} />
       </ChartSection>
@@ -76,7 +67,7 @@ export default function SuperficialTab({
       <Divider />
 
       <ChartSection title="Volume Captado por Outorga (m³/mês)" height={125}>
-        <Bar data={captData} options={chartOpts()} />
+        <Bar data={captData} options={chartOpts()} plugins={[barValuesPlugin]} />
       </ChartSection>
 
       <Divider />
@@ -95,10 +86,16 @@ export default function SuperficialTab({
             ) : (
               <CompactTable
                 headers={TABLE_HEADERS}
-                rows={supRows.map(m => [
-                  m.us_nome ?? '—', m.us_cpf_cnpj ?? '—',
-                  m.int_processo ?? '—', m.emp_endereco ?? '—', m.bh_nome ?? '—',
-                ])}
+                rows={supRows.map(m => {
+                  const demandas = m.dt_demanda?.demandas ?? [];
+                  const monthly = MESES.map((_, i) => {
+                    const d = demandas.find(d => parseInt(d.mes) === i + 1);
+                    if (!d) return '—';
+                    const v = parseFloat(d.vazao_ld);
+                    return isNaN(v) ? '—' : numberWithCommas(v, 2);
+                  });
+                  return [m.us_nome ?? '—', m.us_cpf_cnpj ?? '—', m.int_processo ?? '—', m.emp_endereco ?? '—', ...monthly];
+                })}
                 onRowClick={i => onMarkerSelect?.({
                   ...supRows[i], _catColor: '#2e7d32', _catLabel: 'Superficial',
                 })}
@@ -110,7 +107,14 @@ export default function SuperficialTab({
         <>
           <SectionLabel title="Captações superficiais (exemplo)" count={MOCK_SUP.length} />
           <Divider />
-          <ScrollList items={MOCK_SUP} color="#2e7d32" bg="#e8f5e9" Icon={WavesIcon} />
+          <Box sx={{ opacity: 0.4, pointerEvents: 'none', flex: 1, overflow: 'hidden' }}>
+            <CompactTable
+              headers={TABLE_HEADERS}
+              rows={Array.from({ length: 5 }, () => TABLE_HEADERS.map((_, j) => (
+                <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
+              )))}
+            />
+          </Box>
         </>
       )}
     </Box>

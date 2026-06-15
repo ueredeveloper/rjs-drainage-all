@@ -11,7 +11,7 @@ export default function CompactTable({ headers, rows, onRowClick }) {
       '&::-webkit-scrollbar-thumb': { bgcolor: '#b0bec5', borderRadius: 4, border: '2px solid transparent', backgroundClip: 'content-box' },
       '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
     }}>
-      <Table size="small">
+      <Table size="small" sx={{ minWidth: 900 }}>
         <TableHead>
           <TableRow>
             {headers.map(h => (

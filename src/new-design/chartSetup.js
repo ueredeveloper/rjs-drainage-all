@@ -26,6 +26,55 @@ export const chartOpts = (extra = {}) => ({
   ...extra,
 });
 
+export const PT_SUFFIXES = [
+  { value: 1e9, symbol: 'bi'  },
+  { value: 1e6, symbol: 'mi'  },
+  { value: 1e3, symbol: 'mil' },
+  { value: 1,   symbol: ''    },
+];
+
+export function ptFormatter(num, unit = '') {
+  const abs = Math.abs(num);
+  const { value, symbol } = PT_SUFFIXES.find(s => abs >= s.value) ?? PT_SUFFIXES.at(-1);
+  const number = (num / value).toFixed(1).replace('.', ',').replace(/,0$/, '');
+  const suffix = [symbol, unit].filter(Boolean).join(' ');
+  return suffix ? `${number} ${suffix}` : number;
+}
+
+export function makeBarValuesPlugin(unit = '') {
+  return {
+    id: 'barValues',
+    afterDatasetsDraw(chart) {
+      const { ctx, data } = chart;
+      const meta = chart.getDatasetMeta(0);
+      if (!meta) return;
+      ctx.save();
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      meta.data.forEach((bar, i) => {
+        const value = data.datasets[0].data[i];
+        if (!value) return;
+        const midY = (bar.y + bar.base) / 2;
+        const text = ptFormatter(value, unit);
+        const bc   = data.datasets[0].borderColor;
+        const color = Array.isArray(bc) ? bc[i] : (bc ?? '#455a64');
+
+        ctx.shadowColor   = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur    = 3;
+        ctx.shadowOffsetY = 1;
+        ctx.font          = 'bold 13px Roboto, Arial, sans-serif';
+        ctx.lineWidth     = 3;
+        ctx.strokeStyle   = 'rgba(255,255,255,0.7)';
+        ctx.strokeText(text, bar.x, midY);
+        ctx.shadowBlur    = 0;
+        ctx.fillStyle     = color;
+        ctx.fillText(text, bar.x, midY);
+      });
+      ctx.restore();
+    },
+  };
+}
+
 export const polarCenteredLabelsPlugin = {
   id: 'polarCenteredLabels',
   afterDraw(chart) {

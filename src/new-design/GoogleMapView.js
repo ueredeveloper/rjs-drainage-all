@@ -51,28 +51,58 @@ function buildInfoHtml(item) {
     </div>`;
 }
 
+// polígono → retângulo → círculo
 const DRAW_BTNS = [
-  { mode: null,        title: 'Cursor',    svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M4 0l16 12.28-6.95 1.17 4.32 8.82-3.6 1.73-4.35-8.88-5.42 4.7z"/></svg>` },
-  { mode: 'circle',    title: 'Círculo',   svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>` },
   { mode: 'polygon',   title: 'Polígono',  svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,2 21,8 18,20 6,20 3,8"/></svg>` },
   { mode: 'rectangle', title: 'Retângulo', svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>` },
+  { mode: 'circle',    title: 'Círculo',   svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>` },
 ];
 
-// ─── Componente interno (renderizado somente após API carregada) ───────────────
-function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, allMarkers, subShape }) {
+const BTN_CSS = [
+  'display:flex', 'align-items:center', 'justify-content:center',
+  'width:30px', 'height:30px', 'background:#fff',
+  'border:none', 'border-bottom:1px solid #ccc',
+  'cursor:pointer', 'padding:0',
+  'transition:background 0.15s,color 0.15s',
+  'text-decoration:none',
+].join(';');
+
+const BAR_CSS = 'display:flex;flex-direction:column;background:#fff;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,0.4);overflow:hidden;';
+
+function makeBtn(innerHTML, title, color = '#555') {
+  const a = document.createElement('a');
+  a.href = '#'; a.title = title; a.innerHTML = innerHTML;
+  a.style.cssText = `${BTN_CSS};color:${color};`;
+  a.addEventListener('click', e => e.preventDefault());
+  a.addEventListener('mouseenter', () => { if (!a._active) a.style.background = '#f4f4f4'; });
+  a.addEventListener('mouseleave', () => { if (!a._active) a.style.background = '#fff'; });
+  return a;
+}
+
+function makeBar() {
+  const d = document.createElement('div');
+  d.style.cssText = BAR_CSS;
+  return d;
+}
+
+// ─── Componente interno ───────────────────────────────────────────────────────
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, allMarkers, subShape }) {
   const containerRef   = useRef(null);
   const mapRef         = useRef(null);
   const circleRef      = useRef(null);
+  const userMarkerRef  = useRef(null);
   const selectedMkrRef = useRef(null);
   const allMkrsRef     = useRef([]);
   const subShapeRef    = useRef(null);
   const infoWinRef     = useRef(null);
   const onCreatedRef   = useRef(onShapeCreated);
   const onPickRef      = useRef(onPickCoordinate);
+  const onClearRef     = useRef(onClearAll);
+
   onCreatedRef.current = onShapeCreated;
   onPickRef.current    = onPickCoordinate;
+  onClearRef.current   = onClearAll;
 
-  // ── Inicializa mapa + toolbar de desenho (uma só vez) ───────────────────────
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
 
@@ -82,72 +112,214 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
       mapTypeControlOptions: {
         mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
         style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+        position: window.google.maps.ControlPosition.TOP_LEFT,
       },
     });
-    mapRef.current  = map;
+    mapRef.current     = map;
     infoWinRef.current = new window.google.maps.InfoWindow();
 
-    // --- toolbar de desenho ---
-    let drawMode = null;
-    let points   = [];
-    let startPt  = null;
-    let dragging = false;
-    let lastDrag = null;
-    let previews = [];
-    let pickMode = false;
+    let drawnShapes = [];
+    let editMode    = false;
+    let editBtnEl   = null;
 
+    // ── Popup de área ─────────────────────────────────────────────────────────
+    const fmtArea = (m2) => {
+      const ha = m2 / 10000;
+      const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+      return `<b>${fmt(Math.round(m2))} m²</b>&nbsp;·&nbsp;<b>${fmt(ha)} ha</b>`;
+    };
+
+    const showAreaPopupG = (center, areaM2) => {
+      infoWinRef.current.setContent(`
+        <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
+          <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Área da camada</div>
+          <div style="font-size:12px;color:#263238;">${fmtArea(areaM2)}</div>
+        </div>
+      `);
+      infoWinRef.current.setPosition(center);
+      infoWinRef.current.open(map);
+    };
+
+    const computeArea = (shapeDesc) => {
+      const geo = window.google.maps.geometry?.spherical;
+      if (!geo) return 0;
+      if (shapeDesc.type === 'circle') return Math.PI * shapeDesc.radius ** 2;
+      if (shapeDesc.type === 'polygon') {
+        const path = shapeDesc.points.slice(0, -1).map(([lng, lat]) => new window.google.maps.LatLng(lat, lng));
+        return geo.computeArea(path);
+      }
+      if (shapeDesc.type === 'rectangle') {
+        const path = [
+          new window.google.maps.LatLng(shapeDesc.ney, shapeDesc.nex),
+          new window.google.maps.LatLng(shapeDesc.ney, shapeDesc.swx),
+          new window.google.maps.LatLng(shapeDesc.swy, shapeDesc.swx),
+          new window.google.maps.LatLng(shapeDesc.swy, shapeDesc.nex),
+        ];
+        return geo.computeArea(path);
+      }
+      return 0;
+    };
+
+    const exitEdit = (save) => {
+      if (!editMode) return;
+      editMode = false;
+      if (editBtnEl) {
+        editBtnEl._active = false;
+        editBtnEl.style.background = '#fff';
+        editBtnEl.style.color = '#444';
+        editBtnEl.title = 'Editar camadas';
+      }
+      const all = [...drawnShapes];
+      if (circleRef.current) all.push(circleRef.current);
+      all.forEach(s => { try { s.setEditable(false); } catch (_) {} });
+
+      if (!save) return;
+      if (circleRef.current) {
+        const c = circleRef.current, ctr = c.getCenter();
+        const cs = { type: 'circle', center: { lat: ctr.lat(), lng: ctr.lng() }, radius: Math.round(c.getRadius()) };
+        showAreaPopupG(ctr, computeArea(cs));
+        onCreatedRef.current?.(cs);
+        return;
+      }
+      drawnShapes.forEach(s => {
+        let shape = null, center = null;
+        if (s instanceof window.google.maps.Rectangle) {
+          const b = s.getBounds(), ne = b.getNorthEast(), sw = b.getSouthWest();
+          shape = { type: 'rectangle', nex: ne.lng(), ney: ne.lat(), swx: sw.lng(), swy: sw.lat() };
+          center = b.getCenter();
+        } else if (s instanceof window.google.maps.Polygon) {
+          const pts = s.getPath().getArray().map(p => [p.lng(), p.lat()]);
+          if (pts.length >= 3) { shape = { type: 'polygon', points: [...pts, pts[0]] }; center = s.getPath().getAt(0); }
+        }
+        if (shape) { showAreaPopupG(center, computeArea(shape)); onCreatedRef.current?.(shape); }
+      });
+    };
+
+    const clearAll = () => {
+      exitEdit(false);
+      drawnShapes.forEach(s => s.setMap(null)); drawnShapes = [];
+      if (circleRef.current)      { circleRef.current.setMap(null);      circleRef.current = null; }
+      if (userMarkerRef.current)  { userMarkerRef.current.setMap(null);  userMarkerRef.current = null; }
+      if (selectedMkrRef.current) { selectedMkrRef.current.setMap(null); selectedMkrRef.current = null; }
+      allMkrsRef.current.forEach(m => m.setMap(null)); allMkrsRef.current = [];
+      if (subShapeRef.current)    { subShapeRef.current.setMap(null);    subShapeRef.current = null; }
+      infoWinRef.current?.close();
+    };
+
+    // ── Toolbar: filho do container → vai junto no fullscreen ───────────────
+    // Três grupos separados por gap: [desenho] [marcador] [editar/remover]
+    const TB = document.createElement('div');
+    TB.style.cssText = 'position:absolute;top:52px;left:10px;z-index:999;display:flex;flex-direction:column;gap:8px;';
+    containerRef.current.appendChild(TB);
+
+    // Quando o GMaps fullscreen-a um div interno, o TB (filho do container) fica
+    // fora da área fullscreen. Corrige movendo o TB para o elemento fullscreened.
+    const onFsChange = () => {
+      const fsEl = document.fullscreenElement;
+      if (fsEl && containerRef.current && containerRef.current.contains(fsEl)) {
+        fsEl.appendChild(TB);
+      } else if (!fsEl && containerRef.current) {
+        containerRef.current.appendChild(TB);
+      }
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+
+    // --- estado desenho ---
+    let drawMode = null, points = [], startPt = null, dragging = false, lastDrag = null, previews = [], pickMode = false;
     const clearPrev = () => { previews.forEach(s => s.setMap(null)); previews = []; };
+    const drawBtnMap = {};
 
     const setDrawMode = m => {
       dragging = false; lastDrag = null; map.setOptions({ draggable: true });
       drawMode = m; clearPrev(); points = []; startPt = null;
-      map.setOptions({
-        draggableCursor: m ? 'crosshair' : null,
-        disableDoubleClickZoom: m === 'polygon',
-      });
-      toolbar.querySelectorAll('button[data-draw]').forEach(btn => {
-        const active = btn.dataset.draw === (m ?? '');
-        btn.style.background  = active ? '#d8e8f8' : '#fff';
-        btn.style.borderColor = active ? '#4a90d9' : '#ccc';
+      map.setOptions({ draggableCursor: m ? 'crosshair' : null, disableDoubleClickZoom: m === 'polygon' });
+      Object.entries(drawBtnMap).forEach(([key, btn]) => {
+        const active = key === m;
+        btn._active = active;
+        btn.style.background = active ? '#d8e8f8' : '#fff';
+        btn.style.color = active ? '#1565c0' : '#444';
       });
     };
 
-    const toolbar = document.createElement('div');
-    toolbar.style.cssText = 'display:flex;align-items:center;background:#fff;border-radius:2px;box-shadow:0 1px 4px rgba(0,0,0,.3);margin:10px;padding:2px;gap:2px;';
-
-    DRAW_BTNS.forEach(({ mode: bMode, title, svg }) => {
-      const btn = document.createElement('button');
-      btn.dataset.draw = bMode ?? '';
-      btn.title = title; btn.innerHTML = svg;
-      btn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:#fff;border:1px solid #ccc;border-radius:2px;cursor:pointer;color:#444;padding:0;';
-      btn.onmouseenter = () => { if (drawMode !== bMode) btn.style.background = '#f5f5f5'; };
-      btn.onmouseleave = () => { if (drawMode !== bMode) btn.style.background = '#fff'; };
-      btn.onclick = () => setDrawMode(bMode);
-      toolbar.appendChild(btn);
+    // ── Grupo 1: polígono, retângulo, círculo ──────────────────────────────
+    const drawBar = makeBar();
+    DRAW_BTNS.forEach(({ mode: bMode, title, svg }, i) => {
+      const btn = makeBtn(svg, title);
+      if (i === DRAW_BTNS.length - 1) btn.style.borderBottom = 'none';
+      btn.addEventListener('click', e => { e.preventDefault(); setDrawMode(bMode); });
+      drawBtnMap[bMode] = btn;
+      drawBar.appendChild(btn);
     });
+    TB.appendChild(drawBar);
 
-    // botão pick coordinate
-    const pickBtn = document.createElement('button');
-    pickBtn.title = 'Selecionar ponto de pesquisa no mapa';
-    pickBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.8" fill="white"/></svg>`;
-    pickBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:#fff;border:1px solid #ccc;border-radius:2px;cursor:pointer;color:#444;padding:0;';
-    pickBtn.onclick = () => {
+    // ── Grupo 2: marcador ─────────────────────────────────────────────────
+    const pickSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      <circle cx="12" cy="9" r="2.8" fill="white"/>
+    </svg>`;
+    const pickBar = makeBar();
+    const pickBtn = makeBtn(pickSvg, 'Marcador — selecionar ponto no mapa');
+    pickBtn.style.borderBottom = 'none';
+    pickBtn.addEventListener('click', e => {
+      e.preventDefault();
       pickMode = !pickMode;
-      map.getDiv().style.cursor    = pickMode ? 'crosshair' : '';
-      pickBtn.style.background     = pickMode ? '#e3f2fd' : '#fff';
-      pickBtn.style.borderColor    = pickMode ? '#1565c0'  : '#ccc';
-      pickBtn.style.color          = pickMode ? '#1565c0'  : '#444';
-    };
-    toolbar.appendChild(pickBtn);
+      pickBtn._active           = pickMode;
+      map.getDiv().style.cursor = pickMode ? 'crosshair' : '';
+      pickBtn.style.background  = pickMode ? '#e3f2fd' : '#fff';
+      pickBtn.style.color       = pickMode ? '#1565c0' : '#555';
+    });
+    pickBar.appendChild(pickBtn);
+    TB.appendChild(pickBar);
 
-    map.controls[window.google.maps.ControlPosition.TOP_LEFT].push(toolbar);
+    // ── Grupo 3: editar + remover ─────────────────────────────────────────
+    const editSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+    </svg>`;
+    const removeSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+    </svg>`;
+    const actionBar = makeBar();
+
+    editBtnEl = makeBtn(editSvg, 'Editar camadas');
+    editBtnEl.addEventListener('click', e => {
+      e.preventDefault();
+      if (!editMode) {
+        const all = [...drawnShapes];
+        if (circleRef.current) all.push(circleRef.current);
+        if (!all.length) return;
+        editMode = true;
+        editBtnEl._active = true;
+        editBtnEl.style.background = '#d8e8f8';
+        editBtnEl.style.color = '#1565c0';
+        editBtnEl.title = 'Salvar edição';
+        all.forEach(s => s.setEditable(true));
+      } else {
+        exitEdit(true);
+      }
+    });
+    actionBar.appendChild(editBtnEl);
+
+    const removeBtn = makeBtn(removeSvg, 'Remover', '#c62828');
+    removeBtn.style.borderBottom = 'none';
+    removeBtn.addEventListener('click', e => {
+      e.preventDefault();
+      clearAll();
+      setDrawMode(null);
+      pickMode = false;
+      pickBtn._active = false;
+      pickBtn.style.background = '#fff';
+      pickBtn.style.color = '#555';
+      map.getDiv().style.cursor = '';
+      onClearRef.current?.();
+    });
+    actionBar.appendChild(removeBtn);
+    TB.appendChild(actionBar);
 
     // --- listeners ---
     const clickL = map.addListener('click', e => {
       if (pickMode) {
-        pickMode = false;
-        map.getDiv().style.cursor = '';
-        pickBtn.style.background = '#fff'; pickBtn.style.borderColor = '#ccc'; pickBtn.style.color = '#444';
+        pickMode = false; pickBtn._active = false;
+        map.getDiv().style.cursor = ''; pickBtn.style.background = '#fff'; pickBtn.style.color = '#555';
         onPickRef.current?.({ lat: e.latLng.lat(), lng: e.latLng.lng() });
         return;
       }
@@ -158,9 +330,14 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
     const dblClickL = map.addListener('dblclick', () => {
       if (drawMode === 'polygon' && points.length >= 3) {
         const finalPts = [...points]; setDrawMode(null);
-        new window.google.maps.Polygon({ paths: finalPts, map, ...SHAPE_STYLE, clickable: false });
+        const poly = new window.google.maps.Polygon({ paths: finalPts, map, ...SHAPE_STYLE, clickable: false });
+        drawnShapes.push(poly);
         const pts = finalPts.map(p => [p.lng(), p.lat()]);
-        onCreatedRef.current?.({ type: 'polygon', points: [...pts, pts[0]] });
+        const shape = { type: 'polygon', points: [...pts, pts[0]] };
+        const bounds = new window.google.maps.LatLngBounds();
+        finalPts.forEach(p => bounds.extend(p));
+        showAreaPopupG(bounds.getCenter(), computeArea(shape));
+        onCreatedRef.current?.(shape);
       }
     });
 
@@ -174,10 +351,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
       if (!drawMode) return;
       clearPrev();
       if (drawMode === 'polygon' && points.length > 0) {
-        previews = [new window.google.maps.Polyline({
-          path: [...points, e.latLng], map,
-          strokeColor: '#1565c0', strokeWeight: 1.5, strokeOpacity: 0.7, clickable: false,
-        })];
+        previews = [new window.google.maps.Polyline({ path: [...points, e.latLng], map, strokeColor: '#1565c0', strokeWeight: 1.5, strokeOpacity: 0.7, clickable: false })];
       }
       if (drawMode === 'circle' && dragging && startPt) {
         const r = HAVERSINE(startPt.lat(), startPt.lng(), e.latLng.lat(), e.latLng.lng());
@@ -197,25 +371,37 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
         const radius = HAVERSINE(startPt.lat(), startPt.lng(), lastDrag.lat(), lastDrag.lng());
         if (radius < 50) { clearPrev(); startPt = null; lastDrag = null; return; }
         const s = startPt; clearPrev(); setDrawMode(null); startPt = null; lastDrag = null;
-        onCreatedRef.current?.({ type: 'circle', center: { lat: s.lat(), lng: s.lng() }, radius: Math.round(radius) });
+        const circShape = { type: 'circle', center: { lat: s.lat(), lng: s.lng() }, radius: Math.round(radius) };
+        showAreaPopupG(s, computeArea(circShape));
+        onCreatedRef.current?.(circShape);
       }
       if (drawMode === 'rectangle' && startPt && lastDrag) {
         const s = startPt, end = lastDrag; clearPrev(); setDrawMode(null); startPt = null; lastDrag = null;
-        onCreatedRef.current?.({
-          type: 'rectangle',
-          nex: Math.max(s.lng(), end.lng()), ney: Math.max(s.lat(), end.lat()),
-          swx: Math.min(s.lng(), end.lng()), swy: Math.min(s.lat(), end.lat()),
+        const rect = new window.google.maps.Rectangle({
+          bounds: new window.google.maps.LatLngBounds(
+            new window.google.maps.LatLng(Math.min(s.lat(), end.lat()), Math.min(s.lng(), end.lng())),
+            new window.google.maps.LatLng(Math.max(s.lat(), end.lat()), Math.max(s.lng(), end.lng())),
+          ),
+          map, ...SHAPE_STYLE, clickable: false,
         });
+        drawnShapes.push(rect);
+        const rectShape = { type: 'rectangle', nex: Math.max(s.lng(), end.lng()), ney: Math.max(s.lat(), end.lat()), swx: Math.min(s.lng(), end.lng()), swy: Math.min(s.lat(), end.lat()) };
+        showAreaPopupG(rect.getBounds().getCenter(), computeArea(rectShape));
+        onCreatedRef.current?.(rectShape);
       }
     };
 
-    const onKeyDown = e => { if (e.key === 'Escape') { setDrawMode(null); pickMode = false; } };
+    const onKeyDown = e => {
+      if (e.key === 'Escape') { setDrawMode(null); pickMode = false; exitEdit(false); }
+    };
 
     window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('keydown', onKeyDown);
 
     return () => {
       clearPrev();
+      document.removeEventListener('fullscreenchange', onFsChange);
+      if (TB.parentNode) TB.parentNode.removeChild(TB);
       window.google.maps.event.removeListener(clickL);
       window.google.maps.event.removeListener(dblClickL);
       window.google.maps.event.removeListener(mouseDownL);
@@ -226,20 +412,27 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
     };
   }, []);
 
-  // ── Círculo de busca ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current) return;
     if (circleRef.current) { circleRef.current.setMap(null); circleRef.current = null; }
     if (!circleData) return;
-    circleRef.current = new window.google.maps.Circle({
-      center: circleData.center, radius: circleData.radius,
-      map: mapRef.current, ...SHAPE_STYLE,
-    });
+    circleRef.current = new window.google.maps.Circle({ center: circleData.center, radius: circleData.radius, map: mapRef.current, ...SHAPE_STYLE });
     mapRef.current.panTo(circleData.center);
     mapRef.current.setZoom(13);
   }, [circleData]);
 
-  // ── Marcador selecionado ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (userMarkerRef.current) { userMarkerRef.current.setMap(null); userMarkerRef.current = null; }
+    if (!userMarker) return;
+    userMarkerRef.current = new window.google.maps.Marker({
+      position: { lat: userMarker.lat, lng: userMarker.lng }, map: mapRef.current,
+      icon: { url: makePinUrl('#e53935'), scaledSize: new window.google.maps.Size(24, 36), anchor: new window.google.maps.Point(12, 36) },
+      zIndex: 1000,
+    });
+    mapRef.current.panTo({ lat: userMarker.lat, lng: userMarker.lng });
+  }, [userMarker]);
+
   useEffect(() => {
     if (!mapRef.current) return;
     if (selectedMkrRef.current) { selectedMkrRef.current.setMap(null); selectedMkrRef.current = null; }
@@ -258,10 +451,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
     mapRef.current.panTo({ lat, lng });
   }, [markerData]);
 
-  // ── Todos os marcadores da pesquisa ───────────────────────────────────────────
   useEffect(() => {
-    allMkrsRef.current.forEach(m => m.setMap(null));
-    allMkrsRef.current = [];
+    allMkrsRef.current.forEach(m => m.setMap(null)); allMkrsRef.current = [];
     if (!mapRef.current || !allMarkers?.length) return;
     allMarkers.forEach(item => {
       const lat = parseFloat(item.int_latitude), lng = parseFloat(item.int_longitude);
@@ -271,21 +462,16 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
         position: { lat, lng }, map: mapRef.current,
         icon: { url: makePinUrl(color, 'small'), scaledSize: new window.google.maps.Size(16, 24), anchor: new window.google.maps.Point(8, 24) },
       });
-      marker.addListener('click', () => {
-        infoWinRef.current.setContent(buildInfoHtml(item));
-        infoWinRef.current.open(mapRef.current, marker);
-      });
+      marker.addListener('click', () => { infoWinRef.current.setContent(buildInfoHtml(item)); infoWinRef.current.open(mapRef.current, marker); });
       allMkrsRef.current.push(marker);
     });
   }, [allMarkers]);
 
-  // ── Polígono do subsistema ────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current) return;
     if (subShapeRef.current) { subShapeRef.current.setMap(null); subShapeRef.current = null; }
     if (!subShape) return;
-    const geoJson = (subShape.type === 'Feature' || subShape.type === 'FeatureCollection')
-      ? subShape : { type: 'Feature', geometry: subShape };
+    const geoJson = (subShape.type === 'Feature' || subShape.type === 'FeatureCollection') ? subShape : { type: 'Feature', geometry: subShape };
     const dataLayer = new window.google.maps.Data({ map: mapRef.current });
     dataLayer.addGeoJson(geoJson);
     dataLayer.setStyle({ strokeColor: '#6a1b9a', strokeWeight: 2, strokeOpacity: 0.85, fillColor: '#ce93d8', fillOpacity: 0.12 });
@@ -298,7 +484,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, onPickCoordinate, a
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }
 
-// ─── Wrapper público ──────────────────────────────────────────────────────────
 export default function GoogleMapView(props) {
   return (
     <Wrapper apiKey={API_KEY} libraries={['drawing', 'geometry']}>
