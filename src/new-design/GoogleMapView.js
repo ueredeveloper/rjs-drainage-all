@@ -1,7 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Wrapper } from '@googlemaps/react-wrapper';
 
-const API_KEY   = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
 const BRASILIA  = { lat: -15.7801, lng: -47.9292 };
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
@@ -117,10 +115,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     });
     mapRef.current     = map;
     infoWinRef.current = new window.google.maps.InfoWindow();
+    window.google.maps.event.addListenerOnce(map, 'idle', () => map.setMapTypeId('roadmap'));
 
-    let drawnShapes = [];
-    let editMode    = false;
-    let editBtnEl   = null;
+    let drawnShapes  = [];
+    let editMode     = false;
+    let editBtnEl    = null;
+    let popupAnchor  = null;
 
     // ── Popup de área ─────────────────────────────────────────────────────────
     const fmtArea = (m2) => {
@@ -129,15 +129,34 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       return `<b>${fmt(Math.round(m2))} m²</b>&nbsp;·&nbsp;<b>${fmt(ha)} ha</b>`;
     };
 
-    const showAreaPopupG = (center, areaM2) => {
+    // Vértice de latitude máxima — garante ponto na borda do polígono, nunca dentro
+    const topOfPath = (pathArr) => {
+      let top = pathArr[0];
+      pathArr.forEach(p => { if (p.lat() > top.lat()) top = p; });
+      return top;
+    };
+
+    // Ponto central da borda superior do bounding box (retângulo)
+    const topOfBounds = (bounds) => {
+      const ne = bounds.getNorthEast();
+      return new window.google.maps.LatLng(ne.lat(), bounds.getCenter().lng());
+    };
+
+    // Ponto mais ao norte da circunferência
+    const topOfCircle = (center, radius) =>
+      new window.google.maps.LatLng(center.lat() + radius / 111320, center.lng());
+
+    const showAreaPopupG = (topLatLng, areaM2) => {
       infoWinRef.current.setContent(`
         <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
           <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Área da camada</div>
           <div style="font-size:12px;color:#263238;">${fmtArea(areaM2)}</div>
         </div>
       `);
-      infoWinRef.current.setPosition(center);
-      infoWinRef.current.open(map);
+      // Anchor no ponto mais ao norte: o tip da seta fica na borda, conteúdo acima
+      if (!popupAnchor) popupAnchor = new window.google.maps.Marker({ map, visible: false });
+      popupAnchor.setPosition(topLatLng);
+      infoWinRef.current.open(map, popupAnchor);
     };
 
     const computeArea = (shapeDesc) => {
@@ -177,7 +196,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       if (circleRef.current) {
         const c = circleRef.current, ctr = c.getCenter();
         const cs = { type: 'circle', center: { lat: ctr.lat(), lng: ctr.lng() }, radius: Math.round(c.getRadius()) };
-        showAreaPopupG(ctr, computeArea(cs));
+        showAreaPopupG(topOfCircle(ctr, c.getRadius()), computeArea(cs));
         onCreatedRef.current?.(cs);
         return;
       }
@@ -186,10 +205,14 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         if (s instanceof window.google.maps.Rectangle) {
           const b = s.getBounds(), ne = b.getNorthEast(), sw = b.getSouthWest();
           shape = { type: 'rectangle', nex: ne.lng(), ney: ne.lat(), swx: sw.lng(), swy: sw.lat() };
-          center = b.getCenter();
+          center = topOfBounds(b);
         } else if (s instanceof window.google.maps.Polygon) {
-          const pts = s.getPath().getArray().map(p => [p.lng(), p.lat()]);
-          if (pts.length >= 3) { shape = { type: 'polygon', points: [...pts, pts[0]] }; center = s.getPath().getAt(0); }
+          const pathArr = s.getPath().getArray();
+          const pts = pathArr.map(p => [p.lng(), p.lat()]);
+          if (pts.length >= 3) {
+            shape = { type: 'polygon', points: [...pts, pts[0]] };
+            center = topOfPath(pathArr);
+          }
         }
         if (shape) { showAreaPopupG(center, computeArea(shape)); onCreatedRef.current?.(shape); }
       });
@@ -206,23 +229,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       infoWinRef.current?.close();
     };
 
-    // ── Toolbar: filho do container → vai junto no fullscreen ───────────────
-    // Três grupos separados por gap: [desenho] [marcador] [editar/remover]
+    // ── Toolbar: inserida no sistema de controles do GMaps (LEFT_TOP) ────────
+    // Usando map.controls, o GMaps gerencia z-index — o dropdown do seletor
+    // de tipo de mapa renderiza por cima automaticamente, e o fullscreen funciona.
     const TB = document.createElement('div');
-    TB.style.cssText = 'position:absolute;top:52px;left:10px;z-index:999;display:flex;flex-direction:column;gap:8px;';
-    containerRef.current.appendChild(TB);
-
-    // Quando o GMaps fullscreen-a um div interno, o TB (filho do container) fica
-    // fora da área fullscreen. Corrige movendo o TB para o elemento fullscreened.
-    const onFsChange = () => {
-      const fsEl = document.fullscreenElement;
-      if (fsEl && containerRef.current && containerRef.current.contains(fsEl)) {
-        fsEl.appendChild(TB);
-      } else if (!fsEl && containerRef.current) {
-        containerRef.current.appendChild(TB);
-      }
-    };
-    document.addEventListener('fullscreenchange', onFsChange);
+    TB.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin:5px 0 0 10px;';
+    map.controls[window.google.maps.ControlPosition.LEFT_TOP].push(TB);
 
     // --- estado desenho ---
     let drawMode = null, points = [], startPt = null, dragging = false, lastDrag = null, previews = [], pickMode = false;
@@ -330,13 +342,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const dblClickL = map.addListener('dblclick', () => {
       if (drawMode === 'polygon' && points.length >= 3) {
         const finalPts = [...points]; setDrawMode(null);
-        const poly = new window.google.maps.Polygon({ paths: finalPts, map, ...SHAPE_STYLE, clickable: false });
+        const poly = new window.google.maps.Polygon({ paths: finalPts, map, ...SHAPE_STYLE });
         drawnShapes.push(poly);
         const pts = finalPts.map(p => [p.lng(), p.lat()]);
         const shape = { type: 'polygon', points: [...pts, pts[0]] };
-        const bounds = new window.google.maps.LatLngBounds();
-        finalPts.forEach(p => bounds.extend(p));
-        showAreaPopupG(bounds.getCenter(), computeArea(shape));
+        showAreaPopupG(topOfPath(finalPts), computeArea(shape));
         onCreatedRef.current?.(shape);
       }
     });
@@ -372,7 +382,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         if (radius < 50) { clearPrev(); startPt = null; lastDrag = null; return; }
         const s = startPt; clearPrev(); setDrawMode(null); startPt = null; lastDrag = null;
         const circShape = { type: 'circle', center: { lat: s.lat(), lng: s.lng() }, radius: Math.round(radius) };
-        showAreaPopupG(s, computeArea(circShape));
+        showAreaPopupG(topOfCircle(s, radius), computeArea(circShape));
         onCreatedRef.current?.(circShape);
       }
       if (drawMode === 'rectangle' && startPt && lastDrag) {
@@ -382,11 +392,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
             new window.google.maps.LatLng(Math.min(s.lat(), end.lat()), Math.min(s.lng(), end.lng())),
             new window.google.maps.LatLng(Math.max(s.lat(), end.lat()), Math.max(s.lng(), end.lng())),
           ),
-          map, ...SHAPE_STYLE, clickable: false,
+          map, ...SHAPE_STYLE,
         });
         drawnShapes.push(rect);
         const rectShape = { type: 'rectangle', nex: Math.max(s.lng(), end.lng()), ney: Math.max(s.lat(), end.lat()), swx: Math.min(s.lng(), end.lng()), swy: Math.min(s.lat(), end.lat()) };
-        showAreaPopupG(rect.getBounds().getCenter(), computeArea(rectShape));
+        showAreaPopupG(topOfBounds(rect.getBounds()), computeArea(rectShape));
         onCreatedRef.current?.(rectShape);
       }
     };
@@ -400,14 +410,16 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
     return () => {
       clearPrev();
-      document.removeEventListener('fullscreenchange', onFsChange);
-      if (TB.parentNode) TB.parentNode.removeChild(TB);
+      const ctrlArr = map.controls[window.google.maps.ControlPosition.LEFT_TOP];
+      const idx = ctrlArr.getArray().indexOf(TB);
+      if (idx !== -1) ctrlArr.removeAt(idx);
       window.google.maps.event.removeListener(clickL);
       window.google.maps.event.removeListener(dblClickL);
       window.google.maps.event.removeListener(mouseDownL);
       window.google.maps.event.removeListener(mouseMoveL);
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('keydown', onKeyDown);
+      if (popupAnchor) { popupAnchor.setMap(null); popupAnchor = null; }
       mapRef.current = null;
     };
   }, []);
@@ -474,7 +486,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const geoJson = (subShape.type === 'Feature' || subShape.type === 'FeatureCollection') ? subShape : { type: 'Feature', geometry: subShape };
     const dataLayer = new window.google.maps.Data({ map: mapRef.current });
     dataLayer.addGeoJson(geoJson);
-    dataLayer.setStyle({ strokeColor: '#6a1b9a', strokeWeight: 2, strokeOpacity: 0.85, fillColor: '#ce93d8', fillOpacity: 0.12 });
+    const s = subShape._style ?? {};
+    dataLayer.setStyle({ strokeColor: s.color ?? '#6a1b9a', strokeWeight: 2, strokeOpacity: 0.85, fillColor: s.fillColor ?? '#ce93d8', fillOpacity: 0.12 });
     subShapeRef.current = dataLayer;
     const bounds = new window.google.maps.LatLngBounds();
     dataLayer.forEach(f => f.getGeometry()?.forEachLatLng(ll => bounds.extend(ll)));
@@ -485,9 +498,5 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 }
 
 export default function GoogleMapView(props) {
-  return (
-    <Wrapper apiKey={API_KEY} libraries={['drawing', 'geometry']}>
-      <GMapInner {...props} />
-    </Wrapper>
-  );
+  return <GMapInner {...props} />;
 }

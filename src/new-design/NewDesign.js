@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Typography, Tabs, Tab, Chip, Stack, Divider } from '@mui/material';
 import WaterIcon from '@mui/icons-material/Water';
+import { Wrapper } from '@googlemaps/react-wrapper';
 
 import './chartSetup'; // registra ChartJS globalmente (side-effect)
 import LeafletMap       from './LeafletMap';
@@ -9,15 +10,16 @@ import GeralTab         from './tabs/GeralTab';
 import SubterraneanTab  from './tabs/SubterraneanTab';
 import SuperficialTab   from './tabs/SuperficialTab';
 import BarragemTab      from './tabs/BarragemTab';
-
 import { findAllPointsInCircle, findAllPointsInPolygon, findAllPointsInRectangle } from '../services/geolocation';
 import { findByColumn } from '../services/users';
 import { TI_CATS, MAIN_TABS } from './constants';
 
+const GMAPS_API_KEY = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
+
 export default function NewDesign() {
   const [tabIndex, setTabIndex]               = useState(0);
-  const [lat, setLat]                         = useState('-15.7801');
-  const [lng, setLng]                         = useState('-47.9292');
+  const [lat, setLat]                         = useState('-15.667939');
+  const [lng, setLng]                         = useState('-47.954828');
   const [radius, setRadius]                   = useState(2000);
   const [circleData, setCircleData]           = useState(null);
   const [searchResult, setSearchResult]       = useState(null);
@@ -128,6 +130,14 @@ export default function NewDesign() {
     setAllMarkers(markers);
   }, []);
 
+  const handleSupMarkers = useCallback((points) => {
+    if (!points || points.length === 0) { setAllMarkers([]); return; }
+    const markers = points
+      .filter(p => !isNaN(parseFloat(p.int_latitude)) && !isNaN(parseFloat(p.int_longitude)))
+      .map(p => ({ ...p, _catColor: '#2e7d32', _catLabel: 'Superficial', _catKey: 'superficial' }));
+    setAllMarkers(markers);
+  }, []);
+
   const handleTextSearch = useCallback(async (query) => {
     setTextLoading(true);
     setTextError(null);
@@ -222,6 +232,7 @@ export default function NewDesign() {
     : 0;
 
   return (
+    <Wrapper apiKey={GMAPS_API_KEY} libraries={['drawing', 'geometry']}>
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'Roboto, sans-serif' }}>
 
       {/* ── Cabeçalho ────────────────────────────────────────────────────── */}
@@ -354,8 +365,10 @@ export default function NewDesign() {
           {tabIndex === 2 && (
             <SuperficialTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
-              onSearch={handleSupSearch} loading={loading} error={error}
-              searchResult={searchResult} onMarkerSelect={setSelectedMarker}
+              onMarkerSelect={setSelectedMarker}
+              onSupShape={setSubShape}
+              onSupMarkers={handleSupMarkers}
+              onClearCircle={() => setCircleData(null)}
             />
           )}
           {tabIndex === 3 && (
@@ -389,5 +402,6 @@ export default function NewDesign() {
         </Stack>
       </Box>
     </Box>
+    </Wrapper>
   );
 }

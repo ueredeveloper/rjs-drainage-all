@@ -581,12 +581,13 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       ? subShape
       : { type: 'Feature', geometry: subShape };
 
+    const s = subShape._style ?? {};
     const layer = L.geoJSON(geoJson, {
       style: {
-        color:       '#6a1b9a',
+        color:       s.color     ?? '#6a1b9a',
         weight:      2,
         opacity:     0.85,
-        fillColor:   '#ce93d8',
+        fillColor:   s.fillColor ?? '#ce93d8',
         fillOpacity: 0.12,
         dashArray:   '6 4',
       },
