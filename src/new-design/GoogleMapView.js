@@ -1,4 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import LayerPanel from './LayerPanel';
+import ElemWaterUsage from '../components/Commom/map/ElemWaterUsage';
 
 const BRASILIA  = { lat: -15.7801, lng: -47.9292 };
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
@@ -51,9 +54,9 @@ function buildInfoHtml(item) {
 
 // polígono → retângulo → círculo
 const DRAW_BTNS = [
-  { mode: 'polygon',   title: 'Polígono',  svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,2 21,8 18,20 6,20 3,8"/></svg>` },
-  { mode: 'rectangle', title: 'Retângulo', svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>` },
-  { mode: 'circle',    title: 'Círculo',   svg: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>` },
+  { mode: 'polygon',   title: 'Polígono',  svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,2 21,8 18,20 6,20 3,8"/></svg>` },
+  { mode: 'rectangle', title: 'Retângulo', svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>` },
+  { mode: 'circle',    title: 'Círculo',   svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>` },
 ];
 
 const BTN_CSS = [
@@ -84,13 +87,20 @@ function makeBar() {
 }
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, allMarkers, subShape }) {
-  const containerRef   = useRef(null);
-  const mapRef         = useRef(null);
-  const circleRef      = useRef(null);
-  const userMarkerRef  = useRef(null);
-  const selectedMkrRef = useRef(null);
-  const allMkrsRef     = useRef([]);
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch }) {
+  const [mapInstance, setMapInstance]         = useState(null);
+  const [isWaterAvailable, setIsWaterAvailable] = useState(false);
+  const [isFullscreen, setIsFullscreen]       = useState(false);
+  const containerRef      = useRef(null);
+  const panelRootRef      = useRef(null);
+  const waterUsageRootRef = useRef(null);
+  const mapRef            = useRef(null);
+  const circleRef         = useRef(null);
+  const userMarkerRef     = useRef(null);
+  const selectedMkrRef    = useRef(null);
+  const allMkrsRef        = useRef([]);
+  const clearDrawnRef     = useRef(null);
+  const allCirclesRef     = useRef([]);
   const subShapeRef    = useRef(null);
   const infoWinRef     = useRef(null);
   const onCreatedRef   = useRef(onShapeCreated);
@@ -102,11 +112,17 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   onClearRef.current   = onClearAll;
 
   useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
 
     const map = new window.google.maps.Map(containerRef.current, {
       center: BRASILIA, zoom: 11,
-      mapTypeId: 'roadmap',
+      mapTypeId: 'satellite',
       mapTypeControlOptions: {
         mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
         style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
@@ -115,12 +131,33 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     });
     mapRef.current     = map;
     infoWinRef.current = new window.google.maps.InfoWindow();
-    window.google.maps.event.addListenerOnce(map, 'idle', () => map.setMapTypeId('roadmap'));
+
+    // injeta o container do LayerPanel usando o sistema de controles do GMaps (persiste em fullscreen)
+    const panelContainer = document.createElement('div');
+    panelContainer.id = 'map-layer-zoom-controls';
+    panelContainer.style.cssText = 'z-index:999999;position:absolute;right:14px;bottom:0px;';
+    map.controls[window.google.maps.ControlPosition.BOTTOM_RIGHT].push(panelContainer);
+    panelRootRef.current = panelContainer;
+
+    const waterUsageContainer = document.createElement('div');
+    waterUsageContainer.style.cssText = 'width:100%;';
+    map.controls[window.google.maps.ControlPosition.BOTTOM_CENTER].push(waterUsageContainer);
+    waterUsageRootRef.current = waterUsageContainer;
+
+    setMapInstance(map);
 
     let drawnShapes  = [];
     let editMode     = false;
     let editBtnEl    = null;
     let popupAnchor  = null;
+
+    clearDrawnRef.current = () => {
+      drawnShapes.forEach(s => s.setMap(null));
+      drawnShapes = [];
+      allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} });
+      allCirclesRef.current = [];
+      circleRef.current = null;
+    };
 
     // ── Popup de área ─────────────────────────────────────────────────────────
     const fmtArea = (m2) => {
@@ -221,7 +258,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const clearAll = () => {
       exitEdit(false);
       drawnShapes.forEach(s => s.setMap(null)); drawnShapes = [];
-      if (circleRef.current)      { circleRef.current.setMap(null);      circleRef.current = null; }
+      allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} });
+      allCirclesRef.current = [];
+      circleRef.current = null;
       if (userMarkerRef.current)  { userMarkerRef.current.setMap(null);  userMarkerRef.current = null; }
       if (selectedMkrRef.current) { selectedMkrRef.current.setMap(null); selectedMkrRef.current = null; }
       allMkrsRef.current.forEach(m => m.setMap(null)); allMkrsRef.current = [];
@@ -265,7 +304,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     TB.appendChild(drawBar);
 
     // ── Grupo 2: marcador ─────────────────────────────────────────────────
-    const pickSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+    const pickSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
       <circle cx="12" cy="9" r="2.8" fill="white"/>
     </svg>`;
@@ -284,15 +323,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     TB.appendChild(pickBar);
 
     // ── Grupo 3: editar + remover ─────────────────────────────────────────
-    const editSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+    const editSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
     </svg>`;
-    const removeSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-    </svg>`;
+    const removeSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.81 14.99l1.19-.92-1.43-1.43-1.19.92 1.43 1.43zm-.45-4.72L21 9l-9-7-2.91 2.27 7.87 7.88 2.4-1.88zM3.27 1L2 2.27l4.22 4.22L3 9l1.63 1.27L12 16l2.1-1.63 1.43 1.43L12 18.54l-7.37-5.73L3 14.07l9 7 4.95-3.85L20.73 21 22 19.73 3.27 1z"/></svg>`;
     const actionBar = makeBar();
 
-    editBtnEl = makeBtn(editSvg, 'Editar camadas');
+    editBtnEl = makeBtn(editSvg, 'Editar');
     editBtnEl.addEventListener('click', e => {
       e.preventDefault();
       if (!editMode) {
@@ -420,18 +457,33 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('keydown', onKeyDown);
       if (popupAnchor) { popupAnchor.setMap(null); popupAnchor = null; }
+      if (panelContainer.parentNode) panelContainer.parentNode.removeChild(panelContainer);
+      if (waterUsageContainer.parentNode) waterUsageContainer.parentNode.removeChild(waterUsageContainer);
       mapRef.current = null;
     };
   }, []);
 
   useEffect(() => {
     if (!mapRef.current) return;
-    if (circleRef.current) { circleRef.current.setMap(null); circleRef.current = null; }
-    if (!circleData) return;
-    circleRef.current = new window.google.maps.Circle({ center: circleData.center, radius: circleData.radius, map: mapRef.current, ...SHAPE_STYLE });
+    if (!circleData) {
+      // Multi-pesquisa: mantém círculos anteriores no mapa — só limpa a referência corrente.
+      // A remoção real ocorre via clearShapesTrigger → clearDrawnRef.
+      circleRef.current = null;
+      return;
+    }
+    // Nova busca: cria círculo adicional sem remover os anteriores
+    const circle = new window.google.maps.Circle({ center: circleData.center, radius: circleData.radius, map: mapRef.current, ...SHAPE_STYLE });
+    circleRef.current = circle;
+    allCirclesRef.current.push(circle);
     mapRef.current.panTo(circleData.center);
     mapRef.current.setZoom(13);
   }, [circleData]);
+
+  useEffect(() => {
+    if (!clearShapesTrigger) return;
+    clearDrawnRef.current?.();
+    infoWinRef.current?.close();
+  }, [clearShapesTrigger]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -494,9 +546,26 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     if (!bounds.isEmpty()) mapRef.current.fitBounds(bounds, 24);
   }, [subShape]);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {mapInstance && panelRootRef.current &&
+        ReactDOM.createPortal(
+          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} />,
+          panelRootRef.current,
+        )
+      }
+      {mapInstance && waterUsageRootRef.current && isFullscreen && isWaterAvailable &&
+        ReactDOM.createPortal(
+          <ElemWaterUsage isFullscreen={true} isWaterAvailable={true} />,
+          waterUsageRootRef.current,
+        )
+      }
+    </>
+  );
 }
 
 export default function GoogleMapView(props) {
   return <GMapInner {...props} />;
 }
+

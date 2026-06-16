@@ -23,6 +23,7 @@ export default function NewDesign() {
   const [radius, setRadius]                   = useState(2000);
   const [circleData, setCircleData]           = useState(null);
   const [searchResult, setSearchResult]       = useState(null);
+  const [searchPages, setSearchPages]         = useState([]);
   const [selectedMarker, setSelectedMarker]   = useState(null);
   const [allMarkers, setAllMarkers]           = useState([]);
   const [hiddenCats, setHiddenCats]           = useState(new Set());
@@ -34,6 +35,7 @@ export default function NewDesign() {
   const [subShape, setSubShape]               = useState(null);
   const [userMarker, setUserMarker]           = useState(null);
   const [mapProvider, setMapProvider]         = useState('leaflet');
+  const [clearShapesTrigger, setClearShapesTrigger] = useState(0);
 
   const handleToggleCat = useCallback((key) => {
     setHiddenCats(prev => {
@@ -56,22 +58,34 @@ export default function NewDesign() {
   }, []);
 
   // ── Helpers pós-busca ─────────────────────────────────────────────────────
-  const pushHistory = useCallback((data, shapeLabel) => {
+  const pushHistory = useCallback((data, shapeLabel, pageId) => {
     if (!data) return;
+    setSearchPages(prev => [...prev, {
+      id:    pageId,
+      label: `P${prev.length + 1} — ${shapeLabel}`,
+      data,
+    }]);
     setSearchHistory(prev => [...prev, {
       label:  `P${prev.length + 1} — ${shapeLabel}`,
       counts: TI_CATS.map(c => (Array.isArray(data[c.key]) ? data[c.key].length : 0)),
     }]);
   }, []);
 
-  const updateAllMarkers = useCallback((data) => {
+  const updateAllMarkers = useCallback((data, pageId) => {
     if (!data) return;
-    const markers = TI_CATS.flatMap(c =>
+    const newMarkers = TI_CATS.flatMap(c =>
       (Array.isArray(data[c.key]) ? data[c.key] : []).map(item => ({
-        ...item, _catColor: c.color, _catLabel: c.label, _catKey: c.key,
+        ...item, _catColor: c.color, _catLabel: c.label, _catKey: c.key, _pageId: pageId,
       }))
     ).filter(item => !isNaN(parseFloat(item.int_latitude)) && !isNaN(parseFloat(item.int_longitude)));
-    setAllMarkers(markers);
+    setAllMarkers(prev => [...prev, ...newMarkers]);
+  }, []);
+
+  const handleClearPage = useCallback((id) => {
+    setSearchPages(prev =>
+      prev.filter(p => p.id !== id).map((p, i) => ({ ...p, label: p.label.replace(/^P\d+/, `P${i + 1}`) }))
+    );
+    setAllMarkers(prev => prev.filter(m => m._pageId !== id));
   }, []);
 
   // ── Handlers de busca ─────────────────────────────────────────────────────
@@ -80,11 +94,12 @@ export default function NewDesign() {
     setSubShape(null); // limpa polígono subterrâneo ao iniciar busca geral
     setLoading(true);
     setError(null);
+    const pageId = Date.now();
     try {
       const data = normalizeResult(await findAllPointsInCircle({ center, radius: rad }));
       setSearchResult(data ?? {});
-      pushHistory(data, shapeLabel);
-      updateAllMarkers(data);
+      pushHistory(data, shapeLabel, pageId);
+      updateAllMarkers(data, pageId);
     } catch (err) {
       console.error('[círculo]', err);
       setError('Erro ao buscar outorgas. Verifique conexão ou autenticação.');
@@ -141,6 +156,7 @@ export default function NewDesign() {
   const handleTextSearch = useCallback(async (query) => {
     setTextLoading(true);
     setTextError(null);
+    const pageId = Date.now();
     try {
       const raw = await findByColumn(query);
 
@@ -168,7 +184,8 @@ export default function NewDesign() {
 
       const data = normalizeResult(categorized);
       setSearchResult(data ?? {});
-      updateAllMarkers(data);
+      pushHistory(data, 'Texto', pageId);
+      updateAllMarkers(data, pageId);
     } catch (err) {
       console.error('[texto]', err);
       setTextError('Erro ao buscar por dados do requerente.');
@@ -176,7 +193,7 @@ export default function NewDesign() {
     } finally {
       setTextLoading(false);
     }
-  }, [normalizeResult, updateAllMarkers]);
+  }, [normalizeResult, pushHistory, updateAllMarkers]);
 
   const handleClearAll = useCallback(() => {
     setCircleData(null);
@@ -184,8 +201,11 @@ export default function NewDesign() {
     setSubShape(null);
     setAllMarkers([]);
     setSearchResult(null);
+    setSearchPages([]);
+    setSearchHistory([]);
     setSelectedMarker(null);
     setError(null);
+    setClearShapesTrigger(prev => prev + 1);
   }, []);
 
   const handlePickCoordinate = useCallback(({ lat: pLat, lng: pLng }) => {
@@ -206,18 +226,19 @@ export default function NewDesign() {
     setLoading(true);
     setError(null);
     setTabIndex(0);
+    const pageId = Date.now();
 
     try {
       let data;
       if (shape.type === 'rectangle') {
         data = normalizeResult(await findAllPointsInRectangle(shape.nex, shape.ney, shape.swx, shape.swy));
-        pushHistory(data, 'Retângulo');
+        pushHistory(data, 'Retângulo', pageId);
       } else if (shape.type === 'polygon') {
         data = normalizeResult(await findAllPointsInPolygon(shape.points));
-        pushHistory(data, 'Polígono');
+        pushHistory(data, 'Polígono', pageId);
       }
       setSearchResult(data ?? {});
-      updateAllMarkers(data);
+      updateAllMarkers(data, pageId);
     } catch (err) {
       console.error('[forma]', err);
       setError('Erro ao buscar dentro da forma desenhada.');
@@ -227,9 +248,10 @@ export default function NewDesign() {
     }
   }, [doCircleSearch, normalizeResult, pushHistory, updateAllMarkers]);
 
-  const totalResults = searchResult
-    ? Object.values(searchResult).reduce((s, v) => s + (Array.isArray(v) ? v.length : 0), 0)
-    : 0;
+  const totalResults = searchPages.reduce(
+    (sum, page) => sum + Object.values(page.data).reduce((s, v) => s + (Array.isArray(v) ? v.length : 0), 0),
+    0
+  );
 
   return (
     <Wrapper apiKey={GMAPS_API_KEY} libraries={['drawing', 'geometry']}>
@@ -255,7 +277,7 @@ export default function NewDesign() {
         </Box>
 
         <Box sx={{ flex: 1 }} />
-        {searchResult && (
+        {searchPages.length > 0 && (
           <Chip label={`${totalResults} outorga${totalResults !== 1 ? 's' : ''} encontrada${totalResults !== 1 ? 's' : ''}`}
             size="small" sx={{ bgcolor: '#48cae430', color: '#90e0ef', fontSize: '0.62rem', height: 20 }} />
         )}
@@ -270,12 +292,14 @@ export default function NewDesign() {
             const mapProps = {
               circleData,
               onShapeCreated: handleMapShape,
+              onLayerFeatureSearch: handleMapShape,
               markerData: selectedMarker,
               userMarker,
               onPickCoordinate: handlePickCoordinate,
               onClearAll: handleClearAll,
               allMarkers: hiddenCats.size === 0 ? allMarkers : allMarkers.filter(m => !hiddenCats.has(m._catKey)),
               subShape,
+              clearShapesTrigger,
             };
             return mapProvider === 'gmaps'
               ? <GoogleMapView {...mapProps} />
@@ -347,6 +371,9 @@ export default function NewDesign() {
               textLoading={textLoading}
               textError={textError}
               searchResult={searchResult}
+              searchPages={searchPages}
+              onClearPage={handleClearPage}
+              onClearAll={handleClearAll}
               onMarkerSelect={setSelectedMarker}
               searchHistory={searchHistory}
               hiddenCats={hiddenCats}

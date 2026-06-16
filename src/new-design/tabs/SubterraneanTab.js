@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   Box, Typography, Stack, Divider, LinearProgress, Alert,
   TextField, Button, ToggleButton, ToggleButtonGroup,
-  Table, TableHead, TableBody, TableRow, TableCell, Paper, Chip,
+  Table, TableHead, TableBody, TableRow, TableCell, Paper, Chip, Avatar,
 } from '@mui/material';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import WaterDropIcon    from '@mui/icons-material/WaterDrop';
@@ -213,6 +213,26 @@ export default function SubterraneanTab({
         {error && <Alert severity="error" sx={{ fontSize: '0.73rem', py: 0.3, mt: 1 }}>{error}</Alert>}
       </Box>
 
+      {/* ── Chips: Bacia + UH ────────────────────────────────────────────────── */}
+      {avail && (
+        <Stack direction="row" spacing={1} sx={{ px: 2, py: 0.8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {avail.bacia_nome && (
+            <Chip
+              avatar={<Avatar sx={{ bgcolor: 'transparent', width: 20, height: 20 }}><WallpaperIcon sx={{ fontSize: 14 }} /></Avatar>}
+              label={avail.bacia_nome}
+              size="small" sx={{ fontSize: '0.65rem', height: 20 }}
+            />
+          )}
+          {avail.uh_nome && (
+            <Chip
+              avatar={<Avatar sx={{ bgcolor: 'transparent', width: 20, height: 20 }}><LayersIcon sx={{ fontSize: 14 }} /></Avatar>}
+              label={`${avail.uh_label ?? ''} — ${avail.uh_nome}`}
+              size="small" sx={{ fontSize: '0.65rem', height: 20 }}
+            />
+          )}
+        </Stack>
+      )}
+
       {/* ── Análise de disponibilidade ───────────────────────────────────────── */}
       <Box sx={{ px: 2, py: 1.5, flexShrink: 0, borderBottom: '1px solid #e8eaf0' }}>
         <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
@@ -321,18 +341,6 @@ export default function SubterraneanTab({
 
         {avail && (
           <>
-            {/* chips: Bacia + UH */}
-            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap mb={1}>
-              {avail.bacia_nome && (
-                <Chip size="small" icon={<WallpaperIcon sx={{ fontSize: '0.85rem !important' }} />}
-                  label={avail.bacia_nome} sx={{ fontSize: '0.65rem', height: 20 }} />
-              )}
-              {avail.uh_nome && (
-                <Chip size="small" icon={<LayersIcon sx={{ fontSize: '0.85rem !important' }} />}
-                  label={`${avail.uh_label ?? ''} — ${avail.uh_nome}`} sx={{ fontSize: '0.65rem', height: 20 }} />
-              )}
-            </Stack>
-
             {/* Tabela de disponibilidade */}
             <Paper variant="outlined" sx={{ overflow: 'auto', mb: 1.5 }}>
               <Table size="small" sx={{ minWidth: 500 }}>
@@ -401,7 +409,7 @@ export default function SubterraneanTab({
           <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
             <CompactTable
               headers={TABLE_HEADERS}
-              rows={Array.from({ length: 5 }, () => TABLE_HEADERS.map((_, j) => (
+              rows={Array.from({ length: 15 }, () => TABLE_HEADERS.map((_, j) => (
                 <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
               )))}
             />

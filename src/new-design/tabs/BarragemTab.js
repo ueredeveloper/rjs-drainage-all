@@ -439,7 +439,7 @@ export default function BarragemTab({
           <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
             <CompactTable
               headers={BAR_HEADERS}
-              rows={Array.from({ length: 4 }, () => BAR_HEADERS.map((_, j) => (
+              rows={Array.from({ length: 15 }, () => BAR_HEADERS.map((_, j) => (
                 <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 60 : j === 2 ? 70 : 90 }} />
               )))}
             />

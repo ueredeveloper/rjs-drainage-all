@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box, Typography, Tabs, Tab, TextField, Button,
   Chip, Stack, Divider, Slider, LinearProgress, Alert,
@@ -11,7 +11,33 @@ import { polarCenteredLabelsPlugin } from '../chartSetup';
 import { TI_CATS, MESES } from '../constants';
 import { numberWithCommas } from '../../tools';
 
-const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', ...MESES];
+const HEADERS_BASE  = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço'];
+const HEADERS_VAZAO = [...HEADERS_BASE, ...MESES];
+
+// colunas extras por categoria (sem vazão mensal)
+const CAT_EXTRA_COLS = {
+  barragem: [
+    { label: 'Rio',              key: 'rio_barragem' },
+    { label: 'Mecan. Extravasor', key: 'mecanismo_controle_extravasor' },
+    { label: 'Domínio',          key: 'id_dominio_barragem' },
+    { label: 'Última Inspeção',  key: 'data_ult_inspecao' },
+    { label: 'Crista',           key: 'comprimento_crista_m' },
+    { label: 'Classe',           key: 'class_barr' },
+    { label: 'Área de Contrib.', key: 'area_contribuicao' },
+    { label: 'Área Inund.',      key: 'area_inundada_ha' },
+  ],
+  efluente: [
+    { label: 'Nome da Bacia', key: 'bh_nome' },
+    { label: 'Classe',        key: 'classe_manancial' },
+    { label: 'Descrição',     key: 'sp_descricao' },
+  ],
+  pluvial: [
+    { label: 'Verificado',      key: 'int_verificado' },
+    { label: 'Tipo de Outorga', key: 'to_descricao' },
+  ],
+};
+
+const CATS_SEM_VAZAO = new Set(Object.keys(CAT_EXTRA_COLS));
 
 export default function GeralTab({
   lat, lng, onLatChange, onLngChange,
@@ -19,25 +45,48 @@ export default function GeralTab({
   onSearch, onTextSearch,
   loading, error,
   textLoading, textError,
-  searchResult, onMarkerSelect, searchHistory,
+  searchResult, searchPages, onClearPage, onClearAll,
+  onMarkerSelect, searchHistory,
   hiddenCats, onToggleCat,
 }) {
   const [subTab, setSubTab] = useState(0);
+  const [activePageIdx, setActivePageIdx] = useState(0);
 
-  // ── Resultados geográficos por categoria ──────────────────────────────────
+  // Vai para a última página quando uma nova pesquisa é adicionada
+  const prevLenRef = useRef(0);
+  const pagesLen = searchPages?.length ?? 0;
+  useEffect(() => {
+    if (pagesLen > prevLenRef.current) {
+      setActivePageIdx(pagesLen - 1);
+      setSubTab(0);
+    } else if (activePageIdx >= pagesLen && pagesLen > 0) {
+      setActivePageIdx(pagesLen - 1);
+    }
+    prevLenRef.current = pagesLen;
+  }, [pagesLen, activePageIdx]);
+
+  const activePage = searchPages?.[activePageIdx] ?? null;
+  const activeData = activePage?.data ?? null;
+
+  // ── Resultados da página ativa por categoria ──────────────────────────────
   const categories = useMemo(() => {
-    if (!searchResult) return {};
+    if (!activeData) return {};
     return {
-      subterranea: Array.isArray(searchResult.subterranea) ? searchResult.subterranea : [],
-      superficial: Array.isArray(searchResult.superficial) ? searchResult.superficial : [],
-      barragem:    Array.isArray(searchResult.barragem)    ? searchResult.barragem    : [],
-      pluvial:     Array.isArray(searchResult.pluvial)     ? searchResult.pluvial     : [],
-      efluente:    Array.isArray(searchResult.efluente)    ? searchResult.efluente    : [],
+      subterranea: Array.isArray(activeData.subterranea) ? activeData.subterranea : [],
+      superficial: Array.isArray(activeData.superficial) ? activeData.superficial : [],
+      barragem:    Array.isArray(activeData.barragem)    ? activeData.barragem    : [],
+      pluvial:     Array.isArray(activeData.pluvial)     ? activeData.pluvial     : [],
+      efluente:    Array.isArray(activeData.efluente)    ? activeData.efluente    : [],
     };
-  }, [searchResult]);
+  }, [activeData]);
 
-  const activeCat  = TI_CATS[subTab];
-  const activeRows = categories[activeCat?.key] ?? [];
+  const activeCat    = TI_CATS[subTab];
+  const activeRows   = categories[activeCat?.key] ?? [];
+  const semVazao     = CATS_SEM_VAZAO.has(activeCat?.key);
+  const extraCols    = CAT_EXTRA_COLS[activeCat?.key] ?? [];
+  const tableHeaders = semVazao
+    ? [...HEADERS_BASE, ...extraCols.map(c => c.label)]
+    : HEADERS_VAZAO;
 
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -94,28 +143,26 @@ export default function GeralTab({
       {/* ── Busca por dados do requerente ─────────────────────────────────── */}
       <TextSearchBar onSearch={onTextSearch} loading={textLoading} error={textError} />
 
-      {/* ── PolarArea — sempre reflete o searchResult atual ──────────────── */}
+      {/* ── PolarArea — reflete a página ativa ──────────────────────────── */}
       {!loading && (() => {
-        const isDemo = !searchResult;
+        const isDemo = pagesLen === 0 || !activePage;
         const DEMO_COUNTS = [45, 28, 12, 8, 3];
-        // conta diretamente do resultado atual — garante consistência com a tabela
         const hidden = hiddenCats ?? new Set();
         const rawCounts = isDemo
           ? DEMO_COUNTS
-          : TI_CATS.map(c => (Array.isArray(searchResult[c.key]) ? searchResult[c.key].length : 0));
-        // categorias ocultas aparecem como 0 no chart
+          : TI_CATS.map(c => (Array.isArray(activeData?.[c.key]) ? activeData[c.key].length : 0));
         const counts = rawCounts.map((v, i) => hidden.has(TI_CATS[i].key) ? 0 : v);
         const logData = counts.map(v => Math.log1p(v));
-        const chartKey = isDemo ? 'demo' : JSON.stringify(counts);
+        const chartKey = isDemo ? 'demo' : `${activePageIdx}-${JSON.stringify(counts)}`;
 
         return (
           <Box sx={{ px: 2, pt: 1.2, pb: 0.5, flexShrink: 0 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.8}>
               <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                {isDemo ? 'Distribuição de outorgas' : 'Distribuição por tipo'}
+                {isDemo ? 'Distribuição de outorgas' : `Distribuição — ${activePage?.label ?? ''}`}
               </Typography>
               <Chip
-                label={isDemo ? 'Demonstração' : `${searchHistory.length} pesquisa${searchHistory.length !== 1 ? 's' : ''}`}
+                label={isDemo ? 'Demonstração' : `${pagesLen} pesquisa${pagesLen !== 1 ? 's' : ''}`}
                 size="small"
                 sx={{ height: 16, fontSize: '0.58rem', bgcolor: isDemo ? '#fff3e0' : '#f5f5f5', color: isDemo ? '#e65100' : '#78909c' }}
               />
@@ -168,7 +215,7 @@ export default function GeralTab({
               </Typography>
             )}
 
-            {/* Toggles — inferior direito */}
+            {/* Toggles por categoria */}
             {!isDemo && (
               <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap justifyContent="flex-end" mt={0.8}>
                 {TI_CATS.map((c, i) => {
@@ -201,8 +248,61 @@ export default function GeralTab({
 
       <Divider />
 
-      {/* ── Resultados (geográficos ou por texto) — mesma tabela categorizada ── */}
-      {searchResult && !loading ? (
+      {/* ── Navegação de pesquisas (paginação) ────────────────────────────── */}
+      {pagesLen > 0 && (
+        <Box sx={{ px: 1.5, py: 0.8, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
+          <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
+            <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0, mr: 0.3 }}>
+              Pesquisas:
+            </Typography>
+            {(searchPages ?? []).map((page, idx) => {
+              const total = Object.values(page.data).reduce((s, v) => s + (Array.isArray(v) ? v.length : 0), 0);
+              const isActive = activePageIdx === idx;
+              return (
+                <Chip
+                  key={page.id}
+                  label={`${page.label} · ${total}`}
+                  size="small"
+                  onClick={() => { setActivePageIdx(idx); setSubTab(0); }}
+                  onDelete={() => {
+                    onClearPage?.(page.id);
+                  }}
+                  sx={{
+                    height: 22,
+                    fontSize: '0.62rem',
+                    fontWeight: isActive ? 700 : 400,
+                    bgcolor: isActive ? '#1565c020' : 'transparent',
+                    color: isActive ? '#1565c0' : '#546e7a',
+                    border: `1px solid ${isActive ? '#1565c0' : '#dde3ea'}`,
+                    '& .MuiChip-deleteIcon': {
+                      fontSize: 14,
+                      color: isActive ? '#1565c080' : '#90a4ae',
+                      '&:hover': { color: '#e53935' },
+                    },
+                    transition: 'all 0.15s ease',
+                  }}
+                />
+              );
+            })}
+            {pagesLen > 1 && (
+              <Chip
+                label="Limpar tudo"
+                size="small"
+                onClick={onClearAll}
+                variant="outlined"
+                sx={{
+                  height: 22, fontSize: '0.62rem',
+                  color: '#e53935', border: '1px solid #ffcdd2',
+                  '&:hover': { bgcolor: '#ffebee' },
+                }}
+              />
+            )}
+          </Stack>
+        </Box>
+      )}
+
+      {/* ── Resultados da página ativa ─────────────────────────────────────── */}
+      {activePage && !loading ? (
         <>
           <Box sx={{ borderBottom: '1px solid #e0e0e0', flexShrink: 0 }}>
             <Tabs
@@ -231,8 +331,10 @@ export default function GeralTab({
               </Box>
             ) : (
               <CompactTable
-                headers={TABLE_HEADERS}
+                headers={tableHeaders}
                 rows={activeRows.map(m => {
+                  const base = [m.us_nome ?? '—', m.us_cpf_cnpj ?? '—', m.int_processo ?? '—', m.emp_endereco ?? '—'];
+                  if (semVazao) return [...base, ...extraCols.map(c => m[c.key] ?? '—')];
                   const demandas = m.dt_demanda?.demandas ?? [];
                   const monthly = MESES.map((_, i) => {
                     const d = demandas.find(d => parseInt(d.mes) === i + 1);
@@ -240,7 +342,7 @@ export default function GeralTab({
                     const v = parseFloat(d.vazao_ld);
                     return isNaN(v) ? '—' : numberWithCommas(v, 2);
                   });
-                  return [m.us_nome ?? '—', m.us_cpf_cnpj ?? '—', m.int_processo ?? '—', m.emp_endereco ?? '—', ...monthly];
+                  return [...base, ...monthly];
                 })}
                 onRowClick={i => onMarkerSelect?.({
                   ...activeRows[i],
@@ -254,8 +356,8 @@ export default function GeralTab({
       ) : !loading && (
         <Box sx={{ opacity: 0.4, pointerEvents: 'none', flex: 1, overflow: 'hidden' }}>
           <CompactTable
-            headers={TABLE_HEADERS}
-            rows={Array.from({ length: 5 }, () => TABLE_HEADERS.map((_, j) => (
+            headers={HEADERS_VAZAO}
+            rows={Array.from({ length: 15 }, () => HEADERS_VAZAO.map((_, j) => (
               <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
             )))}
           />

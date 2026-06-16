@@ -480,23 +480,21 @@ function MapControllers({ map, checkboxes, setCheckboxes }) {
                     padding: "2px",
                     gap: "2px",
                 }}>
-                    <Tooltip title="Camadas do Mapa">
-                        <IconButton
-                            id="speedial-open-close"
-                            onClick={() => setOpenPanel((prev) => !prev)}
-                            sx={{
-                                width: 26, height: 26,
-                                borderRadius: "2px",
-                                color: openPanel ? "#4a90d9" : "#444",
-                                background: openPanel ? "#d8e8f8" : "transparent",
-                                border: `1px solid ${openPanel ? "#4a90d9" : "#ccc"}`,
-                                padding: 0,
-                                "&:hover": { background: openPanel ? "#d8e8f8" : "#f5f5f5" },
-                            }}
-                        >
-                            <LayersIcon sx={{ fontSize: 15 }} />
-                        </IconButton>
-                    </Tooltip>
+                    <IconButton
+                        id="speedial-open-close"
+                        onClick={() => setOpenPanel((prev) => !prev)}
+                        sx={{
+                            width: 30, height: 70,
+                            borderRadius: "2px",
+                            color: openPanel ? "#4a90d9" : "#444",
+                            background: openPanel ? "#d8e8f8" : "transparent",
+                            border: `1px solid ${openPanel ? "#4a90d9" : "#ccc"}`,
+                            padding: 0,
+                            "&:hover": { background: openPanel ? "#d8e8f8" : "#f5f5f5" },
+                        }}
+                    >
+                        <LayersIcon sx={{ fontSize: 28 }} />
+                    </IconButton>
 
                     <Tooltip title="Minha localização">
                         <IconButton

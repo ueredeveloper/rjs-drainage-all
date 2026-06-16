@@ -88,7 +88,6 @@ export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onM
       // Envia polígonos das otto bacias para o mapa como GeoJSON
       const supShape = {
         type: 'FeatureCollection',
-        _style: { color: '#2e7d32', fillColor: '#a5d6a7' },
         features: ottoBasins.ottoBasins.map(f => ({
           type: 'Feature',
           properties: f.attributes ?? {},
@@ -261,7 +260,7 @@ const hydrographicBasin = await searchHydrograficUnit(
           <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
             <CompactTable
               headers={TABLE_HEADERS}
-              rows={Array.from({ length: 5 }, () => TABLE_HEADERS.map((_, j) => (
+              rows={Array.from({ length: 15 }, () => TABLE_HEADERS.map((_, j) => (
                 <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
               )))}
             />

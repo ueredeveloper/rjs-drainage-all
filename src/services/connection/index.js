@@ -52,6 +52,7 @@ async function findDemands(addId) {
 
 
 const fetchAddressesByPolygon = async (polygon) => {
+  console.log('fetch fetchAddressesByPolygon ', polygon)
 
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/x-www-form-urlencoded");

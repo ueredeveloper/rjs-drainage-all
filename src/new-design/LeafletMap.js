@@ -1,5 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import L from 'leaflet';
+import LayerPanel from './LayerPanel';
+import ElemWaterUsage from '../components/Commom/map/ElemWaterUsage';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
@@ -97,9 +100,14 @@ function buildPopupHtml(item) {
     </div>`;
 }
 
-export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll }) {
+export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, clearShapesTrigger, onLayerFeatureSearch }) {
   const containerRef       = useRef(null);
   const mapRef             = useRef(null);
+  const [mapInstance, setMapInstance]             = useState(null);
+  const [panelContainer, setPanelContainer]       = useState(null);
+  const [waterUsageContainer, setWaterUsageContainer] = useState(null);
+  const [isWaterAvailable, setIsWaterAvailable]   = useState(false);
+  const [isFullscreen, setIsFullscreen]           = useState(false);
   const drawnItemsRef      = useRef(null);
   const circleLayerRef     = useRef(null);
   const markerLayerRef     = useRef(null);
@@ -117,6 +125,12 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   onCreatedRef.current = onShapeCreated;
   onPickRef.current    = onPickCoordinate;
   onClearRef.current   = onClearAll;
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
 
   // ── Inicializa o mapa uma única vez ──────────────────────────────────────
   useEffect(() => {
@@ -226,7 +240,6 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     };
 
     map.on(L.Draw.Event.CREATED, (e) => {
-      drawnItems.clearLayers();
       const t  = e.layerType;
       let shape = null;
 
@@ -379,7 +392,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
         const removeBtn = L.DomUtil.create('a', '', container);
         removeBtn.href = '#'; removeBtn.title = 'Remover';
         removeBtn.style.cssText = `${BTN}color:#c62828;`;
-        removeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+        removeBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.81 14.99l1.19-.92-1.43-1.43-1.19.92 1.43 1.43zm-.45-4.72L21 9l-9-7-2.91 2.27 7.87 7.88 2.4-1.88zM3.27 1L2 2.27l4.22 4.22L3 9l1.63 1.27L12 16l2.1-1.63 1.43 1.43L12 18.54l-7.37-5.73L3 14.07l9 7 4.95-3.85L20.73 21 22 19.73 3.27 1z"/></svg>`;
 
         const setEditUI = (active) => {
           editBtn.style.background = active ? '#e3f2fd' : '';
@@ -440,44 +453,69 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       if (onPickRef.current) onPickRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
     });
 
+    // Controle do painel de camadas (canto inferior direito, acima do zoom)
+    const LayerPanelControl = L.Control.extend({
+      onAdd() {
+        const div = L.DomUtil.create('div');
+        div.style.background = 'transparent';
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+        setPanelContainer(div);
+        return div;
+      },
+    });
+    new LayerPanelControl({ position: 'bottomright' }).addTo(map);
+
+    const WaterUsageControl = L.Control.extend({
+      onAdd() {
+        const div = L.DomUtil.create('div');
+        div.style.cssText = 'background:transparent;width:100%;';
+        L.DomEvent.disableClickPropagation(div);
+        setWaterUsageContainer(div);
+        return div;
+      },
+    });
+    new WaterUsageControl({ position: 'bottomleft' }).addTo(map);
+
     mapRef.current = map;
+    setMapInstance(map);
 
     return () => {
       map._fsCleanup?.();
       document.removeEventListener('keydown', onKeyDown);
       map.remove();
       mapRef.current = null;
+      setMapInstance(null);
+      setPanelContainer(null);
     };
   }, []); // executa só uma vez
 
+  // ── Limpa formas desenhadas quando "Limpar tudo" é chamado externamente ─────
+  useEffect(() => {
+    if (!clearShapesTrigger) return;
+    drawnItemsRef.current?.clearLayers();
+    mapRef.current?.closePopup();
+  }, [clearShapesTrigger]);
+
   // ── Atualiza círculo no mapa quando circleData muda ───────────────────────
   useEffect(() => {
-    const map    = mapRef.current;
-    const drawn  = drawnItemsRef.current;
+    const map   = mapRef.current;
+    const drawn = drawnItemsRef.current;
     if (!map) return;
 
-    // remove círculo anterior (de drawnItems e do mapa)
-    if (circleLayerRef.current) {
-      if (drawn) drawn.removeLayer(circleLayerRef.current);
-      map.removeLayer(circleLayerRef.current);
+    if (!circleData) {
+      // Multi-pesquisa: mantém o círculo anterior no mapa — só limpa a referência.
+      // A remoção real ocorre via clearShapesTrigger.
       circleLayerRef.current = null;
+      return;
     }
 
-    // limpa eventuais círculos órfãos em drawnItems
-    if (drawn) {
-      const stale = [];
-      drawn.eachLayer(l => { if (l instanceof L.Circle && !(l instanceof L.CircleMarker)) stale.push(l); });
-      stale.forEach(l => drawn.removeLayer(l));
-    }
-
-    if (!circleData) return;
-
+    // Nova busca por coordenada: adiciona novo círculo sem remover os anteriores
     const circle = L.circle(
       [circleData.center.lat, circleData.center.lng],
       { ...SHAPE_OPTS, radius: circleData.radius },
     );
 
-    // adiciona ao drawnItems para que o círculo seja editável
     if (drawn) drawn.addLayer(circle);
     else circle.addTo(map);
 
@@ -604,9 +642,20 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   }, [subShape]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height: '100%' }}
-    />
+    <>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {mapInstance && panelContainer &&
+        ReactDOM.createPortal(
+          <LayerPanel map={mapInstance} mapType="leaflet" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} />,
+          panelContainer,
+        )
+      }
+      {mapInstance && waterUsageContainer && isFullscreen && isWaterAvailable &&
+        ReactDOM.createPortal(
+          <ElemWaterUsage isFullscreen={true} isWaterAvailable={true} />,
+          waterUsageContainer,
+        )
+      }
+    </>
   );
 }
