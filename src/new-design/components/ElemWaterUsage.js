@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 
+/** Legenda de uso de água — cópia local para o novo design. */
 const marks = [
     { value: 0, label: '0%', color: "#4cc94c" },
     { value: 10, label: '10%', color: "#007c00" },
@@ -50,7 +51,7 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
                             background: 'transparent' // sem preenchimento
                         },
                         '& .MuiSlider-markLabel': {
-                            fontSize: 11,
+                            fontSize: '0.786rem',
                             color: '#CCCCC', // Change to your desired color
                         }
                     }}

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import L from 'leaflet';
 import LayerPanel from './LayerPanel';
-import ElemWaterUsage from '../components/Commom/map/ElemWaterUsage';
+import ElemWaterUsage from './components/ElemWaterUsage';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
@@ -100,7 +100,7 @@ function buildPopupHtml(item) {
     </div>`;
 }
 
-export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, clearShapesTrigger, onLayerFeatureSearch }) {
+export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange }) {
   const containerRef       = useRef(null);
   const mapRef             = useRef(null);
   const [mapInstance, setMapInstance]             = useState(null);
@@ -108,23 +108,32 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   const [waterUsageContainer, setWaterUsageContainer] = useState(null);
   const [isWaterAvailable, setIsWaterAvailable]   = useState(false);
   const [isFullscreen, setIsFullscreen]           = useState(false);
+  const [layerClearTrigger, setLayerClearTrigger] = useState(0);
+  const setLayerClearRef = useRef(null);
+  setLayerClearRef.current = setLayerClearTrigger;
   const drawnItemsRef      = useRef(null);
   const circleLayerRef     = useRef(null);
   const markerLayerRef     = useRef(null);
   const userMarkerLayerRef = useRef(null);
   const allMarkersLayerRef = useRef(null);
   const subShapeLayerRef   = useRef(null);
-  const onCreatedRef       = useRef(onShapeCreated);
+  const areaPopupsRef            = useRef([]);
+  const shapeStatesRef           = useRef(new Map());
+  const pendingCircleAreaRef     = useRef(null);
+  const addLayerClickListenerRef = useRef(null);
+  const onCreatedRef             = useRef(onShapeCreated);
   const onPickRef          = useRef(onPickCoordinate);
   const pickModeRef        = useRef(false);
   const pickBtnRef         = useRef(null);
 
-  const onClearRef = useRef(onClearAll);
+  const onClearRef    = useRef(onClearAll);
+  const onEditSaveRef = useRef(onEditSave);
 
   // Mantém referências das callbacks sempre atualizadas sem recriar o mapa
-  onCreatedRef.current = onShapeCreated;
-  onPickRef.current    = onPickCoordinate;
-  onClearRef.current   = onClearAll;
+  onCreatedRef.current   = onShapeCreated;
+  onPickRef.current      = onPickCoordinate;
+  onClearRef.current     = onClearAll;
+  onEditSaveRef.current  = onEditSave;
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -215,29 +224,167 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       return `<b>${fmt(Math.round(m2))} m²</b> &nbsp;·&nbsp; <b>${fmt(ha)} ha</b>`;
     };
 
+    // Vértice (ou ponto calculado) de latitude máxima — popup fica acima da forma
+    const topOfLayer = (layer) => {
+      if (layer instanceof L.Circle) {
+        const c = layer.getLatLng(), r = layer.getRadius();
+        return L.latLng(c.lat + r / 111320, c.lng);
+      }
+      if (layer instanceof L.Polygon) {
+        const lls = layer.getLatLngs()[0];
+        let top = lls[0];
+        lls.forEach(ll => { if (ll.lat > top.lat) top = ll; });
+        return top;
+      }
+      return null;
+    };
+
     const showAreaPopup = (layer) => {
-      let center, areaM2;
+      let anchor, areaM2;
       try {
         if (layer instanceof L.Circle) {
-          center = layer.getLatLng();
           areaM2 = Math.PI * layer.getRadius() ** 2;
         } else if (layer instanceof L.Polygon) {
           const lls = layer.getLatLngs()[0];
-          center  = layer.getBounds().getCenter();
-          areaM2  = L.GeometryUtil ? Math.abs(L.GeometryUtil.geodesicArea(lls)) : 0;
+          areaM2 = L.GeometryUtil ? Math.abs(L.GeometryUtil.geodesicArea(lls)) : 0;
         } else return;
+        anchor = topOfLayer(layer);
+        if (!anchor) return;
       } catch (_) { return; }
 
-      L.popup({ closeButton: true, autoClose: true })
-        .setLatLng(center)
+      const popup = L.popup({ closeButton: true, autoClose: false, closeOnClick: false })
+        .setLatLng(anchor)
         .setContent(`
           <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
             <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Área da camada</div>
             <div style="font-size:12px;color:#263238;">${fmtArea(areaM2)}</div>
           </div>
         `)
-        .openOn(map);
+        .addTo(map);
+      areaPopupsRef.current.push(popup);
+      return popup;
     };
+
+    // ── Painel de estilo das camadas desenhadas ───────────────────────────────
+    const STYLE_COLORS = [
+      { hex: '#2e7d32', label: 'Verde' },
+      { hex: '#1565c0', label: 'Azul' },
+      { hex: '#c62828', label: 'Vermelho' },
+      { hex: '#212121', label: 'Preto' },
+    ];
+    const defaultShapeState = () => ({
+      strokeColor: SHAPE_OPTS.color,
+      fillColor:   SHAPE_OPTS.fillColor,
+      fillOpacity: SHAPE_OPTS.fillOpacity,
+      areaPopup: null, areaVisible: false,
+      _listenerAdded: false,
+    });
+    const applyLeafletStyle = (layer, state) => {
+      try { layer.setStyle({ color: state.strokeColor, fillColor: state.fillColor, fillOpacity: state.fillOpacity }); } catch (_) {}
+    };
+    const buildStylePopupHtml = (state) => {
+      const opacityPct = Math.round(state.fillOpacity * 100);
+      const swatches = (prefix, activeColor) =>
+        STYLE_COLORS.map(({ hex, label }) => {
+          const sel = hex === activeColor;
+          return `<button data-nd="${prefix}" data-color="${hex}" title="${label}"
+            style="width:22px;height:22px;border-radius:4px;cursor:pointer;padding:0;outline:none;
+                   border:2px solid ${sel ? '#000' : 'transparent'};background:${hex};"></button>`;
+        }).join('');
+      const hasArea = !!state.areaPopup;
+      return `<div id="nd-sp" style="font-family:Roboto,Arial,sans-serif;min-width:200px;padding:2px 0 4px;">
+        <div style="font-weight:700;font-size:11px;color:#1565c0;margin-bottom:8px;letter-spacing:.4px;text-transform:uppercase;">Estilo da camada</div>
+        <div style="margin-bottom:7px;">
+          <div style="font-size:10px;color:#78909c;font-weight:600;margin-bottom:4px;">Cor da linha</div>
+          <div style="display:flex;gap:5px;">${swatches('stroke', state.strokeColor)}</div>
+        </div>
+        <div style="margin-bottom:7px;">
+          <div style="font-size:10px;color:#78909c;font-weight:600;margin-bottom:4px;">Cor do fundo</div>
+          <div style="display:flex;gap:5px;">${swatches('fill', state.fillColor)}</div>
+        </div>
+        <div style="margin-bottom:7px;">
+          <div style="font-size:10px;color:#78909c;font-weight:600;margin-bottom:3px;">
+            Transparência: <span id="nd-opa-val">${opacityPct}%</span>
+          </div>
+          <input id="nd-opa-slider" type="range" min="0" max="100" value="${opacityPct}"
+            style="width:100%;accent-color:#1565c0;height:4px;cursor:pointer;">
+        </div>
+        <button id="nd-toggle-area"
+          style="width:100%;padding:4px 8px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;
+                 border:1px solid ${hasArea ? '#1565c0' : '#ccc'};
+                 background:${!hasArea ? '#f5f5f5' : state.areaVisible ? '#1565c0' : '#fff'};
+                 color:${!hasArea ? '#bbb' : state.areaVisible ? '#fff' : '#1565c0'};"
+          ${!hasArea ? 'disabled' : ''}>
+          ${!hasArea ? 'Sem info de área' : (state.areaVisible ? 'Ocultar' : 'Mostrar') + ' info de área'}
+        </button>
+      </div>`;
+    };
+    const setupLeafletStyleListeners = (layer, state, popup) => {
+      const el = popup.getElement();
+      if (!el) return;
+      const panel = el.querySelector('#nd-sp');
+      if (!panel) return;
+      panel.querySelectorAll('[data-nd="stroke"]').forEach(btn => {
+        L.DomEvent.on(btn, 'click', L.DomEvent.stop);
+        L.DomEvent.on(btn, 'click', () => {
+          state.strokeColor = btn.dataset.color;
+          applyLeafletStyle(layer, state);
+          popup.setContent(buildStylePopupHtml(state));
+          setTimeout(() => setupLeafletStyleListeners(layer, state, popup), 0);
+        });
+      });
+      panel.querySelectorAll('[data-nd="fill"]').forEach(btn => {
+        L.DomEvent.on(btn, 'click', L.DomEvent.stop);
+        L.DomEvent.on(btn, 'click', () => {
+          state.fillColor = btn.dataset.color;
+          applyLeafletStyle(layer, state);
+          popup.setContent(buildStylePopupHtml(state));
+          setTimeout(() => setupLeafletStyleListeners(layer, state, popup), 0);
+        });
+      });
+      const slider = panel.querySelector('#nd-opa-slider');
+      const valEl  = panel.querySelector('#nd-opa-val');
+      if (slider) {
+        L.DomEvent.on(slider, 'input', L.DomEvent.stop);
+        L.DomEvent.on(slider, 'input', () => {
+          state.fillOpacity = parseInt(slider.value) / 100;
+          if (valEl) valEl.textContent = `${slider.value}%`;
+          applyLeafletStyle(layer, state);
+        });
+      }
+      const toggleBtn = panel.querySelector('#nd-toggle-area');
+      if (toggleBtn && state.areaPopup) {
+        L.DomEvent.on(toggleBtn, 'click', L.DomEvent.stop);
+        L.DomEvent.on(toggleBtn, 'click', () => {
+          state.areaVisible = !state.areaVisible;
+          try {
+            if (state.areaVisible) state.areaPopup.addTo(map);
+            else map.removeLayer(state.areaPopup);
+          } catch (_) {}
+          popup.setContent(buildStylePopupHtml(state));
+          setTimeout(() => setupLeafletStyleListeners(layer, state, popup), 0);
+        });
+      }
+    };
+    const openLeafletStylePopup = (layer, latlng) => {
+      const state = shapeStatesRef.current.get(layer) ?? defaultShapeState();
+      shapeStatesRef.current.set(layer, state);
+      const popup = L.popup({ closeButton: true, autoClose: true, closeOnClick: false, minWidth: 215, maxWidth: 280 })
+        .setLatLng(latlng)
+        .setContent(buildStylePopupHtml(state));
+      popup.openOn(map);
+      popup.on('add', () => setTimeout(() => setupLeafletStyleListeners(layer, state, popup), 0));
+    };
+    const addLayerClickListener = (layer, areaPopup = null) => {
+      const state = shapeStatesRef.current.get(layer) ?? defaultShapeState();
+      if (areaPopup) { state.areaPopup = areaPopup; state.areaVisible = true; }
+      shapeStatesRef.current.set(layer, state);
+      if (!state._listenerAdded) {
+        state._listenerAdded = true;
+        layer.on('click', (e) => { L.DomEvent.stop(e); openLeafletStylePopup(layer, e.latlng); });
+      }
+    };
+    addLayerClickListenerRef.current = addLayerClickListener;
 
     map.on(L.Draw.Event.CREATED, (e) => {
       const t  = e.layerType;
@@ -246,18 +393,18 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       if (t === 'circle') {
         const ll = e.layer.getLatLng();
         shape = { type: 'circle', center: { lat: ll.lat, lng: ll.lng }, radius: Math.round(e.layer.getRadius()) };
-        showAreaPopup(e.layer);
+        pendingCircleAreaRef.current = showAreaPopup(e.layer);
       } else if (t === 'rectangle') {
         const ne = e.layer.getBounds().getNorthEast();
         const sw = e.layer.getBounds().getSouthWest();
         shape = { type: 'rectangle', nex: ne.lng, ney: ne.lat, swx: sw.lng, swy: sw.lat };
         drawnItems.addLayer(e.layer);
-        showAreaPopup(e.layer);
+        addLayerClickListener(e.layer, showAreaPopup(e.layer));
       } else if (t === 'polygon') {
         const pts = e.layer.getLatLngs()[0].map(ll => [ll.lng, ll.lat]);
         shape = { type: 'polygon', points: [...pts, pts[0]] };
         drawnItems.addLayer(e.layer);
-        showAreaPopup(e.layer);
+        addLayerClickListener(e.layer, showAreaPopup(e.layer));
       }
 
       if (shape) onCreatedRef.current(shape);
@@ -358,6 +505,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       editState.cancelFn = null;
       drawnItems.eachLayer(l => { if (l.editing) l.editing.disable(); });
       if (save) {
+        onEditSaveRef.current?.();
+        areaPopupsRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
+        areaPopupsRef.current = [];
         drawnItems.eachLayer(l => {
           let shape = null;
           if (l instanceof L.Circle) {
@@ -371,7 +521,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
             if (pts.length >= 3) shape = { type: 'polygon', points: [...pts, pts[0]] };
           }
           if (shape) onCreatedRef.current?.(shape);
-          showAreaPopup(l);
+          const newAreaPopup = showAreaPopup(l);
+          const st = shapeStatesRef.current.get(l);
+          if (st && newAreaPopup) { st.areaPopup = newAreaPopup; st.areaVisible = true; }
         });
         snapshots = new Map();
       } else {
@@ -424,6 +576,11 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           [circleLayerRef, userMarkerLayerRef, markerLayerRef, allMarkersLayerRef, subShapeLayerRef].forEach(ref => {
             if (ref.current) { map.removeLayer(ref.current); ref.current = null; }
           });
+          areaPopupsRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
+          areaPopupsRef.current = [];
+          shapeStatesRef.current.clear();
+          pendingCircleAreaRef.current = null;
+          setLayerClearRef.current?.(t => t + 1);
           if (onClearRef.current) onClearRef.current();
         });
 
@@ -466,16 +623,11 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     });
     new LayerPanelControl({ position: 'bottomright' }).addTo(map);
 
-    const WaterUsageControl = L.Control.extend({
-      onAdd() {
-        const div = L.DomUtil.create('div');
-        div.style.cssText = 'background:transparent;width:100%;';
-        L.DomEvent.disableClickPropagation(div);
-        setWaterUsageContainer(div);
-        return div;
-      },
-    });
-    new WaterUsageControl({ position: 'bottomleft' }).addTo(map);
+    // Div posicionado absolutamente no centro inferior do mapa (fora do sistema de controles do Leaflet)
+    const waterDiv = document.createElement('div');
+    waterDiv.style.cssText = 'position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:800;pointer-events:none;';
+    containerRef.current.appendChild(waterDiv);
+    setWaterUsageContainer(waterDiv);
 
     mapRef.current = map;
     setMapInstance(map);
@@ -487,6 +639,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       mapRef.current = null;
       setMapInstance(null);
       setPanelContainer(null);
+      if (waterDiv.parentNode) waterDiv.parentNode.removeChild(waterDiv);
     };
   }, []); // executa só uma vez
 
@@ -495,6 +648,10 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     if (!clearShapesTrigger) return;
     drawnItemsRef.current?.clearLayers();
     mapRef.current?.closePopup();
+    areaPopupsRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
+    areaPopupsRef.current = [];
+    shapeStatesRef.current.clear();
+    pendingCircleAreaRef.current = null;
   }, [clearShapesTrigger]);
 
   // ── Atualiza círculo no mapa quando circleData muda ───────────────────────
@@ -520,7 +677,11 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     else circle.addTo(map);
 
     circleLayerRef.current = circle;
-    map.flyTo([circleData.center.lat, circleData.center.lng], 13, { animate: true, duration: 1.2 });
+    addLayerClickListenerRef.current?.(circle, pendingCircleAreaRef.current);
+    pendingCircleAreaRef.current = null;
+    if (!circleData._skipFly) {
+      map.flyTo([circleData.center.lat, circleData.center.lng], 13, { animate: true, duration: 1.2 });
+    }
   }, [circleData]);
 
   // ── Marcador vermelho do ponto selecionado pelo usuário ──────────────────
@@ -646,7 +807,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {mapInstance && panelContainer &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="leaflet" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} />,
+          <LayerPanel map={mapInstance} mapType="leaflet" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} />,
           panelContainer,
         )
       }

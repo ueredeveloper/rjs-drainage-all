@@ -12,7 +12,7 @@ export default function TextSearchBar({ onSearch, loading, error }) {
   };
 
   return (
-    <Box sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f5f7ff', borderBottom: '1px solid #e8eaf0' }}>
+    <Box id="nd-text-search" sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f5f7ff', borderBottom: '1px solid #e8eaf0' }}>
       <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
         Busca por dados do requerente
       </Typography>

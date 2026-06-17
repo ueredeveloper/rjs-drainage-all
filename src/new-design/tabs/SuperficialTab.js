@@ -8,9 +8,7 @@ import LayersIcon from '@mui/icons-material/Layers';
 import CoordSearchBar from '../components/CoordSearchBar';
 import CompactTable from '../components/CompactTable';
 import SectionLabel from '../components/SectionLabel';
-import SurfaceChart from '../../components/MainFlow/Surface/SurfaceChart';
-import SurfaceTable from '../../components/MainFlow/Surface/SurfaceTable';
-import SurfaceTableModulations from '../../components/MainFlow/Surface/SurfaceTableModulations';
+import { SurfaceChart, SurfaceTable, SurfaceTableModulations } from '../components/surface';
 
 import { fetchShape, fetchMarkersByUH, fetchOttoBasins } from '../../services/shapes';
 import { getMarkersInsideOttoBasins, searchHydrograficUnit, numberWithCommas } from '../../tools';
@@ -54,7 +52,7 @@ const MOCK_UH = {
   attributes: { uh_codigo: '', uh_nome: '' },
 };
 
-export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onMarkerSelect, onSupShape, onSupMarkers, onClearCircle }) {
+export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect, onSupShape, onSupMarkers, onClearCircle }) {
   const [tabIndex, setTabIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -73,6 +71,8 @@ export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onM
       setError('API do Google Maps ainda carregando. Aguarde um instante e tente novamente.');
       return;
     }
+
+    onApplyCoordinates?.({ lat: latN, lng: lngN });
 
     setLoading(true);
     setError(null);
@@ -166,10 +166,12 @@ const hydrographicBasin = await searchHydrograficUnit(
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       <CoordSearchBar
+        id="nd-sup-coord-search"
         lat={lat} lng={lng}
         onLatChange={onLatChange} onLngChange={onLngChange}
+        onApplyCoordinates={onApplyCoordinates}
         onSearch={handleSearch} loading={loading} error={error}
-        title="Busca por coordenada — Superficial"
+        title="Busca por Coordenadas"
       />
 
       {error && (
@@ -179,7 +181,7 @@ const hydrographicBasin = await searchHydrograficUnit(
       )}
 
       {hasData && (
-        <Stack direction="row" spacing={1} sx={{ px: 2, py: 0.8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <Stack id="nd-sup-uh-chips" direction="row" spacing={1} sx={{ px: 2, py: 0.8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Chip
             avatar={<Avatar sx={{ bgcolor: 'transparent', width: 20, height: 20 }}><WallpaperIcon sx={{ fontSize: 14 }} /></Avatar>}
             label={`Área: ${ottoInfo.area.toFixed(4)} km²`}
@@ -195,6 +197,7 @@ const hydrographicBasin = await searchHydrograficUnit(
 
       {/* Abas acima do conteúdo */}
       <Tabs
+        id="nd-sup-tabs"
         value={tabIndex} onChange={(_, v) => setTabIndex(v)}
         variant="scrollable" scrollButtons="auto"
         sx={{
@@ -209,7 +212,7 @@ const hydrographicBasin = await searchHydrograficUnit(
       </Tabs>
 
       {/* Conteúdo das sub-abas + tabela de outorgas sempre abaixo */}
-      <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0,
+      <Box id="nd-sup-content" sx={{ flex: 1, overflow: 'auto', minHeight: 0,
         '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 }
       }}>
 

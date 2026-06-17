@@ -3,7 +3,10 @@ import {
   Box, Typography, Stack, Divider, LinearProgress, Alert,
   TextField, Button, ToggleButton, ToggleButtonGroup,
   Table, TableHead, TableBody, TableRow, TableCell, Paper, Chip, Avatar,
+  IconButton, Tooltip,
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import TransformIcon from '@mui/icons-material/Transform';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import WaterDropIcon    from '@mui/icons-material/WaterDrop';
 import MyLocationIcon   from '@mui/icons-material/MyLocation';
@@ -14,6 +17,7 @@ import { Bar }          from 'react-chartjs-2';
 
 import CompactTable      from '../components/CompactTable';
 import UserSearchDialog  from '../components/UserSearchDialog';
+import CoordConverter    from '../components/CoordConverter';
 import { findPointsInASystem } from '../../services/geolocation';
 import { analyzeAvailability, numberWithCommas, nFormatter } from '../../tools';
 import { MESES } from '../constants';
@@ -101,7 +105,7 @@ function AvailChart({ avail, qUsuario, logScale }) {
 }
 
 export default function SubterraneanTab({
-  lat, lng, onLatChange, onLngChange,
+  lat, lng, onLatChange, onLngChange, onApplyCoordinates,
   onMarkerSelect, onSubShape, onSubMarkers, onClearCircle,
 }) {
   const [wellTypeId, setWellTypeId]     = useState('1');
@@ -114,6 +118,7 @@ export default function SubterraneanTab({
   const [qUsuario, setQUsuario]         = useState(0);
   const [selUser, setSelUser]           = useState(null);
   const [dialogOpen, setDialogOpen]     = useState(false);
+  const [openConverter, setOpenConverter] = useState(false);
   const [logScale, setLogScale]         = useState(true);
 
   const handleSearch = useCallback(async () => {
@@ -123,6 +128,8 @@ export default function SubterraneanTab({
       setError('Coordenadas inválidas. Ex: -15.7801');
       return;
     }
+
+    onApplyCoordinates?.({ lat: latN, lng: lngN });
 
     setLoading(true);
     setError(null);
@@ -156,7 +163,7 @@ export default function SubterraneanTab({
     } finally {
       setLoading(false);
     }
-  }, [lat, lng, wellTypeId, onSubShape, onSubMarkers, onClearCircle]);
+  }, [lat, lng, wellTypeId, onSubShape, onSubMarkers, onClearCircle, onApplyCoordinates]);
 
   const handleUserSelect = useCallback(({ qUsuario: q, user }) => {
     setQUsuario(isNaN(q) ? 0 : q);
@@ -168,9 +175,9 @@ export default function SubterraneanTab({
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* ── Busca por coordenada ─────────────────────────────────────────────── */}
-      <Box sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
+      <Box id="nd-sub-coord-search" sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
         <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
-          Busca por coordenada — Subterrânea
+          Busca por Coordenadas
         </Typography>
 
         <Stack direction="row" spacing={1} alignItems="center" mb={1.2}>
@@ -190,9 +197,35 @@ export default function SubterraneanTab({
           >
             {loading ? 'Buscando…' : 'Buscar'}
           </Button>
+          <Tooltip title="Copiar coordenadas">
+            <IconButton
+              size="small" onClick={() => navigator.clipboard.writeText(`${lat}, ${lng}`)}
+              sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
+            >
+              <ContentCopyIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
+            <IconButton
+              size="small" onClick={() => setOpenConverter(true)}
+              sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
+            >
+              <TransformIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
         </Stack>
 
+        <CoordConverter
+          open={openConverter}
+          onClose={() => setOpenConverter(false)}
+          onConvert={({ lat: latN, lng: lngN }) => {
+            onApplyCoordinates?.({ lat: latN, lng: lngN });
+            setOpenConverter(false);
+          }}
+        />
+
         <ToggleButtonGroup
+          id="nd-sub-well-type"
           value={wellTypeId} exclusive size="small"
           onChange={(_, v) => v && setWellTypeId(v)}
           sx={{
@@ -234,7 +267,7 @@ export default function SubterraneanTab({
       )}
 
       {/* ── Análise de disponibilidade ───────────────────────────────────────── */}
-      <Box sx={{ px: 2, py: 1.5, flexShrink: 0, borderBottom: '1px solid #e8eaf0' }}>
+      <Box id="nd-sub-avail-section" sx={{ px: 2, py: 1.5, flexShrink: 0, borderBottom: '1px solid #e8eaf0' }}>
         <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
           Análise de disponibilidade
         </Typography>
@@ -391,7 +424,7 @@ export default function SubterraneanTab({
       </Box>
 
       {/* ── Outorgas subterrâneas ────────────────────────────────────────────── */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 0.8, flexShrink: 0, bgcolor: '#f5f7ff' }}>
+      <Box id="nd-sub-grants-header" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 0.8, flexShrink: 0, bgcolor: '#f5f7ff' }}>
         <Stack direction="row" alignItems="center" spacing={0.6}>
           <WaterDropIcon sx={{ fontSize: 13, color: '#0277bd' }} />
           <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#0277bd', textTransform: 'uppercase', letterSpacing: 0.8 }}>
@@ -404,7 +437,7 @@ export default function SubterraneanTab({
       </Box>
       <Divider />
 
-      <Box sx={{ flex: 1, overflow: 'auto', '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
+      <Box id="nd-sub-grants-table" sx={{ flex: 1, overflow: 'auto', '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
         {subPoints === null ? (
           <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
             <CompactTable

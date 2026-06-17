@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { fetchShape } from '../services/shapes';
+import { useFontSize } from './FontSizeProvider';
 import {
   fetchAdministrativeRegions,
   fetchAddressByKeyword,
@@ -31,7 +32,7 @@ const LAYER_GROUPS = [
   {
     group: 'Geoportal',
     layers: [
-      { id: 'enderecos',               label: 'Endereços',               color: '#e65100' },
+      { id: 'enderecos',               label: 'Endereços',               color: '#e53935' },
       { id: 'regioes_administrativas', label: 'Regiões Administrativas', color: '#880e4f' },
     ],
   },
@@ -169,6 +170,36 @@ function esriToGeoJSONPoints(esriResult) {
   };
 }
 
+// ESRI Polygon FeatureCollection (features[].{attributes, geometry:{rings:[[[lng,lat]...]]}}) → GeoJSON polygons
+function esriToGeoJSONPolygons(esriResult) {
+  return {
+    type: 'FeatureCollection',
+    features: (esriResult?.features || []).map((f, i) => ({
+      type: 'Feature',
+      id: i,
+      properties: f.attributes || {},
+      geometry: { type: 'Polygon', coordinates: f.geometry?.rings ?? [] },
+    })),
+  };
+}
+
+// ESRI Polyline FeatureCollection (features[].{attributes, geometry:{paths:[[[lng,lat]...]]}}) → GeoJSON LineString
+function esriToGeoJSONPolylines(esriResult) {
+  return {
+    type: 'FeatureCollection',
+    features: (esriResult?.features || [])
+      .map((f, i) => ({
+        type: 'Feature',
+        id: i,
+        properties: f.attributes || {},
+        geometry: { type: 'LineString', coordinates: f.geometry?.paths?.[0] || [] },
+      }))
+      .filter(f => f.geometry.coordinates.length >= 2),
+  };
+}
+
+const CAESB_ICON_PATH = `M100.577,223.936c14.221,0,25.754,11.533,25.754,25.754s-11.533,25.754-25.754,25.754c-14.221,0-25.754-11.533-25.754-25.754S86.356,223.936,100.577,223.936L100.577,223.936zM103.605,179.88c39.309,0,71.157,31.848,71.157,71.157c0,6.335-0.833,12.474-2.386,18.32c0.017-0.551,0.028-1.101,0.028-1.656c0-29.758-24.109-53.867-53.867-53.867c-7.695,0-15.01,1.616-21.631,4.524l-0.001-0.003c-8.681,3.609-18.896,0.294-23.7-8.069c-5.22-9.087-2.086-20.679,6.996-25.892C86.888,180.548,95.966,179.88,103.605,179.88L103.605,179.88zM38.549,281.614c-19.655-34.043-7.998-77.547,26.045-97.202c5.487-3.168,11.219-5.516,17.059-7.093c-0.485,0.261-0.968,0.527-1.448,0.804c-25.771,14.879-34.596,47.812-19.717,73.584c3.848,6.664,8.905,12.191,14.733,16.471l-0.002,0.002c7.466,5.713,9.702,16.217,4.862,24.559c-5.259,9.064-16.866,12.146-25.921,6.887C47.487,295.757,42.369,288.23,38.549,281.614L38.549,281.614zM159.182,287.086c-19.655,34.043-63.159,45.7-97.202,26.045c-5.487-3.168-10.386-6.958-14.672-11.227c0.468,0.29,0.94,0.575,1.42,0.852c25.771,14.879,58.705,6.055,73.584-19.717c3.847-6.664,6.105-13.807,6.898-20.995l0.003,0.001c1.215-9.323,9.194-16.511,18.838-16.49c10.479,0.023,18.951,8.533,18.925,19.005C166.961,272.275,163.001,280.471,159.182,287.086L159.182,287.086z`;
+
 // fetchAddressByKeyword result → GeoJSON points
 function keywordResultsToGeoJSON(results) {
   return {
@@ -215,14 +246,15 @@ async function fetchLayerGeoJSON(id) {
 
 const ALL_LAYERS = LAYER_GROUPS.flatMap(g => g.layers);
 
-export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange }) {
+export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange }) {
+  const { scalePx } = useFontSize();
   const [open, setOpen]               = useState(false);
   const [active, setActive]           = useState(new Set());
   const [loading, setLoading]         = useState(new Set());
   const [addressKeyword, setAddressKeyword] = useState('');
   const [keywordLoading, setKeywordLoading] = useState(false);
-  const [metersMap, setMetersMap]     = useState({ enderecos: 500, caesb_estacoes: 500 });
-  const [waterUseMap, setWaterUseMap] = useState({ hidrogeo_fraturado: false, hidrogeo_poroso: false });
+  const [metersMap, setMetersMap]     = useState(initialLayerState?.metersMap   ?? { enderecos: 500, caesb_estacoes: 500 });
+  const [waterUseMap, setWaterUseMap] = useState(initialLayerState?.waterUseMap ?? { hidrogeo_fraturado: false, hidrogeo_poroso: false });
   const [openGroups, setOpenGroups]   = useState(new Set());
 
   const panelRef        = useRef(null);
@@ -233,12 +265,17 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   const pendingShapeRef = useRef(null);
   const keywordLayerRef = useRef(null);
   const styleFnsRef     = useRef(new Map()); // Map<id, {gmaps, leaflet}>
+  const caesbIconMarkersRef = useRef([]);
   const onSearchRef        = useRef(onFeatureSearch);
   onSearchRef.current      = onFeatureSearch;
   const onWaterUseRef      = useRef(onWaterUseChange);
   onWaterUseRef.current    = onWaterUseChange;
   const waterUseMapRef     = useRef(waterUseMap);
   waterUseMapRef.current   = waterUseMap;
+  const onLayerStateRef    = useRef(onLayerStateChange);
+  onLayerStateRef.current  = onLayerStateChange;
+  const toggleRef          = useRef(null);
+  const isMountedRef       = useRef(false);
 
   useEffect(() => {
     window.__layerPanelSearch = () => {
@@ -266,6 +303,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         if (mapType === 'gmaps') { try { keywordLayerRef.current.setMap(null); } catch (_) {} }
         else { try { if (map && map.hasLayer(keywordLayerRef.current)) map.removeLayer(keywordLayerRef.current); } catch (_) {} }
       }
+      caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+      caesbIconMarkersRef.current = [];
     };
   }, [map, mapType]);
 
@@ -279,6 +318,24 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       else { try { dl.setStyle(fns.leaflet); } catch (_) {} }
     });
   }, [waterUseMap, mapType]);
+
+  useEffect(() => {
+    if (!clearTrigger) return;
+    dataLayersRef.current.forEach(dl => {
+      if (mapType === 'gmaps') { try { dl.setMap(null); } catch (_) {} }
+      else { try { if (map && map.hasLayer(dl)) map.removeLayer(dl); } catch (_) {} }
+    });
+    if (keywordLayerRef.current) {
+      if (mapType === 'gmaps') { try { keywordLayerRef.current.setMap(null); } catch (_) {} }
+      else { try { if (map && map.hasLayer(keywordLayerRef.current)) map.removeLayer(keywordLayerRef.current); } catch (_) {} }
+      keywordLayerRef.current = null;
+    }
+    caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+    caesbIconMarkersRef.current = [];
+    setActive(new Set());
+    setWaterUseMap({ hidrogeo_fraturado: false, hidrogeo_poroso: false });
+    onWaterUseRef.current?.(false);
+  }, [clearTrigger, map, mapType]);
 
   const handleWaterUseToggle = useCallback((id) => {
     setWaterUseMap(prev => {
@@ -311,6 +368,9 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       else { try { if (map && map.hasLayer(existing)) map.removeLayer(existing); } catch (_) {} }
     }
 
+    const isCaesb = id === 'caesb_estacoes';
+    const isEndereco = id === 'enderecos';
+
     const gmapsPointStyle = () => ({
       icon: {
         path: window.google.maps.SymbolPath.CIRCLE,
@@ -319,10 +379,21 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       },
     });
 
+    const gmapsPolygonStyle = () => ({
+      strokeColor: color, strokeWeight: 1.5, strokeOpacity: 0.85,
+      fillColor: color, fillOpacity: 0.18,
+    });
+
+    const gmapsLineStyle = () => ({
+      strokeColor: '#134FAF',
+      strokeOpacity: 1,
+      strokeWeight: 4,
+    });
+
     let dl;
     if (mapType === 'gmaps') {
       dl = new window.google.maps.Data({ map });
-      dl.setStyle(gmapsPointStyle);
+      dl.setStyle(isCaesb ? gmapsLineStyle : isEndereco ? gmapsPolygonStyle : gmapsPointStyle);
       dl.addListener('click', (event) => {
         const props = gmapsFeatureProps(event.feature);
         pendingShapeRef.current = null;
@@ -333,22 +404,52 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       });
     } else {
       const L = (await import('leaflet')).default;
-      dl = L.geoJSON(null, {
-        pointToLayer: (_feature, latlng) => L.circleMarker(latlng, {
-          radius: 5, fillColor: color, fillOpacity: 0.85,
-          color: '#fff', weight: 1.5, opacity: 1,
-        }),
-        onEachFeature: (feature, layer) => {
-          layer.on('click', (e) => {
-            pendingShapeRef.current = null;
-            L.DomEvent.stopPropagation(e);
-            L.popup({ maxWidth: 300, closeButton: true })
-              .setLatLng(e.latlng)
-              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, color, false))
-              .openOn(map);
-          });
-        },
-      });
+      if (isCaesb) {
+        dl = L.geoJSON(null, {
+          style: () => ({ color: '#134FAF', weight: 4, opacity: 1 }),
+          onEachFeature: (feature, layer) => {
+            layer.on('click', (e) => {
+              pendingShapeRef.current = null;
+              L.DomEvent.stopPropagation(e);
+              L.popup({ maxWidth: 300, closeButton: true })
+                .setLatLng(e.latlng)
+                .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, color, false))
+                .openOn(map);
+            });
+          },
+        });
+      } else if (isEndereco) {
+        dl = L.geoJSON(null, {
+          style: () => ({ color, weight: 1.5, opacity: 0.85, fillColor: color, fillOpacity: 0.18 }),
+          onEachFeature: (feature, layer) => {
+            layer.on('click', (e) => {
+              pendingShapeRef.current = null;
+              L.DomEvent.stopPropagation(e);
+              L.popup({ maxWidth: 300, closeButton: true })
+                .setLatLng(e.latlng)
+                .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, color, false))
+                .openOn(map);
+            });
+          },
+        });
+      } else {
+        dl = L.geoJSON(null, {
+          pointToLayer: (_feature, latlng) => L.circleMarker(latlng, {
+            radius: 5, fillColor: color, fillOpacity: 0.85,
+            color: '#fff', weight: 1.5, opacity: 1,
+          }),
+          onEachFeature: (feature, layer) => {
+            layer.on('click', (e) => {
+              pendingShapeRef.current = null;
+              L.DomEvent.stopPropagation(e);
+              L.popup({ maxWidth: 300, closeButton: true })
+                .setLatLng(e.latlng)
+                .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, color, false))
+                .openOn(map);
+            });
+          },
+        });
+      }
       if (map) dl.addTo(map);
     }
     dataLayersRef.current.set(id, dl);
@@ -357,12 +458,51 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     try {
       const position = { ...center, meters };
       let esriResult;
-      if (id === 'enderecos')       esriResult = await fetchAddressesByPosition(position);
+      if (id === 'enderecos')           esriResult = await fetchAddressesByPosition(position);
       else if (id === 'caesb_estacoes') esriResult = await fetchSuplySystemByPosition(position);
 
-      const gj = esriToGeoJSONPoints(esriResult);
-      if (mapType === 'gmaps') { dl.addGeoJson(gj); dl.setStyle(gmapsPointStyle); }
-      else { dl.addData(gj); }
+      if (isCaesb) {
+        const gj = esriToGeoJSONPolylines(esriResult);
+        if (mapType === 'gmaps') {
+          caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+          caesbIconMarkersRef.current = [];
+
+          dl.addGeoJson(gj);
+          dl.setStyle(gmapsLineStyle);
+
+          gj.features.forEach((feature, idx) => {
+            if (idx % 5 !== 4) return;
+            const coords = feature.geometry.coordinates;
+            if (!coords.length) return;
+            const mid = coords[Math.floor(coords.length / 2)];
+            const marker = new window.google.maps.Marker({
+              position: { lat: mid[1], lng: mid[0] },
+              map,
+              icon: {
+                path: CAESB_ICON_PATH,
+                fillColor: '#134FAF',
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: 'white',
+                scale: 0.12,
+                anchor: new window.google.maps.Point(107, 250),
+              },
+              title: feature.properties?.nome || 'CAESB',
+            });
+            caesbIconMarkersRef.current.push(marker);
+          });
+        } else {
+          dl.addData(gj);
+        }
+      } else if (isEndereco) {
+        const gj = esriToGeoJSONPolygons(esriResult);
+        if (mapType === 'gmaps') { dl.addGeoJson(gj); dl.setStyle(gmapsPolygonStyle); }
+        else { dl.addData(gj); }
+      } else {
+        const gj = esriToGeoJSONPoints(esriResult);
+        if (mapType === 'gmaps') { dl.addGeoJson(gj); dl.setStyle(gmapsPointStyle); }
+        else { dl.addData(gj); }
+      }
     } catch (err) {
       console.error('[LayerPanel] erro ao carregar posição', id, err);
     } finally {
@@ -379,6 +519,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       if (dl) {
         if (mapType === 'gmaps') { try { dl.setMap(null); } catch (_) {} }
         else { try { if (map) map.removeLayer(dl); } catch (_) {} }
+      }
+      if (id === 'caesb_estacoes') {
+        caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+        caesbIconMarkersRef.current = [];
       }
       if (WATER_USE_LAYERS.has(id)) {
         setWaterUseMap(prev => {
@@ -511,6 +655,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     }
   }, [active, map, mapType, metersMap, loadPositionLayer]);
 
+  toggleRef.current = toggle;
+
   const handleMetersChange = useCallback(async (id, color, newMeters) => {
     setMetersMap(prev => ({ ...prev, [id]: newMeters }));
     if (active.has(id)) {
@@ -581,6 +727,24 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     }
   }, [addressKeyword, map, mapType]);
 
+  // Reporta estado das camadas para o pai sempre que muda (para persistir entre trocas de mapa)
+  useEffect(() => {
+    if (!isMountedRef.current) { isMountedRef.current = true; return; }
+    onLayerStateRef.current?.({ active, waterUseMap, metersMap });
+  }, [active, waterUseMap, metersMap]);
+
+  // Restaura camadas ativas ao montar (ex: após troca de provedor de mapa)
+  useEffect(() => {
+    if (initialLayerState?.waterUseMap && Object.values(initialLayerState.waterUseMap).some(Boolean)) {
+      onWaterUseRef.current?.(true);
+    }
+    if (!initialLayerState?.active?.size) return;
+    initialLayerState.active.forEach(id => {
+      const layerDef = ALL_LAYERS.find(l => l.id === id);
+      if (layerDef) toggleRef.current?.(id, layerDef.color);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div
       ref={panelRef}
@@ -592,7 +756,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0,
           padding: '0', background: '#fff', border: '1px solid #ccc',
           borderRadius: 2, boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
-          cursor: 'pointer', fontSize: 12, color: '#333', fontWeight: 600,
+          cursor: 'pointer', fontSize: scalePx(12), color: '#333', fontWeight: 600,
           whiteSpace: 'nowrap', width: 30, height: 30,
         }}
       >
@@ -603,7 +767,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           <span style={{
             background: '#1565c0', color: '#fff', borderRadius: '50%',
             width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 10, fontWeight: 700, flexShrink: 0,
+            fontSize: scalePx(10), fontWeight: 700, flexShrink: 0,
           }}>
             {active.size}
           </span>
@@ -644,14 +808,14 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                 >
                   <path d="M7 10l5 5 5-5z"/>
                 </svg>
-                <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
+                <span style={{ flex: 1, fontSize: scalePx(10), fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
                   {group}
                 </span>
                 {groupActive > 0 && (
                   <span style={{
                     background: '#1565c0', color: '#fff', borderRadius: '50%',
                     width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 9, fontWeight: 700, flexShrink: 0,
+                    fontSize: scalePx(9), fontWeight: 700, flexShrink: 0,
                   }}>
                     {groupActive}
                   </span>
@@ -676,7 +840,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                           onChange={e => setAddressKeyword(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && handleKeywordSearch(color)}
                           style={{
-                            flex: 1, fontSize: 11, padding: '3px 6px',
+                            flex: 1, fontSize: scalePx(11), padding: '3px 6px',
                             border: '1px solid #ccc', borderRadius: 3, outline: 'none',
                             fontFamily: 'Roboto, Arial, sans-serif',
                           }}
@@ -713,7 +877,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                       style={{
                         display: 'flex', alignItems: 'center', gap: 8,
                         padding: '6px 12px', cursor: 'pointer',
-                        fontSize: 12.5, color: '#263238',
+                        fontSize: scalePx(12.5), color: '#263238',
                         background: isActive ? `${color}18` : 'transparent',
                       }}
                       onClick={() => toggle(id, color)}
@@ -735,7 +899,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                           onChange={e => handleMetersChange(id, color, Number(e.target.value))}
                           onClick={e => e.stopPropagation()}
                           style={{
-                            fontSize: 10, padding: '1px 2px',
+                            fontSize: scalePx(10), padding: '1px 2px',
                             border: '1px solid #ccc', borderRadius: 2,
                             background: '#fff', cursor: 'pointer',
                             fontFamily: 'Roboto, Arial, sans-serif', flexShrink: 0,
@@ -782,7 +946,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                           }} />
                         </div>
-                        <span style={{ fontSize: 11, color: '#546e7a', fontStyle: 'italic' }}>Cálculo de Uso</span>
+                        <span style={{ fontSize: scalePx(11), color: '#546e7a', fontStyle: 'italic' }}>Cálculo de Uso</span>
                         {waterUseMap[id] && (
                           <div style={{ display: 'flex', gap: 2, marginLeft: 2 }}>
                             {[['≤10%','#4cc94c'],['≤25%','#007c00'],['≤50%','#004700'],['≤75%','#FFD32C'],['≤90%','#FF2C2C'],['>90%','#F200FF']].map(([lbl, col]) => (

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Chip, Stack, Divider } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Chip, Stack, Divider, IconButton } from '@mui/material';
 import WaterIcon from '@mui/icons-material/Water';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { Wrapper } from '@googlemaps/react-wrapper';
 
 import './chartSetup'; // registra ChartJS globalmente (side-effect)
@@ -13,6 +14,12 @@ import BarragemTab      from './tabs/BarragemTab';
 import { findAllPointsInCircle, findAllPointsInPolygon, findAllPointsInRectangle } from '../services/geolocation';
 import { findByColumn } from '../services/users';
 import { TI_CATS, MAIN_TABS } from './constants';
+import SettingsPanel, {
+  FONT_SIZE_OPTIONS,
+  FONT_SIZE_STORAGE_KEY,
+  DEFAULT_FONT_SIZE,
+} from './components/SettingsPanel';
+import { FontSizeProvider } from './FontSizeProvider';
 
 const GMAPS_API_KEY = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
 
@@ -20,7 +27,7 @@ export default function NewDesign() {
   const [tabIndex, setTabIndex]               = useState(0);
   const [lat, setLat]                         = useState('-15.667939');
   const [lng, setLng]                         = useState('-47.954828');
-  const [radius, setRadius]                   = useState(2000);
+  const [radius, setRadius]                   = useState(1300);
   const [circleData, setCircleData]           = useState(null);
   const [searchResult, setSearchResult]       = useState(null);
   const [searchPages, setSearchPages]         = useState([]);
@@ -34,8 +41,24 @@ export default function NewDesign() {
   const [textError, setTextError]             = useState(null);
   const [subShape, setSubShape]               = useState(null);
   const [userMarker, setUserMarker]           = useState(null);
-  const [mapProvider, setMapProvider]         = useState('leaflet');
+  const [mapProvider, setMapProvider]         = useState('gmaps');
+  const [persistedLayerState, setPersistedLayerState] = useState(null);
   const [clearShapesTrigger, setClearShapesTrigger] = useState(0);
+  const [settingsOpen, setSettingsOpen]       = useState(false);
+  const [fontSize, setFontSize]               = useState(() => {
+    try {
+      const stored = parseInt(localStorage.getItem(FONT_SIZE_STORAGE_KEY), 10);
+      return FONT_SIZE_OPTIONS.includes(stored) ? stored : DEFAULT_FONT_SIZE;
+    } catch {
+      return DEFAULT_FONT_SIZE;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(fontSize));
+    } catch { /* ignore */ }
+  }, [fontSize]);
 
   const handleToggleCat = useCallback((key) => {
     setHiddenCats(prev => {
@@ -89,8 +112,8 @@ export default function NewDesign() {
   }, []);
 
   // ── Handlers de busca ─────────────────────────────────────────────────────
-  const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo') => {
-    setCircleData({ center, radius: rad });
+  const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo', skipFly = false) => {
+    setCircleData({ center, radius: rad, _skipFly: skipFly });
     setSubShape(null); // limpa polígono subterrâneo ao iniciar busca geral
     setLoading(true);
     setError(null);
@@ -109,10 +132,17 @@ export default function NewDesign() {
     }
   }, [pushHistory, updateAllMarkers, normalizeResult]);
 
+  const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN }) => {
+    setLat(String(latN.toFixed(7)));
+    setLng(String(lngN.toFixed(7)));
+    setUserMarker({ lat: latN, lng: lngN });
+  }, []);
+
   const handleCoordSearch = useCallback(() => {
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) { setError('Coordenadas inválidas. Ex: -15.7801'); return; }
+    setUserMarker({ lat: latN, lng: lngN });
     doCircleSearch({ lat: latN, lng: lngN }, radius, 'Coordenada');
   }, [lat, lng, radius, doCircleSearch]);
 
@@ -130,13 +160,6 @@ export default function NewDesign() {
     doCircleSearch({ lat: latN, lng: lngN }, 2000, 'Superficial');
   }, [lat, lng, doCircleSearch]);
 
-  const handleBarSearch = useCallback(() => {
-    const latN = parseFloat(lat);
-    const lngN = parseFloat(lng);
-    if (isNaN(latN) || isNaN(lngN)) { setError('Coordenadas inválidas. Ex: -15.7801'); return; }
-    doCircleSearch({ lat: latN, lng: lngN }, radius, 'Barragem');
-  }, [lat, lng, radius, doCircleSearch]);
-
   const handleSubMarkers = useCallback((points) => {
     if (!points || points.length === 0) { setAllMarkers([]); return; }
     const markers = points
@@ -150,6 +173,21 @@ export default function NewDesign() {
     const markers = points
       .filter(p => !isNaN(parseFloat(p.int_latitude)) && !isNaN(parseFloat(p.int_longitude)))
       .map(p => ({ ...p, _catColor: '#2e7d32', _catLabel: 'Superficial', _catKey: 'superficial' }));
+    setAllMarkers(markers);
+  }, []);
+
+  const handleBarMarkers = useCallback((points) => {
+    if (!points || points.length === 0) { setAllMarkers([]); return; }
+    const barCat = TI_CATS.find(c => c.key === 'barragem');
+    const markers = points
+      .filter(p => !isNaN(parseFloat(p.int_latitude)) && !isNaN(parseFloat(p.int_longitude)))
+      .map(p => ({
+        ...p,
+        _catColor: barCat.color,
+        _catLabel: barCat.label,
+        _catKey: barCat.key,
+        ti_id: p.ti_id ?? barCat.tiId,
+      }));
     setAllMarkers(markers);
   }, []);
 
@@ -208,6 +246,13 @@ export default function NewDesign() {
     setClearShapesTrigger(prev => prev + 1);
   }, []);
 
+  const handleEditSave = useCallback(() => {
+    setAllMarkers([]);
+    setSearchPages([]);
+    setSearchHistory([]);
+    setSearchResult(null);
+  }, []);
+
   const handlePickCoordinate = useCallback(({ lat: pLat, lng: pLng }) => {
     setLat(pLat.toFixed(6));
     setLng(pLng.toFixed(6));
@@ -218,7 +263,7 @@ export default function NewDesign() {
     if (shape.type === 'circle') {
       setLat(shape.center.lat.toFixed(6));
       setLng(shape.center.lng.toFixed(6));
-      doCircleSearch(shape.center, shape.radius, 'Círculo');
+      doCircleSearch(shape.center, shape.radius, 'Círculo', true);
       return;
     }
 
@@ -254,11 +299,20 @@ export default function NewDesign() {
   );
 
   return (
+    <FontSizeProvider fontSize={fontSize}>
     <Wrapper apiKey={GMAPS_API_KEY} libraries={['drawing', 'geometry']}>
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'Roboto, sans-serif' }}>
+    <Box
+      id="nd-root"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        fontFamily: 'Roboto, sans-serif',
+      }}
+    >
 
       {/* ── Cabeçalho ────────────────────────────────────────────────────── */}
-      <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 0.9, bgcolor: '#003566', color: '#fff', gap: 1.5, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.35)', zIndex: 10 }}>
+      <Box id="nd-header" sx={{ display: 'flex', alignItems: 'center', px: 2, py: 0.9, bgcolor: '#003566', color: '#fff', gap: 1.5, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.35)', zIndex: 10 }}>
         <WaterIcon sx={{ color: '#48cae4', fontSize: 22 }} />
 
         {/* SAD/DF — expande ao hover */}
@@ -281,13 +335,25 @@ export default function NewDesign() {
           <Chip label={`${totalResults} outorga${totalResults !== 1 ? 's' : ''} encontrada${totalResults !== 1 ? 's' : ''}`}
             size="small" sx={{ bgcolor: '#48cae430', color: '#90e0ef', fontSize: '0.62rem', height: 20 }} />
         )}
+        <IconButton
+          onClick={() => setSettingsOpen(true)}
+          size="small"
+          aria-label="Abrir configurações"
+          sx={{
+            color: '#90e0ef',
+            ml: 0.5,
+            '&:hover': { bgcolor: 'rgba(72, 202, 228, 0.15)', color: '#fff' },
+          }}
+        >
+          <SettingsIcon sx={{ fontSize: 20 }} />
+        </IconButton>
       </Box>
 
       {/* ── Corpo ─────────────────────────────────────────────────────────── */}
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <Box id="nd-body" sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* Mapa */}
-        <Box sx={{ width: '25%', flexShrink: 0, position: 'relative' }}>
+        <Box id="nd-map-panel" sx={{ width: '25%', flexShrink: 0, position: 'relative' }}>
           {(() => {
             const mapProps = {
               circleData,
@@ -297,9 +363,12 @@ export default function NewDesign() {
               userMarker,
               onPickCoordinate: handlePickCoordinate,
               onClearAll: handleClearAll,
+              onEditSave: handleEditSave,
               allMarkers: hiddenCats.size === 0 ? allMarkers : allMarkers.filter(m => !hiddenCats.has(m._catKey)),
               subShape,
               clearShapesTrigger,
+              initialLayerState: persistedLayerState,
+              onLayerStateChange: setPersistedLayerState,
             };
             return mapProvider === 'gmaps'
               ? <GoogleMapView {...mapProps} />
@@ -307,13 +376,13 @@ export default function NewDesign() {
           })()}
 
           {/* Toggle de provedor */}
-          <Box sx={{
+          <Box id="nd-map-provider-toggle" sx={{
             position: 'absolute', bottom: 10, left: 10,
             zIndex: 800, display: 'flex', borderRadius: '20px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.28)', overflow: 'hidden',
             border: '1.5px solid #1565c0',
           }}>
-            {[{ value: 'leaflet', label: 'Leaflet' }, { value: 'gmaps', label: 'Google Maps' }].map(({ value, label }) => (
+            {[{ value: 'gmaps', label: 'G Maps' }, { value: 'leaflet', label: 'Leaflet' }].map(({ value, label }) => (
               <Box
                 key={value}
                 component="button"
@@ -336,10 +405,10 @@ export default function NewDesign() {
         </Box>
 
         {/* Painel de análise */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#fff', borderLeft: '1px solid #e0e0e0', overflow: 'hidden' }}>
+        <Box id="nd-analysis-panel" sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#fff', borderLeft: '1px solid #e0e0e0', overflow: 'hidden' }}>
 
           {/* Abas principais */}
-          <Box sx={{ borderBottom: '1px solid #e0e0e0', flexShrink: 0 }}>
+          <Box id="nd-main-tabs" sx={{ borderBottom: '1px solid #e0e0e0', flexShrink: 0 }}>
             <Tabs value={tabIndex} onChange={(_, v) => setTabIndex(v)} variant="fullWidth"
               sx={{
                 minHeight: 42,
@@ -363,6 +432,7 @@ export default function NewDesign() {
             <GeralTab
               lat={lat} lng={lng}
               onLatChange={setLat} onLngChange={setLng}
+              onApplyCoordinates={handleApplyCoordinates}
               radius={radius} onRadiusChange={setRadius}
               onSearch={handleCoordSearch}
               onTextSearch={handleTextSearch}
@@ -383,6 +453,7 @@ export default function NewDesign() {
           {tabIndex === 1 && (
             <SubterraneanTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
+              onApplyCoordinates={handleApplyCoordinates}
               onMarkerSelect={setSelectedMarker}
               onSubShape={setSubShape}
               onSubMarkers={handleSubMarkers}
@@ -392,6 +463,7 @@ export default function NewDesign() {
           {tabIndex === 2 && (
             <SuperficialTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
+              onApplyCoordinates={handleApplyCoordinates}
               onMarkerSelect={setSelectedMarker}
               onSupShape={setSubShape}
               onSupMarkers={handleSupMarkers}
@@ -401,16 +473,17 @@ export default function NewDesign() {
           {tabIndex === 3 && (
             <BarragemTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
-              radius={radius} onRadiusChange={setRadius}
-              onSearch={handleBarSearch} loading={loading} error={error}
-              searchResult={searchResult} onMarkerSelect={setSelectedMarker}
+              onApplyCoordinates={handleApplyCoordinates}
+              onMarkerSelect={setSelectedMarker}
+              onBarMarkers={handleBarMarkers}
+              onClearCircle={() => setCircleData(null)}
             />
           )}
         </Box>
       </Box>
 
       {/* ── Rodapé ────────────────────────────────────────────────────────── */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 0.6, bgcolor: '#f0f4f8', borderTop: '1px solid #dde3ea', flexShrink: 0 }}>
+      <Box id="nd-footer" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 0.6, bgcolor: '#f0f4f8', borderTop: '1px solid #dde3ea', flexShrink: 0 }}>
         <Typography sx={{ fontSize: '0.62rem', color: '#78909c', letterSpacing: 0.3 }}>
           Superintendência de Outorga — COUT — SRH
         </Typography>
@@ -428,7 +501,14 @@ export default function NewDesign() {
           </Typography>
         </Stack>
       </Box>
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        fontSize={fontSize}
+        onFontSizeChange={setFontSize}
+      />
     </Box>
     </Wrapper>
+    </FontSizeProvider>
   );
 }

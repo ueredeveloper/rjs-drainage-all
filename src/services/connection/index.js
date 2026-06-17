@@ -124,6 +124,8 @@ const fetchAddressesByPosition = async (position) => {
     .then((results) => results)
     .catch((error) => console.error(error));
 
+  console.log('[fetchAddressesByPosition] resposta:', results);
+
   return results;
 
 }

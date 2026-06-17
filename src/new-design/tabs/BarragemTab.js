@@ -6,8 +6,8 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Skeleton,
 } from '@mui/material';
-import WaterIcon from '@mui/icons-material/Water';
 import CalculateIcon from '@mui/icons-material/Calculate';
+import WaterIcon from '@mui/icons-material/Water';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import LayersIcon from '@mui/icons-material/Layers';
@@ -20,7 +20,10 @@ import SectionLabel from '../components/SectionLabel';
 import { calculateReservoirBalance } from '../../services/barrage';
 import { numberWithCommas } from '../../tools';
 import { exportBarrageToCsv } from '../../tools/export-barrage-to-csv';
-import { MESES } from '../constants';
+import { MESES, TI_CATS } from '../constants';
+import { extractBarragemRows } from '../utils/extract-barragem-rows';
+
+const BAR_CAT = TI_CATS.find(c => c.key === 'barragem');
 
 const BAR_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço'];
 
@@ -32,10 +35,8 @@ const StatusChip = ({ check }) => String(check).toLowerCase() === 'ok'
   : <Chip icon={<ErrorOutlineIcon     sx={{ fontSize: 12, color: '#b71c1c !important' }} />} label="Problema" size="small" sx={{ height: 17, fontSize: '0.6rem', bgcolor: '#ffebee', color: '#b71c1c', '& .MuiChip-icon': { ml: 0.5 } }} />;
 
 export default function BarragemTab({
-  lat, lng, onLatChange, onLngChange,
-  radius, onRadiusChange,
-  onSearch, loading, error,
-  searchResult, onMarkerSelect,
+  lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect,
+  onBarMarkers, onClearCircle,
 }) {
   const [calcTab, setCalcTab] = useState(0);
   const [calcLoading, setCalcLoading] = useState(false);
@@ -90,6 +91,7 @@ export default function BarragemTab({
     }
     setCalcLoading(true);
     setCalcError(null);
+    onBarMarkers?.([]);
     try {
       const data = await calculateReservoirBalance({
         coordenadas: { latitude: latN, longitude: lngN },
@@ -98,6 +100,8 @@ export default function BarragemTab({
       });
       console.log('[BarragemTab] resultado do serviço:', data);
       setResult(data);
+      const rows = extractBarragemRows(data) ?? [];
+      onBarMarkers?.(rows);
       if (data?.dbResult?.operacao?.QmmRegionalizada) {
         setOperacao(prev => ({ ...prev, qmm: data.dbResult.operacao.QmmRegionalizada }));
       }
@@ -119,13 +123,19 @@ export default function BarragemTab({
     });
   };
 
-  const handleSearchAndCalculate = () => {
-    onSearch();
-    handleCalculate();
+  const handleSearch = async () => {
+    const latN = parseFloat(lat);
+    const lngN = parseFloat(lng);
+    if (isNaN(latN) || isNaN(lngN)) {
+      setCalcError('Coordenadas inválidas. Informe lat/lng antes de buscar.');
+      return;
+    }
+    onClearCircle?.();
+    onApplyCoordinates?.({ lat: latN, lng: lngN });
+    await handleCalculate();
   };
 
-  const barRows = Array.isArray(searchResult?.barragem) ? searchResult.barragem : null;
-  const searched = searchResult !== null && searchResult !== undefined;
+  const barRows = extractBarragemRows(result);
 
   const pulseStyle = highlightRows ? {
     animation: 'barPulse 1s ease-in-out infinite',
@@ -141,10 +151,12 @@ export default function BarragemTab({
 
       {/* ── Barra de coordenadas ───────────────────────────────────────────── */}
       <CoordSearchBar
+        id="nd-bar-coord-search"
         lat={lat} lng={lng}
         onLatChange={onLatChange} onLngChange={onLngChange}
-        onSearch={handleSearchAndCalculate} loading={loading || calcLoading} error={error}
-        title="Busca por coordenada — Barragem"
+        onApplyCoordinates={onApplyCoordinates}
+        onSearch={handleSearch} loading={calcLoading} error={calcError}
+        title="Busca por Coordenadas"
       />
 
       {/* ── Chips área / UH — direita, visíveis após cálculo ──────────────── */}
@@ -164,7 +176,7 @@ export default function BarragemTab({
       )}
 
       {/* ── Parâmetros da barragem ─────────────────────────────────────────── */}
-      <Box sx={{ px: 1.5, pt: 0.8, pb: 1, flexShrink: 0, bgcolor: '#f8f9fa', borderBottom: '1px solid #e8eaed' }}>
+      <Box id="nd-bar-dam-params" sx={{ px: 1.5, pt: 0.8, pb: 1, flexShrink: 0, bgcolor: '#f8f9fa', borderBottom: '1px solid #e8eaed' }}>
         <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#90a4ae', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', display: 'block', mb: 0.6 }}>
           Parâmetros da barragem
         </Typography>
@@ -201,7 +213,7 @@ export default function BarragemTab({
       </Box>
 
       {/* ── Toolbar: sub-abas de resultado + ações ────────────────────────── */}
-      <Box sx={{ display: 'flex', alignItems: 'center', px: 1, borderBottom: '1px solid #e0e0e0', flexShrink: 0, bgcolor: '#fff' }}>
+      <Box id="nd-bar-toolbar" sx={{ display: 'flex', alignItems: 'center', px: 1, borderBottom: '1px solid #e0e0e0', flexShrink: 0, bgcolor: '#fff' }}>
         <Tabs
           value={calcTab} onChange={(_, v) => setCalcTab(v)}
           sx={{
@@ -243,7 +255,7 @@ export default function BarragemTab({
       )}
 
       {/* ── Área scrollável: tabelas de cálculo + barragens próximas ─────── */}
-      <Box sx={{
+      <Box id="nd-bar-content" sx={{
         flex: 1, overflowY: 'auto',
         '&::-webkit-scrollbar': { width: 4 },
         '&::-webkit-scrollbar-thumb': { bgcolor: '#cfd8dc', borderRadius: 2 },
@@ -427,7 +439,7 @@ export default function BarragemTab({
           )
         )}
 
-        {/* ── Barragens próximas ─────────────────────────────────────────────── */}
+        {/* ── Barragens próximas (retorno do cálculo) ───────────────────────── */}
         <Divider sx={{ mt: 1 }} />
         <SectionLabel
           title="Barragens próximas"
@@ -444,7 +456,7 @@ export default function BarragemTab({
               )))}
             />
           </Box>
-        ) : loading ? (
+        ) : calcLoading ? (
           <Box sx={{ px: 1.5, py: 1 }}>
             {[1, 2, 3].map(i => <Skeleton key={i} variant="text" height={28} sx={{ mb: 0.5 }} />)}
           </Box>
@@ -452,7 +464,7 @@ export default function BarragemTab({
           <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
             <WaterIcon sx={{ fontSize: 30, color: '#e0e0e0' }} />
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.76rem' }}>
-              Nenhuma barragem encontrada no raio de {(radius / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} km.
+              Nenhuma barragem encontrada para estas coordenadas.
             </Typography>
           </Box>
         ) : (
@@ -464,9 +476,14 @@ export default function BarragemTab({
               m.int_processo ?? '—',
               m.emp_endereco ?? '—',
             ])}
-            onRowClick={i => onMarkerSelect?.({ ...barRows[i], _catColor: '#bf360c', _catLabel: 'Barragem' })}
+            onRowClick={i => onMarkerSelect?.({
+              ...barRows[i],
+              _catColor: BAR_CAT.color,
+              _catLabel: BAR_CAT.label,
+            })}
           />
         )}
+
       </Box>
     </Box>
   );

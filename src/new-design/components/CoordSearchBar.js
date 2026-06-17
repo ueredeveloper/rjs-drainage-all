@@ -1,9 +1,27 @@
-import React from 'react';
-import { Box, TextField, Button, Stack, Alert, Typography, LinearProgress } from '@mui/material';
+import React, { useCallback, useState } from 'react';
+import { Box, TextField, Button, Stack, Alert, Typography, LinearProgress, IconButton, Tooltip } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import TransformIcon from '@mui/icons-material/Transform';
+import CoordConverter from './CoordConverter';
 
-export default function CoordSearchBar({ lat, lng, onLatChange, onLngChange, onSearch, loading, error, title, children }) {
+export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange, onApplyCoordinates, onSearch, loading, error, title, children }) {
+  const [openConverter, setOpenConverter] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(`${lat}, ${lng}`);
+  }, [lat, lng]);
+
+  const handleConvert = useCallback(({ lat: latN, lng: lngN }) => {
+    if (onApplyCoordinates) {
+      onApplyCoordinates({ lat: latN, lng: lngN });
+    } else {
+      onLatChange(String(latN.toFixed(7)));
+      onLngChange(String(lngN.toFixed(7)));
+    }
+    setOpenConverter(false);
+  }, [onApplyCoordinates, onLatChange, onLngChange]);
   return (
-    <Box sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
+    <Box id={id} sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
       {title && (
         <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
           {title}
@@ -27,7 +45,29 @@ export default function CoordSearchBar({ lat, lng, onLatChange, onLngChange, onS
         >
           {loading ? 'Buscando…' : 'Buscar'}
         </Button>
+        <Tooltip title="Copiar coordenadas">
+          <IconButton
+            size="small" onClick={handleCopy}
+            sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
+          >
+            <ContentCopyIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
+          <IconButton
+            size="small" onClick={() => setOpenConverter(true)}
+            sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
+          >
+            <TransformIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Tooltip>
       </Stack>
+
+      <CoordConverter
+        open={openConverter}
+        onClose={() => setOpenConverter(false)}
+        onConvert={handleConvert}
+      />
 
       {children}
 

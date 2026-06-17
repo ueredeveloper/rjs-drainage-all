@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import LayerPanel from './LayerPanel';
-import ElemWaterUsage from '../components/Commom/map/ElemWaterUsage';
+import ElemWaterUsage from './components/ElemWaterUsage';
 
 const BRASILIA  = { lat: -15.7801, lng: -47.9292 };
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
@@ -87,10 +87,13 @@ function makeBar() {
 }
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch }) {
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange }) {
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
+  const [layerClearTrigger, setLayerClearTrigger] = useState(0);
+  const setLayerClearRef = useRef(null);
+  setLayerClearRef.current = setLayerClearTrigger;
   const containerRef      = useRef(null);
   const panelRootRef      = useRef(null);
   const waterUsageRootRef = useRef(null);
@@ -101,15 +104,23 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const allMkrsRef        = useRef([]);
   const clearDrawnRef     = useRef(null);
   const allCirclesRef     = useRef([]);
-  const subShapeRef    = useRef(null);
-  const infoWinRef     = useRef(null);
+  const subShapeRef       = useRef(null);
+  const infoWinRef        = useRef(null);
+  const areaInfoWinsRef          = useRef([]);
+  const areaAnchorsRef           = useRef([]);
+  const shapeStyleIWRef          = useRef(null);
+  const shapeStatesRef           = useRef(new Map());
+  const pendingCircleAreaRef     = useRef(null);
+  const addShapeClickListenerRef = useRef(null);
   const onCreatedRef   = useRef(onShapeCreated);
   const onPickRef      = useRef(onPickCoordinate);
   const onClearRef     = useRef(onClearAll);
+  const onEditSaveRef  = useRef(onEditSave);
 
-  onCreatedRef.current = onShapeCreated;
-  onPickRef.current    = onPickCoordinate;
-  onClearRef.current   = onClearAll;
+  onCreatedRef.current  = onShapeCreated;
+  onPickRef.current     = onPickCoordinate;
+  onClearRef.current    = onClearAll;
+  onEditSaveRef.current = onEditSave;
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -131,6 +142,14 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     });
     mapRef.current     = map;
     infoWinRef.current = new window.google.maps.InfoWindow();
+    const shapeStyleIW = new window.google.maps.InfoWindow();
+    shapeStyleIWRef.current = shapeStyleIW;
+
+    userMarkerRef.current = new window.google.maps.Marker({
+      position: BRASILIA, map,
+      icon: { url: makePinUrl('#e53935'), scaledSize: new window.google.maps.Size(24, 36), anchor: new window.google.maps.Point(12, 36) },
+      zIndex: 1000,
+    });
 
     // injeta o container do LayerPanel usando o sistema de controles do GMaps (persiste em fullscreen)
     const panelContainer = document.createElement('div');
@@ -140,7 +159,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     panelRootRef.current = panelContainer;
 
     const waterUsageContainer = document.createElement('div');
-    waterUsageContainer.style.cssText = 'width:100%;';
     map.controls[window.google.maps.ControlPosition.BOTTOM_CENTER].push(waterUsageContainer);
     waterUsageRootRef.current = waterUsageContainer;
 
@@ -149,14 +167,23 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     let drawnShapes  = [];
     let editMode     = false;
     let editBtnEl    = null;
-    let popupAnchor  = null;
+
+    const clearAreaPopups = () => {
+      areaInfoWinsRef.current.forEach(iw => { try { iw.close(); } catch (_) {} });
+      areaInfoWinsRef.current = [];
+      areaAnchorsRef.current.forEach(a => { try { a.setMap(null); } catch (_) {} });
+      areaAnchorsRef.current = [];
+    };
 
     clearDrawnRef.current = () => {
-      drawnShapes.forEach(s => s.setMap(null));
+      drawnShapes.forEach(s => { s.setMap(null); shapeStatesRef.current.delete(s); });
       drawnShapes = [];
-      allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} });
+      allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} shapeStatesRef.current.delete(c); });
       allCirclesRef.current = [];
       circleRef.current = null;
+      pendingCircleAreaRef.current = null;
+      shapeStyleIW.close();
+      clearAreaPopups();
     };
 
     // ── Popup de área ─────────────────────────────────────────────────────────
@@ -184,17 +211,136 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       new window.google.maps.LatLng(center.lat() + radius / 111320, center.lng());
 
     const showAreaPopupG = (topLatLng, areaM2) => {
-      infoWinRef.current.setContent(`
-        <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
-          <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Área da camada</div>
-          <div style="font-size:12px;color:#263238;">${fmtArea(areaM2)}</div>
-        </div>
-      `);
-      // Anchor no ponto mais ao norte: o tip da seta fica na borda, conteúdo acima
-      if (!popupAnchor) popupAnchor = new window.google.maps.Marker({ map, visible: false });
-      popupAnchor.setPosition(topLatLng);
-      infoWinRef.current.open(map, popupAnchor);
+      const iw = new window.google.maps.InfoWindow({
+        content: `
+          <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
+            <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Área da camada</div>
+            <div style="font-size:12px;color:#263238;">${fmtArea(areaM2)}</div>
+          </div>
+        `,
+      });
+      const anchor = new window.google.maps.Marker({ map, visible: false });
+      anchor.setPosition(topLatLng);
+      iw.open(map, anchor);
+      areaInfoWinsRef.current.push(iw);
+      areaAnchorsRef.current.push(anchor);
+      return { iw, anchor };
     };
+
+    // ── Painel de estilo das camadas desenhadas ───────────────────────────────
+    const STYLE_COLORS = [
+      { hex: '#2e7d32', label: 'Verde' },
+      { hex: '#1565c0', label: 'Azul' },
+      { hex: '#c62828', label: 'Vermelho' },
+      { hex: '#212121', label: 'Preto' },
+    ];
+    const defaultShapeState = () => ({
+      strokeColor: SHAPE_STYLE.strokeColor,
+      fillColor:   SHAPE_STYLE.fillColor,
+      fillOpacity: SHAPE_STYLE.fillOpacity,
+      areaIW: null, areaAnchor: null, areaVisible: false,
+      _listenerAdded: false,
+    });
+    const applyShapeStyle = (shape, state) =>
+      shape.setOptions({ strokeColor: state.strokeColor, fillColor: state.fillColor, fillOpacity: state.fillOpacity });
+
+    const buildStylePanelHtml = (state) => {
+      const opacityPct = Math.round(state.fillOpacity * 100);
+      const swatches = (prefix, activeColor) =>
+        STYLE_COLORS.map(({ hex, label }) => {
+          const sel = hex === activeColor;
+          return `<button data-nd="${prefix}" data-color="${hex}" title="${label}"
+            style="width:22px;height:22px;border-radius:4px;cursor:pointer;padding:0;outline:none;
+                   border:2px solid ${sel ? '#000' : 'transparent'};background:${hex};"></button>`;
+        }).join('');
+      const hasArea = !!state.areaIW;
+      return `<div id="nd-sp" style="font-family:Roboto,Arial,sans-serif;min-width:200px;padding:2px 0 4px;">
+        <div style="font-weight:700;font-size:11px;color:#1565c0;margin-bottom:8px;letter-spacing:.4px;text-transform:uppercase;">Estilo da camada</div>
+        <div style="margin-bottom:7px;">
+          <div style="font-size:10px;color:#78909c;font-weight:600;margin-bottom:4px;">Cor da linha</div>
+          <div style="display:flex;gap:5px;">${swatches('stroke', state.strokeColor)}</div>
+        </div>
+        <div style="margin-bottom:7px;">
+          <div style="font-size:10px;color:#78909c;font-weight:600;margin-bottom:4px;">Cor do fundo</div>
+          <div style="display:flex;gap:5px;">${swatches('fill', state.fillColor)}</div>
+        </div>
+        <div style="margin-bottom:7px;">
+          <div style="font-size:10px;color:#78909c;font-weight:600;margin-bottom:3px;">
+            Transparência: <span id="nd-opa-val">${opacityPct}%</span>
+          </div>
+          <input id="nd-opa-slider" type="range" min="0" max="100" value="${opacityPct}"
+            style="width:100%;accent-color:#1565c0;height:4px;cursor:pointer;">
+        </div>
+        <button id="nd-toggle-area"
+          style="width:100%;padding:4px 8px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;
+                 border:1px solid ${hasArea ? '#1565c0' : '#ccc'};
+                 background:${!hasArea ? '#f5f5f5' : state.areaVisible ? '#1565c0' : '#fff'};
+                 color:${!hasArea ? '#bbb' : state.areaVisible ? '#fff' : '#1565c0'};"
+          ${!hasArea ? 'disabled' : ''}>
+          ${!hasArea ? 'Sem info de área' : (state.areaVisible ? 'Ocultar' : 'Mostrar') + ' info de área'}
+        </button>
+      </div>`;
+    };
+
+    const setupStyleListeners = (shape, state) => {
+      const panel = document.getElementById('nd-sp');
+      if (!panel) return;
+      panel.querySelectorAll('[data-nd="stroke"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.strokeColor = btn.dataset.color;
+          applyShapeStyle(shape, state);
+          shapeStyleIW.setContent(buildStylePanelHtml(state));
+          window.google.maps.event.addListenerOnce(shapeStyleIW, 'domready', () => setupStyleListeners(shape, state));
+        });
+      });
+      panel.querySelectorAll('[data-nd="fill"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.fillColor = btn.dataset.color;
+          applyShapeStyle(shape, state);
+          shapeStyleIW.setContent(buildStylePanelHtml(state));
+          window.google.maps.event.addListenerOnce(shapeStyleIW, 'domready', () => setupStyleListeners(shape, state));
+        });
+      });
+      const slider = document.getElementById('nd-opa-slider');
+      const valEl  = document.getElementById('nd-opa-val');
+      if (slider) {
+        slider.addEventListener('input', () => {
+          state.fillOpacity = parseInt(slider.value) / 100;
+          if (valEl) valEl.textContent = `${slider.value}%`;
+          applyShapeStyle(shape, state);
+        });
+      }
+      const toggleBtn = document.getElementById('nd-toggle-area');
+      if (toggleBtn && state.areaIW) {
+        toggleBtn.addEventListener('click', () => {
+          state.areaVisible = !state.areaVisible;
+          if (state.areaVisible) state.areaIW.open(map, state.areaAnchor);
+          else state.areaIW.close();
+          shapeStyleIW.setContent(buildStylePanelHtml(state));
+          window.google.maps.event.addListenerOnce(shapeStyleIW, 'domready', () => setupStyleListeners(shape, state));
+        });
+      }
+    };
+
+    const openShapeStylePanel = (shape, latLng) => {
+      const state = shapeStatesRef.current.get(shape) ?? defaultShapeState();
+      shapeStatesRef.current.set(shape, state);
+      shapeStyleIW.setPosition(latLng);
+      shapeStyleIW.setContent(buildStylePanelHtml(state));
+      shapeStyleIW.open(map);
+      window.google.maps.event.addListenerOnce(shapeStyleIW, 'domready', () => setupStyleListeners(shape, state));
+    };
+
+    const addShapeClickListener = (shape, areaInfo = null) => {
+      const state = shapeStatesRef.current.get(shape) ?? defaultShapeState();
+      if (areaInfo) { state.areaIW = areaInfo.iw; state.areaAnchor = areaInfo.anchor; state.areaVisible = true; }
+      shapeStatesRef.current.set(shape, state);
+      if (!state._listenerAdded) {
+        state._listenerAdded = true;
+        shape.addListener('click', e => openShapeStylePanel(shape, e.latLng));
+      }
+    };
+    addShapeClickListenerRef.current = addShapeClickListener;
 
     const computeArea = (shapeDesc) => {
       const geo = window.google.maps.geometry?.spherical;
@@ -230,37 +376,54 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       all.forEach(s => { try { s.setEditable(false); } catch (_) {} });
 
       if (!save) return;
+      onEditSaveRef.current?.();
+      clearAreaPopups();
       if (circleRef.current) {
         const c = circleRef.current, ctr = c.getCenter();
         const cs = { type: 'circle', center: { lat: ctr.lat(), lng: ctr.lng() }, radius: Math.round(c.getRadius()) };
-        showAreaPopupG(topOfCircle(ctr, c.getRadius()), computeArea(cs));
+        pendingCircleAreaRef.current = showAreaPopupG(topOfCircle(ctr, c.getRadius()), computeArea(cs));
         onCreatedRef.current?.(cs);
+        const latOff = c.getRadius() / 111320;
+        map.fitBounds(new window.google.maps.LatLngBounds(
+          new window.google.maps.LatLng(ctr.lat() - latOff, ctr.lng()),
+          new window.google.maps.LatLng(ctr.lat() + latOff, ctr.lng())
+        ), 40);
         return;
       }
       drawnShapes.forEach(s => {
-        let shape = null, center = null;
+        let shape = null, center = null, bounds = null;
         if (s instanceof window.google.maps.Rectangle) {
           const b = s.getBounds(), ne = b.getNorthEast(), sw = b.getSouthWest();
           shape = { type: 'rectangle', nex: ne.lng(), ney: ne.lat(), swx: sw.lng(), swy: sw.lat() };
-          center = topOfBounds(b);
+          center = topOfBounds(b); bounds = b;
         } else if (s instanceof window.google.maps.Polygon) {
           const pathArr = s.getPath().getArray();
           const pts = pathArr.map(p => [p.lng(), p.lat()]);
           if (pts.length >= 3) {
             shape = { type: 'polygon', points: [...pts, pts[0]] };
             center = topOfPath(pathArr);
+            bounds = new window.google.maps.LatLngBounds();
+            pathArr.forEach(p => bounds.extend(p));
           }
         }
-        if (shape) { showAreaPopupG(center, computeArea(shape)); onCreatedRef.current?.(shape); }
+        if (shape) {
+          const areaInfo = showAreaPopupG(center, computeArea(shape));
+          addShapeClickListener(s, areaInfo);
+          onCreatedRef.current?.(shape);
+          if (bounds) map.fitBounds(bounds, 40);
+        }
       });
     };
 
     const clearAll = () => {
       exitEdit(false);
-      drawnShapes.forEach(s => s.setMap(null)); drawnShapes = [];
-      allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} });
+      drawnShapes.forEach(s => { s.setMap(null); shapeStatesRef.current.delete(s); }); drawnShapes = [];
+      allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} shapeStatesRef.current.delete(c); });
       allCirclesRef.current = [];
       circleRef.current = null;
+      pendingCircleAreaRef.current = null;
+      shapeStyleIW.close();
+      clearAreaPopups();
       if (userMarkerRef.current)  { userMarkerRef.current.setMap(null);  userMarkerRef.current = null; }
       if (selectedMkrRef.current) { selectedMkrRef.current.setMap(null); selectedMkrRef.current = null; }
       allMkrsRef.current.forEach(m => m.setMap(null)); allMkrsRef.current = [];
@@ -359,6 +522,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       pickBtn.style.background = '#fff';
       pickBtn.style.color = '#555';
       map.getDiv().style.cursor = '';
+      setLayerClearRef.current?.(t => t + 1);
       onClearRef.current?.();
     });
     actionBar.appendChild(removeBtn);
@@ -376,14 +540,15 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       if (drawMode === 'polygon') points.push(e.latLng);
     });
 
-    const dblClickL = map.addListener('dblclick', () => {
+    const dblClickL = map.addListener('dblclick', (e) => {
       if (drawMode === 'polygon' && points.length >= 3) {
+        e.stop();
         const finalPts = [...points]; setDrawMode(null);
         const poly = new window.google.maps.Polygon({ paths: finalPts, map, ...SHAPE_STYLE });
         drawnShapes.push(poly);
         const pts = finalPts.map(p => [p.lng(), p.lat()]);
         const shape = { type: 'polygon', points: [...pts, pts[0]] };
-        showAreaPopupG(topOfPath(finalPts), computeArea(shape));
+        addShapeClickListener(poly, showAreaPopupG(topOfPath(finalPts), computeArea(shape)));
         onCreatedRef.current?.(shape);
       }
     });
@@ -419,7 +584,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         if (radius < 50) { clearPrev(); startPt = null; lastDrag = null; return; }
         const s = startPt; clearPrev(); setDrawMode(null); startPt = null; lastDrag = null;
         const circShape = { type: 'circle', center: { lat: s.lat(), lng: s.lng() }, radius: Math.round(radius) };
-        showAreaPopupG(topOfCircle(s, radius), computeArea(circShape));
+        pendingCircleAreaRef.current = showAreaPopupG(topOfCircle(s, radius), computeArea(circShape));
         onCreatedRef.current?.(circShape);
       }
       if (drawMode === 'rectangle' && startPt && lastDrag) {
@@ -433,7 +598,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         });
         drawnShapes.push(rect);
         const rectShape = { type: 'rectangle', nex: Math.max(s.lng(), end.lng()), ney: Math.max(s.lat(), end.lat()), swx: Math.min(s.lng(), end.lng()), swy: Math.min(s.lat(), end.lat()) };
-        showAreaPopupG(topOfBounds(rect.getBounds()), computeArea(rectShape));
+        addShapeClickListener(rect, showAreaPopupG(topOfBounds(rect.getBounds()), computeArea(rectShape)));
         onCreatedRef.current?.(rectShape);
       }
     };
@@ -456,7 +621,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       window.google.maps.event.removeListener(mouseMoveL);
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('keydown', onKeyDown);
-      if (popupAnchor) { popupAnchor.setMap(null); popupAnchor = null; }
+      clearAreaPopups();
       if (panelContainer.parentNode) panelContainer.parentNode.removeChild(panelContainer);
       if (waterUsageContainer.parentNode) waterUsageContainer.parentNode.removeChild(waterUsageContainer);
       mapRef.current = null;
@@ -475,8 +640,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const circle = new window.google.maps.Circle({ center: circleData.center, radius: circleData.radius, map: mapRef.current, ...SHAPE_STYLE });
     circleRef.current = circle;
     allCirclesRef.current.push(circle);
-    mapRef.current.panTo(circleData.center);
-    mapRef.current.setZoom(13);
+    addShapeClickListenerRef.current?.(circle, pendingCircleAreaRef.current);
+    pendingCircleAreaRef.current = null;
+    if (!circleData._skipFly) {
+      mapRef.current.panTo(circleData.center);
+      mapRef.current.setZoom(13);
+    }
   }, [circleData]);
 
   useEffect(() => {
@@ -487,8 +656,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
   useEffect(() => {
     if (!mapRef.current) return;
-    if (userMarkerRef.current) { userMarkerRef.current.setMap(null); userMarkerRef.current = null; }
     if (!userMarker) return;
+    if (userMarkerRef.current) { userMarkerRef.current.setMap(null); userMarkerRef.current = null; }
     userMarkerRef.current = new window.google.maps.Marker({
       position: { lat: userMarker.lat, lng: userMarker.lng }, map: mapRef.current,
       icon: { url: makePinUrl('#e53935'), scaledSize: new window.google.maps.Size(24, 36), anchor: new window.google.maps.Point(12, 36) },
@@ -551,7 +720,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} />,
+          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} />,
           panelRootRef.current,
         )
       }
