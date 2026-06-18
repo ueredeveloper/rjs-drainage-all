@@ -1,9 +1,13 @@
 import React, { useState, useRef } from 'react';
 import {
   Box, Tabs, Tab, Chip, Avatar, Divider, Typography, Alert, Stack,
+  IconButton, Tooltip,
 } from '@mui/material';
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import LayersIcon from '@mui/icons-material/Layers';
+import GetAppIcon from '@mui/icons-material/GetApp';
+
+import { exportGeralToCsv } from '../../tools/export-geral-to-csv';
 
 import CoordSearchBar from '../components/CoordSearchBar';
 import CompactTable from '../components/CompactTable';
@@ -62,6 +66,36 @@ export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onA
 
   const hasData = surfaceAnalyse.secao.q_referencia.values.some(v => v !== 0);
   const secaoGrants = surfaceAnalyse.secao.outorgas ?? [];
+
+  const handleExport = () => {
+    const BASE_FIELDS = [
+      'us_nome', 'us_cpf_cnpj', 'int_processo', 'emp_endereco', 'us_endereco', 'us_bairro', 'us_cep',
+      'bh_nome', 'uh_nome', 'to_descricao', 'ti_descricao', 'tp_descricao', 'sp_descricao',
+      'fin_finalidade', 'int_num_ato', 'int_data_publicacao', 'int_data_vencimento',
+      'int_latitude', 'int_longitude', 'us_email', 'us_telefone_1', 'us_caixa_postal',
+      'hg_codigo', 'hg_sistema', 'hg_subsistema',
+    ];
+    const monthHeaders = MESES.map((_, i) => `vazao_mes_${String(i + 1).padStart(2, '0')}`);
+    const headers = [...BASE_FIELDS, ...monthHeaders];
+
+    const rows = secaoGrants.map(m => {
+      const base = BASE_FIELDS.map(k => m[k] ?? '');
+      const demandas = m.dt_demanda?.demandas ?? [];
+      const monthly = MESES.map((_, i) => {
+        const d = demandas.find(d => parseInt(d.mes) === i + 1);
+        if (!d) return '';
+        const v = parseFloat(d.vazao);
+        return isNaN(v) ? '' : v;
+      });
+      return [...base, ...monthly];
+    });
+
+    exportGeralToCsv({
+      headers,
+      rows,
+      filename: `outorgas_superficial_${ottoInfo.uhRotulo || ''}`,
+    });
+  };
 
   async function handleSearch() {
     const latN = parseFloat(lat);
@@ -257,7 +291,18 @@ const hydrographicBasin = await searchHydrograficUnit(
 
         {/* ── Outorgas — sempre abaixo do conteúdo da aba ──────────────────── */}
         <Divider />
-        <SectionLabel title="Outorgas na seção de captação" count={hasData ? secaoGrants.length : undefined} />
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ flex: 1 }}>
+            <SectionLabel title="Outorgas na seção de captação" count={hasData ? secaoGrants.length : undefined} />
+          </Box>
+          <Tooltip title="Exportar tabela (XLSX)">
+            <span>
+              <IconButton size="small" onClick={handleExport} disabled={secaoGrants.length === 0} sx={{ mr: 1 }}>
+                <GetAppIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
         <Divider />
         {!hasData ? (
           <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>

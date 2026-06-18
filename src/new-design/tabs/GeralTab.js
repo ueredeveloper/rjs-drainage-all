@@ -6,6 +6,9 @@ import {
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TransformIcon from '@mui/icons-material/Transform';
+import GetAppIcon from '@mui/icons-material/GetApp';
+
+import { exportGeralToCsv } from '../../tools/export-geral-to-csv';
 import { PolarArea } from 'react-chartjs-2';
 
 import CompactTable from '../components/CompactTable';
@@ -31,9 +34,10 @@ const CAT_EXTRA_COLS = {
     { label: 'Área Inund.',      key: 'area_inundada_ha' },
   ],
   efluente: [
-    { label: 'Nome da Bacia', key: 'bh_nome' },
-    { label: 'Classe',        key: 'classe_manancial' },
-    { label: 'Descrição',     key: 'sp_descricao' },
+    { label: 'Nome da Bacia',    key: 'bh_nome' },
+    { label: 'Nome Manancial',   key: 'nome_manancial' },
+    { label: 'Classe Manancial', key: 'classe_manancial' },
+    { label: 'Descrição',        key: 'sp_descricao' },
   ],
   pluvial: [
     { label: 'Verificado',      key: 'int_verificado' },
@@ -92,6 +96,41 @@ export default function GeralTab({
   const tableHeaders = semVazao
     ? [...HEADERS_BASE, ...extraCols.map(c => c.label)]
     : HEADERS_VAZAO;
+
+  const handleExport = () => {
+    const BASE_FIELDS = [
+      'us_nome', 'us_cpf_cnpj', 'int_processo', 'emp_endereco', 'us_endereco', 'us_bairro', 'us_cep',
+      'bh_nome', 'uh_nome', 'to_descricao', 'ti_descricao', 'tp_descricao', 'sp_descricao',
+      'fin_finalidade', 'int_num_ato', 'int_data_publicacao', 'int_data_vencimento',
+      'int_latitude', 'int_longitude', 'us_email', 'us_telefone_1', 'us_caixa_postal',
+      'hg_codigo', 'hg_sistema', 'hg_subsistema',
+    ];
+    const extraKeys = extraCols.map(c => c.key);
+    const monthHeaders = semVazao
+      ? []
+      : MESES.map((_, i) => `vazao_ld_mes_${String(i + 1).padStart(2, '0')}`);
+
+    const headers = [...BASE_FIELDS, ...(semVazao ? extraKeys : []), ...monthHeaders];
+
+    const rows = activeRows.map(m => {
+      const base = BASE_FIELDS.map(k => m[k] ?? '');
+      if (semVazao) return [...base, ...extraKeys.map(k => m[k] ?? '')];
+      const demandas = m.dt_demanda?.demandas ?? [];
+      const monthly = MESES.map((_, i) => {
+        const d = demandas.find(d => parseInt(d.mes) === i + 1);
+        if (!d) return '';
+        const v = parseFloat(d.vazao_ld);
+        return isNaN(v) ? '' : v;
+      });
+      return [...base, ...monthly];
+    });
+
+    exportGeralToCsv({
+      headers,
+      rows,
+      filename: `outorgas_${activeCat?.key ?? 'geral'}_${activePage?.label ?? ''}`,
+    });
+  };
 
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -327,11 +366,11 @@ export default function GeralTab({
       {/* ── Resultados da página ativa ─────────────────────────────────────── */}
       {activePage && !loading ? (
         <>
-          <Box id="nd-geral-subtabs" sx={{ borderBottom: '1px solid #e0e0e0', flexShrink: 0 }}>
+          <Box id="nd-geral-subtabs" sx={{ borderBottom: '1px solid #e0e0e0', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
             <Tabs
               value={subTab} onChange={(_, v) => setSubTab(v)}
               variant="scrollable" scrollButtons="auto"
-              sx={{ minHeight: 38, '& .MuiTab-root': { minHeight: 38, fontSize: '0.68rem', textTransform: 'none', py: 0, px: 1.5 }, '& .MuiTabs-indicator': { height: 2 } }}
+              sx={{ flex: 1, minHeight: 38, '& .MuiTab-root': { minHeight: 38, fontSize: '0.68rem', textTransform: 'none', py: 0, px: 1.5 }, '& .MuiTabs-indicator': { height: 2 } }}
             >
               {TI_CATS.map(c => (
                 <Tab key={c.key} label={
@@ -343,6 +382,13 @@ export default function GeralTab({
                 } />
               ))}
             </Tabs>
+            <Tooltip title="Exportar tabela (CSV)">
+              <span>
+                <IconButton size="small" onClick={handleExport} disabled={activeRows.length === 0} sx={{ mr: 0.5 }}>
+                  <GetAppIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
 
           <Box id="nd-geral-table" sx={{ flex: 1, overflow: 'auto', '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>

@@ -36,7 +36,7 @@ const StatusChip = ({ check }) => String(check).toLowerCase() === 'ok'
 
 export default function BarragemTab({
   lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect,
-  onBarMarkers, onClearCircle,
+  onBarMarkers, onBarShape, onClearCircle,
 }) {
   const [calcTab, setCalcTab] = useState(0);
   const [calcLoading, setCalcLoading] = useState(false);
@@ -92,6 +92,7 @@ export default function BarragemTab({
     setCalcLoading(true);
     setCalcError(null);
     onBarMarkers?.([]);
+    onBarShape?.(null);
     try {
       const data = await calculateReservoirBalance({
         coordenadas: { latitude: latN, longitude: lngN },
@@ -102,6 +103,18 @@ export default function BarragemTab({
       setResult(data);
       const rows = extractBarragemRows(data) ?? [];
       onBarMarkers?.(rows);
+
+      const geoFeatures = data?.dbResult?.informacoes_adicionais?.otto_geometrias;
+      if (Array.isArray(geoFeatures) && geoFeatures.length > 0) {
+        onBarShape?.({
+          type: 'FeatureCollection',
+          features: geoFeatures.map(f => ({
+            type: 'Feature',
+            properties: { cobacia: f.cobacia },
+            geometry: { type: f.geometry?.type ?? 'Polygon', coordinates: f.geometry?.coordinates },
+          })),
+        });
+      }
       if (data?.dbResult?.operacao?.QmmRegionalizada) {
         setOperacao(prev => ({ ...prev, qmm: data.dbResult.operacao.QmmRegionalizada }));
       }
@@ -254,235 +267,244 @@ export default function BarragemTab({
         </Box>
       )}
 
-      {/* ── Área scrollável: tabelas de cálculo + barragens próximas ─────── */}
-      <Box id="nd-bar-content" sx={{
-        flex: 1, overflowY: 'auto',
-        '&::-webkit-scrollbar': { width: 4 },
-        '&::-webkit-scrollbar-thumb': { bgcolor: '#cfd8dc', borderRadius: 2 },
-      }}>
+      {/* ── Área de conteúdo: tabelas de cálculo + barragens próximas ──────── */}
+      <Box id="nd-bar-content" sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* ── Tab Operação ── */}
-        {calcTab === 0 && (
-          <TableContainer sx={{ minWidth: 0 }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ ...HEAD, minWidth: 118, position: 'sticky', left: 0, zIndex: 3 }}>Parâmetro</TableCell>
-                  {MESES.map(m => <TableCell key={m} align="center" sx={{ ...HEAD, minWidth: 44 }}>{m}</TableCell>)}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {/* 1 — Vazão */}
-                {[
-                  { label: 'Vazão (L/s)', key: 'vazao_l_s' },
-                  { label: 'T. Cap (h)',  key: 'tempDia'   },
-                ].map(({ label, key }) => (
-                  <TableRow key={key} hover>
-                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>{label}</TableCell>
-                    {operacao[key].map((v, i) => (
+        {/* ── Seção superior: tabelas de cálculo (altura fixa + scroll) ── */}
+        <Box sx={{
+          flexShrink: 0, minHeight: 220, maxHeight: 220, overflowY: 'auto', overflowX: 'auto',
+          '&::-webkit-scrollbar': { width: 4, height: 4 },
+          '&::-webkit-scrollbar-thumb': { bgcolor: '#cfd8dc', borderRadius: 2 },
+        }}>
+
+          {/* ── Tab Operação ── */}
+          {calcTab === 0 && (
+            <TableContainer sx={{ minWidth: 0 }}>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ ...HEAD, minWidth: 118, position: 'sticky', left: 0, zIndex: 3 }}>Parâmetro</TableCell>
+                    {MESES.map(m => <TableCell key={m} align="center" sx={{ ...HEAD, minWidth: 44 }}>{m}</TableCell>)}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[
+                    { label: 'Vazão (L/s)', key: 'vazao_l_s' },
+                    { label: 'T. Cap (h)',  key: 'tempDia'   },
+                  ].map(({ label, key }) => (
+                    <TableRow key={key} hover>
+                      <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>{label}</TableCell>
+                      {operacao[key].map((v, i) => (
+                        <TableCell key={i} padding="none" align="center">
+                          <Input
+                            value={v}
+                            onChange={(e) => handleArrayChange(key, i, e.target.value)}
+                            disableUnderline
+                            inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
+                          />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+
+                  <TableRow hover>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Dias</TableCell>
+                    {operacao.Dias.map((d, i) => (
+                      <TableCell key={i} padding="none" align="center">
+                        <Select
+                          value={d}
+                          onChange={(e) => handleArrayChange('Dias', i, e.target.value)}
+                          variant="standard" disableUnderline
+                          sx={{ fontSize: '0.65rem', width: 40, '& .MuiSelect-select': { py: 0.3, px: 0.5 } }}
+                        >
+                          {Array.from({ length: 32 }, (_, j) => (
+                            <MenuItem key={j} value={j} sx={{ fontSize: '0.65rem', py: 0.2 }}>{j}</MenuItem>
+                          ))}
+                        </Select>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+
+                  <TableRow hover>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Evap. (mm)</TableCell>
+                    {operacao.Evaporacao.map((v, i) => (
                       <TableCell key={i} padding="none" align="center">
                         <Input
                           value={v}
-                          onChange={(e) => handleArrayChange(key, i, e.target.value)}
+                          onChange={(e) => handleArrayChange('Evaporacao', i, e.target.value)}
                           disableUnderline
                           inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
                         />
                       </TableCell>
                     ))}
                   </TableRow>
-                ))}
 
-                {/* 3 — Dias */}
-                <TableRow hover>
-                  <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Dias</TableCell>
-                  {operacao.Dias.map((d, i) => (
-                    <TableCell key={i} padding="none" align="center">
-                      <Select
-                        value={d}
-                        onChange={(e) => handleArrayChange('Dias', i, e.target.value)}
-                        variant="standard" disableUnderline
-                        sx={{ fontSize: '0.65rem', width: 40, '& .MuiSelect-select': { py: 0.3, px: 0.5 } }}
-                      >
-                        {Array.from({ length: 32 }, (_, j) => (
-                          <MenuItem key={j} value={j} sx={{ fontSize: '0.65rem', py: 0.2 }}>{j}</MenuItem>
-                        ))}
-                      </Select>
-                    </TableCell>
-                  ))}
-                </TableRow>
-
-                {/* 4 — Evaporação */}
-                <TableRow hover>
-                  <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Evap. (mm)</TableCell>
-                  {operacao.Evaporacao.map((v, i) => (
-                    <TableCell key={i} padding="none" align="center">
-                      <Input
-                        value={v}
-                        onChange={(e) => handleArrayChange('Evaporacao', i, e.target.value)}
-                        disableUnderline
-                        inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
-                      />
-                    </TableCell>
-                  ))}
-                </TableRow>
-
-                {/* 5 — Qmm Regionalizada — pisca ao receber valores */}
-                <TableRow hover sx={pulseStyle}>
-                  <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Qmm (Reg.) (m³/s)</TableCell>
-                  {operacao.qmm.map((v, i) => (
-                    <TableCell key={i} padding="none" align="center">
-                      <Input
-                        value={v}
-                        onChange={(e) => handleArrayChange('qmm', i, e.target.value)}
-                        disableUnderline
-                        inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
-                      />
-                    </TableCell>
-                  ))}
-                </TableRow>
-
-                {/* 6 — Q Defluente (read-only) — pisca ao receber valores */}
-                <TableRow hover sx={pulseStyle}>
-                  <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Q Defluente (m³/s)</TableCell>
-                  {MESES.map((_, i) => {
-                    const v = result?.dbResult?.operacao?.Q_defluente?.[i];
-                    return (
-                      <TableCell key={i} align="center" sx={{ ...CELL, color: v !== undefined ? '#1565c0' : '#bdbdbd' }}>
-                        {calcLoading
-                          ? <Skeleton variant="text" width={32} sx={{ display: 'inline-block' }} />
-                          : v !== undefined ? numberWithCommas(v, 4) : '—'}
+                  <TableRow hover sx={pulseStyle}>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Qmm (Reg.) (m³/s)</TableCell>
+                    {operacao.qmm.map((v, i) => (
+                      <TableCell key={i} padding="none" align="center">
+                        <Input
+                          value={v}
+                          onChange={(e) => handleArrayChange('qmm', i, e.target.value)}
+                          disableUnderline
+                          inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
+                        />
                       </TableCell>
-                    );
-                  })}
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {/* ── Tab Planilha ── */}
-        {calcTab === 1 && (
-          result?.resultadoCalculo ? (
-            <TableContainer>
-              <Table size="small" stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    {['Mês', 'Qmm', 'Entrada', 'Infilt.', 'Evap.', 'Capt.', 'V. Final', 'Status'].map((h, i) => (
-                      <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={HEAD}>{h}</TableCell>
                     ))}
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {result.resultadoCalculo.planilha.map((row, idx) => (
-                    <TableRow key={idx} hover>
-                      <TableCell sx={CELL}>{row.Mes}</TableCell>
-                      <TableCell align="right" sx={CELL}>{numberWithCommas(row.Qmmm_m3s, 4)}</TableCell>
-                      <TableCell align="right" sx={CELL}>{numberWithCommas(row.Entrada_m3_mes, 2)}</TableCell>
-                      <TableCell align="right" sx={CELL}>{numberWithCommas(row.Infiltracao_m3_mes, 2)}</TableCell>
-                      <TableCell align="right" sx={CELL}>{numberWithCommas(row.Evaporacao_m3_mes, 2)}</TableCell>
-                      <TableCell align="right" sx={CELL}>{numberWithCommas(row.Captacao_m3_mes, 2)}</TableCell>
-                      <TableCell align="right" sx={{ ...CELL, fontWeight: 600 }}>{numberWithCommas(row.Vol_Final, 2)}</TableCell>
-                      <TableCell align="center" sx={CELL}><StatusChip check={row.CHECK} /></TableCell>
+
+                  <TableRow hover sx={pulseStyle}>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Q Defluente (m³/s)</TableCell>
+                    {MESES.map((_, i) => {
+                      const v = result?.dbResult?.operacao?.Q_defluente?.[i];
+                      return (
+                        <TableCell key={i} align="center" sx={{ ...CELL, color: v !== undefined ? '#1565c0' : '#bdbdbd' }}>
+                          {calcLoading
+                            ? <Skeleton variant="text" width={32} sx={{ display: 'inline-block' }} />
+                            : v !== undefined ? numberWithCommas(v, 4) : '—'}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {/* ── Tab Planilha ── */}
+          {calcTab === 1 && (
+            result?.resultadoCalculo ? (
+              <TableContainer>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {['Mês', 'Qmm', 'Entrada', 'Infilt.', 'Evap.', 'Capt.', 'V. Final', 'Status'].map((h, i) => (
+                        <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={HEAD}>{h}</TableCell>
+                      ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Box sx={{ py: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <CalculateIcon sx={{ fontSize: 32, color: '#e0e0e0' }} />
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.76rem' }}>
-                Realize a busca para ver a planilha de balanço hídrico.
-              </Typography>
-            </Box>
-          )
-        )}
-
-        {/* ── Tab Bruta ── */}
-        {calcTab === 2 && (
-          result?.resultadoCalculo ? (
-            <TableContainer>
-              <Table size="small" stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    {['Mês', 'Entr. Méd', 'Evap.', 'Infilt.', 'QCap', 'V. Final', 'V. Prob', 'Chk'].map((h, i) => (
-                      <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={HEAD}>{h}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {result.resultadoCalculo.bruta.meses.map((mes, idx) => {
-                    const b = result.resultadoCalculo.bruta;
-                    return (
+                  </TableHead>
+                  <TableBody>
+                    {result.resultadoCalculo.planilha.map((row, idx) => (
                       <TableRow key={idx} hover>
-                        <TableCell sx={CELL}>{mes}</TableCell>
-                        <TableCell align="right" sx={CELL}>{numberWithCommas(b.entrada_media[idx], 2)}</TableCell>
-                        <TableCell align="right" sx={CELL}>{numberWithCommas(b.evaporacao_m3[idx], 2)}</TableCell>
-                        <TableCell align="right" sx={CELL}>{numberWithCommas(b.infiltracao[idx], 2)}</TableCell>
-                        <TableCell align="right" sx={CELL}>{numberWithCommas(b.qcap_total[idx], 2)}</TableCell>
-                        <TableCell align="right" sx={{ ...CELL, fontWeight: 600 }}>{numberWithCommas(b.volume_final[idx], 2)}</TableCell>
-                        <TableCell align="right" sx={CELL}>{numberWithCommas(b.volume_prob[idx], 2)}</TableCell>
-                        <TableCell align="center" sx={CELL}><StatusChip check={b.CHECK[idx]} /></TableCell>
+                        <TableCell sx={CELL}>{row.Mes}</TableCell>
+                        <TableCell align="right" sx={CELL}>{numberWithCommas(row.Qmmm_m3s, 4)}</TableCell>
+                        <TableCell align="right" sx={CELL}>{numberWithCommas(row.Entrada_m3_mes, 2)}</TableCell>
+                        <TableCell align="right" sx={CELL}>{numberWithCommas(row.Infiltracao_m3_mes, 2)}</TableCell>
+                        <TableCell align="right" sx={CELL}>{numberWithCommas(row.Evaporacao_m3_mes, 2)}</TableCell>
+                        <TableCell align="right" sx={CELL}>{numberWithCommas(row.Captacao_m3_mes, 2)}</TableCell>
+                        <TableCell align="right" sx={{ ...CELL, fontWeight: 600 }}>{numberWithCommas(row.Vol_Final, 2)}</TableCell>
+                        <TableCell align="center" sx={CELL}><StatusChip check={row.CHECK} /></TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Box sx={{ py: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <CalculateIcon sx={{ fontSize: 32, color: '#e0e0e0' }} />
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.76rem' }}>
-                Realize a busca para ver os dados brutos.
-              </Typography>
-            </Box>
-          )
-        )}
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Box sx={{ py: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <CalculateIcon sx={{ fontSize: 32, color: '#e0e0e0' }} />
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.76rem' }}>
+                  Realize a busca para ver a planilha de balanço hídrico.
+                </Typography>
+              </Box>
+            )
+          )}
 
-        {/* ── Barragens próximas (retorno do cálculo) ───────────────────────── */}
-        <Divider sx={{ mt: 1 }} />
-        <SectionLabel
-          title="Barragens próximas"
-          count={barRows !== null ? barRows.length : undefined}
-        />
-        <Divider />
+          {/* ── Tab Bruta ── */}
+          {calcTab === 2 && (
+            result?.resultadoCalculo ? (
+              <TableContainer>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {['Mês', 'Entr. Méd', 'Evap.', 'Infilt.', 'QCap', 'V. Final', 'V. Prob', 'Chk'].map((h, i) => (
+                        <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={HEAD}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {result.resultadoCalculo.bruta.meses.map((mes, idx) => {
+                      const b = result.resultadoCalculo.bruta;
+                      return (
+                        <TableRow key={idx} hover>
+                          <TableCell sx={CELL}>{mes}</TableCell>
+                          <TableCell align="right" sx={CELL}>{numberWithCommas(b.entrada_media[idx], 2)}</TableCell>
+                          <TableCell align="right" sx={CELL}>{numberWithCommas(b.evaporacao_m3[idx], 2)}</TableCell>
+                          <TableCell align="right" sx={CELL}>{numberWithCommas(b.infiltracao[idx], 2)}</TableCell>
+                          <TableCell align="right" sx={CELL}>{numberWithCommas(b.qcap_total[idx], 2)}</TableCell>
+                          <TableCell align="right" sx={{ ...CELL, fontWeight: 600 }}>{numberWithCommas(b.volume_final[idx], 2)}</TableCell>
+                          <TableCell align="right" sx={CELL}>{numberWithCommas(b.volume_prob[idx], 2)}</TableCell>
+                          <TableCell align="center" sx={CELL}><StatusChip check={b.CHECK[idx]} /></TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Box sx={{ py: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <CalculateIcon sx={{ fontSize: 32, color: '#e0e0e0' }} />
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.76rem' }}>
+                  Realize a busca para ver os dados brutos.
+                </Typography>
+              </Box>
+            )
+          )}
+        </Box>
 
-        {barRows === null ? (
-          <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
-            <CompactTable
-              headers={BAR_HEADERS}
-              rows={Array.from({ length: 15 }, () => BAR_HEADERS.map((_, j) => (
-                <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 60 : j === 2 ? 70 : 90 }} />
-              )))}
-            />
-          </Box>
-        ) : calcLoading ? (
-          <Box sx={{ px: 1.5, py: 1 }}>
-            {[1, 2, 3].map(i => <Skeleton key={i} variant="text" height={28} sx={{ mb: 0.5 }} />)}
-          </Box>
-        ) : barRows.length === 0 ? (
-          <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-            <WaterIcon sx={{ fontSize: 30, color: '#e0e0e0' }} />
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.76rem' }}>
-              Nenhuma barragem encontrada para estas coordenadas.
-            </Typography>
-          </Box>
-        ) : (
-          <CompactTable
-            headers={BAR_HEADERS}
-            rows={barRows.map(m => [
-              m.us_nome ?? '—',
-              m.us_cpf_cnpj ?? '—',
-              m.int_processo ?? '—',
-              m.emp_endereco ?? '—',
-            ])}
-            onRowClick={i => onMarkerSelect?.({
-              ...barRows[i],
-              _catColor: BAR_CAT.color,
-              _catLabel: BAR_CAT.label,
-            })}
+        {/* ── Seção inferior: barragens próximas (preenche espaço restante) ── */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderTop: '1px solid #e0e0e0' }}>
+          <SectionLabel
+            title="Barragens próximas"
+            count={barRows !== null ? barRows.length : undefined}
           />
-        )}
+          <Divider />
+
+          <Box sx={{
+            flex: 1, overflowY: 'auto', overflowX: 'auto',
+            pl: 3, pr: 1.5, pt: 0.5,
+            '&::-webkit-scrollbar': { width: 4, height: 4 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: '#cfd8dc', borderRadius: 2 },
+          }}>
+            {barRows === null ? (
+              <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
+                <CompactTable
+                  headers={BAR_HEADERS}
+                  rows={Array.from({ length: 15 }, () => BAR_HEADERS.map((_, j) => (
+                    <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 60 : j === 2 ? 70 : 90 }} />
+                  )))}
+                  cellSx={{ pl: 3, fontSize: '0.8rem' }} rowSx={{ height: 40 }}
+                />
+              </Box>
+            ) : calcLoading ? (
+              <Box sx={{ px: 1.5, py: 1 }}>
+                {[1, 2, 3].map(i => <Skeleton key={i} variant="text" height={28} sx={{ mb: 0.5 }} />)}
+              </Box>
+            ) : barRows.length === 0 ? (
+              <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <WaterIcon sx={{ fontSize: 30, color: '#e0e0e0' }} />
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.76rem' }}>
+                  Nenhuma barragem encontrada para estas coordenadas.
+                </Typography>
+              </Box>
+            ) : (
+              <CompactTable
+                headers={BAR_HEADERS}
+                cellSx={{ pl: 3, fontSize: '0.8rem' }} rowSx={{ height: 40 }}
+                rows={barRows.map(m => [
+                  m.us_nome ?? '—',
+                  m.us_cpf_cnpj ?? '—',
+                  m.int_processo ?? '—',
+                  m.emp_endereco ?? '—',
+                ])}
+                onRowClick={i => onMarkerSelect?.({
+                  ...barRows[i],
+                  _catColor: BAR_CAT.color,
+                  _catLabel: BAR_CAT.label,
+                })}
+              />
+            )}
+          </Box>
+        </Box>
 
       </Box>
     </Box>

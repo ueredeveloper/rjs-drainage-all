@@ -11,6 +11,11 @@ const SHAPE_STYLE = {
   fillColor: '#1565c0', fillOpacity: 0.08,
 };
 
+const USER_SHAPE_STYLE = {
+  strokeColor: '#c62828', strokeWeight: 3,
+  fillColor: '#c62828', fillOpacity: 0.08,
+};
+
 const HAVERSINE = (lat1, lng1, lat2, lng2) => {
   const R = 6371000, toRad = v => (v * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
@@ -64,19 +69,44 @@ const BTN_CSS = [
   'width:30px', 'height:30px', 'background:#fff',
   'border:none', 'border-bottom:1px solid #ccc',
   'cursor:pointer', 'padding:0',
-  'transition:background 0.15s,color 0.15s',
+  'transition:background 0.18s,color 0.18s,box-shadow 0.18s,transform 0.15s',
   'text-decoration:none',
+  'outline:none',
+  'position:relative',
 ].join(';');
 
-const BAR_CSS = 'display:flex;flex-direction:column;background:#fff;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,0.4);overflow:hidden;';
+const BAR_CSS = 'display:flex;flex-direction:column;background:#fff;border-radius:4px;box-shadow:0 1px 5px rgba(0,0,0,0.4);overflow:visible;';
 
 function makeBtn(innerHTML, title, color = '#555') {
   const a = document.createElement('a');
+  a._defaultColor = color;
   a.href = '#'; a.title = title; a.innerHTML = innerHTML;
   a.style.cssText = `${BTN_CSS};color:${color};`;
   a.addEventListener('click', e => e.preventDefault());
-  a.addEventListener('mouseenter', () => { if (!a._active) a.style.background = '#f4f4f4'; });
-  a.addEventListener('mouseleave', () => { if (!a._active) a.style.background = '#fff'; });
+
+  const isRed = color === '#c62828';
+  const hoverBg    = isRed ? '#fce8e8' : '#dbeafe';
+  const hoverColor = isRed ? '#c62828' : '#1565c0';
+  const hoverShadow = isRed
+    ? 'inset 2px 0 0 #c62828, 0 2px 6px rgba(198,40,40,0.15)'
+    : 'inset 2px 0 0 #1565c0, 0 2px 6px rgba(21,101,192,0.12)';
+
+  a.addEventListener('mouseenter', () => {
+    if (a._active) return;
+    a.style.background = hoverBg;
+    a.style.color = hoverColor;
+    a.style.boxShadow = hoverShadow;
+    a.style.transform = 'scale(1.08)';
+    a.style.zIndex = '2';
+  });
+  a.addEventListener('mouseleave', () => {
+    if (a._active) return;
+    a.style.background = '#fff';
+    a.style.color = color;
+    a.style.boxShadow = '';
+    a.style.transform = '';
+    a.style.zIndex = '';
+  });
   return a;
 }
 
@@ -87,7 +117,7 @@ function makeBar() {
 }
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange }) {
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger }) {
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
@@ -112,6 +142,10 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const shapeStatesRef           = useRef(new Map());
   const pendingCircleAreaRef     = useRef(null);
   const addShapeClickListenerRef = useRef(null);
+  const coordCircleRef           = useRef(null);
+  const pageShapesRef            = useRef(new Map());
+  const drawnShapesRef           = useRef([]);
+  const removeFromDrawnRef       = useRef(null);
   const onCreatedRef   = useRef(onShapeCreated);
   const onPickRef      = useRef(onPickCoordinate);
   const onClearRef     = useRef(onClearAll);
@@ -168,6 +202,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     let editMode     = false;
     let editBtnEl    = null;
 
+    removeFromDrawnRef.current = (s) => {
+      drawnShapes = drawnShapes.filter(x => x !== s);
+      drawnShapesRef.current = drawnShapesRef.current.filter(x => x !== s);
+    };
+
     const clearAreaPopups = () => {
       areaInfoWinsRef.current.forEach(iw => { try { iw.close(); } catch (_) {} });
       areaInfoWinsRef.current = [];
@@ -178,10 +217,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     clearDrawnRef.current = () => {
       drawnShapes.forEach(s => { s.setMap(null); shapeStatesRef.current.delete(s); });
       drawnShapes = [];
+      drawnShapesRef.current = [];
       allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} shapeStatesRef.current.delete(c); });
       allCirclesRef.current = [];
       circleRef.current = null;
+      coordCircleRef.current = null;
       pendingCircleAreaRef.current = null;
+      pageShapesRef.current.clear();
       shapeStyleIW.close();
       clearAreaPopups();
     };
@@ -234,11 +276,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       { hex: '#c62828', label: 'Vermelho' },
       { hex: '#212121', label: 'Preto' },
     ];
-    const defaultShapeState = () => ({
-      strokeColor: SHAPE_STYLE.strokeColor,
-      fillColor:   SHAPE_STYLE.fillColor,
+    const defaultShapeState = (userDrawn = false) => ({
+      strokeColor: userDrawn ? USER_SHAPE_STYLE.strokeColor : SHAPE_STYLE.strokeColor,
+      fillColor:   userDrawn ? USER_SHAPE_STYLE.fillColor   : SHAPE_STYLE.fillColor,
       fillOpacity: SHAPE_STYLE.fillOpacity,
       areaIW: null, areaAnchor: null, areaVisible: false,
+      shapeDesc: null,
       _listenerAdded: false,
     });
     const applyShapeStyle = (shape, state) =>
@@ -279,6 +322,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
           ${!hasArea ? 'disabled' : ''}>
           ${!hasArea ? 'Sem info de área' : (state.areaVisible ? 'Ocultar' : 'Mostrar') + ' info de área'}
         </button>
+        ${state.shapeDesc ? `<button id="nd-search-shape"
+          style="width:100%;padding:4px 8px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;
+                 border:1px solid #1565c0;background:#1565c0;color:#fff;margin-top:5px;">
+          Atualizar pesquisa
+        </button>` : ''}
       </div>`;
     };
 
@@ -320,6 +368,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
           window.google.maps.event.addListenerOnce(shapeStyleIW, 'domready', () => setupStyleListeners(shape, state));
         });
       }
+      const searchBtn = document.getElementById('nd-search-shape');
+      if (searchBtn && state.shapeDesc) {
+        searchBtn.addEventListener('click', () => {
+          onCreatedRef.current?.(state.shapeDesc);
+          shapeStyleIW.close();
+        });
+      }
     };
 
     const openShapeStylePanel = (shape, latLng) => {
@@ -331,9 +386,10 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       window.google.maps.event.addListenerOnce(shapeStyleIW, 'domready', () => setupStyleListeners(shape, state));
     };
 
-    const addShapeClickListener = (shape, areaInfo = null) => {
-      const state = shapeStatesRef.current.get(shape) ?? defaultShapeState();
+    const addShapeClickListener = (shape, areaInfo = null, shapeDesc = null, userDrawn = false) => {
+      const state = shapeStatesRef.current.get(shape) ?? defaultShapeState(userDrawn);
       if (areaInfo) { state.areaIW = areaInfo.iw; state.areaAnchor = areaInfo.anchor; state.areaVisible = true; }
+      if (shapeDesc) state.shapeDesc = shapeDesc;
       shapeStatesRef.current.set(shape, state);
       if (!state._listenerAdded) {
         state._listenerAdded = true;
@@ -369,55 +425,50 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         editBtnEl._active = false;
         editBtnEl.style.background = '#fff';
         editBtnEl.style.color = '#444';
+        editBtnEl.style.boxShadow = '';
+        editBtnEl.style.transform = '';
         editBtnEl.title = 'Editar camadas';
       }
-      const all = [...drawnShapes];
-      if (circleRef.current) all.push(circleRef.current);
+      const all = [...drawnShapes, ...allCirclesRef.current];
       all.forEach(s => { try { s.setEditable(false); } catch (_) {} });
 
       if (!save) return;
       onEditSaveRef.current?.();
       clearAreaPopups();
-      if (circleRef.current) {
-        const c = circleRef.current, ctr = c.getCenter();
+
+      allCirclesRef.current.forEach(c => {
+        const ctr = c.getCenter();
         const cs = { type: 'circle', center: { lat: ctr.lat(), lng: ctr.lng() }, radius: Math.round(c.getRadius()) };
-        pendingCircleAreaRef.current = showAreaPopupG(topOfCircle(ctr, c.getRadius()), computeArea(cs));
+        const areaInfo = showAreaPopupG(topOfCircle(ctr, c.getRadius()), computeArea(cs));
+        addShapeClickListener(c, areaInfo, cs);
         onCreatedRef.current?.(cs);
-        const latOff = c.getRadius() / 111320;
-        map.fitBounds(new window.google.maps.LatLngBounds(
-          new window.google.maps.LatLng(ctr.lat() - latOff, ctr.lng()),
-          new window.google.maps.LatLng(ctr.lat() + latOff, ctr.lng())
-        ), 40);
-        return;
-      }
+      });
+
       drawnShapes.forEach(s => {
-        let shape = null, center = null, bounds = null;
+        let shape = null, center = null;
         if (s instanceof window.google.maps.Rectangle) {
           const b = s.getBounds(), ne = b.getNorthEast(), sw = b.getSouthWest();
           shape = { type: 'rectangle', nex: ne.lng(), ney: ne.lat(), swx: sw.lng(), swy: sw.lat() };
-          center = topOfBounds(b); bounds = b;
+          center = topOfBounds(b);
         } else if (s instanceof window.google.maps.Polygon) {
           const pathArr = s.getPath().getArray();
           const pts = pathArr.map(p => [p.lng(), p.lat()]);
           if (pts.length >= 3) {
             shape = { type: 'polygon', points: [...pts, pts[0]] };
             center = topOfPath(pathArr);
-            bounds = new window.google.maps.LatLngBounds();
-            pathArr.forEach(p => bounds.extend(p));
           }
         }
         if (shape) {
           const areaInfo = showAreaPopupG(center, computeArea(shape));
-          addShapeClickListener(s, areaInfo);
+          addShapeClickListener(s, areaInfo, shape);
           onCreatedRef.current?.(shape);
-          if (bounds) map.fitBounds(bounds, 40);
         }
       });
     };
 
     const clearAll = () => {
       exitEdit(false);
-      drawnShapes.forEach(s => { s.setMap(null); shapeStatesRef.current.delete(s); }); drawnShapes = [];
+      drawnShapes.forEach(s => { s.setMap(null); shapeStatesRef.current.delete(s); }); drawnShapes = []; drawnShapesRef.current = [];
       allCirclesRef.current.forEach(c => { try { c.setMap(null); } catch (_) {} shapeStatesRef.current.delete(c); });
       allCirclesRef.current = [];
       circleRef.current = null;
@@ -452,6 +503,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         btn._active = active;
         btn.style.background = active ? '#d8e8f8' : '#fff';
         btn.style.color = active ? '#1565c0' : '#444';
+        btn.style.boxShadow = '';
+        btn.style.transform = '';
       });
     };
 
@@ -481,6 +534,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       map.getDiv().style.cursor = pickMode ? 'crosshair' : '';
       pickBtn.style.background  = pickMode ? '#e3f2fd' : '#fff';
       pickBtn.style.color       = pickMode ? '#1565c0' : '#555';
+      pickBtn.style.boxShadow   = '';
+      pickBtn.style.transform   = '';
     });
     pickBar.appendChild(pickBtn);
     TB.appendChild(pickBar);
@@ -496,13 +551,14 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     editBtnEl.addEventListener('click', e => {
       e.preventDefault();
       if (!editMode) {
-        const all = [...drawnShapes];
-        if (circleRef.current) all.push(circleRef.current);
+        const all = [...drawnShapes, ...allCirclesRef.current];
         if (!all.length) return;
         editMode = true;
         editBtnEl._active = true;
         editBtnEl.style.background = '#d8e8f8';
         editBtnEl.style.color = '#1565c0';
+        editBtnEl.style.boxShadow = '';
+        editBtnEl.style.transform = '';
         editBtnEl.title = 'Salvar edição';
         all.forEach(s => s.setEditable(true));
       } else {
@@ -521,6 +577,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       pickBtn._active = false;
       pickBtn.style.background = '#fff';
       pickBtn.style.color = '#555';
+      pickBtn.style.boxShadow = '';
+      pickBtn.style.transform = '';
       map.getDiv().style.cursor = '';
       setLayerClearRef.current?.(t => t + 1);
       onClearRef.current?.();
@@ -532,7 +590,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const clickL = map.addListener('click', e => {
       if (pickMode) {
         pickMode = false; pickBtn._active = false;
-        map.getDiv().style.cursor = ''; pickBtn.style.background = '#fff'; pickBtn.style.color = '#555';
+        map.getDiv().style.cursor = '';
+        pickBtn.style.background = '#fff'; pickBtn.style.color = '#555';
+        pickBtn.style.boxShadow = ''; pickBtn.style.transform = '';
         onPickRef.current?.({ lat: e.latLng.lat(), lng: e.latLng.lng() });
         return;
       }
@@ -544,11 +604,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       if (drawMode === 'polygon' && points.length >= 3) {
         e.stop();
         const finalPts = [...points]; setDrawMode(null);
-        const poly = new window.google.maps.Polygon({ paths: finalPts, map, ...SHAPE_STYLE });
+        const poly = new window.google.maps.Polygon({ paths: finalPts, map, ...USER_SHAPE_STYLE });
         drawnShapes.push(poly);
+        drawnShapesRef.current.push(poly);
         const pts = finalPts.map(p => [p.lng(), p.lat()]);
         const shape = { type: 'polygon', points: [...pts, pts[0]] };
-        addShapeClickListener(poly, showAreaPopupG(topOfPath(finalPts), computeArea(shape)));
+        addShapeClickListener(poly, showAreaPopupG(topOfPath(finalPts), computeArea(shape)), shape, true);
         onCreatedRef.current?.(shape);
       }
     });
@@ -563,16 +624,16 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       if (!drawMode) return;
       clearPrev();
       if (drawMode === 'polygon' && points.length > 0) {
-        previews = [new window.google.maps.Polyline({ path: [...points, e.latLng], map, strokeColor: '#1565c0', strokeWeight: 1.5, strokeOpacity: 0.7, clickable: false })];
+        previews = [new window.google.maps.Polyline({ path: [...points, e.latLng], map, strokeColor: USER_SHAPE_STYLE.strokeColor, strokeWeight: USER_SHAPE_STYLE.strokeWeight, strokeOpacity: 0.85, clickable: false })];
       }
       if (drawMode === 'circle' && dragging && startPt) {
         const r = HAVERSINE(startPt.lat(), startPt.lng(), e.latLng.lat(), e.latLng.lng());
-        previews = [new window.google.maps.Circle({ center: startPt, radius: r, map, ...SHAPE_STYLE, clickable: false })];
+        previews = [new window.google.maps.Circle({ center: startPt, radius: r, map, ...USER_SHAPE_STYLE, clickable: false })];
       }
       if (drawMode === 'rectangle' && dragging && startPt) {
         const SW = new window.google.maps.LatLng(Math.min(startPt.lat(), e.latLng.lat()), Math.min(startPt.lng(), e.latLng.lng()));
         const NE = new window.google.maps.LatLng(Math.max(startPt.lat(), e.latLng.lat()), Math.max(startPt.lng(), e.latLng.lng()));
-        previews = [new window.google.maps.Rectangle({ bounds: new window.google.maps.LatLngBounds(SW, NE), map, ...SHAPE_STYLE, clickable: false })];
+        previews = [new window.google.maps.Rectangle({ bounds: new window.google.maps.LatLngBounds(SW, NE), map, ...USER_SHAPE_STYLE, clickable: false })];
       }
     });
 
@@ -594,11 +655,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
             new window.google.maps.LatLng(Math.min(s.lat(), end.lat()), Math.min(s.lng(), end.lng())),
             new window.google.maps.LatLng(Math.max(s.lat(), end.lat()), Math.max(s.lng(), end.lng())),
           ),
-          map, ...SHAPE_STYLE,
+          map, ...USER_SHAPE_STYLE,
         });
         drawnShapes.push(rect);
+        drawnShapesRef.current.push(rect);
         const rectShape = { type: 'rectangle', nex: Math.max(s.lng(), end.lng()), ney: Math.max(s.lat(), end.lat()), swx: Math.min(s.lng(), end.lng()), swy: Math.min(s.lat(), end.lat()) };
-        addShapeClickListener(rect, showAreaPopupG(topOfBounds(rect.getBounds()), computeArea(rectShape)));
+        addShapeClickListener(rect, showAreaPopupG(topOfBounds(rect.getBounds()), computeArea(rectShape)), rectShape, true);
         onCreatedRef.current?.(rectShape);
       }
     };
@@ -631,16 +693,37 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   useEffect(() => {
     if (!mapRef.current) return;
     if (!circleData) {
-      // Multi-pesquisa: mantém círculos anteriores no mapa — só limpa a referência corrente.
-      // A remoção real ocorre via clearShapesTrigger → clearDrawnRef.
+      if (coordCircleRef.current) {
+        const old = coordCircleRef.current;
+        const st = shapeStatesRef.current.get(old);
+        if (st?.areaIW) { try { st.areaIW.close(); } catch (_) {} }
+        if (st?.areaAnchor) { try { st.areaAnchor.setMap(null); } catch (_) {} }
+        shapeStatesRef.current.delete(old);
+        allCirclesRef.current = allCirclesRef.current.filter(c => c !== old);
+        try { old.setMap(null); } catch (_) {}
+        coordCircleRef.current = null;
+      }
       circleRef.current = null;
       return;
     }
-    // Nova busca: cria círculo adicional sem remover os anteriores
-    const circle = new window.google.maps.Circle({ center: circleData.center, radius: circleData.radius, map: mapRef.current, ...SHAPE_STYLE });
+    // Busca por coordenada (aba Geral): remove o círculo anterior antes de criar o novo
+    if (circleData._replaceCoord && coordCircleRef.current) {
+      const old = coordCircleRef.current;
+      const st = shapeStatesRef.current.get(old);
+      if (st?.areaIW) { try { st.areaIW.close(); } catch (_) {} }
+      if (st?.areaAnchor) { try { st.areaAnchor.setMap(null); } catch (_) {} }
+      shapeStatesRef.current.delete(old);
+      allCirclesRef.current = allCirclesRef.current.filter(c => c !== old);
+      try { old.setMap(null); } catch (_) {}
+      coordCircleRef.current = null;
+    }
+    const circStyle = circleData._userDrawn ? USER_SHAPE_STYLE : SHAPE_STYLE;
+    const circle = new window.google.maps.Circle({ center: circleData.center, radius: circleData.radius, map: mapRef.current, ...circStyle });
     circleRef.current = circle;
     allCirclesRef.current.push(circle);
-    addShapeClickListenerRef.current?.(circle, pendingCircleAreaRef.current);
+    if (circleData._replaceCoord) coordCircleRef.current = circle;
+    if (circleData._pageId) pageShapesRef.current.set(circleData._pageId, circle);
+    addShapeClickListenerRef.current?.(circle, pendingCircleAreaRef.current, { type: 'circle', center: circleData.center, radius: circleData.radius }, circleData._userDrawn ?? false);
     pendingCircleAreaRef.current = null;
     if (!circleData._skipFly) {
       mapRef.current.panTo(circleData.center);
@@ -653,6 +736,35 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     clearDrawnRef.current?.();
     infoWinRef.current?.close();
   }, [clearShapesTrigger]);
+
+  useEffect(() => {
+    if (!lastDrawnPageId) return;
+    const { pageId } = lastDrawnPageId;
+    const last = drawnShapesRef.current[drawnShapesRef.current.length - 1];
+    if (last) pageShapesRef.current.set(pageId, last);
+  }, [lastDrawnPageId]);
+
+  useEffect(() => {
+    if (!removeShapeTrigger) return;
+    const { pageId } = removeShapeTrigger;
+    const shape = pageShapesRef.current.get(pageId);
+    if (!shape) return;
+    pageShapesRef.current.delete(pageId);
+    const st = shapeStatesRef.current.get(shape);
+    if (st?.areaIW) {
+      try { st.areaIW.close(); } catch (_) {}
+      areaInfoWinsRef.current = areaInfoWinsRef.current.filter(x => x !== st.areaIW);
+    }
+    if (st?.areaAnchor) {
+      try { st.areaAnchor.setMap(null); } catch (_) {}
+      areaAnchorsRef.current = areaAnchorsRef.current.filter(x => x !== st.areaAnchor);
+    }
+    shapeStatesRef.current.delete(shape);
+    try { shape.setMap(null); } catch (_) {}
+    allCirclesRef.current = allCirclesRef.current.filter(c => c !== shape);
+    if (coordCircleRef.current === shape) coordCircleRef.current = null;
+    removeFromDrawnRef.current?.(shape);
+  }, [removeShapeTrigger]);
 
   useEffect(() => {
     if (!mapRef.current) return;

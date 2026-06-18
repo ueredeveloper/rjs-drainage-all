@@ -16,7 +16,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const BRASILIA   = [-15.7801, -47.9292];
-const SHAPE_OPTS = { color: '#1565c0', fillColor: '#1565c0', fillOpacity: 0.08, weight: 2 };
+const SHAPE_OPTS      = { color: '#1565c0', fillColor: '#1565c0', fillOpacity: 0.08, weight: 2 };
+const USER_SHAPE_OPTS = { color: '#c62828', fillColor: '#c62828', fillOpacity: 0.08, weight: 3 };
 
 const TILE_TYPES = [
   { label: 'Mapa',
@@ -100,7 +101,7 @@ function buildPopupHtml(item) {
     </div>`;
 }
 
-export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange }) {
+export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger }) {
   const containerRef       = useRef(null);
   const mapRef             = useRef(null);
   const [mapInstance, setMapInstance]             = useState(null);
@@ -121,6 +122,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   const shapeStatesRef           = useRef(new Map());
   const pendingCircleAreaRef     = useRef(null);
   const addLayerClickListenerRef = useRef(null);
+  const coordCircleRef           = useRef(null);
+  const pageShapesRef            = useRef(new Map());
+  const lastDrawnLayerRef        = useRef(null);
   const onCreatedRef             = useRef(onShapeCreated);
   const onPickRef          = useRef(onPickCoordinate);
   const pickModeRef        = useRef(false);
@@ -204,9 +208,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     const drawCtrl = new L.Control.Draw({
       position: 'topleft',
       draw: {
-        polygon:      { shapeOptions: SHAPE_OPTS, allowIntersection: false },
-        rectangle:    { shapeOptions: SHAPE_OPTS },
-        circle:       { shapeOptions: SHAPE_OPTS },
+        polygon:      { shapeOptions: USER_SHAPE_OPTS, allowIntersection: false },
+        rectangle:    { shapeOptions: USER_SHAPE_OPTS },
+        circle:       { shapeOptions: USER_SHAPE_OPTS },
         polyline:     false,
         marker:       false,
         circlemarker: false,
@@ -272,11 +276,12 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       { hex: '#c62828', label: 'Vermelho' },
       { hex: '#212121', label: 'Preto' },
     ];
-    const defaultShapeState = () => ({
-      strokeColor: SHAPE_OPTS.color,
-      fillColor:   SHAPE_OPTS.fillColor,
+    const defaultShapeState = (userDrawn = false) => ({
+      strokeColor: userDrawn ? USER_SHAPE_OPTS.color     : SHAPE_OPTS.color,
+      fillColor:   userDrawn ? USER_SHAPE_OPTS.fillColor : SHAPE_OPTS.fillColor,
       fillOpacity: SHAPE_OPTS.fillOpacity,
       areaPopup: null, areaVisible: false,
+      shapeDesc: null,
       _listenerAdded: false,
     });
     const applyLeafletStyle = (layer, state) => {
@@ -317,6 +322,11 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           ${!hasArea ? 'disabled' : ''}>
           ${!hasArea ? 'Sem info de área' : (state.areaVisible ? 'Ocultar' : 'Mostrar') + ' info de área'}
         </button>
+        ${state.shapeDesc ? `<button id="nd-search-shape"
+          style="width:100%;padding:4px 8px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;
+                 border:1px solid #1565c0;background:#1565c0;color:#fff;margin-top:5px;">
+          Atualizar pesquisa
+        </button>` : ''}
       </div>`;
     };
     const setupLeafletStyleListeners = (layer, state, popup) => {
@@ -365,6 +375,14 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           setTimeout(() => setupLeafletStyleListeners(layer, state, popup), 0);
         });
       }
+      const searchBtn = panel.querySelector('#nd-search-shape');
+      if (searchBtn && state.shapeDesc) {
+        L.DomEvent.on(searchBtn, 'click', L.DomEvent.stop);
+        L.DomEvent.on(searchBtn, 'click', () => {
+          onCreatedRef.current?.(state.shapeDesc);
+          map.closePopup();
+        });
+      }
     };
     const openLeafletStylePopup = (layer, latlng) => {
       const state = shapeStatesRef.current.get(layer) ?? defaultShapeState();
@@ -373,11 +391,13 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
         .setLatLng(latlng)
         .setContent(buildStylePopupHtml(state));
       popup.openOn(map);
-      popup.on('add', () => setTimeout(() => setupLeafletStyleListeners(layer, state, popup), 0));
+      // setTimeout garante que o DOM do popup já foi renderizado antes de anexar os listeners
+      setTimeout(() => setupLeafletStyleListeners(layer, state, popup), 0);
     };
-    const addLayerClickListener = (layer, areaPopup = null) => {
-      const state = shapeStatesRef.current.get(layer) ?? defaultShapeState();
+    const addLayerClickListener = (layer, areaPopup = null, shapeDesc = null, userDrawn = false) => {
+      const state = shapeStatesRef.current.get(layer) ?? defaultShapeState(userDrawn);
       if (areaPopup) { state.areaPopup = areaPopup; state.areaVisible = true; }
+      if (shapeDesc) state.shapeDesc = shapeDesc;
       shapeStatesRef.current.set(layer, state);
       if (!state._listenerAdded) {
         state._listenerAdded = true;
@@ -398,13 +418,17 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
         const ne = e.layer.getBounds().getNorthEast();
         const sw = e.layer.getBounds().getSouthWest();
         shape = { type: 'rectangle', nex: ne.lng, ney: ne.lat, swx: sw.lng, swy: sw.lat };
+        e.layer.setStyle(USER_SHAPE_OPTS);
         drawnItems.addLayer(e.layer);
-        addLayerClickListener(e.layer, showAreaPopup(e.layer));
+        lastDrawnLayerRef.current = e.layer;
+        addLayerClickListener(e.layer, showAreaPopup(e.layer), shape, true);
       } else if (t === 'polygon') {
         const pts = e.layer.getLatLngs()[0].map(ll => [ll.lng, ll.lat]);
         shape = { type: 'polygon', points: [...pts, pts[0]] };
+        e.layer.setStyle(USER_SHAPE_OPTS);
         drawnItems.addLayer(e.layer);
-        addLayerClickListener(e.layer, showAreaPopup(e.layer));
+        lastDrawnLayerRef.current = e.layer;
+        addLayerClickListener(e.layer, showAreaPopup(e.layer), shape, true);
       }
 
       if (shape) onCreatedRef.current(shape);
@@ -524,6 +548,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           const newAreaPopup = showAreaPopup(l);
           const st = shapeStatesRef.current.get(l);
           if (st && newAreaPopup) { st.areaPopup = newAreaPopup; st.areaVisible = true; }
+          if (st && shape) st.shapeDesc = shape;
         });
         snapshots = new Map();
       } else {
@@ -652,7 +677,35 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     areaPopupsRef.current = [];
     shapeStatesRef.current.clear();
     pendingCircleAreaRef.current = null;
+    coordCircleRef.current = null;
+    pageShapesRef.current.clear();
   }, [clearShapesTrigger]);
+
+  useEffect(() => {
+    if (!lastDrawnPageId) return;
+    const { pageId } = lastDrawnPageId;
+    if (lastDrawnLayerRef.current) {
+      pageShapesRef.current.set(pageId, lastDrawnLayerRef.current);
+      lastDrawnLayerRef.current = null;
+    }
+  }, [lastDrawnPageId]);
+
+  useEffect(() => {
+    if (!removeShapeTrigger || !mapRef.current) return;
+    const { pageId } = removeShapeTrigger;
+    const layer = pageShapesRef.current.get(pageId);
+    if (!layer) return;
+    pageShapesRef.current.delete(pageId);
+    const st = shapeStatesRef.current.get(layer);
+    if (st?.areaPopup) {
+      try { st.areaPopup.remove(); } catch (_) {}
+      areaPopupsRef.current = areaPopupsRef.current.filter(p => p !== st.areaPopup);
+    }
+    shapeStatesRef.current.delete(layer);
+    const drawn = drawnItemsRef.current;
+    try { if (drawn) drawn.removeLayer(layer); else mapRef.current.removeLayer(layer); } catch (_) {}
+    if (coordCircleRef.current === layer) coordCircleRef.current = null;
+  }, [removeShapeTrigger]);
 
   // ── Atualiza círculo no mapa quando circleData muda ───────────────────────
   useEffect(() => {
@@ -661,23 +714,47 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     if (!map) return;
 
     if (!circleData) {
-      // Multi-pesquisa: mantém o círculo anterior no mapa — só limpa a referência.
-      // A remoção real ocorre via clearShapesTrigger.
+      if (coordCircleRef.current) {
+        const old = coordCircleRef.current;
+        const st = shapeStatesRef.current.get(old);
+        if (st?.areaPopup) {
+          try { st.areaPopup.remove(); } catch (_) {}
+          areaPopupsRef.current = areaPopupsRef.current.filter(p => p !== st.areaPopup);
+        }
+        shapeStatesRef.current.delete(old);
+        try { if (drawn) drawn.removeLayer(old); else map.removeLayer(old); } catch (_) {}
+        coordCircleRef.current = null;
+      }
       circleLayerRef.current = null;
       return;
     }
 
-    // Nova busca por coordenada: adiciona novo círculo sem remover os anteriores
+    // Busca por coordenada (aba Geral): remove o círculo anterior antes de criar o novo
+    if (circleData._replaceCoord && coordCircleRef.current) {
+      const old = coordCircleRef.current;
+      const st = shapeStatesRef.current.get(old);
+      if (st?.areaPopup) {
+        try { st.areaPopup.remove(); } catch (_) {}
+        areaPopupsRef.current = areaPopupsRef.current.filter(p => p !== st.areaPopup);
+      }
+      shapeStatesRef.current.delete(old);
+      try { if (drawn) drawn.removeLayer(old); else map.removeLayer(old); } catch (_) {}
+      coordCircleRef.current = null;
+    }
+
+    const circStyle = circleData._userDrawn ? USER_SHAPE_OPTS : SHAPE_OPTS;
     const circle = L.circle(
       [circleData.center.lat, circleData.center.lng],
-      { ...SHAPE_OPTS, radius: circleData.radius },
+      { ...circStyle, radius: circleData.radius },
     );
 
     if (drawn) drawn.addLayer(circle);
     else circle.addTo(map);
 
     circleLayerRef.current = circle;
-    addLayerClickListenerRef.current?.(circle, pendingCircleAreaRef.current);
+    if (circleData._replaceCoord) coordCircleRef.current = circle;
+    if (circleData._pageId) pageShapesRef.current.set(circleData._pageId, circle);
+    addLayerClickListenerRef.current?.(circle, pendingCircleAreaRef.current, { type: 'circle', center: circleData.center, radius: circleData.radius }, circleData._userDrawn ?? false);
     pendingCircleAreaRef.current = null;
     if (!circleData._skipFly) {
       map.flyTo([circleData.center.lat, circleData.center.lng], 13, { animate: true, duration: 1.2 });

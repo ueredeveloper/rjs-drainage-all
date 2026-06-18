@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Box, Typography, Tabs, Tab, Chip, Stack, Divider, IconButton } from '@mui/material';
 import WaterIcon from '@mui/icons-material/Water';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -45,6 +45,9 @@ export default function NewDesign() {
   const [persistedLayerState, setPersistedLayerState] = useState(null);
   const [clearShapesTrigger, setClearShapesTrigger] = useState(0);
   const [settingsOpen, setSettingsOpen]       = useState(false);
+  const coordSearchPageIdRef                  = useRef(null);
+  const [removeShapeTrigger, setRemoveShapeTrigger] = useState(null);
+  const [lastDrawnPageId, setLastDrawnPageId] = useState(null);
   const [fontSize, setFontSize]               = useState(() => {
     try {
       const stored = parseInt(localStorage.getItem(FONT_SIZE_STORAGE_KEY), 10);
@@ -89,6 +92,7 @@ export default function NewDesign() {
       data,
     }]);
     setSearchHistory(prev => [...prev, {
+      id:     pageId,
       label:  `P${prev.length + 1} — ${shapeLabel}`,
       counts: TI_CATS.map(c => (Array.isArray(data[c.key]) ? data[c.key].length : 0)),
     }]);
@@ -105,6 +109,8 @@ export default function NewDesign() {
   }, []);
 
   const handleClearPage = useCallback((id) => {
+    if (coordSearchPageIdRef.current === id) coordSearchPageIdRef.current = null;
+    setRemoveShapeTrigger({ pageId: id, ts: Date.now() });
     setSearchPages(prev =>
       prev.filter(p => p.id !== id).map((p, i) => ({ ...p, label: p.label.replace(/^P\d+/, `P${i + 1}`) }))
     );
@@ -112,12 +118,25 @@ export default function NewDesign() {
   }, []);
 
   // ── Handlers de busca ─────────────────────────────────────────────────────
-  const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo', skipFly = false) => {
-    setCircleData({ center, radius: rad, _skipFly: skipFly });
-    setSubShape(null); // limpa polígono subterrâneo ao iniciar busca geral
+  const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo', skipFly = false, replaceCoord = false, userDrawn = false) => {
+    const oldPageId = replaceCoord ? coordSearchPageIdRef.current : null;
+    const pageId = Date.now();
+    if (replaceCoord) coordSearchPageIdRef.current = pageId;
+
+    setCircleData({ center, radius: rad, _skipFly: skipFly, _replaceCoord: replaceCoord, _pageId: pageId, _userDrawn: userDrawn });
+    setSubShape(null);
     setLoading(true);
     setError(null);
-    const pageId = Date.now();
+
+    if (oldPageId !== null) {
+      setAllMarkers(prev => prev.filter(m => m._pageId !== oldPageId));
+      setSearchPages(prev => {
+        const filtered = prev.filter(p => p.id !== oldPageId);
+        return filtered.map((p, i) => ({ ...p, label: p.label.replace(/^P\d+/, `P${i + 1}`) }));
+      });
+      setSearchHistory(prev => prev.filter(h => h.id !== oldPageId));
+    }
+
     try {
       const data = normalizeResult(await findAllPointsInCircle({ center, radius: rad }));
       setSearchResult(data ?? {});
@@ -143,7 +162,7 @@ export default function NewDesign() {
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) { setError('Coordenadas inválidas. Ex: -15.7801'); return; }
     setUserMarker({ lat: latN, lng: lngN });
-    doCircleSearch({ lat: latN, lng: lngN }, radius, 'Coordenada');
+    doCircleSearch({ lat: latN, lng: lngN }, radius, 'Coordenada', false, true);
   }, [lat, lng, radius, doCircleSearch]);
 
   const handleSubSearch = useCallback(() => {
@@ -234,6 +253,7 @@ export default function NewDesign() {
   }, [normalizeResult, pushHistory, updateAllMarkers]);
 
   const handleClearAll = useCallback(() => {
+    coordSearchPageIdRef.current = null;
     setCircleData(null);
     setUserMarker(null);
     setSubShape(null);
@@ -263,7 +283,7 @@ export default function NewDesign() {
     if (shape.type === 'circle') {
       setLat(shape.center.lat.toFixed(6));
       setLng(shape.center.lng.toFixed(6));
-      doCircleSearch(shape.center, shape.radius, 'Círculo', true);
+      doCircleSearch(shape.center, shape.radius, 'Círculo', true, false, true);
       return;
     }
 
@@ -272,6 +292,7 @@ export default function NewDesign() {
     setError(null);
     setTabIndex(0);
     const pageId = Date.now();
+    setLastDrawnPageId({ pageId, ts: pageId });
 
     try {
       let data;
@@ -369,6 +390,8 @@ export default function NewDesign() {
               clearShapesTrigger,
               initialLayerState: persistedLayerState,
               onLayerStateChange: setPersistedLayerState,
+              lastDrawnPageId,
+              removeShapeTrigger,
             };
             return mapProvider === 'gmaps'
               ? <GoogleMapView {...mapProps} />
@@ -476,6 +499,7 @@ export default function NewDesign() {
               onApplyCoordinates={handleApplyCoordinates}
               onMarkerSelect={setSelectedMarker}
               onBarMarkers={handleBarMarkers}
+              onBarShape={setSubShape}
               onClearCircle={() => setCircleData(null)}
             />
           )}

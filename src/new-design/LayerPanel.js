@@ -7,6 +7,7 @@ import {
   fetchAddressesByPosition,
   fetchSuplySystemByPosition,
 } from '../services/connection';
+import { convertGeometryToGmaps, getPolygonEsriCentroid } from '../tools';
 
 const LAYER_GROUPS = [
   {
@@ -253,6 +254,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   const [loading, setLoading]         = useState(new Set());
   const [addressKeyword, setAddressKeyword] = useState('');
   const [keywordLoading, setKeywordLoading] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [metersMap, setMetersMap]     = useState(initialLayerState?.metersMap   ?? { enderecos: 500, caesb_estacoes: 500 });
   const [waterUseMap, setWaterUseMap] = useState(initialLayerState?.waterUseMap ?? { hidrogeo_fraturado: false, hidrogeo_poroso: false });
   const [openGroups, setOpenGroups]   = useState(new Set());
@@ -264,6 +267,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   const infoWinRef      = useRef(null);
   const pendingShapeRef = useRef(null);
   const keywordLayerRef = useRef(null);
+  const addressPolygonRef = useRef(null);
   const styleFnsRef     = useRef(new Map()); // Map<id, {gmaps, leaflet}>
   const caesbIconMarkersRef = useRef([]);
   const onSearchRef        = useRef(onFeatureSearch);
@@ -380,8 +384,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     });
 
     const gmapsPolygonStyle = () => ({
-      strokeColor: color, strokeWeight: 1.5, strokeOpacity: 0.85,
-      fillColor: color, fillOpacity: 0.18,
+      strokeColor: color, strokeWeight: 2, strokeOpacity: 1,
+      fillColor: color, fillOpacity: 0.30,
     });
 
     const gmapsLineStyle = () => ({
@@ -420,7 +424,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         });
       } else if (isEndereco) {
         dl = L.geoJSON(null, {
-          style: () => ({ color, weight: 1.5, opacity: 0.85, fillColor: color, fillOpacity: 0.18 }),
+          style: () => ({ color, weight: 2, opacity: 1, fillColor: color, fillOpacity: 0.30 }),
           onEachFeature: (feature, layer) => {
             layer.on('click', (e) => {
               pendingShapeRef.current = null;
@@ -558,7 +562,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       const fIdx   = typeof feature.getId() === 'number' ? feature.getId() : 0;
       const colors = colorCacheRef.current.get(id);
       const fColor = COLORED_LAYERS.has(id) ? (colors?.[fIdx] ?? getFeatureColor(fIdx)) : color;
-      return { strokeColor: fColor, strokeWeight: 1.5, strokeOpacity: 0.85, fillColor: fColor, fillOpacity: 0.18 };
+      return { strokeColor: fColor, strokeWeight: 2, strokeOpacity: 1, fillColor: fColor, fillOpacity: 0.30 };
     };
 
     const leafletStyleFn = (feature) => {
@@ -570,7 +574,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       const fIdx   = feature?.id ?? 0;
       const colors = colorCacheRef.current.get(id);
       const fColor = COLORED_LAYERS.has(id) ? (colors?.[fIdx] ?? getFeatureColor(fIdx)) : color;
-      return { color: fColor, weight: 1.5, opacity: 0.85, fillColor: fColor, fillOpacity: 0.18 };
+      return { color: fColor, weight: 2, opacity: 1, fillColor: fColor, fillOpacity: 0.30 };
     };
 
     styleFnsRef.current.set(id, { gmaps: gmapsStyleFn, leaflet: leafletStyleFn });
@@ -727,6 +731,102 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     }
   }, [addressKeyword, map, mapType]);
 
+  // Busca sugestões de endereço conforme o usuário digita (debounce 300ms)
+  useEffect(() => {
+    const kw = addressKeyword.trim();
+    if (kw.length < 3) { setAddressSuggestions([]); setShowSuggestions(false); return; }
+    const timer = setTimeout(async () => {
+      try {
+        const results = await fetchAddressByKeyword(kw);
+        setAddressSuggestions(results || []);
+        setShowSuggestions(true);
+      } catch (_) {
+        setAddressSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [addressKeyword]);
+
+  const handleSuggestionSelect = useCallback(async (option) => {
+    setAddressKeyword(option.pu_end_usual);
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+    if (!option?.geometry) return;
+
+    // Remove polígono anterior
+    if (addressPolygonRef.current) {
+      if (mapType === 'gmaps') { try { addressPolygonRef.current.setMap(null); } catch (_) {} }
+      else { try { if (map && map.hasLayer(addressPolygonRef.current)) map.removeLayer(addressPolygonRef.current); } catch (_) {} }
+      addressPolygonRef.current = null;
+    }
+
+    const paths = convertGeometryToGmaps(option.geometry);
+    if (!paths?.length) return;
+    const centroid = getPolygonEsriCentroid(option.geometry);
+
+    // Propriedades sem a geometria para o popup
+    const { geometry: _geo, ...props } = option;
+
+    const html = buildFeatureHtml(props, 'Endereço', '#1565c0', false);
+
+    if (mapType === 'gmaps' && map) {
+      const polygon = new window.google.maps.Polygon({
+        paths, map,
+        strokeColor: '#1565c0', strokeWeight: 2,
+        fillColor: '#1565c0', fillOpacity: 0.15,
+      });
+      addressPolygonRef.current = polygon;
+      if (!infoWinRef.current) infoWinRef.current = new window.google.maps.InfoWindow();
+      infoWinRef.current.setContent(html);
+      polygon.addListener('click', () => {
+        if (centroid) {
+          infoWinRef.current.setPosition(centroid);
+          infoWinRef.current.open(map);
+        }
+      });
+      if (centroid) {
+        map.panTo(centroid);
+        map.setZoom(17);
+        infoWinRef.current.setPosition(centroid);
+        infoWinRef.current.open(map);
+      }
+    } else if (mapType !== 'gmaps' && map) {
+      const L = (await import('leaflet')).default;
+      const latLngs = paths.map(ring => ring.map(p => [p.lat, p.lng]));
+      const poly = L.polygon(latLngs, { color: '#1565c0', weight: 2, fillColor: '#1565c0', fillOpacity: 0.15 });
+      poly.addTo(map);
+      addressPolygonRef.current = poly;
+      poly.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        if (centroid) {
+          L.popup({ maxWidth: 300, closeButton: true })
+            .setLatLng([centroid.lat, centroid.lng])
+            .setContent(html)
+            .openOn(map);
+        }
+      });
+      if (centroid) {
+        map.setView([centroid.lat, centroid.lng], 17);
+        L.popup({ maxWidth: 300, closeButton: true })
+          .setLatLng([centroid.lat, centroid.lng])
+          .setContent(html)
+          .openOn(map);
+      }
+    }
+  }, [map, mapType]);
+
+  const handleClearAddress = useCallback(() => {
+    setAddressKeyword('');
+    setAddressSuggestions([]);
+    setShowSuggestions(false);
+    if (addressPolygonRef.current) {
+      if (mapType === 'gmaps') { try { addressPolygonRef.current.setMap(null); } catch (_) {} }
+      else { try { if (map && map.hasLayer(addressPolygonRef.current)) map.removeLayer(addressPolygonRef.current); } catch (_) {} }
+      addressPolygonRef.current = null;
+    }
+    if (infoWinRef.current) { try { infoWinRef.current.close(); } catch (_) {} }
+  }, [map, mapType]);
+
   // Reporta estado das camadas para o pai sempre que muda (para persistir entre trocas de mapa)
   useEffect(() => {
     if (!isMountedRef.current) { isMountedRef.current = true; return; }
@@ -779,9 +879,25 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           position: 'absolute', bottom: 'calc(100% + 4px)', right: 0,
           background: '#fff', borderRadius: 6,
           boxShadow: '0 2px 12px rgba(0,0,0,0.22)',
-          minWidth: 230, overflow: 'hidden',
+          minWidth: 230,
           zIndex: 1000,
         }}>
+          {/* Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '7px 10px 6px', borderBottom: '1px solid #e8ecf0',
+          }}>
+            <span style={{ fontSize: scalePx(11), fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.7px' }}>Camadas</span>
+            <button
+              onClick={() => setOpen(false)}
+              title="Fechar painel"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#9e9e9e', padding: '0 2px', lineHeight: 1,
+                fontSize: 16, display: 'flex', alignItems: 'center',
+              }}
+            >×</button>
+          </div>
           {LAYER_GROUPS.map(({ group, layers }) => {
             const isGroupOpen  = openGroups.has(group);
             const groupActive  = layers.filter(l => active.has(l.id)).length;
@@ -832,19 +948,35 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                   <div key={id}>
                     {/* Keyword text search — only for enderecos */}
                     {id === 'enderecos' && (
-                      <div style={{ padding: '5px 12px 2px', display: 'flex', gap: 4 }}>
-                        <input
-                          type="text"
-                          placeholder="Buscar endereço..."
-                          value={addressKeyword}
-                          onChange={e => setAddressKeyword(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && handleKeywordSearch(color)}
-                          style={{
-                            flex: 1, fontSize: scalePx(11), padding: '3px 6px',
-                            border: '1px solid #ccc', borderRadius: 3, outline: 'none',
-                            fontFamily: 'Roboto, Arial, sans-serif',
-                          }}
-                        />
+                      <div style={{ padding: '5px 12px 2px', display: 'flex', gap: 4, position: 'relative' }}>
+                        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            placeholder="Buscar endereço..."
+                            value={addressKeyword}
+                            onChange={e => setAddressKeyword(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleKeywordSearch(color)}
+                            onFocus={() => addressSuggestions.length > 0 && setShowSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                            style={{
+                              width: '100%', fontSize: scalePx(11),
+                              padding: addressKeyword ? '3px 18px 3px 6px' : '3px 6px',
+                              border: '1px solid #ccc', borderRadius: 3, outline: 'none',
+                              fontFamily: 'Roboto, Arial, sans-serif', boxSizing: 'border-box',
+                            }}
+                          />
+                          {addressKeyword && (
+                            <button
+                              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); handleClearAddress(); }}
+                              title="Limpar"
+                              style={{
+                                position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                padding: 0, lineHeight: 1, color: '#9e9e9e', fontSize: 13,
+                              }}
+                            >×</button>
+                          )}
+                        </div>
                         <button
                           onClick={() => handleKeywordSearch(color)}
                           disabled={keywordLoading || !addressKeyword.trim()}
@@ -869,6 +1001,42 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                               </svg>
                           }
                         </button>
+                        {showSuggestions && addressSuggestions.length > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            background: '#fff',
+                            border: '1px solid #ccc',
+                            borderRadius: 4,
+                            maxHeight: 180,
+                            overflowY: 'auto',
+                            zIndex: 9999,
+                            boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
+                            marginTop: 2,
+                          }}>
+                            {addressSuggestions.slice(0, 20).map(opt => (
+                              <div
+                                key={opt.objectid}
+                                onMouseDown={() => handleSuggestionSelect(opt)}
+                                style={{
+                                  padding: '5px 8px',
+                                  fontSize: scalePx(11),
+                                  cursor: 'pointer',
+                                  fontFamily: 'Roboto, Arial, sans-serif',
+                                  borderBottom: '1px solid #f0f0f0',
+                                  color: '#263238',
+                                  lineHeight: 1.3,
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background = '#e3f2fd'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+                              >
+                                {opt.pu_end_usual}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
