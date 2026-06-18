@@ -292,12 +292,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       const swatches = (prefix, activeColor) =>
         STYLE_COLORS.map(({ hex, label }) => {
           const sel = hex === activeColor;
-          return `<button data-nd="${prefix}" data-color="${hex}" title="${label}"
+          return `<button data-nd="${prefix}" data-color="${hex}" title="${label}" class="nd-swatch-btn"
             style="width:22px;height:22px;border-radius:4px;cursor:pointer;padding:0;outline:none;
                    border:2px solid ${sel ? '#000' : 'transparent'};background:${hex};"></button>`;
         }).join('');
       const hasArea = !!state.areaIW;
-      return `<div id="nd-sp" style="font-family:Roboto,Arial,sans-serif;min-width:200px;padding:2px 0 4px;">
+      return `<style>.nd-swatch-btn{transition:transform .15s,box-shadow .15s}.nd-swatch-btn:hover{transform:scale(1.18);box-shadow:0 0 0 3px rgba(0,0,0,0.22)}.nd-swatch-btn:active{transform:scale(.92)}.nd-act-btn:not([disabled]):hover{filter:brightness(.88)}.nd-act-btn:not([disabled]):active{filter:brightness(.72);transform:scale(.97)}.nd-act-btn{transition:filter .15s,transform .1s}</style>
+      <div id="nd-sp" style="font-family:Roboto,Arial,sans-serif;min-width:200px;padding:2px 0 4px;">
         <div style="font-weight:700;font-size:11px;color:#1565c0;margin-bottom:8px;letter-spacing:.4px;text-transform:uppercase;">Estilo da camada</div>
         <div style="margin-bottom:7px;">
           <div style="font-size:10px;color:#78909c;font-weight:600;margin-bottom:4px;">Cor da linha</div>
@@ -314,7 +315,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
           <input id="nd-opa-slider" type="range" min="0" max="100" value="${opacityPct}"
             style="width:100%;accent-color:#1565c0;height:4px;cursor:pointer;">
         </div>
-        <button id="nd-toggle-area"
+        <button id="nd-toggle-area" class="nd-act-btn"
           style="width:100%;padding:4px 8px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;
                  border:1px solid ${hasArea ? '#1565c0' : '#ccc'};
                  background:${!hasArea ? '#f5f5f5' : state.areaVisible ? '#1565c0' : '#fff'};
@@ -322,7 +323,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
           ${!hasArea ? 'disabled' : ''}>
           ${!hasArea ? 'Sem info de área' : (state.areaVisible ? 'Ocultar' : 'Mostrar') + ' info de área'}
         </button>
-        ${state.shapeDesc ? `<button id="nd-search-shape"
+        ${state.shapeDesc ? `<button id="nd-search-shape" class="nd-act-btn"
           style="width:100%;padding:4px 8px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;
                  border:1px solid #1565c0;background:#1565c0;color:#fff;margin-top:5px;">
           Atualizar pesquisa

@@ -126,8 +126,10 @@ function buildFeatureHtml(props, layerLabel, color, showSearch) {
   const rows = formatProps(props);
   const searchBtn = showSearch ? `
     <div style="margin-top:8px;padding-top:6px;border-top:1px solid #e0e0e0;text-align:center;">
+      <style>.lp-feat-btn{transition:filter .15s,transform .1s}.lp-feat-btn:hover{filter:brightness(.84)}.lp-feat-btn:active{filter:brightness(.7);transform:scale(.97)}</style>
       <button
         onclick="window.__layerPanelSearch()"
+        class="lp-feat-btn"
         style="display:inline-flex;align-items:center;gap:5px;padding:5px 14px;
                background:${color};color:#fff;border:none;border-radius:4px;cursor:pointer;
                font-size:11px;font-weight:600;font-family:Roboto,Arial,sans-serif;"
@@ -852,12 +854,17 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     >
       <button
         onClick={() => setOpen(p => !p)}
+        onMouseEnter={e => { e.currentTarget.style.background = '#f0f4ff'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(21,101,192,0.28)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; }}
+        onMouseDown={e => { e.currentTarget.style.background = '#dce8ff'; }}
+        onMouseUp={e => { e.currentTarget.style.background = '#f0f4ff'; }}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0,
           padding: '0', background: '#fff', border: '1px solid #ccc',
           borderRadius: 2, boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
           cursor: 'pointer', fontSize: scalePx(12), color: '#333', fontWeight: 600,
           whiteSpace: 'nowrap', width: 30, height: 30,
+          transition: 'background 0.15s, box-shadow 0.15s',
         }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="#555">
@@ -891,10 +898,13 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
             <button
               onClick={() => setOpen(false)}
               title="Fechar painel"
+              onMouseEnter={e => { e.currentTarget.style.background = '#f0f0f0'; e.currentTarget.style.color = '#424242'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#9e9e9e'; }}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                color: '#9e9e9e', padding: '0 2px', lineHeight: 1,
+                color: '#9e9e9e', padding: '2px 4px', lineHeight: 1,
                 fontSize: 16, display: 'flex', alignItems: 'center',
+                borderRadius: 3, transition: 'background 0.15s, color 0.15s',
               }}
             >×</button>
           </div>
@@ -910,6 +920,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                   if (next.has(group)) next.delete(group); else next.add(group);
                   return next;
                 })}
+                onMouseEnter={e => { e.currentTarget.style.background = isGroupOpen ? '#edf0ff' : '#f5f7ff'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = isGroupOpen ? '#f5f7ff' : '#fff'; }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '7px 12px', cursor: 'pointer',
@@ -969,10 +981,13 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                             <button
                               onMouseDown={e => { e.preventDefault(); e.stopPropagation(); handleClearAddress(); }}
                               title="Limpar"
+                              onMouseEnter={e => { e.currentTarget.style.color = '#c62828'; }}
+                              onMouseLeave={e => { e.currentTarget.style.color = '#9e9e9e'; }}
                               style={{
                                 position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
                                 background: 'none', border: 'none', cursor: 'pointer',
                                 padding: 0, lineHeight: 1, color: '#9e9e9e', fontSize: 13,
+                                transition: 'color 0.15s',
                               }}
                             >×</button>
                           )}
@@ -981,13 +996,17 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                           onClick={() => handleKeywordSearch(color)}
                           disabled={keywordLoading || !addressKeyword.trim()}
                           title="Pesquisar endereço por nome"
+                          onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.filter = 'brightness(0.85)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}
+                          onMouseDown={e => { if (!e.currentTarget.disabled) e.currentTarget.style.filter = 'brightness(0.72)'; }}
+                          onMouseUp={e => { if (!e.currentTarget.disabled) e.currentTarget.style.filter = 'brightness(0.85)'; }}
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             padding: '3px 7px', background: color, color: '#fff',
                             border: 'none', borderRadius: 3,
                             cursor: keywordLoading || !addressKeyword.trim() ? 'default' : 'pointer',
                             opacity: keywordLoading || !addressKeyword.trim() ? 0.5 : 1,
-                            flexShrink: 0,
+                            flexShrink: 0, transition: 'filter 0.15s',
                           }}
                         >
                           {keywordLoading
@@ -1047,8 +1066,11 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                         padding: '6px 12px', cursor: 'pointer',
                         fontSize: scalePx(12.5), color: '#263238',
                         background: isActive ? `${color}18` : 'transparent',
+                        transition: 'background 0.15s',
                       }}
                       onClick={() => toggle(id, color)}
+                      onMouseEnter={e => { e.currentTarget.style.background = isActive ? `${color}28` : '#f5f7ff'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = isActive ? `${color}18` : 'transparent'; }}
                     >
                       <input
                         type="checkbox"
@@ -1132,7 +1154,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           })}
         </div>
       )}
-      <style>{`@keyframes lp-spin{to{transform:rotate(360deg)}}.lp-spin{animation:lp-spin .8s linear infinite}`}</style>
+      <style>{`@keyframes lp-spin{to{transform:rotate(360deg)}}.lp-spin{animation:lp-spin .8s linear infinite}.nd-swatch-btn{transition:transform .15s,box-shadow .15s}.nd-swatch-btn:hover{transform:scale(1.18);box-shadow:0 0 0 3px rgba(0,0,0,0.22)}.nd-swatch-btn:active{transform:scale(.92)}.nd-act-btn{transition:filter .15s,transform .1s}.nd-act-btn:not([disabled]):hover{filter:brightness(.88)}.nd-act-btn:not([disabled]):active{filter:brightness(.72);transform:scale(.97)}`}</style>
 
       {mapType === 'gmaps' && (
         <div style={{
@@ -1147,10 +1169,12 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
               background: '#fff', border: '1px solid #ccc', borderRadius: 2,
               boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
               cursor: 'pointer', color: '#555', fontWeight: 600,
-              transition: 'background 0.15s, color 0.15s',
+              transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
             }}
-            onMouseEnter={(e) => { e.target.style.background = '#f5f5f5'; }}
-            onMouseLeave={(e) => { e.target.style.background = '#fff'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#f0f4ff'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(21,101,192,0.28)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; }}
+            onMouseDown={e => { e.currentTarget.style.background = '#dce8ff'; }}
+            onMouseUp={e => { e.currentTarget.style.background = '#f0f4ff'; }}
             title="Aumentar zoom"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1165,10 +1189,12 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
               background: '#fff', border: '1px solid #ccc', borderRadius: 2,
               boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
               cursor: 'pointer', color: '#555', fontWeight: 600,
-              transition: 'background 0.15s, color 0.15s',
+              transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
             }}
-            onMouseEnter={(e) => { e.target.style.background = '#f5f5f5'; }}
-            onMouseLeave={(e) => { e.target.style.background = '#fff'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#f0f4ff'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(21,101,192,0.28)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; }}
+            onMouseDown={e => { e.currentTarget.style.background = '#dce8ff'; }}
+            onMouseUp={e => { e.currentTarget.style.background = '#f0f4ff'; }}
             title="Diminuir zoom"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
