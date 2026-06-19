@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Box, Typography, Stack, Divider, LinearProgress, Alert,
   TextField, Button, ToggleButton, ToggleButtonGroup,
@@ -19,9 +19,9 @@ import CompactTable      from '../components/CompactTable';
 import UserSearchDialog  from '../components/UserSearchDialog';
 import CoordConverter    from '../components/CoordConverter';
 import { findPointsInASystem } from '../../services/geolocation';
-import { analyzeAvailability, numberWithCommas, nFormatter } from '../../tools';
+import { analyzeAvailability, numberWithCommas } from '../../tools';
 import { MESES } from '../constants';
-import { PT_SUFFIXES, ptFormatter, makeBarValuesPlugin } from '../chartSetup';
+import { PT_SUFFIXES, makeBarValuesPlugin } from '../chartSetup';
 
 const barValuesPlugin = makeBarValuesPlugin('m³/ano');
 
@@ -108,6 +108,7 @@ export default function SubterraneanTab({
   lat, lng, onLatChange, onLngChange, onApplyCoordinates,
   onMarkerSelect, onSubShape, onSubMarkers, onClearCircle,
 }) {
+  const _renderRef = useRef(0);
   const [wellTypeId, setWellTypeId]     = useState('1');
   const [subPoints, setSubPoints]       = useState(null);
   const [rawAvail, setRawAvail]         = useState(null);
@@ -120,6 +121,8 @@ export default function SubterraneanTab({
   const [dialogOpen, setDialogOpen]     = useState(false);
   const [openConverter, setOpenConverter] = useState(false);
   const [logScale, setLogScale]         = useState(true);
+
+  console.log(`[SubterraneanTab] render #${++_renderRef.current}`, { lat, lng, loading, subPoints: subPoints?.length ?? 'null' });
 
   // Disponibilidade com usuário somado (reativo a qUsuario e rawAvail)
   const avail = useMemo(() => {
@@ -138,8 +141,11 @@ export default function SubterraneanTab({
   }, [rawAvail, qUsuario]);
 
   // Sync subPoints → map markers whenever the list changes
+  useEffect(() => {
+    console.log('[SubterraneanTab] subPoints effect', { count: subPoints?.length ?? 'null' });
+    if (subPoints !== null) onSubMarkers?.(subPoints);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (subPoints !== null) onSubMarkers?.(subPoints); }, [subPoints]);
+  }, [subPoints]);
 
   const handleSearch = useCallback(async () => {
     const latN = parseFloat(lat);
@@ -323,9 +329,11 @@ export default function SubterraneanTab({
         {error && <Alert severity="error" sx={{ fontSize: '0.73rem', py: 0.3, mt: 1 }}>{error}</Alert>}
       </Box>
 
+      <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
+
       {/* ── Chips: Bacia + UH ────────────────────────────────────────────────── */}
       {avail && (
-        <Stack direction="row" spacing={1} sx={{ px: 2, py: 0.8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <Stack direction="row" spacing={1} sx={{ px: 2, py: 0.8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {avail.bacia_nome && (
             <Chip
               avatar={<Avatar sx={{ bgcolor: 'transparent', width: 20, height: 20 }}><WallpaperIcon sx={{ fontSize: 14 }} /></Avatar>}
@@ -344,7 +352,7 @@ export default function SubterraneanTab({
       )}
 
       {/* ── Análise de disponibilidade ───────────────────────────────────────── */}
-      <Box id="nd-sub-avail-section" sx={{ px: 2, py: 1.5, flexShrink: 0, borderBottom: '1px solid #e8eaf0' }}>
+      <Box id="nd-sub-avail-section" sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e8eaf0' }}>
         <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
           Análise de disponibilidade
         </Typography>
@@ -505,7 +513,7 @@ export default function SubterraneanTab({
       </Box>
 
       {/* ── Outorgas subterrâneas ────────────────────────────────────────────── */}
-      <Box id="nd-sub-grants-header" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 0.8, flexShrink: 0, bgcolor: '#f5f7ff' }}>
+      <Box id="nd-sub-grants-header" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 0.8, bgcolor: '#f5f7ff' }}>
         <Stack direction="row" alignItems="center" spacing={0.6}>
           <WaterDropIcon sx={{ fontSize: 13, color: '#0277bd' }} />
           <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#0277bd', textTransform: 'uppercase', letterSpacing: 0.8 }}>
@@ -518,7 +526,7 @@ export default function SubterraneanTab({
       </Box>
       <Divider />
 
-      <Box id="nd-sub-grants-table" sx={{ flex: 1, overflow: 'auto', '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
+      <Box id="nd-sub-grants-table">
         {subPoints === null ? (
           <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
             <CompactTable
@@ -550,6 +558,8 @@ export default function SubterraneanTab({
             onRowClick={i => onMarkerSelect?.({ ...subPoints[i], _catColor: '#0277bd', _catLabel: 'Subterrânea' })}
           />
         )}
+      </Box>
+
       </Box>
 
       {/* ── Diálogo de busca de usuário ──────────────────────────────────────── */}

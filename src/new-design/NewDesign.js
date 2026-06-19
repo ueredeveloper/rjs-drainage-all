@@ -24,6 +24,8 @@ import { FontSizeProvider } from './FontSizeProvider';
 const GMAPS_API_KEY = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
 
 export default function NewDesign() {
+  const _renderRef = useRef(0);
+  console.log(`[NewDesign] render #${++_renderRef.current}`);
   const [tabIndex, setTabIndex]               = useState(0);
   const [lat, setLat]                         = useState('-15.667939');
   const [lng, setLng]                         = useState('-47.954828');
@@ -120,6 +122,7 @@ export default function NewDesign() {
 
   // ── Handlers de busca ─────────────────────────────────────────────────────
   const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo', skipFly = false, replaceCoord = false, userDrawn = false) => {
+    console.log('[NewDesign] doCircleSearch', { center, rad, shapeLabel, replaceCoord });
     const oldPageId = replaceCoord ? coordSearchPageIdRef.current : null;
     const pageId = Date.now();
     if (replaceCoord) coordSearchPageIdRef.current = pageId;
@@ -153,6 +156,7 @@ export default function NewDesign() {
   }, [pushHistory, updateAllMarkers, normalizeResult]);
 
   useEffect(() => {
+    console.log('[NewDesign] lat/lng effect', { lat, lng, skip: skipUserMarkerEffectRef.current });
     if (skipUserMarkerEffectRef.current) { skipUserMarkerEffectRef.current = false; return; }
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
@@ -160,6 +164,7 @@ export default function NewDesign() {
   }, [lat, lng]);
 
   const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN, info }) => {
+    console.log('[NewDesign] handleApplyCoordinates', { latN, lngN, hasInfo: !!info });
     skipUserMarkerEffectRef.current = true;
     setLat(String(latN.toFixed(7)));
     setLng(String(lngN.toFixed(7)));
@@ -283,12 +288,14 @@ export default function NewDesign() {
   }, []);
 
   const handlePickCoordinate = useCallback(({ lat: pLat, lng: pLng }) => {
+    console.log('[NewDesign] handlePickCoordinate', { pLat, pLng });
     setLat(pLat.toFixed(6));
     setLng(pLng.toFixed(6));
     setUserMarker({ lat: pLat, lng: pLng });
   }, []);
 
   const handleMapShape = useCallback(async (shape) => {
+    console.log('[NewDesign] handleMapShape', { type: shape.type });
     if (shape.type === 'circle') {
       setLat(shape.center.lat.toFixed(6));
       setLng(shape.center.lng.toFixed(6));

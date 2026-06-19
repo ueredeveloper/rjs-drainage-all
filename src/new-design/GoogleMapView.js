@@ -796,7 +796,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       zIndex: 1000,
     });
     if (userMarker.info) {
-      mkr.addListener('click', () => {
+      mkr.addEventListener('gmp-click', () => {
         infoWinRef.current.setContent(buildInfoHtml({ ...userMarker.info, _catColor: '#e53935', _catLabel: 'Usuário' }));
         infoWinRef.current.open({ map: mapRef.current, anchor: mkr });
       });
@@ -836,7 +836,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         map: mapRef.current,
         content: makePinElement(makePinUrl(color, 'small'), 16, 24),
       });
-      marker.addListener('click', () => { infoWinRef.current.setContent(buildInfoHtml(item)); infoWinRef.current.open({ map: mapRef.current, anchor: marker }); });
+      marker.addEventListener('gmp-click', () => { infoWinRef.current.setContent(buildInfoHtml(item)); infoWinRef.current.open({ map: mapRef.current, anchor: marker }); });
       allMkrsRef.current.push(marker);
     });
   }, [allMarkers]);

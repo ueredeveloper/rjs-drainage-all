@@ -1,5 +1,6 @@
 import { ThemeProvider } from '@mui/material/styles';
 import './App.css';
+import './notebook.css';
 import LoginDialog from './components/Commom/LoginDialog';
 import MenuAppBar from './components/Commom/MenuAppBar';
 import Analyse from './components/MainFlow/Analyse';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Tabs, Tab, Chip, Avatar, Divider, Typography, Alert, Stack,
   TextField, Select, MenuItem, FormControl, InputLabel,
@@ -40,11 +40,13 @@ export default function BarragemTab({
   lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect,
   onBarMarkers, onBarShape, onClearCircle,
 }) {
+  const _renderRef = useRef(0);
   const [calcTab, setCalcTab] = useState(0);
   const [calcLoading, setCalcLoading] = useState(false);
   const [calcError, setCalcError] = useState(null);
   const [result, setResult] = useState(null);
   const [highlightRows, setHighlightRows] = useState(false);
+  console.log(`[BarragemTab] render #${++_renderRef.current}`, { calcLoading, hasResult: !!result });
 
   const [damData, setDamData] = useState({
     Max_Volume: 374411.5,
@@ -68,7 +70,9 @@ export default function BarragemTab({
   });
 
   useEffect(() => {
-    setDamData(prev => ({ ...prev, Q_Cap: operacao.vazao_l_s }));
+    console.log('[BarragemTab] vazao_l_s effect → sync Q_Cap', operacao.vazao_l_s);
+    // Só sincroniza se Q_Cap realmente divergiu (evita render no mount onde já são iguais)
+    setDamData(prev => prev.Q_Cap === operacao.vazao_l_s ? prev : { ...prev, Q_Cap: operacao.vazao_l_s });
   }, [operacao.vazao_l_s]);
 
 
@@ -85,6 +89,7 @@ export default function BarragemTab({
   };
 
   const handleCalculate = async () => {
+    console.log('[BarragemTab] handleCalculate', { lat, lng });
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) {
@@ -139,6 +144,7 @@ export default function BarragemTab({
   };
 
   const handleSearch = async () => {
+    console.log('[BarragemTab] handleSearch', { lat, lng });
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) {

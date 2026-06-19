@@ -57,6 +57,8 @@ export default function GeralTab({
   onMarkerSelect, searchHistory,
   hiddenCats, onToggleCat,
 }) {
+  const _renderRef = useRef(0);
+  console.log(`[GeralTab] render #${++_renderRef.current}`, { pagesLen: searchPages?.length, loading });
   const [subTab, setSubTab] = useState(0);
   const [activePageIdx, setActivePageIdx] = useState(0);
   const [openConverter, setOpenConverter] = useState(false);
@@ -65,8 +67,10 @@ export default function GeralTab({
   const prevLenRef = useRef(0);
   const pagesLen = searchPages?.length ?? 0;
   useEffect(() => {
+    console.log('[GeralTab] pagesLen/activePageIdx effect', { pagesLen, activePageIdx, prevLen: prevLenRef.current });
     if (pagesLen > prevLenRef.current) {
-      setActivePageIdx(pagesLen - 1);
+      // Só atualiza se o índice realmente precisa mudar (evita render desnecessário)
+      if (activePageIdx !== pagesLen - 1) setActivePageIdx(pagesLen - 1);
       setSubTab(0);
     } else if (activePageIdx >= pagesLen && pagesLen > 0) {
       setActivePageIdx(pagesLen - 1);
@@ -194,6 +198,8 @@ export default function GeralTab({
         </Stack>
       </Box>
 
+      <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
+
       {loading && <LinearProgress />}
 
       {error && (
@@ -218,7 +224,7 @@ export default function GeralTab({
         const chartKey = isDemo ? 'demo' : `${activePageIdx}-${JSON.stringify(counts)}`;
 
         return (
-          <Box id="nd-geral-polar-chart" sx={{ px: 2, pt: 1.2, pb: 0.5, flexShrink: 0 }}>
+          <Box id="nd-geral-polar-chart" sx={{ px: 2, pt: 1.2, pb: 0.5 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.8}>
               <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 {isDemo ? 'Distribuição de outorgas' : `Distribuição — ${activePage?.label ?? ''}`}
@@ -312,7 +318,7 @@ export default function GeralTab({
 
       {/* ── Navegação de pesquisas (paginação) ────────────────────────────── */}
       {pagesLen > 0 && (
-        <Box id="nd-geral-pages-nav" sx={{ px: 1.5, py: 0.8, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
+        <Box id="nd-geral-pages-nav" sx={{ px: 1.5, py: 0.8, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
           <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
             <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0, mr: 0.3 }}>
               Pesquisas:
@@ -366,7 +372,7 @@ export default function GeralTab({
       {/* ── Resultados da página ativa ─────────────────────────────────────── */}
       {activePage && !loading ? (
         <>
-          <Box id="nd-geral-subtabs" sx={{ borderBottom: '1px solid #e0e0e0', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <Box id="nd-geral-subtabs" sx={{ borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center' }}>
             <Tabs
               value={subTab} onChange={(_, v) => setSubTab(v)}
               variant="scrollable" scrollButtons="auto"
@@ -391,7 +397,7 @@ export default function GeralTab({
             </Tooltip>
           </Box>
 
-          <Box id="nd-geral-table" sx={{ flex: 1, overflow: 'auto', '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
+          <Box id="nd-geral-table">
             {activeRows.length === 0 ? (
               <Box sx={{ py: 6, textAlign: 'center' }}>
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
@@ -432,6 +438,7 @@ export default function GeralTab({
           />
         </Box>
       )}
+      </Box>
     </Box>
   );
 }
