@@ -342,7 +342,7 @@ export default function SurfaceTableModulations({
                         fontSize: "10px", lineHeight: "1.2", verticalAlign: "middle",
                         backgroundColor: highlighted[index] && rowIndex === 0 ? "#e3f2fd" : "inherit",
                       }}>
-                      {typeof value === "number" && !isNaN(value) ? value : value}
+                      {typeof value === "number" && isNaN(value) ? "-" : value}
                     </TableCell>
                   ))
                 : row.values.map((value, index) => (

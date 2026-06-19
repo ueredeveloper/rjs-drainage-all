@@ -46,6 +46,7 @@ export default function NewDesign() {
   const [clearShapesTrigger, setClearShapesTrigger] = useState(0);
   const [settingsOpen, setSettingsOpen]       = useState(false);
   const coordSearchPageIdRef                  = useRef(null);
+  const skipUserMarkerEffectRef               = useRef(false);
   const [removeShapeTrigger, setRemoveShapeTrigger] = useState(null);
   const [lastDrawnPageId, setLastDrawnPageId] = useState(null);
   const [fontSize, setFontSize]               = useState(() => {
@@ -152,15 +153,17 @@ export default function NewDesign() {
   }, [pushHistory, updateAllMarkers, normalizeResult]);
 
   useEffect(() => {
+    if (skipUserMarkerEffectRef.current) { skipUserMarkerEffectRef.current = false; return; }
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (!isNaN(latN) && !isNaN(lngN)) setUserMarker({ lat: latN, lng: lngN });
   }, [lat, lng]);
 
-  const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN }) => {
+  const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN, info }) => {
+    skipUserMarkerEffectRef.current = true;
     setLat(String(latN.toFixed(7)));
     setLng(String(lngN.toFixed(7)));
-    setUserMarker({ lat: latN, lng: lngN });
+    setUserMarker({ lat: latN, lng: lngN, info: info ?? null });
   }, []);
 
   const handleCoordSearch = useCallback(() => {
@@ -327,7 +330,7 @@ export default function NewDesign() {
 
   return (
     <FontSizeProvider fontSize={fontSize}>
-    <Wrapper apiKey={GMAPS_API_KEY} libraries={['drawing', 'geometry']}>
+    <Wrapper apiKey={GMAPS_API_KEY} libraries={['drawing', 'geometry', 'marker']}>
     <Box
       id="nd-root"
       sx={{

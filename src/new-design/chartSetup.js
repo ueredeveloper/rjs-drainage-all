@@ -36,7 +36,16 @@ export const PT_SUFFIXES = [
 export function ptFormatter(num, unit = '') {
   const abs = Math.abs(num);
   const { value, symbol } = PT_SUFFIXES.find(s => abs >= s.value) ?? PT_SUFFIXES.at(-1);
-  const number = (num / value).toFixed(1).replace('.', ',').replace(/,0$/, '');
+  const divided = num / value;
+
+  let number;
+  if (symbol) {
+    const truncated = Math.trunc(divided * 1000) / 1000;
+    number = truncated.toFixed(3).replace('.', ',').replace(/0+$/, '').replace(/,$/, '');
+  } else {
+    number = divided.toFixed(1).replace('.', ',').replace(/,0$/, '');
+  }
+
   const suffix = [symbol, unit].filter(Boolean).join(' ');
   return suffix ? `${number} ${suffix}` : number;
 }

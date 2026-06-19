@@ -246,7 +246,7 @@ export default function UserSearchDialog({ open, onClose, onSelect }) {
               </TableHead>
               <TableBody>
                 {users.map((u, i) => (
-                  <UserRow key={u.us_id ?? i} user={u} onSelect={handleSelect} />
+                  <UserRow key={`${u.us_id ?? 'u'}-${i}`} user={u} onSelect={handleSelect} />
                 ))}
               </TableBody>
             </Table>

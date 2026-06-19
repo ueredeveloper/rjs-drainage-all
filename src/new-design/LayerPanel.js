@@ -249,6 +249,22 @@ async function fetchLayerGeoJSON(id) {
 
 const ALL_LAYERS = LAYER_GROUPS.flatMap(g => g.layers);
 
+function makeCaesbContent() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '30 170 155 155');
+  svg.setAttribute('width', '20');
+  svg.setAttribute('height', '20');
+  svg.style.display = 'block';
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', CAESB_ICON_PATH);
+  path.setAttribute('fill', '#134FAF');
+  path.setAttribute('stroke', 'white');
+  path.setAttribute('stroke-width', '6');
+  svg.appendChild(path);
+  return svg;
+}
+
 export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange }) {
   const { scalePx } = useFontSize();
   const [open, setOpen]               = useState(false);
@@ -309,7 +325,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         if (mapType === 'gmaps') { try { keywordLayerRef.current.setMap(null); } catch (_) {} }
         else { try { if (map && map.hasLayer(keywordLayerRef.current)) map.removeLayer(keywordLayerRef.current); } catch (_) {} }
       }
-      caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+      caesbIconMarkersRef.current.forEach(m => { try { m.map = null; } catch (_) {} });
       caesbIconMarkersRef.current = [];
     };
   }, [map, mapType]);
@@ -336,7 +352,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       else { try { if (map && map.hasLayer(keywordLayerRef.current)) map.removeLayer(keywordLayerRef.current); } catch (_) {} }
       keywordLayerRef.current = null;
     }
-    caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+    caesbIconMarkersRef.current.forEach(m => { try { m.map = null; } catch (_) {} });
     caesbIconMarkersRef.current = [];
     setActive(new Set());
     setWaterUseMap({ hidrogeo_fraturado: false, hidrogeo_poroso: false });
@@ -500,7 +516,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       if (isCaesb) {
         const gj = esriToGeoJSONPolylines(esriResult);
         if (mapType === 'gmaps') {
-          caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+          caesbIconMarkersRef.current.forEach(m => { try { m.map = null; } catch (_) {} });
           caesbIconMarkersRef.current = [];
 
           dl.addGeoJson(gj);
@@ -511,18 +527,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
             const coords = feature.geometry.coordinates;
             if (!coords.length) return;
             const mid = coords[Math.floor(coords.length / 2)];
-            const marker = new window.google.maps.Marker({
+            const marker = new window.google.maps.marker.AdvancedMarkerElement({
               position: { lat: mid[1], lng: mid[0] },
               map,
-              icon: {
-                path: CAESB_ICON_PATH,
-                fillColor: '#134FAF',
-                fillOpacity: 1,
-                strokeWeight: 1,
-                strokeColor: 'white',
-                scale: 0.12,
-                anchor: new window.google.maps.Point(107, 250),
-              },
+              content: makeCaesbContent(),
               title: feature.properties?.nome || 'CAESB',
             });
             caesbIconMarkersRef.current.push(marker);
@@ -557,7 +565,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         else { try { if (map) map.removeLayer(dl); } catch (_) {} }
       }
       if (id === 'caesb_estacoes') {
-        caesbIconMarkersRef.current.forEach(m => { try { m.setMap(null); } catch (_) {} });
+        caesbIconMarkersRef.current.forEach(m => { try { m.map = null; } catch (_) {} });
         caesbIconMarkersRef.current = [];
       }
       if (WATER_USE_LAYERS.has(id)) {

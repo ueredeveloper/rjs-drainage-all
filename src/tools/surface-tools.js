@@ -265,7 +265,9 @@ function ajustarHoraBombAjustada(q_secao_m_d, q_solicitada) {
 
   return q_secao_m_d.map((q_md, i) => {
     // arredondar para cima => resultado + 0.5 e round(resultado)
-    let h_bom_aju = (Number(q_md) / (Number(q_solicitada.values[i]) * 3.8)) + 0.5
+    const divisor = Number(q_solicitada.values[i]) * 3.8;
+    if (!divisor) return 0;
+    let h_bom_aju = (Number(q_md) / divisor) + 0.5;
     return Math.round(h_bom_aju);
   });
 }

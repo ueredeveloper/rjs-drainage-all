@@ -2,33 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import LayerPanel from './LayerPanel';
 import ElemWaterUsage from './components/ElemWaterUsage';
-import ElemStreetView from './ElemStreetView';
 
 const BRASILIA  = { lat: -15.7801, lng: -47.9292 };
-
-const STREET_VIEW_LOCATIONS = [
-  { lat: -15.7331605, lng: -47.886387 },
-  { lat: -15.6991739, lng: -47.8295777 },
-  { lat: -15.9299951, lng: -47.915462 },
-  { lat: -15.8387876, lng: -47.902269 },
-  { lat: -15.7603064, lng: -48.0818471 },
-  { lat: -15.777931,  lng: -47.857934 },
-  { lat: -15.777467,  lng: -47.8575272 },
-  { lat: -15.8325514, lng: -47.8476695 },
-  { lat: -15.8209913, lng: -47.8279401 },
-  { lat: -15.9647741, lng: -47.743557 },
-  { lat: -15.74754,   lng: -47.8716051 },
-  { lat: -15.8237419, lng: -47.8827199 },
-  { lat: -15.8243773, lng: -47.8722113 },
-  { lat: -15.828312,  lng: -47.870282 },
-  { lat: -15.8512752, lng: -47.862365 },
-  { lat: -15.7856923, lng: -47.8291058 },
-  { lat: -15.8244509, lng: -47.8254215 },
-  { lat: -15.7974116, lng: -47.812143 },
-  { lat: -15.7858201, lng: -47.8332237 },
-  { lat: -15.6985107, lng: -47.8297711 },
-  { lat: -15.794565,  lng: -47.77701 },
-];
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
 const SHAPE_STYLE = {
@@ -56,6 +31,13 @@ function makePinUrl(color, size = 'normal') {
     <circle cx="12" cy="12" r="${r}" fill="white"/>
   </svg>`;
   return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+}
+
+function makePinElement(url, w, h) {
+  const img = document.createElement('img');
+  img.src = url;
+  img.style.cssText = `width:${w}px;height:${h}px;display:block;`;
+  return img;
 }
 
 function buildInfoHtml(item) {
@@ -146,9 +128,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
-  const [streetViewLocation, setStreetViewLocation] = useState(null);
-  const [shakeMap, setShakeMap] = useState(false);
-  const prevSVRef = useRef(false);
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const setLayerClearRef = useRef(null);
   setLayerClearRef.current = setLayerClearTrigger;
@@ -205,6 +184,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const map = new window.google.maps.Map(containerRef.current, {
       center: BRASILIA, zoom: 11,
       mapTypeId: 'satellite',
+      mapId: 'DEMO_MAP_ID',
       mapTypeControlOptions: {
         mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
         style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
@@ -216,9 +196,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const shapeStyleIW = new window.google.maps.InfoWindow();
     shapeStyleIWRef.current = shapeStyleIW;
 
-    userMarkerRef.current = new window.google.maps.Marker({
+    userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
       position: BRASILIA, map,
-      icon: { url: makePinUrl('#e53935'), scaledSize: new window.google.maps.Size(24, 36), anchor: new window.google.maps.Point(12, 36) },
+      content: makePinElement(makePinUrl('#e53935'), 24, 36),
       zIndex: 1000,
     });
 
@@ -235,15 +215,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
     setMapInstance(map);
 
-    // Seleciona local aleatório e verifica cobertura de Street View
-    const randomLoc = STREET_VIEW_LOCATIONS[Math.floor(Math.random() * STREET_VIEW_LOCATIONS.length)];
-    const svService = new window.google.maps.StreetViewService();
-    svService.getPanorama({ location: randomLoc, radius: 100 }, (_, status) => {
-      if (status === window.google.maps.StreetViewStatus.OK) {
-        setStreetViewLocation(randomLoc);
-      }
-    });
-
     let drawnShapes  = [];
     let editMode     = false;
     let editBtnEl    = null;
@@ -256,7 +227,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const clearAreaPopups = () => {
       areaInfoWinsRef.current.forEach(iw => { try { iw.close(); } catch (_) {} });
       areaInfoWinsRef.current = [];
-      areaAnchorsRef.current.forEach(a => { try { a.setMap(null); } catch (_) {} });
+      areaAnchorsRef.current.forEach(a => { try { a.map = null; } catch (_) {} });
       areaAnchorsRef.current = [];
     };
 
@@ -307,9 +278,10 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
           </div>
         `,
       });
-      const anchor = new window.google.maps.Marker({ map, visible: false });
-      anchor.setPosition(topLatLng);
-      iw.open(map, anchor);
+      const hiddenEl = document.createElement('div');
+      hiddenEl.style.cssText = 'display:none;width:0;height:0;';
+      const anchor = new window.google.maps.marker.AdvancedMarkerElement({ position: topLatLng, map, content: hiddenEl });
+      iw.open({ map, anchor });
       areaInfoWinsRef.current.push(iw);
       areaAnchorsRef.current.push(anchor);
       return { iw, anchor };
@@ -409,7 +381,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       if (toggleBtn && state.areaIW) {
         toggleBtn.addEventListener('click', () => {
           state.areaVisible = !state.areaVisible;
-          if (state.areaVisible) state.areaIW.open(map, state.areaAnchor);
+          if (state.areaVisible) state.areaIW.open({ map, anchor: state.areaAnchor });
           else state.areaIW.close();
           shapeStyleIW.setContent(buildStylePanelHtml(state));
           window.google.maps.event.addListenerOnce(shapeStyleIW, 'domready', () => setupStyleListeners(shape, state));
@@ -522,9 +494,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       pendingCircleAreaRef.current = null;
       shapeStyleIW.close();
       clearAreaPopups();
-      if (userMarkerRef.current)  { userMarkerRef.current.setMap(null);  userMarkerRef.current = null; }
-      if (selectedMkrRef.current) { selectedMkrRef.current.setMap(null); selectedMkrRef.current = null; }
-      allMkrsRef.current.forEach(m => m.setMap(null)); allMkrsRef.current = [];
+      if (userMarkerRef.current)  { userMarkerRef.current.map = null;  userMarkerRef.current = null; }
+      if (selectedMkrRef.current) { selectedMkrRef.current.map = null; selectedMkrRef.current = null; }
+      allMkrsRef.current.forEach(m => { m.map = null; }); allMkrsRef.current = [];
       if (subShapeRef.current)    { subShapeRef.current.setMap(null);    subShapeRef.current = null; }
       infoWinRef.current?.close();
     };
@@ -744,7 +716,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         const old = coordCircleRef.current;
         const st = shapeStatesRef.current.get(old);
         if (st?.areaIW) { try { st.areaIW.close(); } catch (_) {} }
-        if (st?.areaAnchor) { try { st.areaAnchor.setMap(null); } catch (_) {} }
+        if (st?.areaAnchor) { try { st.areaAnchor.map = null; } catch (_) {} }
         shapeStatesRef.current.delete(old);
         allCirclesRef.current = allCirclesRef.current.filter(c => c !== old);
         try { old.setMap(null); } catch (_) {}
@@ -758,7 +730,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       const old = coordCircleRef.current;
       const st = shapeStatesRef.current.get(old);
       if (st?.areaIW) { try { st.areaIW.close(); } catch (_) {} }
-      if (st?.areaAnchor) { try { st.areaAnchor.setMap(null); } catch (_) {} }
+      if (st?.areaAnchor) { try { st.areaAnchor.map = null; } catch (_) {} }
       shapeStatesRef.current.delete(old);
       allCirclesRef.current = allCirclesRef.current.filter(c => c !== old);
       try { old.setMap(null); } catch (_) {}
@@ -803,7 +775,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       areaInfoWinsRef.current = areaInfoWinsRef.current.filter(x => x !== st.areaIW);
     }
     if (st?.areaAnchor) {
-      try { st.areaAnchor.setMap(null); } catch (_) {}
+      try { st.areaAnchor.map = null; } catch (_) {}
       areaAnchorsRef.current = areaAnchorsRef.current.filter(x => x !== st.areaAnchor);
     }
     shapeStatesRef.current.delete(shape);
@@ -816,45 +788,55 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   useEffect(() => {
     if (!mapRef.current) return;
     if (!userMarker) return;
-    if (userMarkerRef.current) { userMarkerRef.current.setMap(null); userMarkerRef.current = null; }
-    userMarkerRef.current = new window.google.maps.Marker({
-      position: { lat: userMarker.lat, lng: userMarker.lng }, map: mapRef.current,
-      icon: { url: makePinUrl('#e53935'), scaledSize: new window.google.maps.Size(24, 36), anchor: new window.google.maps.Point(12, 36) },
+    if (userMarkerRef.current) { userMarkerRef.current.map = null; userMarkerRef.current = null; }
+    const mkr = new window.google.maps.marker.AdvancedMarkerElement({
+      position: { lat: userMarker.lat, lng: userMarker.lng },
+      map: mapRef.current,
+      content: makePinElement(makePinUrl('#e53935'), 24, 36),
       zIndex: 1000,
     });
+    if (userMarker.info) {
+      mkr.addListener('click', () => {
+        infoWinRef.current.setContent(buildInfoHtml({ ...userMarker.info, _catColor: '#e53935', _catLabel: 'Usuário' }));
+        infoWinRef.current.open({ map: mapRef.current, anchor: mkr });
+      });
+    }
+    userMarkerRef.current = mkr;
     mapRef.current.panTo({ lat: userMarker.lat, lng: userMarker.lng });
   }, [userMarker]);
 
   useEffect(() => {
     if (!mapRef.current) return;
-    if (selectedMkrRef.current) { selectedMkrRef.current.setMap(null); selectedMkrRef.current = null; }
+    if (selectedMkrRef.current) { selectedMkrRef.current.map = null; selectedMkrRef.current = null; }
     infoWinRef.current?.close();
     if (!markerData) return;
     const lat = parseFloat(markerData.int_latitude), lng = parseFloat(markerData.int_longitude);
     if (isNaN(lat) || isNaN(lng)) return;
     const color = markerData._catColor ?? TI_COLORS[markerData.ti_id] ?? '#1565c0';
-    const marker = new window.google.maps.Marker({
-      position: { lat, lng }, map: mapRef.current,
-      icon: { url: makePinUrl(color), scaledSize: new window.google.maps.Size(24, 36), anchor: new window.google.maps.Point(12, 36) },
+    const marker = new window.google.maps.marker.AdvancedMarkerElement({
+      position: { lat, lng },
+      map: mapRef.current,
+      content: makePinElement(makePinUrl(color), 24, 36),
     });
     infoWinRef.current.setContent(buildInfoHtml(markerData));
-    infoWinRef.current.open(mapRef.current, marker);
+    infoWinRef.current.open({ map: mapRef.current, anchor: marker });
     selectedMkrRef.current = marker;
     mapRef.current.panTo({ lat, lng });
   }, [markerData]);
 
   useEffect(() => {
-    allMkrsRef.current.forEach(m => m.setMap(null)); allMkrsRef.current = [];
+    allMkrsRef.current.forEach(m => { m.map = null; }); allMkrsRef.current = [];
     if (!mapRef.current || !allMarkers?.length) return;
     allMarkers.forEach(item => {
       const lat = parseFloat(item.int_latitude), lng = parseFloat(item.int_longitude);
       if (isNaN(lat) || isNaN(lng)) return;
       const color = item._catColor ?? TI_COLORS[item.ti_id] ?? '#1565c0';
-      const marker = new window.google.maps.Marker({
-        position: { lat, lng }, map: mapRef.current,
-        icon: { url: makePinUrl(color, 'small'), scaledSize: new window.google.maps.Size(16, 24), anchor: new window.google.maps.Point(8, 24) },
+      const marker = new window.google.maps.marker.AdvancedMarkerElement({
+        position: { lat, lng },
+        map: mapRef.current,
+        content: makePinElement(makePinUrl(color, 'small'), 16, 24),
       });
-      marker.addListener('click', () => { infoWinRef.current.setContent(buildInfoHtml(item)); infoWinRef.current.open(mapRef.current, marker); });
+      marker.addListener('click', () => { infoWinRef.current.setContent(buildInfoHtml(item)); infoWinRef.current.open({ map: mapRef.current, anchor: marker }); });
       allMkrsRef.current.push(marker);
     });
   }, [allMarkers]);
@@ -874,37 +856,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     if (!bounds.isEmpty()) mapRef.current.fitBounds(bounds, 24);
   }, [subShape]);
 
-  useEffect(() => {
-    if (prevSVRef.current && !streetViewLocation) {
-      setShakeMap(true);
-      const t = setTimeout(() => setShakeMap(false), 600);
-      return () => clearTimeout(t);
-    }
-    prevSVRef.current = !!streetViewLocation;
-  }, [streetViewLocation]);
-
   return (
-    <>
-    <style>{`
-      @keyframes nd-map-shake {
-        0%   { transform: rotate(0deg); }
-        25%  { transform: rotate(0.6deg); }
-        50%  { transform: rotate(0deg); }
-        75%  { transform: rotate(-0.6deg); }
-        100% { transform: rotate(0deg); }
-      }
-      .nd-map-shake { animation: nd-map-shake 0.15s ease-in-out 4; }
-    `}</style>
-    <div className={shakeMap ? 'nd-map-shake' : ''} style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-      {streetViewLocation && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
-          <ElemStreetView
-            streetViewLocation={streetViewLocation}
-            setStreetViewLocation={setStreetViewLocation}
-          />
-        </div>
-      )}
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
           <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} />,
@@ -918,7 +872,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         )
       }
     </div>
-    </>
   );
 }
 

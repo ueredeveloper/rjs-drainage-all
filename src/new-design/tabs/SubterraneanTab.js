@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Box, Typography, Stack, Divider, LinearProgress, Alert,
   TextField, Button, ToggleButton, ToggleButtonGroup,
@@ -110,7 +110,7 @@ export default function SubterraneanTab({
 }) {
   const [wellTypeId, setWellTypeId]     = useState('1');
   const [subPoints, setSubPoints]       = useState(null);
-  const [avail, setAvail]               = useState(null);
+  const [rawAvail, setRawAvail]         = useState(null);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState(null);
 
@@ -120,6 +120,26 @@ export default function SubterraneanTab({
   const [dialogOpen, setDialogOpen]     = useState(false);
   const [openConverter, setOpenConverter] = useState(false);
   const [logScale, setLogScale]         = useState(true);
+
+  // Disponibilidade com usuário somado (reativo a qUsuario e rawAvail)
+  const avail = useMemo(() => {
+    if (!rawAvail) return null;
+    const q = isNaN(qUsuario) ? 0 : Number(qUsuario);
+    if (q === 0) return rawAvail;
+    const q_points = rawAvail.q_points + q;
+    const q_ex     = rawAvail.q_ex;
+    return {
+      ...rawAvail,
+      n_points:     rawAvail.n_points + 1,
+      q_points,
+      q_points_per: q_ex > 0 ? ((q_points * 100) / q_ex).toFixed(4) : '0.0000',
+      vol_avaiable: (q_ex - q_points).toFixed(4),
+    };
+  }, [rawAvail, qUsuario]);
+
+  // Sync subPoints → map markers whenever the list changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (subPoints !== null) onSubMarkers?.(subPoints); }, [subPoints]);
 
   const handleSearch = useCallback(async () => {
     const latN = parseFloat(lat);
@@ -151,25 +171,82 @@ export default function SubterraneanTab({
 
       if (!info) {
         setError('Nenhum sistema encontrado para estas coordenadas.');
-        setAvail(null);
+        setRawAvail(null);
         return;
       }
-      setAvail(analyzeAvailability(info, points));
+      setRawAvail(analyzeAvailability(info, points));
     } catch (err) {
       console.error('[subterrânea]', err);
       setError('Erro ao buscar dados subterrâneos. Verifique conexão ou autenticação.');
       setSubPoints(null);
-      setAvail(null);
+      setRawAvail(null);
     } finally {
       setLoading(false);
     }
   }, [lat, lng, wellTypeId, onSubShape, onSubMarkers, onClearCircle, onApplyCoordinates]);
 
-  const handleUserSelect = useCallback(({ qUsuario: q, user }) => {
+  const handleUserSelect = useCallback(async ({ qUsuario: q, user, interference }) => {
     setQUsuario(isNaN(q) ? 0 : q);
     setSelUser(user);
     setDialogOpen(false);
-  }, []);
+    if (!interference) return;
+
+    const syntheticPoint = {
+      us_nome:       user.us_nome,
+      us_cpf_cnpj:   user.us_cpf_cnpj,
+      int_processo:  user.proc_sei ?? user.doc_sei ?? null,
+      emp_endereco:  interference.end_logradouro,
+      int_latitude:  interference.int_latitude,
+      int_longitude: interference.int_longitude,
+      dt_demanda:    { demandas: Array.isArray(interference.dt_demanda) ? interference.dt_demanda : [] },
+      _isUserAdded:  true,
+    };
+
+    const latN = parseFloat(interference.int_latitude);
+    const lngN = parseFloat(interference.int_longitude);
+
+    const subTpId = Number(interference.sub_tp_id);
+    const resolvedWellTypeId = (!isNaN(subTpId) && subTpId > 0)
+      ? (subTpId === 1 || subTpId === 2 ? '1' : '3')
+      : wellTypeId;
+    setWellTypeId(resolvedWellTypeId);
+
+    if (!isNaN(latN) && !isNaN(lngN)) {
+      setLoading(true);
+      setError(null);
+      onClearCircle?.();
+      onSubShape?.(null);
+      onSubMarkers?.([]);
+      onApplyCoordinates?.({ lat: latN, lng: lngN, info: syntheticPoint });
+
+      try {
+        const response = await findPointsInASystem(Number(resolvedWellTypeId), latN, lngN);
+        const info   = response?._hg_info  ?? null;
+        const points = response?._points   ?? [];
+        const shape  = response?._hg_shape ?? null;
+
+        const allPoints = [syntheticPoint, ...points.filter(p => !p._isUserAdded)];
+        setSubPoints(allPoints);
+        onSubShape?.(shape);
+        onSubMarkers?.(allPoints);
+
+        if (info) setRawAvail(analyzeAvailability(info, points));
+        else setRawAvail(null);
+      } catch (err) {
+        console.error('[subterrânea] handleUserSelect', err);
+        setError('Erro ao buscar sistema para a interferência selecionada.');
+        setSubPoints([syntheticPoint]);
+        onSubMarkers?.([syntheticPoint]);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setSubPoints(prev => {
+        const current = Array.isArray(prev) ? prev : [];
+        return [...current.filter(p => !p._isUserAdded), syntheticPoint];
+      });
+    }
+  }, [wellTypeId, onSubShape, onSubMarkers, onClearCircle, onApplyCoordinates]);
 
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -282,7 +359,11 @@ export default function SubterraneanTab({
               <Chip
                 size="small"
                 label={selUser.us_nome}
-                onDelete={() => { setQUsuario(0); setSelUser(null); }}
+                onDelete={() => {
+                  setQUsuario(0);
+                  setSelUser(null);
+                  setSubPoints(prev => Array.isArray(prev) ? prev.filter(p => !p._isUserAdded) : prev);
+                }}
                 deleteIcon={<CloseIcon sx={{ fontSize: '0.75rem !important' }} />}
                 sx={{ height: 18, fontSize: '0.6rem', bgcolor: '#ede7f6', color: '#4a148c', maxWidth: 140 }}
               />
@@ -290,7 +371,7 @@ export default function SubterraneanTab({
             <Button
               size="small" variant="outlined"
               startIcon={<PersonSearchIcon sx={{ fontSize: '0.9rem !important' }} />}
-              onClick={() => setDialogOpen(true)}
+              onClick={(e) => { e.currentTarget.blur(); setDialogOpen(true); }}
               sx={{ textTransform: 'none', fontSize: '0.65rem', py: 0.3, px: 1, borderColor: '#6a1b9a', color: '#6a1b9a', '&:hover': { bgcolor: '#f3e5f5' } }}
             >
               Adicionar usuário
