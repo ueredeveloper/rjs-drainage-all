@@ -22,17 +22,19 @@ import { numberWithCommas } from '../../tools';
 import { exportBarrageToCsv } from '../../tools/export-barrage-to-csv';
 import { MESES, TI_CATS } from '../constants';
 import { extractBarragemRows } from '../utils/extract-barragem-rows';
+import '../chartSetup';
 
 const BAR_CAT = TI_CATS.find(c => c.key === 'barragem');
 
 const BAR_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço'];
 
-const CELL = { fontSize: '0.68rem', py: 0, px: 0.5 };
+const CELL = { fontSize: '0.78rem', py: 0, px: 0.5 };
 const HEAD = { ...CELL, fontWeight: 700, bgcolor: '#f5f7fa', whiteSpace: 'nowrap' };
 
+
 const StatusChip = ({ check }) => String(check).toLowerCase() === 'ok'
-  ? <Chip icon={<CheckCircleOutlineIcon sx={{ fontSize: 12, color: '#2e7d32 !important' }} />} label="OK"       size="small" sx={{ height: 17, fontSize: '0.6rem', bgcolor: '#e8f5e9', color: '#2e7d32', '& .MuiChip-icon': { ml: 0.5 } }} />
-  : <Chip icon={<ErrorOutlineIcon     sx={{ fontSize: 12, color: '#b71c1c !important' }} />} label="Problema" size="small" sx={{ height: 17, fontSize: '0.6rem', bgcolor: '#ffebee', color: '#b71c1c', '& .MuiChip-icon': { ml: 0.5 } }} />;
+  ? <Chip icon={<CheckCircleOutlineIcon sx={{ fontSize: 12, color: '#2e7d32 !important' }} />} label="OK"       size="small" sx={{ height: 17, fontSize: '0.78rem', bgcolor: '#e8f5e9', color: '#2e7d32', '& .MuiChip-icon': { ml: 0.5 } }} />
+  : <Chip icon={<ErrorOutlineIcon     sx={{ fontSize: 12, color: '#b71c1c !important' }} />} label="Problema" size="small" sx={{ height: 17, fontSize: '0.78rem', bgcolor: '#ffebee', color: '#b71c1c', '& .MuiChip-icon': { ml: 0.5 } }} />;
 
 export default function BarragemTab({
   lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect,
@@ -231,7 +233,7 @@ export default function BarragemTab({
           value={calcTab} onChange={(_, v) => setCalcTab(v)}
           sx={{
             flex: 1, minHeight: 34,
-            '& .MuiTab-root': { minHeight: 34, fontSize: '0.64rem', textTransform: 'none', py: 0, px: 1.5 },
+            '& .MuiTab-root': { minHeight: 34, fontSize: '0.78rem', textTransform: 'none', py: 0, px: 1.5 },
             '& .MuiTabs-indicator': { height: 2 },
           }}
         >
@@ -272,7 +274,8 @@ export default function BarragemTab({
 
         {/* ── Seção superior: tabelas de cálculo (altura fixa + scroll) ── */}
         <Box sx={{
-          flexShrink: 0, minHeight: 220, maxHeight: 220, overflowY: 'auto', overflowX: 'auto',
+          flexShrink: 0, minHeight: 280, maxHeight: 280,
+          overflowY: 'auto', overflowX: 'auto',
           '&::-webkit-scrollbar': { width: 4, height: 4 },
           '&::-webkit-scrollbar-thumb': { bgcolor: '#cfd8dc', borderRadius: 2 },
         }}>
@@ -282,79 +285,90 @@ export default function BarragemTab({
             <TableContainer sx={{ minWidth: 0 }}>
               <Table size="small" stickyHeader>
                 <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ ...HEAD, minWidth: 118, position: 'sticky', left: 0, zIndex: 3 }}>Parâmetro</TableCell>
-                    {MESES.map(m => <TableCell key={m} align="center" sx={{ ...HEAD, minWidth: 44 }}>{m}</TableCell>)}
+                  <TableRow sx={{ height: 36 }}>
+                    <TableCell sx={{ ...HEAD, minWidth: 118, position: 'sticky', left: 0, zIndex: 3, pl: 1.5 }}>Parâmetro</TableCell>
+                    {MESES.map(m => <TableCell key={m} align="center" sx={{ ...HEAD, minWidth: 64 }}>{m}</TableCell>)}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {[
-                    { label: 'Vazão (L/s)', key: 'vazao_l_s' },
-                    { label: 'T. Cap (h)',  key: 'tempDia'   },
-                  ].map(({ label, key }) => (
+                    { label: 'Vazão (L/s)', key: 'vazao_l_s', width: 80 },
+                    { label: 'T. Cap (h)',  key: 'tempDia',   width: 60 },
+                  ].map(({ label, key, width }) => (
                     <TableRow key={key} hover>
-                      <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>{label}</TableCell>
+                      <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500, pl: 1.5 }}>{label}</TableCell>
                       {operacao[key].map((v, i) => (
-                        <TableCell key={i} padding="none" align="center">
-                          <Input
-                            value={v}
-                            onChange={(e) => handleArrayChange(key, i, e.target.value)}
-                            disableUnderline
-                            inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
-                          />
+                        <TableCell key={i} padding="none">
+                          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <Input
+                              value={v}
+                              onChange={(e) => handleArrayChange(key, i, e.target.value)}
+                              disableUnderline
+                              sx={{ width }}
+                              inputProps={{ style: { textAlign: 'center', fontSize: '0.78rem', padding: '2px 0' }, type: 'number' }}
+                            />
+                          </Box>
                         </TableCell>
                       ))}
                     </TableRow>
                   ))}
 
                   <TableRow hover>
-                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Dias</TableCell>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500, pl: 1.5 }}>Dias</TableCell>
                     {operacao.Dias.map((d, i) => (
-                      <TableCell key={i} padding="none" align="center">
-                        <Select
-                          value={d}
-                          onChange={(e) => handleArrayChange('Dias', i, e.target.value)}
-                          variant="standard" disableUnderline
-                          sx={{ fontSize: '0.65rem', width: 40, '& .MuiSelect-select': { py: 0.3, px: 0.5 } }}
-                        >
-                          {Array.from({ length: 32 }, (_, j) => (
-                            <MenuItem key={j} value={j} sx={{ fontSize: '0.65rem', py: 0.2 }}>{j}</MenuItem>
-                          ))}
-                        </Select>
+                      <TableCell key={i} padding="none">
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <Select
+                            value={d}
+                            onChange={(e) => handleArrayChange('Dias', i, e.target.value)}
+                            variant="standard" disableUnderline
+                            sx={{ fontSize: '0.78rem', width: 60, '& .MuiSelect-select': { py: 0.3, px: 0.5, textAlign: 'center' } }}
+                          >
+                            {Array.from({ length: 32 }, (_, j) => (
+                              <MenuItem key={j} value={j} sx={{ fontSize: '0.78rem', py: 0.2 }}>{j}</MenuItem>
+                            ))}
+                          </Select>
+                        </Box>
                       </TableCell>
                     ))}
                   </TableRow>
 
                   <TableRow hover>
-                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Evap. (mm)</TableCell>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500, pl: 1.5 }}>Evap. (mm)</TableCell>
                     {operacao.Evaporacao.map((v, i) => (
-                      <TableCell key={i} padding="none" align="center">
-                        <Input
-                          value={v}
-                          onChange={(e) => handleArrayChange('Evaporacao', i, e.target.value)}
-                          disableUnderline
-                          inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
-                        />
+                      <TableCell key={i} padding="none">
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <Input
+                            value={v}
+                            onChange={(e) => handleArrayChange('Evaporacao', i, e.target.value)}
+                            disableUnderline
+                            sx={{ width: 60 }}
+                            inputProps={{ style: { textAlign: 'center', fontSize: '0.78rem', padding: '2px 0' }, type: 'number' }}
+                          />
+                        </Box>
                       </TableCell>
                     ))}
                   </TableRow>
 
                   <TableRow hover sx={pulseStyle}>
-                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Qmm (Reg.) (m³/s)</TableCell>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500, pl: 1.5 }}>Qmm (Reg.) (m³/s)</TableCell>
                     {operacao.qmm.map((v, i) => (
-                      <TableCell key={i} padding="none" align="center">
-                        <Input
-                          value={v}
-                          onChange={(e) => handleArrayChange('qmm', i, e.target.value)}
-                          disableUnderline
-                          inputProps={{ style: { textAlign: 'center', fontSize: '0.65rem', padding: '2px 0', width: 40 }, type: 'number' }}
-                        />
+                      <TableCell key={i} padding="none">
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <Input
+                            value={v}
+                            onChange={(e) => handleArrayChange('qmm', i, e.target.value)}
+                            disableUnderline
+                            sx={{ width: 60 }}
+                            inputProps={{ style: { textAlign: 'center', fontSize: '0.78rem', padding: '2px 0' }, type: 'number' }}
+                          />
+                        </Box>
                       </TableCell>
                     ))}
                   </TableRow>
 
-                  <TableRow hover sx={pulseStyle}>
-                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500 }}>Q Defluente (m³/s)</TableCell>
+                  <TableRow hover sx={{ ...pulseStyle, height: 36 }}>
+                    <TableCell sx={{ ...CELL, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 1, fontWeight: 500, pl: 1.5 }}>Q Defluente (m³/s)</TableCell>
                     {MESES.map((_, i) => {
                       const v = result?.dbResult?.operacao?.Q_defluente?.[i];
                       return (
@@ -377,16 +391,16 @@ export default function BarragemTab({
               <TableContainer>
                 <Table size="small" stickyHeader>
                   <TableHead>
-                    <TableRow>
+                    <TableRow sx={{ height: 36 }}>
                       {['Mês', 'Qmm', 'Entrada', 'Infilt.', 'Evap.', 'Capt.', 'V. Final', 'Status'].map((h, i) => (
-                        <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={HEAD}>{h}</TableCell>
+                        <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={i === 0 ? { ...HEAD, pl: 1.5 } : HEAD}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {result.resultadoCalculo.planilha.map((row, idx) => (
                       <TableRow key={idx} hover>
-                        <TableCell sx={CELL}>{row.Mes}</TableCell>
+                        <TableCell sx={{ ...CELL, pl: 1.5 }}>{row.Mes}</TableCell>
                         <TableCell align="right" sx={CELL}>{numberWithCommas(row.Qmmm_m3s, 4)}</TableCell>
                         <TableCell align="right" sx={CELL}>{numberWithCommas(row.Entrada_m3_mes, 2)}</TableCell>
                         <TableCell align="right" sx={CELL}>{numberWithCommas(row.Infiltracao_m3_mes, 2)}</TableCell>
@@ -415,9 +429,9 @@ export default function BarragemTab({
               <TableContainer>
                 <Table size="small" stickyHeader>
                   <TableHead>
-                    <TableRow>
+                    <TableRow sx={{ height: 36 }}>
                       {['Mês', 'Entr. Méd', 'Evap.', 'Infilt.', 'QCap', 'V. Final', 'V. Prob', 'Chk'].map((h, i) => (
-                        <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={HEAD}>{h}</TableCell>
+                        <TableCell key={h} align={i === 0 ? 'left' : i === 7 ? 'center' : 'right'} sx={i === 0 ? { ...HEAD, pl: 1.5 } : HEAD}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
@@ -426,7 +440,7 @@ export default function BarragemTab({
                       const b = result.resultadoCalculo.bruta;
                       return (
                         <TableRow key={idx} hover>
-                          <TableCell sx={CELL}>{mes}</TableCell>
+                          <TableCell sx={{ ...CELL, pl: 1.5 }}>{mes}</TableCell>
                           <TableCell align="right" sx={CELL}>{numberWithCommas(b.entrada_media[idx], 2)}</TableCell>
                           <TableCell align="right" sx={CELL}>{numberWithCommas(b.evaporacao_m3[idx], 2)}</TableCell>
                           <TableCell align="right" sx={CELL}>{numberWithCommas(b.infiltracao[idx], 2)}</TableCell>
@@ -472,7 +486,7 @@ export default function BarragemTab({
                   rows={Array.from({ length: 15 }, () => BAR_HEADERS.map((_, j) => (
                     <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 60 : j === 2 ? 70 : 90 }} />
                   )))}
-                  cellSx={{ pl: 3, fontSize: '0.8rem' }} rowSx={{ height: 40 }}
+                  cellSx={{ pl: 3, fontSize: '0.78rem' }} rowSx={{ height: 40 }}
                 />
               </Box>
             ) : calcLoading ? (
@@ -489,7 +503,7 @@ export default function BarragemTab({
             ) : (
               <CompactTable
                 headers={BAR_HEADERS}
-                cellSx={{ pl: 3, fontSize: '0.8rem' }} rowSx={{ height: 40 }}
+                cellSx={{ pl: 3, fontSize: '0.78rem' }} rowSx={{ height: 40 }}
                 rows={barRows.map(m => [
                   m.us_nome ?? '—',
                   m.us_cpf_cnpj ?? '—',

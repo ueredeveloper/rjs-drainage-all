@@ -2,8 +2,33 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import LayerPanel from './LayerPanel';
 import ElemWaterUsage from './components/ElemWaterUsage';
+import ElemStreetView from './ElemStreetView';
 
 const BRASILIA  = { lat: -15.7801, lng: -47.9292 };
+
+const STREET_VIEW_LOCATIONS = [
+  { lat: -15.7331605, lng: -47.886387 },
+  { lat: -15.6991739, lng: -47.8295777 },
+  { lat: -15.9299951, lng: -47.915462 },
+  { lat: -15.8387876, lng: -47.902269 },
+  { lat: -15.7603064, lng: -48.0818471 },
+  { lat: -15.777931,  lng: -47.857934 },
+  { lat: -15.777467,  lng: -47.8575272 },
+  { lat: -15.8325514, lng: -47.8476695 },
+  { lat: -15.8209913, lng: -47.8279401 },
+  { lat: -15.9647741, lng: -47.743557 },
+  { lat: -15.74754,   lng: -47.8716051 },
+  { lat: -15.8237419, lng: -47.8827199 },
+  { lat: -15.8243773, lng: -47.8722113 },
+  { lat: -15.828312,  lng: -47.870282 },
+  { lat: -15.8512752, lng: -47.862365 },
+  { lat: -15.7856923, lng: -47.8291058 },
+  { lat: -15.8244509, lng: -47.8254215 },
+  { lat: -15.7974116, lng: -47.812143 },
+  { lat: -15.7858201, lng: -47.8332237 },
+  { lat: -15.6985107, lng: -47.8297711 },
+  { lat: -15.794565,  lng: -47.77701 },
+];
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
 const SHAPE_STYLE = {
@@ -121,6 +146,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
+  const [streetViewLocation, setStreetViewLocation] = useState(null);
+  const [shakeMap, setShakeMap] = useState(false);
+  const prevSVRef = useRef(false);
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const setLayerClearRef = useRef(null);
   setLayerClearRef.current = setLayerClearTrigger;
@@ -163,6 +191,15 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   }, []);
 
   useEffect(() => {
+    if (!mapRef.current) return;
+    // Força o GMaps a recalcular as posições dos controles após mudança de fullscreen,
+    // evitando desalinhamento do BOTTOM_CENTER na primeira entrada em tela cheia.
+    requestAnimationFrame(() => {
+      window.google.maps.event.trigger(mapRef.current, 'resize');
+    });
+  }, [isFullscreen]);
+
+  useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
 
     const map = new window.google.maps.Map(containerRef.current, {
@@ -197,6 +234,15 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     waterUsageRootRef.current = waterUsageContainer;
 
     setMapInstance(map);
+
+    // Seleciona local aleatório e verifica cobertura de Street View
+    const randomLoc = STREET_VIEW_LOCATIONS[Math.floor(Math.random() * STREET_VIEW_LOCATIONS.length)];
+    const svService = new window.google.maps.StreetViewService();
+    svService.getPanorama({ location: randomLoc, radius: 100 }, (_, status) => {
+      if (status === window.google.maps.StreetViewStatus.OK) {
+        setStreetViewLocation(randomLoc);
+      }
+    });
 
     let drawnShapes  = [];
     let editMode     = false;
@@ -828,9 +874,37 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     if (!bounds.isEmpty()) mapRef.current.fitBounds(bounds, 24);
   }, [subShape]);
 
+  useEffect(() => {
+    if (prevSVRef.current && !streetViewLocation) {
+      setShakeMap(true);
+      const t = setTimeout(() => setShakeMap(false), 600);
+      return () => clearTimeout(t);
+    }
+    prevSVRef.current = !!streetViewLocation;
+  }, [streetViewLocation]);
+
   return (
     <>
+    <style>{`
+      @keyframes nd-map-shake {
+        0%   { transform: rotate(0deg); }
+        25%  { transform: rotate(0.6deg); }
+        50%  { transform: rotate(0deg); }
+        75%  { transform: rotate(-0.6deg); }
+        100% { transform: rotate(0deg); }
+      }
+      .nd-map-shake { animation: nd-map-shake 0.15s ease-in-out 4; }
+    `}</style>
+    <div className={shakeMap ? 'nd-map-shake' : ''} style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {streetViewLocation && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+          <ElemStreetView
+            streetViewLocation={streetViewLocation}
+            setStreetViewLocation={setStreetViewLocation}
+          />
+        </div>
+      )}
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
           <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} />,
@@ -843,6 +917,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
           waterUsageRootRef.current,
         )
       }
+    </div>
     </>
   );
 }

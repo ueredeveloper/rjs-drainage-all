@@ -151,6 +151,12 @@ export default function NewDesign() {
     }
   }, [pushHistory, updateAllMarkers, normalizeResult]);
 
+  useEffect(() => {
+    const latN = parseFloat(lat);
+    const lngN = parseFloat(lng);
+    if (!isNaN(latN) && !isNaN(lngN)) setUserMarker({ lat: latN, lng: lngN });
+  }, [lat, lng]);
+
   const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN }) => {
     setLat(String(latN.toFixed(7)));
     setLng(String(lngN.toFixed(7)));

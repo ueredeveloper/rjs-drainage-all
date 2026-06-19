@@ -20,10 +20,9 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
             <Box id="nd-water-usage" sx={{
                 display: "flex", justifyContent: "center", alignItems: "center",
                 backgroundColor: "#FFF",
-                borderRadius: '6px',
                 boxShadow: '0 1px 5px rgba(0,0,0,0.25)',
-                px: 2, height: 50,
-                maxWidth: 480, minWidth: 260,
+                px: 2, height: 50, mb: 2,
+                maxWidth: 600, minWidth: 360,
             }}>
                 <Slider
                     aria-label="Custom marks"
@@ -32,7 +31,7 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
                     disabled // não interativo
                     sx={{
                         height: 8,
-                        width: "clamp(200px, 28dvw, 400px)",
+                        width: "clamp(300px, 36dvw, 540px)",
                         '& .MuiSlider-thumb': {
                             display: 'none'
                         },

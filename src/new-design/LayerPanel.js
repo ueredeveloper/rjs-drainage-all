@@ -344,12 +344,42 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   }, [clearTrigger, map, mapType]);
 
   const handleWaterUseToggle = useCallback((id) => {
+    const turningOn = !waterUseMapRef.current[id];
+
     setWaterUseMap(prev => {
       const next = { ...prev, [id]: !prev[id] };
       onWaterUseRef.current?.(Object.values(next).some(Boolean));
       return next;
     });
-  }, []);
+
+    if (turningOn && map) {
+      const dl = dataLayersRef.current.get(id);
+      if (dl) {
+        if (mapType === 'gmaps') {
+          const bounds = new window.google.maps.LatLngBounds();
+          let hasPoints = false;
+          dl.forEach(feature => {
+            feature.getGeometry().forEachLatLng(ll => { bounds.extend(ll); hasPoints = true; });
+          });
+          if (hasPoints && !bounds.isEmpty()) {
+            map.fitBounds(bounds, 40);
+            const listener = map.addListener('idle', () => {
+              window.google.maps.event.removeListener(listener);
+              map.setZoom(Math.min((map.getZoom() ?? 10) + 2, 14));
+            });
+          }
+        } else {
+          try {
+            const b = dl.getBounds();
+            if (b && b.isValid()) {
+              map.fitBounds(b, { padding: [40, 40] });
+              map.setZoom(Math.min(map.getZoom() + 2, 14));
+            }
+          } catch (_) {}
+        }
+      }
+    }
+  }, [map, mapType]);
 
   const getMapCenter = useCallback(() => {
     if (!map) return null;
@@ -854,10 +884,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     >
       <button
         onClick={() => setOpen(p => !p)}
-        onMouseEnter={e => { e.currentTarget.style.background = '#f0f4ff'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(21,101,192,0.28)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = 'inset 2px 0 0 #1565c0, 0 2px 6px rgba(21,101,192,0.12)'; e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.zIndex = '2'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; e.currentTarget.style.transform = ''; e.currentTarget.style.zIndex = ''; }}
         onMouseDown={e => { e.currentTarget.style.background = '#dce8ff'; }}
-        onMouseUp={e => { e.currentTarget.style.background = '#f0f4ff'; }}
+        onMouseUp={e => { e.currentTarget.style.background = '#dbeafe'; }}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0,
           padding: '0', background: '#fff', border: '1px solid #ccc',
@@ -1171,10 +1201,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
               cursor: 'pointer', color: '#555', fontWeight: 600,
               transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f0f4ff'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(21,101,192,0.28)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = 'inset 2px 0 0 #1565c0, 0 2px 6px rgba(21,101,192,0.12)'; e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.zIndex = '2'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; e.currentTarget.style.transform = ''; e.currentTarget.style.zIndex = ''; }}
             onMouseDown={e => { e.currentTarget.style.background = '#dce8ff'; }}
-            onMouseUp={e => { e.currentTarget.style.background = '#f0f4ff'; }}
+            onMouseUp={e => { e.currentTarget.style.background = '#dbeafe'; }}
             title="Aumentar zoom"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1191,10 +1221,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
               cursor: 'pointer', color: '#555', fontWeight: 600,
               transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f0f4ff'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(21,101,192,0.28)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = 'inset 2px 0 0 #1565c0, 0 2px 6px rgba(21,101,192,0.12)'; e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.zIndex = '2'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; e.currentTarget.style.transform = ''; e.currentTarget.style.zIndex = ''; }}
             onMouseDown={e => { e.currentTarget.style.background = '#dce8ff'; }}
-            onMouseUp={e => { e.currentTarget.style.background = '#f0f4ff'; }}
+            onMouseUp={e => { e.currentTarget.style.background = '#dbeafe'; }}
             title="Diminuir zoom"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
