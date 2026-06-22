@@ -287,7 +287,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   const keywordLayerRef = useRef(null);
   const addressPolygonRef = useRef(null);
   const styleFnsRef     = useRef(new Map()); // Map<id, {gmaps, leaflet}>
-  const caesbIconMarkersRef = useRef([]);
+  const caesbIconMarkersRef   = useRef([]);
+  const caesbIconMarkersLfRef = useRef([]);
   const onSearchRef        = useRef(onFeatureSearch);
   onSearchRef.current      = onFeatureSearch;
   const onWaterUseRef      = useRef(onWaterUseChange);
@@ -327,6 +328,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       }
       caesbIconMarkersRef.current.forEach(m => { try { m.map = null; } catch (_) {} });
       caesbIconMarkersRef.current = [];
+      caesbIconMarkersLfRef.current.forEach(m => { try { if (map) map.removeLayer(m); } catch (_) {} });
+      caesbIconMarkersLfRef.current = [];
     };
   }, [map, mapType]);
 
@@ -354,6 +357,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     }
     caesbIconMarkersRef.current.forEach(m => { try { m.map = null; } catch (_) {} });
     caesbIconMarkersRef.current = [];
+    caesbIconMarkersLfRef.current.forEach(m => { try { if (map) map.removeLayer(m); } catch (_) {} });
+    caesbIconMarkersLfRef.current = [];
     setActive(new Set());
     setWaterUseMap({ hidrogeo_fraturado: false, hidrogeo_poroso: false });
     onWaterUseRef.current?.(false);
@@ -385,13 +390,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
             });
           }
         } else {
-          try {
-            const b = dl.getBounds();
-            if (b && b.isValid()) {
-              map.fitBounds(b, { padding: [40, 40] });
-              map.setZoom(Math.min(map.getZoom() + 2, 14));
-            }
-          } catch (_) {}
+          map.flyTo([-15.781682, -47.802887], 11, { animate: true, duration: 0.6 });
         }
       }
     }
@@ -536,7 +535,20 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
             caesbIconMarkersRef.current.push(marker);
           });
         } else {
+          const L = (await import('leaflet')).default;
+          caesbIconMarkersLfRef.current.forEach(m => { try { map.removeLayer(m); } catch (_) {} });
+          caesbIconMarkersLfRef.current = [];
           dl.addData(gj);
+          gj.features.forEach((feature, idx) => {
+            if (idx % 5 !== 4) return;
+            const coords = feature.geometry.coordinates;
+            if (!coords.length) return;
+            const mid = coords[Math.floor(coords.length / 2)];
+            const svgHtml = `<svg viewBox="30 170 155 155" width="20" height="20" style="display:block"><path d="${CAESB_ICON_PATH}" fill="#134FAF" stroke="white" stroke-width="6"/></svg>`;
+            const icon = L.divIcon({ className: '', html: svgHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
+            const m = L.marker([mid[1], mid[0]], { icon, interactive: false }).addTo(map);
+            caesbIconMarkersLfRef.current.push(m);
+          });
         }
       } else if (isEndereco) {
         const gj = esriToGeoJSONPolygons(esriResult);
@@ -567,6 +579,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       if (id === 'caesb_estacoes') {
         caesbIconMarkersRef.current.forEach(m => { try { m.map = null; } catch (_) {} });
         caesbIconMarkersRef.current = [];
+        caesbIconMarkersLfRef.current.forEach(m => { try { if (map) map.removeLayer(m); } catch (_) {} });
+        caesbIconMarkersLfRef.current = [];
       }
       if (WATER_USE_LAYERS.has(id)) {
         setWaterUseMap(prev => {

@@ -129,6 +129,12 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   const onPickRef          = useRef(onPickCoordinate);
   const pickModeRef        = useRef(false);
   const pickBtnRef         = useRef(null);
+  const distModeRef        = useRef(false);
+  const distPointsRef      = useRef([]);
+  const distPreviewRef     = useRef(null);
+  const distLinesLfRef     = useRef([]);
+  const distPopupsLfRef    = useRef([]);
+  const distBtnRef         = useRef(null);
 
   const onClearRef    = useRef(onClearAll);
   const onEditSaveRef = useRef(onEditSave);
@@ -220,6 +226,18 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     map.addControl(drawCtrl);
     // Separa os botões de desenho do seletor de tipo (que fica no topo)
     drawCtrl.getContainer().style.marginTop = '40px';
+
+    // Injeta botão de distância diretamente no toolbar do drawCtrl (abaixo do círculo)
+    const drawToolbarEl = drawCtrl.getContainer().querySelector('.leaflet-draw-toolbar') ?? drawCtrl.getContainer();
+    const distA = document.createElement('a');
+    distA.href  = '#';
+    distA.title = 'Medir distância';
+    distA.style.cssText = 'display:flex;align-items:center;justify-content:center;color:#555;transition:background 0.15s,color 0.15s;';
+    distA.style.setProperty('background-image', 'none', 'important');
+    distA.style.setProperty('background-size', 'unset', 'important');
+    distA.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="21" x2="21" y2="3"/><circle cx="3" cy="21" r="2.2" fill="currentColor" stroke="none"/><circle cx="21" cy="3" r="2.2" fill="currentColor" stroke="none"/></svg>`;
+    distBtnRef.current = distA;
+    drawToolbarEl.appendChild(distA);
 
     // ── Popup de área ─────────────────────────────────────────────────────────
     const fmtArea = (m2) => {
@@ -598,12 +616,14 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
         L.DomEvent.on(removeBtn, 'click', L.DomEvent.stop);
         L.DomEvent.on(removeBtn, 'click', () => {
           if (editState.active) { exitEditMode(false); setEditUI(false); }
+          stopDistMode();
           drawnItems.clearLayers();
           [circleLayerRef, userMarkerLayerRef, markerLayerRef, allMarkersLayerRef, subShapeLayerRef].forEach(ref => {
             if (ref.current) { map.removeLayer(ref.current); ref.current = null; }
           });
           areaPopupsRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
           areaPopupsRef.current = [];
+          clearDistLf();
           shapeStatesRef.current.clear();
           pendingCircleAreaRef.current = null;
           setLayerClearRef.current?.(t => t + 1);
@@ -615,6 +635,36 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     });
     new EditRemoveControl({ position: 'topleft' }).addTo(map);
 
+    // ── Funções de distância ─────────────────────────────────────────────────
+    const clearDistLf = () => {
+      distLinesLfRef.current.forEach(l => { try { map.removeLayer(l); } catch (_) {} });
+      distLinesLfRef.current = [];
+      distPopupsLfRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
+      distPopupsLfRef.current = [];
+    };
+
+    const stopDistMode = () => {
+      distModeRef.current = false;
+      distPointsRef.current = [];
+      if (distPreviewRef.current) { try { map.removeLayer(distPreviewRef.current); } catch (_) {} distPreviewRef.current = null; }
+      map.getContainer().style.cursor = '';
+      if (distBtnRef.current) { distBtnRef.current.style.backgroundColor = ''; distBtnRef.current.style.color = '#555'; }
+    };
+
+    L.DomEvent.on(distA, 'click', L.DomEvent.stop);
+    L.DomEvent.on(distA, 'click', () => {
+      if (distModeRef.current) { stopDistMode(); return; }
+      if (pickModeRef.current) {
+        pickModeRef.current = false;
+        map.getContainer().style.cursor = '';
+        if (pickBtnRef.current) { pickBtnRef.current.style.background = ''; pickBtnRef.current.style.color = '#555'; }
+      }
+      distModeRef.current = true;
+      distPointsRef.current = [];
+      map.getContainer().style.cursor = 'crosshair';
+      distA.style.backgroundColor = '#e3f2fd';
+      distA.style.color           = '#1565c0';
+    });
 
     // ── Listeners globais ────────────────────────────────────────────────────
     const onKeyDown = (e) => {
@@ -624,11 +674,58 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
         map.getContainer().style.cursor = '';
         if (pickBtnRef.current) { pickBtnRef.current.style.background = ''; pickBtnRef.current.style.color = '#555'; }
       }
+      if (distModeRef.current) stopDistMode();
       if (editState.cancelFn) editState.cancelFn();
     };
     document.addEventListener('keydown', onKeyDown);
 
+    map.on('mousemove', (e) => {
+      if (!distModeRef.current || distPointsRef.current.length === 0) return;
+      if (distPreviewRef.current) map.removeLayer(distPreviewRef.current);
+      distPreviewRef.current = L.polyline([...distPointsRef.current, e.latlng], {
+        color: '#e65100', weight: 2.5, opacity: 0.9, dashArray: '6 5', interactive: false,
+      }).addTo(map);
+    });
+
+    // dblclick finaliza; o Leaflet dispara click antes do dblclick, então usamos
+    // um timer para cancelar o click simples quando um dblclick é detectado
+    let distClickTimer = null;
+    map.on('dblclick', (e) => {
+      if (!distModeRef.current) return;
+      L.DomEvent.stop(e);
+      if (distClickTimer) { clearTimeout(distClickTimer); distClickTimer = null; }
+      const pts = distPointsRef.current;
+      if (pts.length < 2) { stopDistMode(); return; }
+      if (distPreviewRef.current) { map.removeLayer(distPreviewRef.current); distPreviewRef.current = null; }
+      let totalDist = 0;
+      for (let i = 0; i < pts.length - 1; i++) totalDist += pts[i].distanceTo(pts[i + 1]);
+      const line = L.polyline(pts, { color: '#e65100', weight: 2.5, opacity: 0.9, interactive: false }).addTo(map);
+      distLinesLfRef.current.push(line);
+      const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+      const distM = Math.round(totalDist);
+      const distKm = totalDist / 1000;
+      const popup = L.popup({ closeButton: true, autoClose: false, closeOnClick: false })
+        .setLatLng(pts[pts.length - 1])
+        .setContent(`
+          <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
+            <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">Distância total</div>
+            <div style="font-size:14px;color:#bf360c;font-weight:700;">${fmt(distM)} m</div>
+            <div style="font-size:12px;color:#546e7a;margin-top:2px;">${fmt(distKm)} km</div>
+          </div>
+        `)
+        .addTo(map);
+      distPopupsLfRef.current.push(popup);
+      stopDistMode();
+    });
+
     map.on('click', (e) => {
+      if (distModeRef.current) {
+        distClickTimer = setTimeout(() => {
+          distClickTimer = null;
+          distPointsRef.current.push(e.latlng);
+        }, 220);
+        return;
+      }
       if (!pickModeRef.current) return;
       pickModeRef.current = false;
       map.getContainer().style.cursor = '';
@@ -655,6 +752,10 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     containerRef.current.appendChild(waterDiv);
     setWaterUsageContainer(waterDiv);
 
+    map.on('zoomend', () => {
+      console.log('[LeafletMap] zoomend — zoom atual:', map.getZoom(), '| centro:', map.getCenter());
+    });
+
     mapRef.current = map;
     setMapInstance(map);
 
@@ -676,6 +777,10 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     mapRef.current?.closePopup();
     areaPopupsRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
     areaPopupsRef.current = [];
+    distLinesLfRef.current.forEach(l => { try { mapRef.current?.removeLayer(l); } catch (_) {} });
+    distLinesLfRef.current = [];
+    distPopupsLfRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
+    distPopupsLfRef.current = [];
     shapeStatesRef.current.clear();
     pendingCircleAreaRef.current = null;
     coordCircleRef.current = null;
@@ -780,7 +885,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     }).addTo(map);
 
     userMarkerLayerRef.current = marker;
-    map.flyTo([userMarker.lat, userMarker.lng], Math.max(mapRef.current.getZoom(), 13), { animate: true, duration: 1.0 });
+    map.panTo([userMarker.lat, userMarker.lng]);
   }, [userMarker]);
 
   // ── Marcador de outorga selecionada ───────────────────────────────────────
@@ -873,11 +978,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     layer.addTo(map);
     subShapeLayerRef.current = layer;
 
-    // centraliza no polígono se não houver busca de círculo ativa
-    try {
-      const bounds = layer.getBounds();
-      if (bounds.isValid()) map.flyToBounds(bounds, { padding: [24, 24], maxZoom: 13, duration: 1.0 });
-    } catch (_) {}
+    map.flyTo([-15.781682, -47.802887], 11, { animate: true, duration: 0.6 });
   }, [subShape]);
 
   return (

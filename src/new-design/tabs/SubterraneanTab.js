@@ -329,8 +329,9 @@ export default function SubterraneanTab({
         {error && <Alert severity="error" sx={{ fontSize: '0.73rem', py: 0.3, mt: 1 }}>{error}</Alert>}
       </Box>
 
-      <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
+      <Box id="nd-sub-results" sx={{ flex: 1, overflow: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
 
+      <Box id="nd-sub-chart-area">
       {/* ── Chips: Bacia + UH ────────────────────────────────────────────────── */}
       {avail && (
         <Stack direction="row" spacing={1} sx={{ px: 2, py: 0.8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -420,7 +421,7 @@ export default function SubterraneanTab({
               </Typography>
             </Stack>
             {/* placeholder chart com valores sample — exibido normalmente */}
-            <Box sx={{ height: 140 }}>
+            <Box id="nd-sub-avail-chart-placeholder" sx={{ height: 140 }}>
               <Bar
                 plugins={[barValuesPlugin]}
                 data={{
@@ -489,7 +490,7 @@ export default function SubterraneanTab({
               </Table>
             </Paper>
 
-            <Box sx={{ position: 'relative', height: 140 }}>
+            <Box id="nd-sub-avail-chart" sx={{ position: 'relative', height: 140 }}>
               <AvailChart avail={avail} qUsuario={qUsuario} logScale={logScale} />
               <ToggleButtonGroup
                 value={logScale ? 'log' : 'lin'} exclusive size="small"
@@ -511,7 +512,9 @@ export default function SubterraneanTab({
           </>
         )}
       </Box>
+      </Box>
 
+      <Box id="nd-sub-table-area">
       {/* ── Outorgas subterrâneas ────────────────────────────────────────────── */}
       <Box id="nd-sub-grants-header" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 0.8, bgcolor: '#f5f7ff' }}>
         <Stack direction="row" alignItems="center" spacing={0.6}>
@@ -558,6 +561,7 @@ export default function SubterraneanTab({
             onRowClick={i => onMarkerSelect?.({ ...subPoints[i], _catColor: '#0277bd', _catLabel: 'Subterrânea' })}
           />
         )}
+      </Box>
       </Box>
 
       </Box>

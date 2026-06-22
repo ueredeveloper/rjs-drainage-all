@@ -4,7 +4,7 @@
 
 Aplicação web React para busca e análise de outorgas de uso de água (ADASA/DF). Permite pesquisar outorgas por formas geográficas no mapa (polígono, retângulo, círculo) ou por dados do usuário (nome, CPF/CNPJ, endereço, número de processo).
 
-**Versão:** 1.27.0
+**Versão:** 2.0.0
 **Órgão:** ADASA — Agência Reguladora de Águas, Energia e Saneamento do DF
 
 ---

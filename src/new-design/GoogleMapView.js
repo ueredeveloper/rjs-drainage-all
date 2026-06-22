@@ -64,11 +64,12 @@ function buildInfoHtml(item) {
     </div>`;
 }
 
-// polígono → retângulo → círculo
+// polígono → retângulo → círculo → linha de distância
 const DRAW_BTNS = [
   { mode: 'polygon',   title: 'Polígono',  svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12,2 21,8 18,20 6,20 3,8"/></svg>` },
   { mode: 'rectangle', title: 'Retângulo', svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="1"/></svg>` },
   { mode: 'circle',    title: 'Círculo',   svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg>` },
+  { mode: 'polyline',  title: 'Medir distância', svg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="21" x2="21" y2="3"/><circle cx="3" cy="21" r="2.2" fill="currentColor" stroke="none"/><circle cx="21" cy="3" r="2.2" fill="currentColor" stroke="none"/></svg>` },
 ];
 
 const BTN_CSS = [
@@ -153,6 +154,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const pageShapesRef            = useRef(new Map());
   const drawnShapesRef           = useRef([]);
   const removeFromDrawnRef       = useRef(null);
+  const distLinesRef             = useRef([]);
+  const distIWsRef               = useRef([]);
+  const distAnchorsRef           = useRef([]);
   const onCreatedRef   = useRef(onShapeCreated);
   const onPickRef      = useRef(onPickCoordinate);
   const onClearRef     = useRef(onClearAll);
@@ -231,6 +235,15 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       areaAnchorsRef.current = [];
     };
 
+    const clearDistLines = () => {
+      distLinesRef.current.forEach(l => { try { l.setMap(null); } catch (_) {} });
+      distLinesRef.current = [];
+      distIWsRef.current.forEach(iw => { try { iw.close(); } catch (_) {} });
+      distIWsRef.current = [];
+      distAnchorsRef.current.forEach(a => { try { a.map = null; } catch (_) {} });
+      distAnchorsRef.current = [];
+    };
+
     clearDrawnRef.current = () => {
       drawnShapes.forEach(s => { s.setMap(null); shapeStatesRef.current.delete(s); });
       drawnShapes = [];
@@ -243,6 +256,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       pageShapesRef.current.clear();
       shapeStyleIW.close();
       clearAreaPopups();
+      clearDistLines();
     };
 
     // ── Popup de área ─────────────────────────────────────────────────────────
@@ -494,6 +508,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       pendingCircleAreaRef.current = null;
       shapeStyleIW.close();
       clearAreaPopups();
+      clearDistLines();
       if (userMarkerRef.current)  { userMarkerRef.current.map = null;  userMarkerRef.current = null; }
       if (selectedMkrRef.current) { selectedMkrRef.current.map = null; selectedMkrRef.current = null; }
       allMkrsRef.current.forEach(m => { m.map = null; }); allMkrsRef.current = [];
@@ -516,7 +531,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const setDrawMode = m => {
       dragging = false; lastDrag = null; map.setOptions({ draggable: true });
       drawMode = m; clearPrev(); points = []; startPt = null;
-      map.setOptions({ draggableCursor: m ? 'crosshair' : null, disableDoubleClickZoom: m === 'polygon' });
+      map.setOptions({ draggableCursor: m ? 'crosshair' : null, disableDoubleClickZoom: m === 'polygon' || m === 'polyline' });
       Object.entries(drawBtnMap).forEach(([key, btn]) => {
         const active = key === m;
         btn._active = active;
@@ -617,6 +632,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       }
       if (!drawMode) return;
       if (drawMode === 'polygon') points.push(e.latLng);
+      if (drawMode === 'polyline') points.push(e.latLng);
     });
 
     const dblClickL = map.addListener('dblclick', (e) => {
@@ -631,6 +647,38 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         addShapeClickListener(poly, showAreaPopupG(topOfPath(finalPts), computeArea(shape)), shape, true);
         onCreatedRef.current?.(shape);
       }
+      if (drawMode === 'polyline' && points.length >= 2) {
+        e.stop();
+        const finalPts = [...points]; setDrawMode(null); clearPrev();
+        let totalDist = 0;
+        for (let i = 0; i < finalPts.length - 1; i++) {
+          totalDist += HAVERSINE(finalPts[i].lat(), finalPts[i].lng(), finalPts[i + 1].lat(), finalPts[i + 1].lng());
+        }
+        const line = new window.google.maps.Polyline({
+          path: finalPts, map,
+          strokeColor: '#e65100', strokeWeight: 2.5, strokeOpacity: 0.9, clickable: false,
+        });
+        distLinesRef.current.push(line);
+        const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+        const distM = Math.round(totalDist);
+        const distKm = totalDist / 1000;
+        const lastPt = finalPts[finalPts.length - 1];
+        const iw = new window.google.maps.InfoWindow({
+          content: `
+            <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
+              <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;">Distância total</div>
+              <div style="font-size:14px;color:#bf360c;font-weight:700;">${fmt(distM)} m</div>
+              <div style="font-size:12px;color:#546e7a;margin-top:2px;">${fmt(distKm)} km</div>
+            </div>
+          `,
+        });
+        const hiddenEl = document.createElement('div');
+        hiddenEl.style.cssText = 'display:none;width:0;height:0;';
+        const anchor = new window.google.maps.marker.AdvancedMarkerElement({ position: lastPt, map, content: hiddenEl });
+        iw.open({ map, anchor });
+        distIWsRef.current.push(iw);
+        distAnchorsRef.current.push(anchor);
+      }
     });
 
     const mouseDownL = map.addListener('mousedown', e => {
@@ -644,6 +692,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       clearPrev();
       if (drawMode === 'polygon' && points.length > 0) {
         previews = [new window.google.maps.Polyline({ path: [...points, e.latLng], map, strokeColor: USER_SHAPE_STYLE.strokeColor, strokeWeight: USER_SHAPE_STYLE.strokeWeight, strokeOpacity: 0.85, clickable: false })];
+      }
+      if (drawMode === 'polyline' && points.length > 0) {
+        previews = [new window.google.maps.Polyline({ path: [...points, e.latLng], map, strokeColor: '#e65100', strokeWeight: 2.5, strokeOpacity: 0.9, icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '12px' }], clickable: false })];
       }
       if (drawMode === 'circle' && dragging && startPt) {
         const r = HAVERSINE(startPt.lat(), startPt.lng(), e.latLng.lat(), e.latLng.lng());

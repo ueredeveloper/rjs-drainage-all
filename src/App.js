@@ -9,7 +9,7 @@ import { AuthProvider } from './hooks/auth-hooks';
 import theme from './theme';
 import NewDesign from './new-design/NewDesign';
 
-const isNewDesign = window.location.pathname.startsWith('/new-design');
+const isLegacy = window.location.pathname.startsWith('/legacy');
 
 /**
  * Componente principal da aplicação.
@@ -19,17 +19,25 @@ const isNewDesign = window.location.pathname.startsWith('/new-design');
  * @requires Analyse
  */
 function App() {
-  if (isNewDesign) return <ThemeProvider theme={theme}><NewDesign /></ThemeProvider>;
+  if (isLegacy) {
+    return (
+      <ThemeProvider theme={theme}>
+        <AuthProvider>
+          <div className="App">
+            <MenuAppBar />
+            <Analyse />
+            <Footer />
+            <LoginDialog />
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
       <AuthProvider>
-        <div className="App">
-          <MenuAppBar />
-          <Analyse />
-          <Footer />
-          <LoginDialog />
-        </div>
+        <NewDesign />
       </AuthProvider>
     </ThemeProvider>
   );

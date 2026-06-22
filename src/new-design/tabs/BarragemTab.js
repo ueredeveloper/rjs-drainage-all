@@ -168,7 +168,10 @@ export default function BarragemTab({
   } : {};
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <Box id="nd-bar-root" sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+      {/* ── nd-bar-content: scroll único no notebook, split no desktop ──────── */}
+      <Box id="nd-bar-content" sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
 
       {/* ── Barra de coordenadas ───────────────────────────────────────────── */}
       <CoordSearchBar
@@ -275,20 +278,16 @@ export default function BarragemTab({
         </Box>
       )}
 
-      {/* ── Área de conteúdo: tabelas de cálculo + barragens próximas ──────── */}
-      <Box id="nd-bar-content" sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
         {/* ── Seção superior: tabelas de cálculo (altura fixa + scroll) ── */}
-        <Box sx={{
-          flexShrink: 0, minHeight: 280, maxHeight: 280,
-          overflowY: 'auto', overflowX: 'auto',
+        <Box id="nd-bar-calc-tables" sx={{
+          overflowX: 'auto',
           '&::-webkit-scrollbar': { width: 4, height: 4 },
           '&::-webkit-scrollbar-thumb': { bgcolor: '#cfd8dc', borderRadius: 2 },
         }}>
 
           {/* ── Tab Operação ── */}
           {calcTab === 0 && (
-            <TableContainer sx={{ minWidth: 0 }}>
+            <TableContainer id="nd-bar-operacao-table" sx={{ minWidth: 0 }}>
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow sx={{ height: 36 }}>
@@ -394,7 +393,7 @@ export default function BarragemTab({
           {/* ── Tab Planilha ── */}
           {calcTab === 1 && (
             result?.resultadoCalculo ? (
-              <TableContainer>
+              <TableContainer id="nd-bar-planilha-table">
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow sx={{ height: 36 }}>
@@ -432,7 +431,7 @@ export default function BarragemTab({
           {/* ── Tab Bruta ── */}
           {calcTab === 2 && (
             result?.resultadoCalculo ? (
-              <TableContainer>
+              <TableContainer id="nd-bar-bruta-table">
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow sx={{ height: 36 }}>
@@ -472,15 +471,15 @@ export default function BarragemTab({
         </Box>
 
         {/* ── Seção inferior: barragens próximas (preenche espaço restante) ── */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderTop: '1px solid #e0e0e0' }}>
+        <Box id="nd-bar-nearby-section" sx={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid #e0e0e0' }}>
           <SectionLabel
             title="Barragens próximas"
             count={barRows !== null ? barRows.length : undefined}
           />
           <Divider />
 
-          <Box sx={{
-            flex: 1, overflowY: 'auto', overflowX: 'auto',
+          <Box id="nd-bar-nearby-table" sx={{
+            overflowX: 'auto',
             pl: 3, pr: 1.5, pt: 0.5,
             '&::-webkit-scrollbar': { width: 4, height: 4 },
             '&::-webkit-scrollbar-thumb': { bgcolor: '#cfd8dc', borderRadius: 2 },

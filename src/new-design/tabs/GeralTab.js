@@ -62,6 +62,7 @@ export default function GeralTab({
   const [subTab, setSubTab] = useState(0);
   const [activePageIdx, setActivePageIdx] = useState(0);
   const [openConverter, setOpenConverter] = useState(false);
+  const [searchTab, setSearchTab] = useState(0);
 
   // Vai para a última página quando uma nova pesquisa é adicionada
   const prevLenRef = useRef(0);
@@ -139,67 +140,88 @@ export default function GeralTab({
   return (
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-      {/* ── Busca por coordenada + raio ────────────────────────────────────── */}
-      <Box id="nd-geral-coord-search" sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
-        <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
-          Busca por Coordenadas
-        </Typography>
-
-        <Stack direction="row" spacing={1} alignItems="center" mb={1.2}>
-          <TextField size="small" label="Latitude"  value={lat} onChange={e => onLatChange(e.target.value)} sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }} />
-          <TextField size="small" label="Longitude" value={lng} onChange={e => onLngChange(e.target.value)} sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }} />
-          <Button
-            variant="contained" size="small" onClick={onSearch} disabled={loading}
-            sx={{ flexShrink: 0, textTransform: 'none', fontSize: '0.75rem', px: 2, bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}
-          >
-            {loading ? 'Buscando…' : 'Buscar'}
-          </Button>
-          <Tooltip title="Copiar coordenadas">
-            <IconButton
-              size="small" onClick={() => navigator.clipboard.writeText(`${lat}, ${lng}`)}
-              sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
-            >
-              <ContentCopyIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
-            <IconButton
-              size="small" onClick={() => setOpenConverter(true)}
-              sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
-            >
-              <TransformIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-
-        <CoordConverter
-          open={openConverter}
-          onClose={() => setOpenConverter(false)}
-          onConvert={({ lat: latN, lng: lngN }) => {
-            onApplyCoordinates?.({ lat: latN, lng: lngN });
-            setOpenConverter(false);
+      {/* ── Painel de busca com abas ─────────────────────────────────────── */}
+      <Box id="nd-geral-search" sx={{ flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
+        <Tabs
+          value={searchTab} onChange={(_, v) => setSearchTab(v)}
+          sx={{
+            minHeight: 34, borderBottom: '1px solid #e8eaf0',
+            '& .MuiTab-root': { minHeight: 34, fontSize: '0.68rem', textTransform: 'none', py: 0, px: 2 },
+            '& .MuiTabs-indicator': { height: 2 },
           }}
-        />
+        >
+          <Tab label="Busca por Coordenadas" />
+          <Tab label="Busca por Requerente" />
+        </Tabs>
 
-        <Stack direction="row" alignItems="center" spacing={1.5}>
-          <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0 }}>600 m</Typography>
-          <Slider
-            value={radius} min={600} max={2000} step={100}
-            onChange={(_, v) => onRadiusChange(v)}
-            valueLabelDisplay="auto" valueLabelFormat={v => `${v} m`}
-            marks={[{ value: 600 }, { value: 1000 }, { value: 1300 }, { value: 1500 }, { value: 2000 }]}
-            sx={{
-              flex: 1, color: '#003566',
-              '& .MuiSlider-thumb': { width: 14, height: 14 },
-              '& .MuiSlider-valueLabel': { fontSize: '0.62rem', py: 0.3, px: 0.8 },
-            }}
-          />
-          <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0 }}>2.000 m</Typography>
-        </Stack>
+        {/* ── Aba: Coordenadas ── */}
+        {searchTab === 0 && (
+          <Box id="nd-geral-coord-search" sx={{ px: 2, py: 1.5 }}>
+            <Stack direction="row" spacing={1} alignItems="center" mb={1.2}>
+              <TextField size="small" label="Latitude"  value={lat} onChange={e => onLatChange(e.target.value)} sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }} />
+              <TextField size="small" label="Longitude" value={lng} onChange={e => onLngChange(e.target.value)} sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }} />
+              <Button
+                variant="contained" size="small" onClick={onSearch} disabled={loading}
+                sx={{ flexShrink: 0, textTransform: 'none', fontSize: '0.75rem', px: 2, bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}
+              >
+                {loading ? 'Buscando…' : 'Buscar'}
+              </Button>
+              <Tooltip title="Copiar coordenadas">
+                <IconButton
+                  size="small" onClick={() => navigator.clipboard.writeText(`${lat}, ${lng}`)}
+                  sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
+                >
+                  <ContentCopyIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
+                <IconButton
+                  size="small" onClick={() => setOpenConverter(true)}
+                  sx={{ flexShrink: 0, color: '#1565c0', border: '1px solid #90caf9', borderRadius: 1, p: 0.7 }}
+                >
+                  <TransformIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+
+            <CoordConverter
+              open={openConverter}
+              onClose={() => setOpenConverter(false)}
+              onConvert={({ lat: latN, lng: lngN }) => {
+                onApplyCoordinates?.({ lat: latN, lng: lngN });
+                setOpenConverter(false);
+              }}
+            />
+
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0 }}>600 m</Typography>
+              <Slider
+                value={radius} min={600} max={2000} step={100}
+                onChange={(_, v) => onRadiusChange(v)}
+                valueLabelDisplay="auto" valueLabelFormat={v => `${v} m`}
+                marks={[{ value: 600 }, { value: 1000 }, { value: 1300 }, { value: 1500 }, { value: 2000 }]}
+                sx={{
+                  flex: 1, color: '#003566',
+                  '& .MuiSlider-thumb': { width: 14, height: 14 },
+                  '& .MuiSlider-valueLabel': { fontSize: '0.62rem', py: 0.3, px: 0.8 },
+                }}
+              />
+              <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0 }}>2.000 m</Typography>
+            </Stack>
+          </Box>
+        )}
+
+        {/* ── Aba: Requerente ── */}
+        {searchTab === 1 && (
+          <Box id="nd-geral-text-search" sx={{ px: 2, py: 1.5 }}>
+            <TextSearchBar onSearch={onTextSearch} loading={textLoading} error={textError} />
+          </Box>
+        )}
       </Box>
 
-      <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
+      <Box id="nd-geral-results" sx={{ flex: 1, overflow: 'auto', minHeight: 0, '&::-webkit-scrollbar': { width: 5, height: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#bdbdbd', borderRadius: 3 } }}>
 
+      <Box id="nd-geral-chart-area">
       {loading && <LinearProgress />}
 
       {error && (
@@ -207,9 +229,6 @@ export default function GeralTab({
           <Alert severity="error" sx={{ fontSize: '0.73rem', py: 0.3 }}>{error}</Alert>
         </Box>
       )}
-
-      {/* ── Busca por dados do requerente ─────────────────────────────────── */}
-      <TextSearchBar onSearch={onTextSearch} loading={textLoading} error={textError} />
 
       {/* ── PolarArea — reflete a página ativa ──────────────────────────── */}
       {!loading && (() => {
@@ -368,7 +387,9 @@ export default function GeralTab({
           </Stack>
         </Box>
       )}
+      </Box>
 
+      <Box id="nd-geral-table-area">
       {/* ── Resultados da página ativa ─────────────────────────────────────── */}
       {activePage && !loading ? (
         <>
@@ -438,6 +459,7 @@ export default function GeralTab({
           />
         </Box>
       )}
+      </Box>
       </Box>
     </Box>
   );

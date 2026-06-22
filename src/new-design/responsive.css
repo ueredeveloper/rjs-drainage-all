@@ -1,0 +1,90 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Responsividade — new-design
+   Celular / Tablet / Notebook : comportamento padrão (tudo rola junto)
+   Desktop grande (≥ 1440px)   : chart fixo, tabela com scroll próprio
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Celular (padrão) */
+/* nenhuma regra extra — o layout base já é mobile-first */
+
+/* Tablet */
+@media (min-width: 768px) {
+  /* layout não muda, mesma coluna única */
+}
+
+/* Notebook — div pai une chart + tabela em scroll único (padrão atual) */
+@media (min-width: 1024px) {
+  /* nenhuma alteração em relação ao padrão */
+}
+
+/* Desktop grande — chart fixo no topo, tabela com scroll independente */
+@media (min-width: 1440px) {
+
+  /* ── Aba Geral ────────────────────────────────────────────────────── */
+  #nd-geral-results {
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+  #nd-geral-chart-area {
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  #nd-geral-table-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* ── Aba Subterrânea ─────────────────────────────────────────────── */
+  #nd-sub-results {
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+  #nd-sub-chart-area {
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  #nd-sub-table-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* ── Aba Superficial ─────────────────────────────────────────────── */
+  #nd-sup-content {
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+  #nd-sup-chart-area {
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  #nd-sup-table-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* ── Aba Barragem ────────────────────────────────────────────────── */
+  #nd-bar-content {
+    overflow: hidden !important;
+  }
+  #nd-bar-calc-tables {
+    flex-shrink: 0;
+    max-height: 380px;
+    overflow-y: auto !important;
+  }
+  #nd-bar-nearby-section {
+    flex: 1;
+    overflow: hidden !important;
+    min-height: 0;
+  }
+  #nd-bar-nearby-table {
+    flex: 1;
+    overflow-y: auto !important;
+    min-height: 0;
+  }
+}

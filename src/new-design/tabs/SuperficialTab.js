@@ -254,8 +254,9 @@ const hydrographicBasin = await searchHydrograficUnit(
       }}>
 
         {/* ── Conteúdo da aba ativa ─────────────────────────────────────────── */}
+        <Box id="nd-sup-chart-area">
         {tabIndex === 0 && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1 }}>
+          <Box id="nd-sup-charts" sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1 }}>
             <Box sx={{ height: 200 }}><SurfaceChart analyse={hasData ? surfaceAnalyse.secao : MOCK_SECAO} /></Box>
             <Box sx={{ height: 200 }}><SurfaceChart analyse={hasData ? surfaceAnalyse.uh   : MOCK_UH}    /></Box>
           </Box>
@@ -263,7 +264,7 @@ const hydrographicBasin = await searchHydrograficUnit(
 
         {tabIndex === 1 && (
           hasData ? (
-            <Box>
+            <Box id="nd-sup-tables">
               <SurfaceTable q_solicitada={surfaceAnalyse.q_solicitada} analyse={surfaceAnalyse.secao} setSurfaceAnalyse={setSurfaceAnalyse} />
               <SurfaceTable q_solicitada={surfaceAnalyse.q_solicitada} analyse={surfaceAnalyse.uh}   setSurfaceAnalyse={setSurfaceAnalyse} />
             </Box>
@@ -278,7 +279,7 @@ const hydrographicBasin = await searchHydrograficUnit(
 
         {tabIndex === 2 && (
           hasData ? (
-            <Box>
+            <Box id="nd-sup-modulations">
               <SurfaceTableModulations analyse={surfaceAnalyse.h_ajuste} setSurfaceAnalyse={setSurfaceAnalyse} />
               <SurfaceTableModulations analyse={surfaceAnalyse.h_modula} setSurfaceAnalyse={setSurfaceAnalyse} />
               <SurfaceTableModulations analyse={surfaceAnalyse.q_modula} setSurfaceAnalyse={setSurfaceAnalyse} />
@@ -292,9 +293,12 @@ const hydrographicBasin = await searchHydrograficUnit(
           )
         )}
 
+        </Box>
+
         {/* ── Outorgas — sempre abaixo do conteúdo da aba ──────────────────── */}
+        <Box id="nd-sup-table-area">
         <Divider />
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box id="nd-sup-outorgas-header" sx={{ display: 'flex', alignItems: 'center' }}>
           <Box sx={{ flex: 1 }}>
             <SectionLabel title="Outorgas na seção de captação" count={hasData ? secaoGrants.length : undefined} />
           </Box>
@@ -307,37 +311,40 @@ const hydrographicBasin = await searchHydrograficUnit(
           </Tooltip>
         </Box>
         <Divider />
-        {!hasData ? (
-          <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
+        <Box id="nd-sup-outorgas-table">
+          {!hasData ? (
+            <Box sx={{ opacity: 0.4, pointerEvents: 'none' }}>
+              <CompactTable
+                headers={TABLE_HEADERS}
+                rows={Array.from({ length: 15 }, () => TABLE_HEADERS.map((_, j) => (
+                  <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
+                )))}
+              />
+            </Box>
+          ) : secaoGrants.length === 0 ? (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
+                Nenhuma captação superficial encontrada na seção.
+              </Typography>
+            </Box>
+          ) : (
             <CompactTable
               headers={TABLE_HEADERS}
-              rows={Array.from({ length: 15 }, () => TABLE_HEADERS.map((_, j) => (
-                <Box sx={{ height: 9, borderRadius: 1, bgcolor: '#cfd8dc', width: j === 0 ? 80 : j === 1 ? 56 : j === 2 ? 64 : j === 3 ? 90 : 36 }} />
-              )))}
+              rows={secaoGrants.map(m => {
+                const demandas = m.dt_demanda?.demandas ?? [];
+                const monthly = MESES.map((_, i) => {
+                  const d = demandas.find(d => parseInt(d.mes) === i + 1);
+                  if (!d) return '—';
+                  const v = parseFloat(d.vazao);
+                  return isNaN(v) ? '—' : numberWithCommas(v, 2);
+                });
+                return [m.us_nome ?? '—', m.us_cpf_cnpj ?? '—', m.int_processo ?? '—', m.emp_endereco ?? '—', ...monthly];
+              })}
+              onRowClick={i => onMarkerSelect?.({ ...secaoGrants[i], _catColor: '#2e7d32', _catLabel: 'Superficial' })}
             />
-          </Box>
-        ) : secaoGrants.length === 0 ? (
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
-              Nenhuma captação superficial encontrada na seção.
-            </Typography>
-          </Box>
-        ) : (
-          <CompactTable
-            headers={TABLE_HEADERS}
-            rows={secaoGrants.map(m => {
-              const demandas = m.dt_demanda?.demandas ?? [];
-              const monthly = MESES.map((_, i) => {
-                const d = demandas.find(d => parseInt(d.mes) === i + 1);
-                if (!d) return '—';
-                const v = parseFloat(d.vazao);
-                return isNaN(v) ? '—' : numberWithCommas(v, 2);
-              });
-              return [m.us_nome ?? '—', m.us_cpf_cnpj ?? '—', m.int_processo ?? '—', m.emp_endereco ?? '—', ...monthly];
-            })}
-            onRowClick={i => onMarkerSelect?.({ ...secaoGrants[i], _catColor: '#2e7d32', _catLabel: 'Superficial' })}
-          />
-        )}
+          )}
+        </Box>
+        </Box>
       </Box>
 
     </Box>

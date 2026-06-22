@@ -1,10 +1,14 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Box, Typography, Tabs, Tab, Chip, Stack, Divider, IconButton } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Chip, Stack, Divider, IconButton, Button, Tooltip } from '@mui/material';
 import WaterIcon from '@mui/icons-material/Water';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { Wrapper } from '@googlemaps/react-wrapper';
+import LoginDialog from '../components/Commom/LoginDialog';
+import { useAuth } from '../hooks/auth-hooks';
 
 import './chartSetup'; // registra ChartJS globalmente (side-effect)
+import './responsive.css';
 import LeafletMap       from './LeafletMap';
 import GoogleMapView    from './GoogleMapView';
 import GeralTab         from './tabs/GeralTab';
@@ -26,9 +30,11 @@ const GMAPS_API_KEY = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
 export default function NewDesign() {
   const _renderRef = useRef(0);
   console.log(`[NewDesign] render #${++_renderRef.current}`);
+  const { session, setLoginOpen } = useAuth();
+  const userLabel = session?.colaborador?.email ? session.colaborador.email.split('@')[0] : null;
   const [tabIndex, setTabIndex]               = useState(0);
-  const [lat, setLat]                         = useState('-15.667939');
-  const [lng, setLng]                         = useState('-47.954828');
+  const [lat, setLat]                         = useState('-15.7222350');
+  const [lng, setLng]                         = useState('-47.8801980');
   const [radius, setRadius]                   = useState(1300);
   const [circleData, setCircleData]           = useState(null);
   const [searchResult, setSearchResult]       = useState(null);
@@ -372,6 +378,25 @@ export default function NewDesign() {
           <Chip label={`${totalResults} outorga${totalResults !== 1 ? 's' : ''} encontrada${totalResults !== 1 ? 's' : ''}`}
             size="small" sx={{ bgcolor: '#48cae430', color: '#90e0ef', fontSize: '0.62rem', height: 20 }} />
         )}
+        <Tooltip title={session?.colaborador?.email ?? 'Fazer login'}>
+          <Button
+            size="small"
+            onClick={() => setLoginOpen(true)}
+            startIcon={<AccountCircleIcon sx={{ fontSize: 17 }} />}
+            sx={{
+              color: userLabel ? '#48cae4' : 'rgba(255,255,255,0.65)',
+              fontSize: '0.7rem',
+              textTransform: 'none',
+              fontWeight: userLabel ? 700 : 400,
+              minWidth: 'auto',
+              px: 1,
+              py: 0.4,
+              '&:hover': { bgcolor: 'rgba(72,202,228,0.15)', color: '#fff' },
+            }}
+          >
+            {userLabel ?? 'Login'}
+          </Button>
+        </Tooltip>
         <IconButton
           onClick={() => setSettingsOpen(true)}
           size="small"
@@ -466,8 +491,8 @@ export default function NewDesign() {
             </Tabs>
           </Box>
 
-          {/* Conteúdo das abas */}
-          {tabIndex === 0 && (
+          {/* Conteúdo das abas — todos mantidos montados para preservar estado */}
+          <Box sx={{ display: tabIndex === 0 ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
             <GeralTab
               lat={lat} lng={lng}
               onLatChange={setLat} onLngChange={setLng}
@@ -488,8 +513,8 @@ export default function NewDesign() {
               hiddenCats={hiddenCats}
               onToggleCat={handleToggleCat}
             />
-          )}
-          {tabIndex === 1 && (
+          </Box>
+          <Box sx={{ display: tabIndex === 1 ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
             <SubterraneanTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
               onApplyCoordinates={handleApplyCoordinates}
@@ -498,8 +523,8 @@ export default function NewDesign() {
               onSubMarkers={handleSubMarkers}
               onClearCircle={() => setCircleData(null)}
             />
-          )}
-          {tabIndex === 2 && (
+          </Box>
+          <Box sx={{ display: tabIndex === 2 ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
             <SuperficialTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
               onApplyCoordinates={handleApplyCoordinates}
@@ -508,8 +533,8 @@ export default function NewDesign() {
               onSupMarkers={handleSupMarkers}
               onClearCircle={() => setCircleData(null)}
             />
-          )}
-          {tabIndex === 3 && (
+          </Box>
+          <Box sx={{ display: tabIndex === 3 ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
             <BarragemTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
               onApplyCoordinates={handleApplyCoordinates}
@@ -518,7 +543,7 @@ export default function NewDesign() {
               onBarShape={setSubShape}
               onClearCircle={() => setCircleData(null)}
             />
-          )}
+          </Box>
         </Box>
       </Box>
 
@@ -537,7 +562,7 @@ export default function NewDesign() {
           </Typography>
           <Typography sx={{ fontSize: '0.62rem', color: '#b0bec5', userSelect: 'none' }}>|</Typography>
           <Typography sx={{ fontSize: '0.62rem', color: '#90a4ae', letterSpacing: 0.4 }}>
-            v1.27.0
+            v2.0.0
           </Typography>
         </Stack>
       </Box>
@@ -547,6 +572,7 @@ export default function NewDesign() {
         fontSize={fontSize}
         onFontSizeChange={setFontSize}
       />
+      <LoginDialog />
     </Box>
     </Wrapper>
     </FontSizeProvider>
