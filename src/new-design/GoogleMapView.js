@@ -157,6 +157,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const distLinesRef             = useRef([]);
   const distIWsRef               = useRef([]);
   const distAnchorsRef           = useRef([]);
+  const markerClickSuppressRef   = useRef(false);
   const onCreatedRef   = useRef(onShapeCreated);
   const onPickRef      = useRef(onPickCoordinate);
   const onClearRef     = useRef(onClearAll);
@@ -840,14 +841,20 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     if (!mapRef.current) return;
     if (!userMarker) return;
     if (userMarkerRef.current) { userMarkerRef.current.map = null; userMarkerRef.current = null; }
+    const userPinEl = makePinElement(makePinUrl('#e53935'), 24, 36);
     const mkr = new window.google.maps.marker.AdvancedMarkerElement({
       position: { lat: userMarker.lat, lng: userMarker.lng },
       map: mapRef.current,
-      content: makePinElement(makePinUrl('#e53935'), 24, 36),
+      content: userPinEl,
       zIndex: 1000,
+      gmpClickable: true,
     });
     if (userMarker.info) {
-      mkr.addEventListener('gmp-click', () => {
+      userPinEl.style.cursor = 'pointer';
+      userPinEl.addEventListener('click', e => {
+        e.stopPropagation();
+        markerClickSuppressRef.current = true;
+        setTimeout(() => { markerClickSuppressRef.current = false; }, 100);
         infoWinRef.current.setContent(buildInfoHtml({ ...userMarker.info, _catColor: '#e53935', _catLabel: 'Usuário' }));
         infoWinRef.current.open({ map: mapRef.current, anchor: mkr });
       });
@@ -882,12 +889,21 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       const lat = parseFloat(item.int_latitude), lng = parseFloat(item.int_longitude);
       if (isNaN(lat) || isNaN(lng)) return;
       const color = item._catColor ?? TI_COLORS[item.ti_id] ?? '#1565c0';
+      const pinEl = makePinElement(makePinUrl(color, 'small'), 16, 24);
+      pinEl.style.cursor = 'pointer';
       const marker = new window.google.maps.marker.AdvancedMarkerElement({
         position: { lat, lng },
         map: mapRef.current,
-        content: makePinElement(makePinUrl(color, 'small'), 16, 24),
+        content: pinEl,
+        gmpClickable: true,
       });
-      marker.addEventListener('gmp-click', () => { infoWinRef.current.setContent(buildInfoHtml(item)); infoWinRef.current.open({ map: mapRef.current, anchor: marker }); });
+      pinEl.addEventListener('click', e => {
+        e.stopPropagation();
+        markerClickSuppressRef.current = true;
+        setTimeout(() => { markerClickSuppressRef.current = false; }, 100);
+        infoWinRef.current.setContent(buildInfoHtml(item));
+        infoWinRef.current.open({ map: mapRef.current, anchor: marker });
+      });
       allMkrsRef.current.push(marker);
     });
   }, [allMarkers]);
@@ -912,7 +928,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} />,
+          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} />,
           panelRootRef.current,
         )
       }

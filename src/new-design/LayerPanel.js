@@ -265,7 +265,7 @@ function makeCaesbContent() {
   return svg;
 }
 
-export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange }) {
+export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive }) {
   const { scalePx } = useFontSize();
   const [open, setOpen]               = useState(false);
   const [active, setActive]           = useState(new Set());
@@ -297,6 +297,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   waterUseMapRef.current   = waterUseMap;
   const onLayerStateRef    = useRef(onLayerStateChange);
   onLayerStateRef.current  = onLayerStateChange;
+  const isMarkerActiveRef  = useRef(isMarkerActive);
+  isMarkerActiveRef.current = isMarkerActive;
   const toggleRef          = useRef(null);
   const isMountedRef       = useRef(false);
 
@@ -446,6 +448,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       dl = new window.google.maps.Data({ map });
       dl.setStyle(isCaesb ? gmapsLineStyle : isEndereco ? gmapsPolygonStyle : gmapsPointStyle);
       dl.addListener('click', (event) => {
+        if (isMarkerActiveRef.current?.()) return;
         const props = gmapsFeatureProps(event.feature);
         pendingShapeRef.current = null;
         if (!infoWinRef.current) infoWinRef.current = new window.google.maps.InfoWindow();
@@ -639,6 +642,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       dl.setStyle(gmapsStyleFn);
 
       dl.addListener('click', (event) => {
+        if (isMarkerActiveRef.current?.()) return;
         const feature = event.feature;
         const props   = gmapsFeatureProps(feature);
         const shape   = gmapsFeatureToShape(feature);
@@ -748,6 +752,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         });
         dl.setStyle(styleFn);
         dl.addListener('click', (event) => {
+          if (isMarkerActiveRef.current?.()) return;
           const props = gmapsFeatureProps(event.feature);
           pendingShapeRef.current = null;
           if (!infoWinRef.current) infoWinRef.current = new window.google.maps.InfoWindow();
