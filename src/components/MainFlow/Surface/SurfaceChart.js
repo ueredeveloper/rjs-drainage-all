@@ -9,9 +9,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { useData } from '../../../hooks/analyse-hooks';
 import { useEffect, useState } from 'react';
-import { FormControl, FormLabel, Paper } from '@mui/material';
 
 // Register required components
 ChartJS.register(
@@ -35,7 +33,7 @@ const SurfaceChart = ({ analyse }) => {
   useEffect(() => {
 
     if (analyse.alias === "Análise na Unidade Hidrográfica") {
-      let _data = { ...data }
+      let _data = { labels: analyse.meses.values, datasets: [] }
 
       let datasets = [
         {
@@ -101,7 +99,7 @@ const SurfaceChart = ({ analyse }) => {
 
     } else {
 
-      let _data = { ...data }
+      let _data = { labels: analyse.meses.values, datasets: [] }
 
       let datasets = [
         {

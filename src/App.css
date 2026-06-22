@@ -29,6 +29,16 @@
   transform-origin: top right;
 }
 
+/* Garantir que o painel de camadas e botões de zoom fiquem visíveis em fullscreen */
+[style*="bottom-right"] {
+  z-index: 9999 !important;
+}
+
+#map-layer-zoom-controls {
+  right: 14px !important;
+  bottom: 14px !important;
+}
+
 /* tamanho do seletor de tipo de mapa */
 .gm-style-mtc {
   transform: scale(0.7);
@@ -39,13 +49,14 @@
 gmp-internal-camera-control {
   transform: scale(0.75);
   transform-origin: center center;
-  display: inline-block;
+  display: inline-block !important;
+  bottom: 350px !important;
 }
 
-/* Elevar os controles da direita (streetview etc) para encaixo os 
+/* Elevar os controles da direita (streetview etc) para encaixo os
 controles do mapa com as camadas */
 .gm-bundled-control {
-  bottom: 12rem !important;
+  bottom: 350px !important;
   /* aumenta esse valor para subir mais */
 }
 

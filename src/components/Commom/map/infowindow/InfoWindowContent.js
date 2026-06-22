@@ -60,7 +60,7 @@ const InfoWindowContent = ({ shape, setOverlays }) => {
         fillOpacity,
       });
     }
-  }, [strokeColor, fillColor, fillOpacity]);
+  }, [strokeColor, fillColor, fillOpacity, shape.draw]);
 
   /**
    * Atualiza o estado global de cálculo de área da shape.
@@ -74,7 +74,7 @@ const InfoWindowContent = ({ shape, setOverlays }) => {
         ),
       }));
     }
-  }, [calculoAreaAtivo]);
+  }, [calculoAreaAtivo, setOverlays, shape.id]);
 
   return (
     <div id="draw-container">

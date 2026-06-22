@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 
@@ -17,9 +16,13 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
     // Se tela cheia, mostra o slide que explica porcentagens de uso
     return (
         isFullscreen && isWaterAvailable ?
-            <Box sx={{
-                display: "flex", justifyContent: "center",
-                backgroundColor: "#FFF", mx: 3, my: 0, width: "100%", height: 50
+            <Box id="nd-water-usage" sx={{
+                display: "flex", justifyContent: "center", alignItems: "center",
+                backgroundColor: "#FFF",
+                borderRadius: '6px',
+                boxShadow: '0 1px 5px rgba(0,0,0,0.25)',
+                px: 2, height: 50,
+                maxWidth: 480, minWidth: 260,
             }}>
                 <Slider
                     aria-label="Custom marks"
@@ -28,7 +31,7 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
                     disabled // não interativo
                     sx={{
                         height: 8,
-                        width: "30dvw",
+                        width: "clamp(200px, 28dvw, 400px)",
                         '& .MuiSlider-thumb': {
                             display: 'none'
                         },
@@ -52,6 +55,6 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
                         }
                     }}
                 />
-            </Box> : <Box></Box>
+            </Box> : <Box id="nd-water-usage-hidden"></Box>
     );
 }

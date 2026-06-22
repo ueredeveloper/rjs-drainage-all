@@ -63,8 +63,7 @@ function setContent(draw) {
 function MapContent({ checkboxes, setCheckboxes }) {
   /** @type {string} Modo do mapa (ex: 'light') */
   const [mode] = useState('light');
-  /** @type {Array} Estado dos popups ativos */
-  const [popups, setPopups] = useState([]);
+  const [, setPopups] = useState([]);
 
   // Obtém os estados do contexto de análise
   const { map, setMap, marker, setMarker, overlays, overlaysFetched } = useData();
@@ -117,7 +116,7 @@ function MapContent({ checkboxes, setCheckboxes }) {
 
 
 
-  }, [checkboxes])
+  }, [checkboxes, map, setMarker])
 
 
 

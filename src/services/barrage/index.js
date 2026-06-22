@@ -19,7 +19,10 @@ export const calculateReservoirBalance = async (payload) => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+
+    let data = await response.json();
+    console.log("Received response from API:", data);
+    return data;
   } catch (error) {
     console.error("Error calculating reservoir balance:", error);
     throw error;

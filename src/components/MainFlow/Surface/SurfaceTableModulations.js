@@ -127,7 +127,7 @@ export default function SurfaceTableModulations({
         };
       });
     }
-  }, []);
+  }, [analyse.alias, setSurfaceAnalyse]);
 
   /**
    * Efeito para atualizar as linhas da tabela conforme o tipo de análise.

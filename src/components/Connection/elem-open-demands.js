@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import Table from '@mui/material/Table';
@@ -15,7 +15,7 @@ function ElemOpenDemands({ open, user, setUser }) {
 
   const [demands, setDemands] = useState([{ dt_demanda: { demandas: [] } }]);
 
-  function updateDemands(end_id) {
+  const updateDemands = useCallback(function updateDemands(end_id) {
 
     if (end_id != null) {
 
@@ -46,14 +46,14 @@ function ElemOpenDemands({ open, user, setUser }) {
 
     }
 
-  }
+  }, [user]);
 
   useEffect(() => {
     if (open) {
       updateDemands(user.end_id)
     }
 
-  }, [open]);
+  }, [open, updateDemands, user.end_id]);
 
   return (
     <TableRow>

@@ -28,11 +28,11 @@ const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
     const [successOpen, setSuccessOpen] = useState(false);
 
     // Função para fechar a InfoWindow
-    const handleCloseInfoWindow = () => {
+    const handleCloseInfoWindow = React.useCallback(() => {
         if (infoWindow) {
             infoWindow.close();
         }
-    };
+    }, [infoWindow]);
 
     // Função para mostrar o alerta de sucesso
     const handleShowSuccess = () => setSuccessOpen(true);
@@ -101,7 +101,7 @@ const ElemPolygonInfoWindow = ({ polygon, shape, map }) => {
                 rootRef.current = null;
             }
         };
-    }, [map, polygon, infoWindow, shape, theme, setOverlays]);
+    }, [map, polygon, infoWindow, shape, theme, setOverlays, handleCloseInfoWindow]);
 
     // Renderiza o Snackbar global sobre o mapa
     return (

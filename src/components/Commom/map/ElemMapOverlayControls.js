@@ -37,7 +37,7 @@ const ElemMapOverlayControls = ({ map, position, isFullscreen, isWaterAvailable,
         controls.removeAt(index);
       }
     };
-  }, [map]);
+  }, [map, position]);
 
   // Usa um portal para renderizar o componente do gráfico dentro do div de controle
   return createPortal(

@@ -1,5 +1,4 @@
 import { calculateContributingArea, convertOthoCoordToGmaps } from "../../tools";
-import { joinPolygons } from "../../tools/surface-tools";
 import { getAuthHeaders } from '../auth/headers';
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';

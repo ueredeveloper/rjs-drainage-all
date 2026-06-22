@@ -75,7 +75,7 @@ export default function AddressControllers({ group, name, alias, checked, setChe
           ...prev[group],
           [name]: {
             ...prev[group][name],
-            ["checked"]: true,
+            checked: true,
             // Primeira coordenada do polígono para centralizar o mapa
             point: centroid
           },

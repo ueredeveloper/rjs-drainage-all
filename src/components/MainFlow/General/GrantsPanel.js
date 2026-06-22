@@ -84,8 +84,7 @@ function GrantsPanel() {
             <Stack>
                 {
                     overlays.shapes?.map((shape, i) => {
-                        if (page===++i)
-                        return (
+                        if (page===++i) return (
                             <div id="div-panel" key={i} style={{ height: '360px', overflow: 'auto' }}>
                                 <TabPanel value={value} index={0}>
                                     <GrantsTable name={"subterranea"} markers={shape.markers !==undefined && shape.markers.subterranea !== null ? shape.markers.subterranea : []} />
@@ -104,7 +103,8 @@ function GrantsPanel() {
                                     <GrantsTable name={"barragem"} markers={shape.markers !==undefined && shape.markers.barragem !== null ? shape.markers.barragem : []} />
                                 </TabPanel>
                             </div>
-                        )
+                        );
+                        return null;
                     })
                 }
             </Stack>

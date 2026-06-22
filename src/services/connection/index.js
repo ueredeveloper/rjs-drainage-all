@@ -52,6 +52,7 @@ async function findDemands(addId) {
 
 
 const fetchAddressesByPolygon = async (polygon) => {
+  console.log('fetch fetchAddressesByPolygon ', polygon)
 
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
@@ -61,7 +62,7 @@ const fetchAddressesByPolygon = async (polygon) => {
   urlencoded.append("geometryType", "esriGeometryPolygon");
   urlencoded.append("inSR", "4674");
   urlencoded.append("spatialRel", "esriSpatialRelIntersects");
-  urlencoded.append("outFields", "*"); https://www.geoservicos.ide.df.gov.br
+  urlencoded.append("outFields", "*");
   urlencoded.append("returnGeometry", "true");
   urlencoded.append("outSR", "4674");
   urlencoded.append("f", "json");
@@ -122,6 +123,8 @@ const fetchAddressesByPosition = async (position) => {
     .then((response) => response.json())
     .then((results) => results)
     .catch((error) => console.error(error));
+
+  console.log('[fetchAddressesByPosition] resposta:', results);
 
   return results;
 

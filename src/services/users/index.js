@@ -23,8 +23,7 @@ async function findByColumn(keyword) {
 
     const data = await response.json();
 
-    // obter primeiro índice da matriz
-    return data[0];
+    return data;
   } catch (error) {
     console.error(error);
   }

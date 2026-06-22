@@ -341,7 +341,7 @@ function GrantsTable({ markers }) {
     let { hg_shape, hg_info } = subsystem;
 
     // Só fazer os cálculos se for outorga subterrânea
-    if (markers[0]?.ti_id == 2) {
+    if (markers[0]?.ti_id === 2) {
 
       let hgAnalyse = analyzeAvailability(hg_info, newSelected);
 
@@ -358,7 +358,7 @@ function GrantsTable({ markers }) {
 
     }
 
-  }, [selected]);
+  }, [selected, markers, subsystem, setHgAnalyse, setSubsystem]);
 
   const handleRequestSort = useCallback(
     (event, newOrderBy) => {
@@ -459,7 +459,7 @@ function GrantsTable({ markers }) {
       const newPaddingHeight = (dense ? 33 : 53) * numEmptyRows;
       setPaddingHeight(newPaddingHeight);
     },
-    [order, orderBy, dense, rowsPerPage]
+    [order, orderBy, dense, rowsPerPage, markers]
   );
 
   const handleChangeRowsPerPage = useCallback(
@@ -480,7 +480,7 @@ function GrantsTable({ markers }) {
       // There is no layout jump to handle on the first page.
       setPaddingHeight(0);
     },
-    [order, orderBy]
+    [order, orderBy, markers]
   );
 
   const isSelected = (id) => selected.indexOf(id) !== -1;

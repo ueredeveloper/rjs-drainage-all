@@ -1,0 +1,6 @@
+/*
+ * O comportamento de scroll para notebooks é implementado diretamente
+ * via sx props nos componentes de painel (GeneralAnalysePanel,
+ * SubterraneanAnalysePanel, GeneralBarragePanel), seguindo o mesmo
+ * padrão do SurfaceTabs. Não há regras CSS neste arquivo.
+ */

@@ -71,7 +71,7 @@ export const DataProvider = ({ children }) => {
       let latLng = { lat: parseFloat(marker.int_latitude), lng: parseFloat(marker.int_longitude) }
       map.setCenter(latLng)
     }
-  }, [marker])
+  }, [marker, map])
 
 
   return (

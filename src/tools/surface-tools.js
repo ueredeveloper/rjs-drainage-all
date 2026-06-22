@@ -1,5 +1,3 @@
-import * as turf from '@turf/turf';
-
 /**
  * Calcula o somatório mensal das vazões (em L/s) de todas as demandas 
  * da seção da unidade hidrográfica com base nos dados do objeto `markers`.
@@ -267,22 +265,12 @@ function ajustarHoraBombAjustada(q_secao_m_d, q_solicitada) {
 
   return q_secao_m_d.map((q_md, i) => {
     // arredondar para cima => resultado + 0.5 e round(resultado)
-    let h_bom_aju = (Number(q_md) / (Number(q_solicitada.values[i]) * 3.8)) + 0.5
+    const divisor = Number(q_solicitada.values[i]) * 3.8;
+    if (!divisor) return 0;
+    let h_bom_aju = (Number(q_md) / divisor) + 0.5;
     return Math.round(h_bom_aju);
   });
 }
-/**
- * Não precisa desta função, mas deixarei aqui por enquanto
- * @param {*} q_modula 
- * @param {*} q_demanda_ajustada 
- */
-function modularVazaoQ(q_modula, q_demanda_ajustada) {
-  // excel => =D33 => =demanda_ajustada
-  q_modula.q_outorgada.values = q_demanda_ajustada.values;
-
-
-}
-
 function modularVazaoH(q_outorgada, h_ajuste) {
   //excel => =SE(D56=0;0;D46) 
   return q_outorgada.values.map((_q, i) => {
@@ -298,20 +286,6 @@ function modularHoraQ(h_ajuste, uh_q_demanda_ajustada, q_solicitada) {
   });
 
 }
-
-/**
- * Não precisa desta função, mas deixarei aqui por enquanto
- */
-function modularHoraH() {
-  // excel => =D49 => ah_ajuste.h_bomb_ajustada
-  this.h_modula.h_bombeamento.values = this.h_ajuste.h_bomb_ajustada.values;
-  // view //////////////////////////////////////////
-  this.h_modula.h_bombeamento.values.forEach((v, i) => {
-    this.h_modula.h_bombeamento.elements[i].innerHTML = v
-  });
-
-}
-
 
 export {
   // Seção
