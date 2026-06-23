@@ -783,6 +783,61 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       if (e.key === 'Escape') { setDrawMode(null); pickMode = false; exitEdit(false); }
     };
 
+    // ── Touch: círculo e retângulo ────────────────────────────────────────────
+    // Converte coordenada de toque (px) em LatLng usando a projeção do mapa
+    const getTouchLatLng = (touch) => {
+      const el = containerRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const proj = map.getProjection();
+      if (!proj) return null;
+      const scale = Math.pow(2, map.getZoom());
+      const center = proj.fromLatLngToPoint(map.getCenter());
+      return proj.fromPointToLatLng(new window.google.maps.Point(
+        center.x + (x - el.offsetWidth  / 2) / scale,
+        center.y + (y - el.offsetHeight / 2) / scale,
+      ));
+    };
+
+    const onTouchStart = (e) => {
+      if (drawMode !== 'circle' && drawMode !== 'rectangle') return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+      const latLng = getTouchLatLng(touch);
+      if (!latLng) return;
+      startPt = latLng; dragging = true; map.setOptions({ draggable: false });
+    };
+
+    const onTouchMove = (e) => {
+      if (!dragging || !startPt) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+      const latLng = getTouchLatLng(touch);
+      if (!latLng) return;
+      lastDrag = latLng;
+      clearPrev();
+      if (drawMode === 'circle') {
+        const r = HAVERSINE(startPt.lat(), startPt.lng(), latLng.lat(), latLng.lng());
+        previews = [new window.google.maps.Circle({ center: startPt, radius: r, map, ...USER_SHAPE_STYLE, clickable: false })];
+      }
+      if (drawMode === 'rectangle') {
+        const SW = new window.google.maps.LatLng(Math.min(startPt.lat(), latLng.lat()), Math.min(startPt.lng(), latLng.lng()));
+        const NE = new window.google.maps.LatLng(Math.max(startPt.lat(), latLng.lat()), Math.max(startPt.lng(), latLng.lng()));
+        previews = [new window.google.maps.Rectangle({ bounds: new window.google.maps.LatLngBounds(SW, NE), map, ...USER_SHAPE_STYLE, clickable: false })];
+      }
+    };
+
+    const onTouchEnd = () => onMouseUp();
+
+    const containerEl = containerRef.current;
+    containerEl.addEventListener('touchstart', onTouchStart, { passive: false });
+    containerEl.addEventListener('touchmove',  onTouchMove,  { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
+
     window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('keydown', onKeyDown);
 
@@ -797,6 +852,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       window.google.maps.event.removeListener(mouseMoveL);
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('keydown', onKeyDown);
+      containerEl.removeEventListener('touchstart', onTouchStart);
+      containerEl.removeEventListener('touchmove',  onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
       clearAreaPopups();
       if (panelContainer.parentNode) panelContainer.parentNode.removeChild(panelContainer);
       if (waterUsageContainer.parentNode) waterUsageContainer.parentNode.removeChild(waterUsageContainer);

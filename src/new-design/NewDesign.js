@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import packageJson from '../../package.json';
 import { Box, Typography, Tabs, Tab, Chip, Stack, Divider, IconButton, Button, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import WaterIcon from '@mui/icons-material/Water';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -589,7 +590,7 @@ export default function NewDesign() {
           </Typography>
           <Typography sx={{ fontSize: '0.62rem', color: '#b0bec5', userSelect: 'none' }}>|</Typography>
           <Typography sx={{ fontSize: '0.62rem', color: '#90a4ae', letterSpacing: 0.4 }}>
-            v2.0.0
+            v{packageJson.version}
           </Typography>
         </Stack>
       </Box>
