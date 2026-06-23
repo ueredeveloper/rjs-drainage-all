@@ -275,6 +275,7 @@ export default function NewDesign() {
     }
   }, [normalizeResult, pushHistory, updateAllMarkers]);
 
+  
   const handleClearAll = useCallback(() => {
     coordSearchPageIdRef.current = null;
     setCircleData(null);

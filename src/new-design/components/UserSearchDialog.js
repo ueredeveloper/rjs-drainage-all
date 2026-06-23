@@ -16,6 +16,7 @@ import CheckCircleIcon   from '@mui/icons-material/CheckCircle';
 import { getUsers, findDemands } from '../../services/connection';
 import { numberWithCommas } from '../../tools';
 
+
 const USER_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço'];
 
 // Cabeçalhos das interferências

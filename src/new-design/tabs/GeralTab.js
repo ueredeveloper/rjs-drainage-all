@@ -80,6 +80,7 @@ export default function GeralTab({
     prevLenRef.current = pagesLen;
   }, [pagesLen, activePageIdx]);
 
+  
   const activePage = searchPages?.[activePageIdx] ?? null;
   const activeData = activePage?.data ?? null;
 

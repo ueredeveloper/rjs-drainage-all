@@ -7,6 +7,7 @@ const ElemStreetView = ({ streetViewLocation, setStreetViewLocation }) => {
     const timeoutRef  = useRef(null);
     const failsafeRef = useRef(null);
 
+    
     useEffect(() => {
         if (!streetViewLocation || !ref.current) return;
 

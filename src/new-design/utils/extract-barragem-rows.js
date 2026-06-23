@@ -6,6 +6,7 @@ function normalizeBarragensEncontradas(raw) {
   return [];
 }
 
+
 /** Normaliza valor da API em lista de outorgas de barragem. */
 function normalizeBarragemList(raw) {
   if (raw == null) return [];

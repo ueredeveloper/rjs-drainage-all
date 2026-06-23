@@ -10,6 +10,7 @@ const FontSizeContext = createContext({
   scalePx: (px) => px,
 });
 
+
 /** Hook para acessar tamanho de fonte e escala proporcional. */
 export function useFontSize() {
   return useContext(FontSizeContext);

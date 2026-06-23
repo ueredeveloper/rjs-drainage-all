@@ -10,6 +10,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 
+
 export const FONT_SIZE_OPTIONS = [12, 14, 16, 18, 20];
 export const FONT_SIZE_STORAGE_KEY = 'nd-font-size';
 export const DEFAULT_FONT_SIZE = 16;

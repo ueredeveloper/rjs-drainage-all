@@ -9,6 +9,7 @@ import {
 } from '../services/connection';
 import { convertGeometryToGmaps, getPolygonEsriCentroid } from '../tools';
 
+
 const LAYER_GROUPS = [
   {
     group: 'Superficial',

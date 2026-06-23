@@ -7,6 +7,7 @@ import WaterIcon       from '@mui/icons-material/Water';
 export const DEV_SESSION = localStorage.getItem('rjs_session');
 
 
+
 // ─── Categorias de outorga ────────────────────────────────────────────────────
 export const TI_CATS = [
   { key: 'superficial', label: 'Superficial', color: '#2e7d32', tiId: 1, Icon: WavesIcon },

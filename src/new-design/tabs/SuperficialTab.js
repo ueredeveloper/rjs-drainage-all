@@ -132,6 +132,7 @@ export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onA
       };
       onSupShape?.(supShape);
 
+      
       const uhGrants = await fetchMarkersByUH(uhRotulo);
       const sectionGrants = await getMarkersInsideOttoBasins(ottoBasins.ottoBasinsToGmaps, uhGrants, null);
 

@@ -5,6 +5,7 @@ import {
 } from 'chart.js';
 import { TI_CATS } from './constants';
 
+
 ChartJS.register(
   CategoryScale, LinearScale, LogarithmicScale, BarElement, LineElement,
   PointElement, ArcElement, RadialLinearScale,
