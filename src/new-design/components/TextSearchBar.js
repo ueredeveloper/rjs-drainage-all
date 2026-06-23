@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, LinearProgress, Alert } from '@mui/material';
+import { Box, TextField, LinearProgress, Alert, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 
 const PLACEHOLDER = 'Nome, CPF/CNPJ, endereço, processo, nº do ato...';
 
@@ -27,15 +28,16 @@ export default function TextSearchBar({ onSearch, loading, error }) {
           helperText={tooShort ? 'Mínimo de 3 caracteres' : ''}
           sx={{ '& input': { fontSize: '0.78rem' }, '& .MuiFormHelperText-root': { fontSize: '0.62rem', mt: 0.3 } }}
         />
-        <Button
-          variant="contained"
-          size="small"
-          onClick={handleSearch}
-          disabled={loading}
-          sx={{ flexShrink: 0, textTransform: 'none', fontSize: '0.75rem', px: 2, bgcolor: '#003566', '&:hover': { bgcolor: '#004080' }, alignSelf: 'flex-start' }}
-        >
-          {loading ? 'Buscando…' : 'Buscar'}
-        </Button>
+        <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
+          <span>
+            <IconButton
+              size="small" onClick={handleSearch} disabled={loading}
+              sx={{ flexShrink: 0, bgcolor: '#003566', color: '#fff', borderRadius: 1, p: 0.7, alignSelf: 'flex-start', '&:hover': { bgcolor: '#004080' }, '&.Mui-disabled': { bgcolor: '#90a4ae', color: '#fff' } }}
+            >
+              {loading ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <SearchIcon sx={{ fontSize: 18 }} />}
+            </IconButton>
+          </span>
+        </Tooltip>
       </Box>
 
       {loading && <LinearProgress sx={{ mt: 1 }} />}

@@ -33,8 +33,6 @@ const locations = [
 
 function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
   const ref = useRef();
-  const [streetViewLocation, setStreetViewLocation] = useState(null);
-
   // Inicializa o mapa uma vez
   useEffect(() => {
     const center = { lat: -15.78567469569133, lng: -47.83988126733556 };
@@ -73,12 +71,7 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
   return (
     <>
       {
-        !streetViewLocation && (
-          <div ref={ref} id="map" className="swing" style={{ width: '100%', height: '100%', minHeight: '25rem' }} />)
-      }
-      {
-        locations && (
-          <ElemStreeView streetViewLocation={streetViewLocation} setStreetViewLocation={setStreetViewLocation} />)
+        <div ref={ref} id="map" className="swing" style={{ width: '100%', height: '100%', minHeight: '25rem' }} />
       }
     </>
   );

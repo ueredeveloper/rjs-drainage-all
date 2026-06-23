@@ -2,14 +2,16 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box, Typography, Tabs, Tab, TextField, Button,
   Chip, Stack, Divider, Slider, LinearProgress, Alert,
-  IconButton, Tooltip,
+  IconButton, Tooltip, CircularProgress, useTheme, useMediaQuery,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TransformIcon from '@mui/icons-material/Transform';
+import SearchIcon from '@mui/icons-material/Search';
 import GetAppIcon from '@mui/icons-material/GetApp';
 
 import { exportGeralToCsv } from '../../tools/export-geral-to-csv';
 import { PolarArea } from 'react-chartjs-2';
+import { abbr } from '../constants';
 
 import CompactTable from '../components/CompactTable';
 import TextSearchBar from '../components/TextSearchBar';
@@ -57,8 +59,8 @@ export default function GeralTab({
   onMarkerSelect, searchHistory,
   hiddenCats, onToggleCat,
 }) {
-  const _renderRef = useRef(0);
-  console.log(`[GeralTab] render #${++_renderRef.current}`, { pagesLen: searchPages?.length, loading });
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [subTab, setSubTab] = useState(0);
   const [activePageIdx, setActivePageIdx] = useState(0);
   const [openConverter, setOpenConverter] = useState(false);
@@ -68,7 +70,6 @@ export default function GeralTab({
   const prevLenRef = useRef(0);
   const pagesLen = searchPages?.length ?? 0;
   useEffect(() => {
-    console.log('[GeralTab] pagesLen/activePageIdx effect', { pagesLen, activePageIdx, prevLen: prevLenRef.current });
     if (pagesLen > prevLenRef.current) {
       // Só atualiza se o índice realmente precisa mudar (evita render desnecessário)
       if (activePageIdx !== pagesLen - 1) setActivePageIdx(pagesLen - 1);
@@ -150,8 +151,8 @@ export default function GeralTab({
             '& .MuiTabs-indicator': { height: 2 },
           }}
         >
-          <Tab label="Busca por Coordenadas" />
-          <Tab label="Busca por Requerente" />
+          <Tab label={abbr('Busca por Coordenadas', isMobile)} />
+          <Tab label={abbr('Busca por Requerente', isMobile)} />
         </Tabs>
 
         {/* ── Aba: Coordenadas ── */}
@@ -160,12 +161,6 @@ export default function GeralTab({
             <Stack direction="row" spacing={1} alignItems="center" mb={1.2}>
               <TextField size="small" label="Latitude"  value={lat} onChange={e => onLatChange(e.target.value)} sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }} />
               <TextField size="small" label="Longitude" value={lng} onChange={e => onLngChange(e.target.value)} sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }} />
-              <Button
-                variant="contained" size="small" onClick={onSearch} disabled={loading}
-                sx={{ flexShrink: 0, textTransform: 'none', fontSize: '0.75rem', px: 2, bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}
-              >
-                {loading ? 'Buscando…' : 'Buscar'}
-              </Button>
               <Tooltip title="Copiar coordenadas">
                 <IconButton
                   size="small" onClick={() => navigator.clipboard.writeText(`${lat}, ${lng}`)}
@@ -181,6 +176,16 @@ export default function GeralTab({
                 >
                   <TransformIcon sx={{ fontSize: 18 }} />
                 </IconButton>
+              </Tooltip>
+              <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
+                <span>
+                  <IconButton
+                    size="small" onClick={onSearch} disabled={loading}
+                    sx={{ flexShrink: 0, bgcolor: '#003566', color: '#fff', borderRadius: 1, p: 0.7, '&:hover': { bgcolor: '#004080' }, '&.Mui-disabled': { bgcolor: '#90a4ae', color: '#fff' } }}
+                  >
+                    {loading ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <SearchIcon sx={{ fontSize: 18 }} />}
+                  </IconButton>
+                </span>
               </Tooltip>
             </Stack>
 
@@ -246,7 +251,9 @@ export default function GeralTab({
           <Box id="nd-geral-polar-chart" sx={{ px: 2, pt: 1.2, pb: 0.5 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.8}>
               <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                {isDemo ? 'Distribuição de outorgas' : `Distribuição — ${activePage?.label ?? ''}`}
+                {isDemo
+                  ? (isMobile ? 'Dist.' : 'Distribuição de outorgas')
+                  : `${abbr('Distribuição', isMobile)} — ${activePage?.label ?? ''}`}
               </Typography>
               <Chip
                 label={isDemo ? 'Demonstração' : `${pagesLen} pesquisa${pagesLen !== 1 ? 's' : ''}`}
@@ -402,7 +409,7 @@ export default function GeralTab({
               {TI_CATS.map(c => (
                 <Tab key={c.key} label={
                   <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <span>{c.label}</span>
+                    <span>{abbr(c.label, isMobile)}</span>
                     <Chip label={(categories[c.key] ?? []).length} size="small"
                       sx={{ height: 16, fontSize: '0.58rem', bgcolor: `${c.color}18`, color: c.color, minWidth: 20 }} />
                   </Stack>

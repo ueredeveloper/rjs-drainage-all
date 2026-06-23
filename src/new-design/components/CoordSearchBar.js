@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { Box, TextField, Button, Stack, Alert, Typography, LinearProgress, IconButton, Tooltip } from '@mui/material';
+import { Box, TextField, Button, Stack, Alert, Typography, LinearProgress, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import SearchIcon from '@mui/icons-material/Search';
 import TransformIcon from '@mui/icons-material/Transform';
 import CoordConverter from './CoordConverter';
 
@@ -39,12 +40,6 @@ export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange,
           onChange={e => onLngChange(e.target.value)}
           sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }}
         />
-        <Button
-          variant="contained" size="small" onClick={onSearch} disabled={loading}
-          sx={{ flexShrink: 0, textTransform: 'none', fontSize: '0.75rem', px: 2, bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}
-        >
-          {loading ? 'Buscando…' : 'Buscar'}
-        </Button>
         <Tooltip title="Copiar coordenadas">
           <IconButton
             size="small" onClick={handleCopy}
@@ -60,6 +55,16 @@ export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange,
           >
             <TransformIcon sx={{ fontSize: 18 }} />
           </IconButton>
+        </Tooltip>
+        <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
+          <span>
+            <IconButton
+              size="small" onClick={onSearch} disabled={loading}
+              sx={{ flexShrink: 0, bgcolor: '#003566', color: '#fff', borderRadius: 1, p: 0.7, '&:hover': { bgcolor: '#004080' }, '&.Mui-disabled': { bgcolor: '#90a4ae', color: '#fff' } }}
+            >
+              {loading ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <SearchIcon sx={{ fontSize: 18 }} />}
+            </IconButton>
+          </span>
         </Tooltip>
       </Stack>
 

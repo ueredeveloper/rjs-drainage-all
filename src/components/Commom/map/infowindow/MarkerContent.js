@@ -52,6 +52,11 @@ import { setInfoMarkerIcon } from "../../../../tools";
  * @param {string} props.info.int_num_ato - Número do ato/documento
  * @param {string} props.info.emp_endereco - Endereço do empreendimento
  * @param {string} props.info.int_processo - Número do processo
+ * @param {string} props.info.fin_finalidade - Finalidade da outorga
+ * @param {string} props.info.int_data_publicacao - Data de publicação do ato
+ * @param {string} props.info.int_data_vencimento - Data de vencimento da outorga
+ * @param {string} props.info.us_email - E-mail do usuário
+ * @param {string} props.info.us_telefone_1 - Telefone do usuário
  * @param {number|string} props.info.int_latitude - Latitude da interferência
  * @param {number|string} props.info.int_longitude - Longitude da interferência
  * @param {string} props.info.bh_nome - Nome da bacia hidrográfica
@@ -123,7 +128,7 @@ const HTMLMarkerContent = ({ color, info }) => {
             <Box
                 sx={{
                     p: 2,
-                    maxHeight: "180px",
+                    maxHeight: "280px",
                     overflowY: "auto", // Scroll vertical quando necessário
                 }}
             >
@@ -178,10 +183,31 @@ const HTMLMarkerContent = ({ color, info }) => {
                         <strong>CPF:</strong> {info.us_cpf_cnpj}
                     </Typography>
 
+                    {/* Finalidade */}
+                    {info.fin_finalidade && (
+                        <Typography variant="body2">
+                            <strong>Finalidade:</strong> {info.fin_finalidade}
+                        </Typography>
+                    )}
+
                     {/* Número do ato */}
                     <Typography variant="body2">
                         <strong>Número do Ato:</strong> {info.int_num_ato}
                     </Typography>
+
+                    {/* Data de publicação */}
+                    {info.int_data_publicacao && (
+                        <Typography variant="body2">
+                            <strong>Publicação:</strong> {info.int_data_publicacao}
+                        </Typography>
+                    )}
+
+                    {/* Data de vencimento */}
+                    {info.int_data_vencimento && (
+                        <Typography variant="body2">
+                            <strong>Vencimento:</strong> {info.int_data_vencimento}
+                        </Typography>
+                    )}
 
                     {/* Endereço do empreendimento */}
                     <Typography variant="body2">
@@ -192,6 +218,20 @@ const HTMLMarkerContent = ({ color, info }) => {
                     <Typography variant="body2">
                         <strong>Processo:</strong> {info.int_processo}
                     </Typography>
+
+                    {/* E-mail */}
+                    {info.us_email && (
+                        <Typography variant="body2">
+                            <strong>E-mail:</strong> {info.us_email}
+                        </Typography>
+                    )}
+
+                    {/* Telefone */}
+                    {info.us_telefone_1 && (
+                        <Typography variant="body2">
+                            <strong>Telefone:</strong> {info.us_telefone_1}
+                        </Typography>
+                    )}
 
                     {/* Coordenadas geográficas */}
                     <Typography variant="body2">

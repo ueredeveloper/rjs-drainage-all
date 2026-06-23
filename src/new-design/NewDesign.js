@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Box, Typography, Tabs, Tab, Chip, Stack, Divider, IconButton, Button, Tooltip } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Chip, Stack, Divider, IconButton, Button, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import WaterIcon from '@mui/icons-material/Water';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import { Wrapper } from '@googlemaps/react-wrapper';
 import LoginDialog from '../components/Commom/LoginDialog';
 import { useAuth } from '../hooks/auth-hooks';
@@ -27,9 +29,11 @@ import { FontSizeProvider } from './FontSizeProvider';
 
 const GMAPS_API_KEY = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
 
+const MOBILE_TAB_LABELS = { 'Geral': 'GER', 'Subterrânea': 'SUB', 'Superficial': 'SUP', 'Barragem': 'BAR' };
+
 export default function NewDesign() {
-  const _renderRef = useRef(0);
-  console.log(`[NewDesign] render #${++_renderRef.current}`);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { session, setLoginOpen } = useAuth();
   const userLabel = session?.colaborador?.email ? session.colaborador.email.split('@')[0] : null;
   const [tabIndex, setTabIndex]               = useState(0);
@@ -53,6 +57,7 @@ export default function NewDesign() {
   const [persistedLayerState, setPersistedLayerState] = useState(null);
   const [clearShapesTrigger, setClearShapesTrigger] = useState(0);
   const [settingsOpen, setSettingsOpen]       = useState(false);
+  const [mapExpanded, setMapExpanded]         = useState(false);
   const coordSearchPageIdRef                  = useRef(null);
   const skipUserMarkerEffectRef               = useRef(false);
   const [removeShapeTrigger, setRemoveShapeTrigger] = useState(null);
@@ -128,7 +133,6 @@ export default function NewDesign() {
 
   // ── Handlers de busca ─────────────────────────────────────────────────────
   const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo', skipFly = false, replaceCoord = false, userDrawn = false) => {
-    console.log('[NewDesign] doCircleSearch', { center, rad, shapeLabel, replaceCoord });
     const oldPageId = replaceCoord ? coordSearchPageIdRef.current : null;
     const pageId = Date.now();
     if (replaceCoord) coordSearchPageIdRef.current = pageId;
@@ -162,7 +166,6 @@ export default function NewDesign() {
   }, [pushHistory, updateAllMarkers, normalizeResult]);
 
   useEffect(() => {
-    console.log('[NewDesign] lat/lng effect', { lat, lng, skip: skipUserMarkerEffectRef.current });
     if (skipUserMarkerEffectRef.current) { skipUserMarkerEffectRef.current = false; return; }
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
@@ -170,7 +173,6 @@ export default function NewDesign() {
   }, [lat, lng]);
 
   const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN, info }) => {
-    console.log('[NewDesign] handleApplyCoordinates', { latN, lngN, hasInfo: !!info });
     skipUserMarkerEffectRef.current = true;
     setLat(String(latN.toFixed(7)));
     setLng(String(lngN.toFixed(7)));
@@ -294,14 +296,12 @@ export default function NewDesign() {
   }, []);
 
   const handlePickCoordinate = useCallback(({ lat: pLat, lng: pLng }) => {
-    console.log('[NewDesign] handlePickCoordinate', { pLat, pLng });
     setLat(pLat.toFixed(6));
     setLng(pLng.toFixed(6));
     setUserMarker({ lat: pLat, lng: pLng });
   }, []);
 
   const handleMapShape = useCallback(async (shape) => {
-    console.log('[NewDesign] handleMapShape', { type: shape.type });
     if (shape.type === 'circle') {
       setLat(shape.center.lat.toFixed(6));
       setLng(shape.center.lng.toFixed(6));
@@ -355,16 +355,16 @@ export default function NewDesign() {
     >
 
       {/* ── Cabeçalho ────────────────────────────────────────────────────── */}
-      <Box id="nd-header" sx={{ display: 'flex', alignItems: 'center', px: 2, py: 0.9, bgcolor: '#003566', color: '#fff', gap: 1.5, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.35)', zIndex: 10 }}>
+      <Box id="nd-header" sx={{ display: 'flex', alignItems: 'center', px: { xs: 1, sm: 2 }, py: { xs: 0.6, sm: 0.9 }, bgcolor: '#003566', color: '#fff', gap: { xs: 1, sm: 1.5 }, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.35)', zIndex: 10 }}>
         <WaterIcon sx={{ color: '#48cae4', fontSize: 22 }} />
 
         {/* SAD/DF — expande ao hover */}
         <Box sx={{ overflow: 'hidden', maxWidth: 320, '&:hover .slide-hidden': { maxWidth: 260, opacity: 1 } }}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ whiteSpace: 'nowrap' }}>
-            <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', letterSpacing: 0.6, flexShrink: 0 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.88rem' }, letterSpacing: 0.6, flexShrink: 0 }}>
               SAD/DF
             </Typography>
-            <Box className="slide-hidden" sx={{ maxWidth: 0, opacity: 0, overflow: 'hidden', transition: 'max-width 0.4s ease, opacity 0.35s ease', display: 'flex', alignItems: 'center', gap: 0.8 }}>
+            <Box className="slide-hidden" sx={{ maxWidth: 0, opacity: 0, overflow: 'hidden', transition: 'max-width 0.4s ease, opacity 0.35s ease', display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 0.8 }}>
               <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.35)', height: 14, alignSelf: 'center' }} />
               <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.75)', letterSpacing: 0.3 }}>
                 Sistema de Apoio à Decisão — SRH/COUT
@@ -375,7 +375,7 @@ export default function NewDesign() {
 
         <Box sx={{ flex: 1 }} />
         {searchPages.length > 0 && (
-          <Chip label={`${totalResults} outorga${totalResults !== 1 ? 's' : ''} encontrada${totalResults !== 1 ? 's' : ''}`}
+          <Chip label={`${totalResults} outorga${totalResults !== 1 ? 's' : ''}`}
             size="small" sx={{ bgcolor: '#48cae430', color: '#90e0ef', fontSize: '0.62rem', height: 20 }} />
         )}
         <Tooltip title={session?.colaborador?.email ?? 'Fazer login'}>
@@ -385,11 +385,11 @@ export default function NewDesign() {
             startIcon={<AccountCircleIcon sx={{ fontSize: 17 }} />}
             sx={{
               color: userLabel ? '#48cae4' : 'rgba(255,255,255,0.65)',
-              fontSize: '0.7rem',
+              fontSize: { xs: '0.62rem', sm: '0.7rem' },
               textTransform: 'none',
               fontWeight: userLabel ? 700 : 400,
               minWidth: 'auto',
-              px: 1,
+              px: { xs: 0.6, sm: 1 },
               py: 0.4,
               '&:hover': { bgcolor: 'rgba(72,202,228,0.15)', color: '#fff' },
             }}
@@ -412,10 +412,18 @@ export default function NewDesign() {
       </Box>
 
       {/* ── Corpo ─────────────────────────────────────────────────────────── */}
-      <Box id="nd-body" sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <Box id="nd-body" sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: { xs: 'column', md: 'row' } }}>
 
         {/* Mapa */}
-        <Box id="nd-map-panel" sx={{ width: '25%', flexShrink: 0, position: 'relative' }}>
+        <Box id="nd-map-panel" sx={{
+          width:    { xs: mapExpanded ? '100vw' : '100%',  md: mapExpanded ? '100vw' : '25%' },
+          height:   { xs: mapExpanded ? '100vh' : '42vh',  md: 'auto' },
+          position: { xs: mapExpanded ? 'fixed' : 'relative', md: 'relative' },
+          top:      { xs: mapExpanded ? 0 : 'auto',        md: 'auto' },
+          left:     { xs: mapExpanded ? 0 : 'auto',        md: 'auto' },
+          zIndex:   { xs: mapExpanded ? 9999 : 'auto',     md: 'auto' },
+          flexShrink: 0,
+        }}>
           {(() => {
             const mapProps = {
               circleData,
@@ -439,6 +447,24 @@ export default function NewDesign() {
               : <LeafletMap    {...mapProps} />;
           })()}
 
+          {/* Botão fullscreen customizado — visível apenas em mobile */}
+          <Tooltip title={mapExpanded ? 'Sair do fullscreen' : 'Fullscreen'}>
+            <IconButton
+              onClick={() => setMapExpanded(v => !v)}
+              size="small"
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                position: 'absolute', top: 8, right: 8, zIndex: 900,
+                bgcolor: 'rgba(255,255,255,0.92)', boxShadow: '0 1px 5px rgba(0,0,0,0.35)',
+                p: 0.5, '&:hover': { bgcolor: '#fff' },
+              }}
+            >
+              {mapExpanded
+                ? <FullscreenExitIcon sx={{ fontSize: 20 }} />
+                : <FullscreenIcon    sx={{ fontSize: 20 }} />}
+            </IconButton>
+          </Tooltip>
+
           {/* Toggle de provedor */}
           <Box id="nd-map-provider-toggle" sx={{
             position: 'absolute', bottom: 10, left: 10,
@@ -452,8 +478,8 @@ export default function NewDesign() {
                 component="button"
                 onClick={() => setMapProvider(value)}
                 sx={{
-                  px: 1.6, py: 0.55,
-                  fontSize: '0.68rem', fontWeight: mapProvider === value ? 700 : 500,
+                  px: { xs: 0.8, sm: 1.6 }, py: { xs: 0.3, sm: 0.55 },
+                  fontSize: { xs: '0.55rem', sm: '0.68rem' }, fontWeight: mapProvider === value ? 700 : 500,
                   lineHeight: 1.4, cursor: 'pointer', border: 'none', outline: 'none',
                   bgcolor: mapProvider === value ? '#1565c0' : '#fff',
                   color:   mapProvider === value ? '#fff'    : '#1565c0',
@@ -484,7 +510,8 @@ export default function NewDesign() {
               {MAIN_TABS.map(({ label, Icon }) => (
                 <Tab key={label} label={
                   <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <Icon sx={{ fontSize: 14 }} /><span>{label}</span>
+                    <Icon sx={{ fontSize: 14 }} />
+                    <span>{isMobile ? (MOBILE_TAB_LABELS[label] ?? label) : label}</span>
                   </Stack>
                 } />
               ))}
@@ -548,7 +575,7 @@ export default function NewDesign() {
       </Box>
 
       {/* ── Rodapé ────────────────────────────────────────────────────────── */}
-      <Box id="nd-footer" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 0.6, bgcolor: '#f0f4f8', borderTop: '1px solid #dde3ea', flexShrink: 0 }}>
+      <Box id="nd-footer" sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 0.6, bgcolor: '#f0f4f8', borderTop: '1px solid #dde3ea', flexShrink: 0 }}>
         <Typography sx={{ fontSize: '0.62rem', color: '#78909c', letterSpacing: 0.3 }}>
           Superintendência de Outorga — COUT — SRH
         </Typography>

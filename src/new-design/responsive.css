@@ -1,19 +1,75 @@
 /* ─────────────────────────────────────────────────────────────────────────
    Responsividade — new-design
-   Celular / Tablet / Notebook : comportamento padrão (tudo rola junto)
-   Desktop grande (≥ 1440px)   : chart fixo, tabela com scroll próprio
+   Celular (< 900px) : mapa em cima, abas embaixo, fontes menores
+   Desktop (≥ 900px) : layout lado a lado original
+   Desktop grande (≥ 1440px) : chart fixo, tabela com scroll próprio
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Celular (padrão) */
-/* nenhuma regra extra — o layout base já é mobile-first */
+/* ── Celular (< 900px / MUI md breakpoint) ────────────────────────────── */
+@media (max-width: 899px) {
+
+  /* Reduz base rem global: escala todo o MUI (typography, inputs, chips, etc.)
+     proporcionalmente sem precisar sobrescrever cada componente. */
+  html {
+    font-size: 60%;  /* ≈ 9.6px — redução de ~40% em relação ao padrão 16px */
+  }
+
+  /* Painel de análise ocupa o restante após o mapa */
+  #nd-analysis-panel {
+    overflow-y: auto !important;
+  }
+
+  /* Abas: altura compacta */
+  #nd-main-tabs .MuiTab-root {
+    min-height: 36px !important;
+    padding: 0 6px !important;
+  }
+  #nd-main-tabs .MuiTabs-root {
+    min-height: 36px !important;
+  }
+
+  /* Toggle de provedor do mapa */
+  #nd-map-provider-toggle button {
+    padding: 3px 8px !important;
+  }
+
+  /* Charts: limita altura em mobile */
+  #nd-geral-polar-chart > div:last-child {
+    max-height: 160px !important;
+    height: 160px !important;
+  }
+  #nd-sup-charts > div {
+    max-height: 110px !important;
+    height: 110px !important;
+  }
+  #nd-sub-avail-chart,
+  #nd-sub-avail-chart-placeholder {
+    max-height: 100px !important;
+    height: 100px !important;
+  }
+
+  /* Botões nativos do GMaps (zoom, tipo de mapa) — compactar via CSS */
+  .gm-bundled-control .gm-svpc,
+  .gm-bundled-control-on-bottom {
+    transform: scale(0.85);
+    transform-origin: bottom right;
+  }
+}
 
 /* Tablet */
-@media (min-width: 768px) {
-  /* layout não muda, mesma coluna única */
+@media (min-width: 768px) and (max-width: 899px) {
+  /* herda as regras de celular acima */
+}
+
+/* Restaura base rem para desktop */
+@media (min-width: 900px) {
+  html {
+    font-size: 100%;
+  }
 }
 
 /* Notebook — div pai une chart + tabela em scroll único (padrão atual) */
-@media (min-width: 1024px) {
+@media (min-width: 900px) and (max-width: 1439px) {
   /* nenhuma alteração em relação ao padrão */
 }
 

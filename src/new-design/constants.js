@@ -25,6 +25,38 @@ export const MAIN_TABS = [
 
 export const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
+// ─── Abreviações para renderização em celular ─────────────────────────────────
+export const ABBR = {
+  'Geral':                    'GER',
+  'Subterrânea':              'SUB',
+  'Subterrâneo':              'SUB',
+  'Subterrâneas':             'Subt.',
+  'Superficial':              'SUP',
+  'Barragem':                 'BAR',
+  'Pluvial':                  'PLU',
+  'Efluente':                 'EFL',
+  'Efluentes':                'EFL',
+  'Busca por Requerente':     'Req.',
+  'Busca por Coordenadas':    'Coord.',
+  'Distribuição':             'Dist.',
+  'Coordenada':               'Coord.',
+  'Manual / Tubular Raso':    'Man. / TR',
+  'Tubular Profundo':         'TP',
+  'Análise de disponibilidade': 'An. Disp.',
+  'Outorgas subterrâneas':    'Subt.',
+  'Q Explotável':             'Q Expl.',
+  'Q Outorgada':              'Q Outorg.',
+  'Q Disponível':             'Q Disp.',
+  'Outorgas':                 'Out.',
+  'Outorgada':                'Outorg.',
+  'Disponível':               'Disp.',
+  'Explotável':               'Expl.',
+  'Bacia Hidrográfica':       'BH',
+};
+
+/** Retorna a abreviação do label em mobile, ou o label original em desktop. */
+export const abbr = (label, isMobile) => isMobile ? (ABBR[label] ?? label) : label;
+
 // ─── Dados de exemplo ─────────────────────────────────────────────────────────
 export const MOCK_SUB = [
   { id: 1,  nome: 'Fazenda São José',    processo: '197.000.456/2021', volume: 850,  vazao: 2.3, municipio: 'Brasília' },

@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 const SESSION_KEY = 'rjs_session';
 const CREDS_KEY   = 'rjs_credentials';
@@ -13,6 +13,13 @@ function _readCredentials() {
   try { return JSON.parse(localStorage.getItem(CREDS_KEY)) || []; } catch { return []; }
 }
 
+function _decodeJwtPayload(token) {
+  try {
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(b64));
+  } catch { return null; }
+}
+
 const AuthContext = createContext(null);
 
 /**
@@ -24,6 +31,23 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession]       = useState(_readSession);
   const [credentials, setCredentials] = useState(_readCredentials);
   const [loginOpen, setLoginOpen]   = useState(() => !_readSession());
+
+  // Verifica se o token JWT venceu; se sim, abre a tela de login
+  useEffect(() => {
+    const checkExpiration = () => {
+      const s = _readSession();
+      if (!s?.token) return;
+      const payload = _decodeJwtPayload(s.token);
+      if (payload?.exp && payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem(SESSION_KEY);
+        setSession(null);
+        setLoginOpen(true);
+      }
+    };
+    checkExpiration();
+    const id = setInterval(checkExpiration, 60_000);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveSession = useCallback((data) => {
     if (data) localStorage.setItem(SESSION_KEY, JSON.stringify(data));

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import L from 'leaflet';
 import LayerPanel from './LayerPanel';
 import ElemWaterUsage from './components/ElemWaterUsage';
+import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEfluenteIcon, iwPluvialIcon, iwDefaultIcon } from '../assets/svg/svgs-icons';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
@@ -38,24 +39,29 @@ const TILE_TYPES = [
 
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
-// Ícone SVG inline por tipo de outorga
-const TYPE_SVG = {
-  superficial: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 16.99c-1.35 0-2.2.42-2.95.8-.65.33-1.18.6-2.05.6-.87 0-1.4-.27-2.05-.6C9.2 17.41 8.35 17 7 17s-2.2.42-2.95.8c-.65.33-1.17.6-2.05.6v1.95c1.35 0 2.2-.42 2.95-.8.65-.33 1.17-.6 2.05-.6s1.4.27 2.05.6c.75.38 1.6.8 2.95.8s2.2-.42 2.95-.8c.65-.33 1.17-.6 2.05-.6s1.4.27 2.05.6c.75.38 1.6.8 2.95.8v-1.95c-.87 0-1.4-.27-2.05-.6-.75-.38-1.6-.8-2.95-.8zm0-4.45c-1.35 0-2.2.43-2.95.8-.65.32-1.18.6-2.05.6-.87 0-1.4-.28-2.05-.6C9.2 13 8.35 12.54 7 12.54s-2.2.43-2.95.8c-.65.32-1.17.6-2.05.6v1.95c1.35 0 2.2-.43 2.95-.8.65-.32 1.17-.6 2.05-.6s1.4.28 2.05.6c.75.37 1.6.8 2.95.8s2.2-.43 2.95-.8c.65-.32 1.17-.6 2.05-.6s1.4.28 2.05.6c.75.37 1.6.8 2.95.8v-1.95c-.87 0-1.4-.28-2.05-.6-.75-.37-1.6-.8-2.95-.8z"/></svg>`,
-  subterranea: `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9.24 2 7 4.24 7 7c0 2.85 2.92 7.21 5 9.72C14.08 14.21 17 9.85 17 7c0-2.76-2.24-5-5-5zm0 7.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 4.5 12 4.5s2.5 1.12 2.5 2.5S13.38 9.5 12 9.5z"/><path d="M5 19h14v2H5z"/></svg>`,
-  pluvial:     `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.66 8L12 2.35 6.34 8C4.78 9.56 4 11.64 4 13.64s.78 4.11 2.34 5.67 3.61 2.35 5.66 2.35 4.1-.79 5.66-2.35S20 15.64 20 13.64 19.22 9.56 17.66 8zM6 14c.01-2 .62-3.27 1.76-4.4L12 5.27l4.24 4.38C17.38 10.77 17.99 12 18 14H6z"/></svg>`,
-  efluente:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3zm0 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>`,
-  barragem:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>`,
-};
-
 function getTypeSvg(item) {
-  const key = item._catLabel?.toLowerCase()
+  const key = (item._catLabel ?? '').toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '');
-  if (key?.includes('superficial')) return TYPE_SVG.superficial;
-  if (key?.includes('subterr'))     return TYPE_SVG.subterranea;
-  if (key?.includes('pluvial'))     return TYPE_SVG.pluvial;
-  if (key?.includes('efluente'))    return TYPE_SVG.efluente;
-  if (key?.includes('barragem'))    return TYPE_SVG.barragem;
-  return TYPE_SVG.subterranea;
+  let fn;
+  if (key.includes('superficial'))    fn = iwSuperficialIcon;
+  else if (key.includes('subterr')) {
+    const tp = (item.tp_descricao ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    fn = (tp.includes('manual') || tp.includes('raso')) ? iwManualIcon : iwTubularIcon;
+  }
+  else if (key.includes('pluvial'))   fn = iwPluvialIcon;
+  else if (key.includes('efluente'))  fn = iwEfluenteIcon;
+  else if (key.includes('barragem'))  fn = iwBarragemIcon;
+  else                                 fn = iwDefaultIcon;
+  let svg = fn()
+    .replace(/^[\s\S]*?(?=<svg[\s>])/i, '')  // remove XML declaration e comentários antes de <svg
+    .trim();
+  svg = svg.replace(/<svg([^>]*)>/i, (_, attrs) => {
+    const cleaned = attrs
+      .replace(/\s+(width|height)="[^"]*"/g, '')   // remove width/height explícitos
+      .replace(/\s+style="[^"]*"/g, '');             // remove style (enable-background, etc.)
+    return `<svg width="100%" height="100%" style="display:block;background:transparent;" ${cleaned.trim()}>`;
+  });
+  return svg;
 }
 
 function makePinIcon(color, size = 'normal') {
@@ -77,13 +83,18 @@ function buildPopupHtml(item) {
   const lat   = parseFloat(item.int_latitude);
   const lng   = parseFloat(item.int_longitude);
   const icon  = getTypeSvg(item);
+  const td1 = 'style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"';
+  const td2 = 'style="color:#263238;"';
+  const row = (label, val) => val ? `<tr><td ${td1}><b>${label}</b></td><td ${td2}>${val}</td></tr>` : '';
+  const fmtDate = iso => { if (!iso) return null; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString('pt-BR'); };
+  const fmtDoc  = v => { if (!v) return null; const n = String(v).replace(/\D/g, ''); if (n.length === 11) return n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'); if (n.length === 14) return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'); return v; };
   return `
-    <div style="font-family:Roboto,Arial,sans-serif;min-width:210px;max-width:280px;">
+    <div style="font-family:Roboto,Arial,sans-serif;min-width:210px;max-width:310px;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;
                   border-bottom:2px solid ${color};padding-bottom:5px;">
         <span style="display:inline-flex;align-items:center;justify-content:center;
-                     width:26px;height:26px;border-radius:6px;
-                     background:${color}18;color:${color};flex-shrink:0;">
+                     width:44px;height:44px;border-radius:8px;
+                     background:transparent;flex-shrink:0;overflow:hidden;padding:4px;">
           ${icon}
         </span>
         <span style="font-weight:700;font-size:13px;color:#1a237e;line-height:1.3;">
@@ -91,12 +102,18 @@ function buildPopupHtml(item) {
         </span>
       </div>
       <table style="width:100%;font-size:11px;border-collapse:collapse;line-height:1.7;">
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Processo</b></td><td style="color:#263238;">${item.int_processo ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>CPF/CNPJ</b></td><td style="color:#263238;">${item.us_cpf_cnpj ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Endereço</b></td><td style="color:#263238;">${item.emp_endereco ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Bacia</b></td><td style="color:#263238;">${item.bh_nome ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Tipo</b></td><td style="color:${color};font-weight:600;">${item._catLabel ?? '—'}</td></tr>
-        ${!isNaN(lat) && !isNaN(lng) ? `<tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Lat / Lng</b></td><td style="color:#263238;">${lat.toFixed(6)}, ${lng.toFixed(6)}</td></tr>` : ''}
+        <tr><td ${td1}><b>Processo</b></td><td ${td2}>${item.int_processo ?? '—'}</td></tr>
+        <tr><td ${td1}><b>CPF/CNPJ</b></td><td ${td2}>${fmtDoc(item.us_cpf_cnpj) ?? '—'}</td></tr>
+        ${row('Núm. do Ato', item.int_num_ato)}
+        ${row('Endereço', item.emp_endereco)}
+        ${row('Situação', item.sp_descricao)}
+        ${row('Publicação', fmtDate(item.int_data_publicacao))}
+        ${row('Vencimento', fmtDate(item.int_data_vencimento))}
+        ${row('E-mail', item.us_email)}
+        ${row('Bacia', item.bh_nome)}
+        ${row('Unid. Hidro.', item.uh_nome)}
+        <tr><td ${td1}><b>Tipo</b></td><td style="color:${color};font-weight:600;">${item._catLabel ?? '—'}</td></tr>
+        ${!isNaN(lat) && !isNaN(lng) ? `<tr><td ${td1}><b>Lat / Lng</b></td><td ${td2}>${lat.toFixed(6)}, ${lng.toFixed(6)}</td></tr>` : ''}
       </table>
     </div>`;
 }
@@ -752,9 +769,6 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     containerRef.current.appendChild(waterDiv);
     setWaterUsageContainer(waterDiv);
 
-    map.on('zoomend', () => {
-      console.log('[LeafletMap] zoomend — zoom atual:', map.getZoom(), '| centro:', map.getCenter());
-    });
 
     mapRef.current = map;
     setMapInstance(map);

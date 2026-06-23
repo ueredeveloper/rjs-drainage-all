@@ -265,9 +265,10 @@ function makeCaesbContent() {
   return svg;
 }
 
-export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive }) {
+export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive, onLocate }) {
   const { scalePx } = useFontSize();
   const [open, setOpen]               = useState(false);
+  const [locating, setLocating]       = useState(false);
   const [active, setActive]           = useState(new Set());
   const [loading, setLoading]         = useState(new Set());
   const [addressKeyword, setAddressKeyword] = useState('');
@@ -904,11 +905,58 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleLocate = () => {
+    if (!navigator.geolocation || locating) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        if (map && map.panTo) {
+          map.panTo({ lat, lng });
+          map.setZoom(15);
+        }
+        onLocate?.({ lat, lng });
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { timeout: 10_000, maximumAge: 30_000 },
+    );
+  };
+
   return (
     <div
       ref={panelRef}
       style={{ position: 'relative', margin: '0', fontFamily: 'Roboto, Arial, sans-serif', zIndex: 9999 }}
     >
+      {/* Botão de localização — aparece acima do toggle de camadas */}
+      <div style={{ padding: '6px 0 2px' }}>
+        <button
+          onClick={handleLocate}
+          disabled={locating}
+          title="Minha localização"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 30, height: 30, padding: 0,
+            background: '#fff', border: '1px solid #ccc', borderRadius: 2,
+            boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
+            cursor: locating ? 'default' : 'pointer',
+            color: locating ? '#1565c0' : '#555',
+            transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
+            opacity: locating ? 0.75 : 1,
+          }}
+          onMouseEnter={e => { if (!locating) { e.currentTarget.style.background = '#dbeafe'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = 'inset 2px 0 0 #1565c0, 0 2px 6px rgba(21,101,192,0.12)'; e.currentTarget.style.transform = 'scale(1.08)'; } }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = locating ? '#1565c0' : '#555'; e.currentTarget.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)'; e.currentTarget.style.transform = ''; }}
+        >
+          {locating
+            ? <span className="lp-spin" style={{ width: 14, height: 14, display: 'block', border: '2px solid #1565c0', borderTopColor: 'transparent', borderRadius: '50%' }} />
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+              </svg>
+          }
+        </button>
+      </div>
+
       <button
         onClick={() => setOpen(p => !p)}
         onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; e.currentTarget.style.color = '#1565c0'; e.currentTarget.style.boxShadow = 'inset 2px 0 0 #1565c0, 0 2px 6px rgba(21,101,192,0.12)'; e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.zIndex = '2'; }}

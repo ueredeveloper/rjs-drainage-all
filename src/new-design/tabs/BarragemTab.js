@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Tabs, Tab, Chip, Avatar, Divider, Typography, Alert, Stack,
   TextField, Select, MenuItem, FormControl, InputLabel,
   Input, IconButton, Tooltip, FormControlLabel, Checkbox,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Skeleton,
+  Skeleton, useTheme, useMediaQuery,
 } from '@mui/material';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import WaterIcon from '@mui/icons-material/Water';
@@ -20,7 +20,7 @@ import SectionLabel from '../components/SectionLabel';
 import { calculateReservoirBalance } from '../../services/barrage';
 import { numberWithCommas } from '../../tools';
 import { exportBarrageToCsv } from '../../tools/export-barrage-to-csv';
-import { MESES, TI_CATS } from '../constants';
+import { MESES, TI_CATS, abbr } from '../constants';
 import { extractBarragemRows } from '../utils/extract-barragem-rows';
 import '../chartSetup';
 
@@ -40,13 +40,13 @@ export default function BarragemTab({
   lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect,
   onBarMarkers, onBarShape, onClearCircle,
 }) {
-  const _renderRef = useRef(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [calcTab, setCalcTab] = useState(0);
   const [calcLoading, setCalcLoading] = useState(false);
   const [calcError, setCalcError] = useState(null);
   const [result, setResult] = useState(null);
   const [highlightRows, setHighlightRows] = useState(false);
-  console.log(`[BarragemTab] render #${++_renderRef.current}`, { calcLoading, hasResult: !!result });
 
   const [damData, setDamData] = useState({
     Max_Volume: 374411.5,
@@ -70,8 +70,6 @@ export default function BarragemTab({
   });
 
   useEffect(() => {
-    console.log('[BarragemTab] vazao_l_s effect → sync Q_Cap', operacao.vazao_l_s);
-    // Só sincroniza se Q_Cap realmente divergiu (evita render no mount onde já são iguais)
     setDamData(prev => prev.Q_Cap === operacao.vazao_l_s ? prev : { ...prev, Q_Cap: operacao.vazao_l_s });
   }, [operacao.vazao_l_s]);
 
@@ -89,7 +87,6 @@ export default function BarragemTab({
   };
 
   const handleCalculate = async () => {
-    console.log('[BarragemTab] handleCalculate', { lat, lng });
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) {
@@ -106,7 +103,6 @@ export default function BarragemTab({
         dam_data: damData,
         operacao,
       });
-      console.log('[BarragemTab] resultado do serviço:', data);
       setResult(data);
       const rows = extractBarragemRows(data) ?? [];
       onBarMarkers?.(rows);
@@ -144,7 +140,6 @@ export default function BarragemTab({
   };
 
   const handleSearch = async () => {
-    console.log('[BarragemTab] handleSearch', { lat, lng });
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) {
@@ -180,7 +175,7 @@ export default function BarragemTab({
         onLatChange={onLatChange} onLngChange={onLngChange}
         onApplyCoordinates={onApplyCoordinates}
         onSearch={handleSearch} loading={calcLoading} error={calcError}
-        title="Busca por Coordenadas"
+        title={abbr('Busca por Coordenadas', isMobile)}
       />
 
       {/* ── Chips área / UH — direita, visíveis após cálculo ──────────────── */}

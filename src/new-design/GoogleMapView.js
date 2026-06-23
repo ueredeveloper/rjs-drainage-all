@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import LayerPanel from './LayerPanel';
 import ElemWaterUsage from './components/ElemWaterUsage';
-
+import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEfluenteIcon, iwPluvialIcon, iwDefaultIcon } from '../assets/svg/svgs-icons';
 const BRASILIA  = { lat: -15.7801, lng: -47.9292 };
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
@@ -40,25 +40,67 @@ function makePinElement(url, w, h) {
   return img;
 }
 
+function getTypeSvg(item) {
+  const key = (item._catLabel ?? '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  let fn;
+  if (key.includes('superficial'))    fn = iwSuperficialIcon;
+  else if (key.includes('subterr')) {
+    const tp = (item.tp_descricao ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    fn = (tp.includes('manual') || tp.includes('raso')) ? iwManualIcon : iwTubularIcon;
+  }
+  else if (key.includes('pluvial'))   fn = iwPluvialIcon;
+  else if (key.includes('efluente'))  fn = iwEfluenteIcon;
+  else if (key.includes('barragem'))  fn = iwBarragemIcon;
+  else                                 fn = iwDefaultIcon;
+  let svg = fn()
+    .replace(/^[\s\S]*?(?=<svg[\s>])/i, '')  // remove XML declaration e comentários antes de <svg
+    .trim();
+  svg = svg.replace(/<svg([^>]*)>/i, (_, attrs) => {
+    const cleaned = attrs
+      .replace(/\s+(width|height)="[^"]*"/g, '')   // remove width/height explícitos
+      .replace(/\s+style="[^"]*"/g, '');             // remove style (enable-background, etc.)
+    return `<svg width="100%" height="100%" style="display:block;background:transparent;" ${cleaned.trim()}>`;
+  });
+  return svg;
+}
+
 function buildInfoHtml(item) {
   const color = item._catColor ?? TI_COLORS[item.ti_id] ?? '#1565c0';
   const lat = parseFloat(item.int_latitude), lng = parseFloat(item.int_longitude);
+  const icon = getTypeSvg(item);
+  const td1 = 'style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"';
+  const td2 = 'style="color:#263238;"';
+  const row = (label, val) => val ? `<tr><td ${td1}><b>${label}</b></td><td ${td2}>${val}</td></tr>` : '';
+  const fmtDate = iso => { if (!iso) return null; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString('pt-BR'); };
+  const fmtDoc  = v => { if (!v) return null; const n = String(v).replace(/\D/g, ''); if (n.length === 11) return n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'); if (n.length === 14) return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'); return v; };
   return `
-    <div style="font-family:Roboto,Arial,sans-serif;min-width:210px;max-width:270px;">
-      <div style="font-weight:700;font-size:13px;color:#1a237e;
+    <div style="font-family:Roboto,Arial,sans-serif;min-width:210px;max-width:310px;">
+      <div style="display:flex;align-items:center;gap:8px;
                   border-bottom:2px solid ${color};padding-bottom:5px;margin-bottom:6px;">
-        ${item.us_nome ?? '—'}
+        <span style="display:inline-flex;align-items:center;justify-content:center;
+                     width:44px;height:44px;border-radius:8px;
+                     background:transparent;flex-shrink:0;overflow:hidden;padding:4px;">
+          ${icon}
+        </span>
+        <span style="font-weight:700;font-size:13px;color:#1a237e;line-height:1.3;">
+          ${item.us_nome ?? '—'}
+        </span>
       </div>
       <table style="width:100%;font-size:11px;border-collapse:collapse;line-height:1.7;">
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Processo</b></td><td>${item.int_processo ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>CPF/CNPJ</b></td><td>${item.us_cpf_cnpj ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Endereço</b></td><td>${item.emp_endereco ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Bacia</b></td><td>${item.bh_nome ?? '—'}</td></tr>
-        <tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Tipo</b></td>
-            <td style="color:${color};font-weight:600;">${item._catLabel ?? '—'}</td></tr>
+        <tr><td ${td1}><b>Processo</b></td><td ${td2}>${item.int_processo ?? '—'}</td></tr>
+        <tr><td ${td1}><b>CPF/CNPJ</b></td><td ${td2}>${fmtDoc(item.us_cpf_cnpj) ?? '—'}</td></tr>
+        ${row('Núm. do Ato', item.int_num_ato)}
+        ${row('Endereço', item.emp_endereco)}
+        ${row('Situação', item.sp_descricao)}
+        ${row('Publicação', fmtDate(item.int_data_publicacao))}
+        ${row('Vencimento', fmtDate(item.int_data_vencimento))}
+        ${row('E-mail', item.us_email)}
+        ${row('Bacia', item.bh_nome)}
+        ${row('Unid. Hidro.', item.uh_nome)}
+        <tr><td ${td1}><b>Tipo</b></td><td style="color:${color};font-weight:600;">${item._catLabel ?? '—'}</td></tr>
         ${!isNaN(lat) && !isNaN(lng)
-          ? `<tr><td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"><b>Lat/Lng</b></td>
-              <td>${lat.toFixed(6)}, ${lng.toFixed(6)}</td></tr>`
+          ? `<tr><td ${td1}><b>Lat/Lng</b></td><td ${td2}>${lat.toFixed(6)}, ${lng.toFixed(6)}</td></tr>`
           : ''}
       </table>
     </div>`;
@@ -190,6 +232,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       center: BRASILIA, zoom: 11,
       mapTypeId: 'satellite',
       mapId: 'DEMO_MAP_ID',
+      streetViewControl: window.innerWidth >= 900,
       mapTypeControlOptions: {
         mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain'],
         style: window.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
@@ -928,7 +971,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} />,
+          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} onLocate={(pos) => onPickRef.current?.(pos)} />,
           panelRootRef.current,
         )
       }

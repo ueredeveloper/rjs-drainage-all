@@ -3,10 +3,11 @@ import {
   Box, Typography, Stack, Divider, LinearProgress, Alert,
   TextField, Button, ToggleButton, ToggleButtonGroup,
   Table, TableHead, TableBody, TableRow, TableCell, Paper, Chip, Avatar,
-  IconButton, Tooltip,
+  IconButton, Tooltip, CircularProgress, useTheme, useMediaQuery,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TransformIcon from '@mui/icons-material/Transform';
+import SearchIcon from '@mui/icons-material/Search';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import WaterDropIcon    from '@mui/icons-material/WaterDrop';
 import MyLocationIcon   from '@mui/icons-material/MyLocation';
@@ -20,7 +21,7 @@ import UserSearchDialog  from '../components/UserSearchDialog';
 import CoordConverter    from '../components/CoordConverter';
 import { findPointsInASystem } from '../../services/geolocation';
 import { analyzeAvailability, numberWithCommas } from '../../tools';
-import { MESES } from '../constants';
+import { MESES, abbr } from '../constants';
 import { PT_SUFFIXES, makeBarValuesPlugin } from '../chartSetup';
 
 const barValuesPlugin = makeBarValuesPlugin('m³/ano');
@@ -46,6 +47,8 @@ const CHART_ITEMS = [
 ];
 
 function AvailChart({ avail, qUsuario, logScale }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const values = [
     avail.q_ex,
     avail.q_points,
@@ -57,7 +60,7 @@ function AvailChart({ avail, qUsuario, logScale }) {
     <Bar
       plugins={[barValuesPlugin]}
       data={{
-        labels: CHART_ITEMS.map(c => c.label),
+        labels: CHART_ITEMS.map(c => abbr(c.label, isMobile)),
         datasets: [{
           data: values,
           backgroundColor: CHART_ITEMS.map(c => `${c.color}33`),
@@ -108,7 +111,8 @@ export default function SubterraneanTab({
   lat, lng, onLatChange, onLngChange, onApplyCoordinates,
   onMarkerSelect, onSubShape, onSubMarkers, onClearCircle,
 }) {
-  const _renderRef = useRef(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [wellTypeId, setWellTypeId]     = useState('1');
   const [subPoints, setSubPoints]       = useState(null);
   const [rawAvail, setRawAvail]         = useState(null);
@@ -121,8 +125,6 @@ export default function SubterraneanTab({
   const [dialogOpen, setDialogOpen]     = useState(false);
   const [openConverter, setOpenConverter] = useState(false);
   const [logScale, setLogScale]         = useState(true);
-
-  console.log(`[SubterraneanTab] render #${++_renderRef.current}`, { lat, lng, loading, subPoints: subPoints?.length ?? 'null' });
 
   // Disponibilidade com usuário somado (reativo a qUsuario e rawAvail)
   const avail = useMemo(() => {
@@ -142,7 +144,6 @@ export default function SubterraneanTab({
 
   // Sync subPoints → map markers whenever the list changes
   useEffect(() => {
-    console.log('[SubterraneanTab] subPoints effect', { count: subPoints?.length ?? 'null' });
     if (subPoints !== null) onSubMarkers?.(subPoints);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subPoints]);
@@ -260,7 +261,7 @@ export default function SubterraneanTab({
       {/* ── Busca por coordenada ─────────────────────────────────────────────── */}
       <Box id="nd-sub-coord-search" sx={{ px: 2, py: 1.5, flexShrink: 0, bgcolor: '#f8faff', borderBottom: '1px solid #e8eaf0' }}>
         <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
-          Busca por Coordenadas
+          {abbr('Busca por Coordenadas', isMobile)}
         </Typography>
 
         <Stack direction="row" spacing={1} alignItems="center" mb={1.2}>
@@ -274,12 +275,6 @@ export default function SubterraneanTab({
             onChange={e => onLngChange(e.target.value)}
             sx={{ flex: 1, '& input': { fontSize: '0.78rem' } }}
           />
-          <Button
-            variant="contained" size="small" onClick={handleSearch} disabled={loading}
-            sx={{ flexShrink: 0, textTransform: 'none', fontSize: '0.75rem', px: 2, bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}
-          >
-            {loading ? 'Buscando…' : 'Buscar'}
-          </Button>
           <Tooltip title="Copiar coordenadas">
             <IconButton
               size="small" onClick={() => navigator.clipboard.writeText(`${lat}, ${lng}`)}
@@ -295,6 +290,16 @@ export default function SubterraneanTab({
             >
               <TransformIcon sx={{ fontSize: 18 }} />
             </IconButton>
+          </Tooltip>
+          <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
+            <span>
+              <IconButton
+                size="small" onClick={handleSearch} disabled={loading}
+                sx={{ flexShrink: 0, bgcolor: '#003566', color: '#fff', borderRadius: 1, p: 0.7, '&:hover': { bgcolor: '#004080' }, '&.Mui-disabled': { bgcolor: '#90a4ae', color: '#fff' } }}
+              >
+                {loading ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <SearchIcon sx={{ fontSize: 18 }} />}
+              </IconButton>
+            </span>
           </Tooltip>
         </Stack>
 
@@ -321,7 +326,7 @@ export default function SubterraneanTab({
           }}
         >
           {WELL_TYPES.map(t => (
-            <ToggleButton key={t.value} value={t.value}>{t.label}</ToggleButton>
+            <ToggleButton key={t.value} value={t.value}>{abbr(t.label, isMobile)}</ToggleButton>
           ))}
         </ToggleButtonGroup>
 
@@ -355,7 +360,7 @@ export default function SubterraneanTab({
       {/* ── Análise de disponibilidade ───────────────────────────────────────── */}
       <Box id="nd-sub-avail-section" sx={{ px: 2, py: 1.5, borderBottom: '1px solid #e8eaf0' }}>
         <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#1565c0', textTransform: 'uppercase', letterSpacing: 0.9, display: 'block', mb: 1 }}>
-          Análise de disponibilidade
+          {abbr('Análise de disponibilidade', isMobile)}
         </Typography>
 
         {/* Título + botão Adicionar Usuário — sempre visível */}
@@ -425,7 +430,7 @@ export default function SubterraneanTab({
               <Bar
                 plugins={[barValuesPlugin]}
                 data={{
-                  labels: CHART_ITEMS.map(c => c.label),
+                  labels: CHART_ITEMS.map(c => abbr(c.label, isMobile)),
                   datasets: [{
                     data: [95000, 12400, 82600, 3800],
                     backgroundColor: CHART_ITEMS.map(c => `${c.color}55`),
@@ -520,7 +525,7 @@ export default function SubterraneanTab({
         <Stack direction="row" alignItems="center" spacing={0.6}>
           <WaterDropIcon sx={{ fontSize: 13, color: '#0277bd' }} />
           <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.62rem', color: '#0277bd', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-            Outorgas subterrâneas
+            {abbr('Outorgas subterrâneas', isMobile)}
           </Typography>
         </Stack>
         {subPoints !== null && (

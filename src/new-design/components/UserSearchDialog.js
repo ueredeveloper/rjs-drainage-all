@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, IconButton, Box,
   TextField, Button, Typography, Stack, LinearProgress, Alert, Divider,
   Table, TableHead, TableBody, TableRow, TableCell, Paper, Chip,
-  Collapse,
+  Collapse, Tooltip, CircularProgress,
 } from '@mui/material';
 import CloseIcon         from '@mui/icons-material/Close';
 import SearchIcon        from '@mui/icons-material/Search';
@@ -36,7 +36,6 @@ function UserRow({ user, onSelect }) {
       setError(null);
       try {
         const res = await findDemands(user.end_id);
-        console.log('[UserSearchDialog] demands for end_id', user.end_id, res);
         setDemands(Array.isArray(res) ? res : []);
       } catch (err) {
         console.error('[UserSearchDialog] findDemands error', err);
@@ -154,7 +153,6 @@ export default function UserSearchDialog({ open, onClose, onSelect }) {
     setUsers(null);
     try {
       const res = await getUsers(query.trim());
-      console.log('[UserSearchDialog] getUsers result', res);
       setUsers(Array.isArray(res) ? res : []);
     } catch {
       setSearchErr('Erro ao buscar usuários. Verifique a conexão.');
@@ -200,15 +198,16 @@ export default function UserSearchDialog({ open, onClose, onSelect }) {
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               sx={{ '& input': { fontSize: '0.78rem' } }}
             />
-            <Button
-              variant="contained" size="small"
-              onClick={handleSearch}
-              disabled={searching || !query.trim()}
-              startIcon={<SearchIcon sx={{ fontSize: '0.9rem !important' }} />}
-              sx={{ flexShrink: 0, textTransform: 'none', fontSize: '0.72rem', px: 1.5, bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}
-            >
-              Buscar
-            </Button>
+            <Tooltip title={searching ? 'Buscando…' : 'Buscar'}>
+              <span>
+                <IconButton
+                  size="small" onClick={handleSearch} disabled={searching || !query.trim()}
+                  sx={{ flexShrink: 0, bgcolor: '#003566', color: '#fff', borderRadius: 1, p: 0.7, '&:hover': { bgcolor: '#004080' }, '&.Mui-disabled': { bgcolor: '#90a4ae', color: '#fff' } }}
+                >
+                  {searching ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <SearchIcon sx={{ fontSize: 18 }} />}
+                </IconButton>
+              </span>
+            </Tooltip>
           </Stack>
           {searching && <LinearProgress sx={{ mt: 1 }} />}
           {searchErr  && <Alert severity="error" sx={{ mt: 1, py: 0.3, fontSize: '0.72rem' }}>{searchErr}</Alert>}

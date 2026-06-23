@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   Box, Tabs, Tab, Chip, Avatar, Divider, Typography, Alert, Stack,
-  IconButton, Tooltip,
+  IconButton, Tooltip, useTheme, useMediaQuery,
 } from '@mui/material';
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import LayersIcon from '@mui/icons-material/Layers';
@@ -24,7 +24,7 @@ import {
   calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual,
 } from '../../tools/surface-tools';
 import { initialsStates } from '../../initials-states';
-import { MESES } from '../constants';
+import { MESES, abbr } from '../constants';
 
 const TABLE_HEADERS = ['Nome', 'CPF/CNPJ', 'Processo', 'Endereço', ...MESES];
 
@@ -57,7 +57,8 @@ const MOCK_UH = {
 };
 
 export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect, onSupShape, onSupMarkers, onClearCircle }) {
-  const _renderRef = useRef(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [tabIndex, setTabIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -65,7 +66,6 @@ export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onA
   const [ottoInfo, setOttoInfo] = useState({ area: 0, uhNome: '', uhRotulo: '' });
   const overlaysCacheRef = useRef([]);
 
-  console.log(`[SuperficialTab] render #${++_renderRef.current}`, { loading, hasData: surfaceAnalyse.secao.q_referencia.values.some(v => v !== 0) });
   const hasData = surfaceAnalyse.secao.q_referencia.values.some(v => v !== 0);
   const secaoGrants = surfaceAnalyse.secao.outorgas ?? [];
 
@@ -100,7 +100,6 @@ export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onA
   };
 
   async function handleSearch() {
-    console.log('[SuperficialTab] handleSearch', { lat, lng });
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) { setError('Coordenadas inválidas. Ex: -15.7801'); return; }
@@ -208,7 +207,7 @@ const hydrographicBasin = await searchHydrograficUnit(
         onLatChange={onLatChange} onLngChange={onLngChange}
         onApplyCoordinates={onApplyCoordinates}
         onSearch={handleSearch} loading={loading} error={error}
-        title="Busca por Coordenadas"
+        title={abbr('Busca por Coordenadas', isMobile)}
       />
 
       {error && (
