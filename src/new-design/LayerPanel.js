@@ -122,8 +122,24 @@ function formatProps(props) {
     .slice(0, 8);
 }
 
-function buildFeatureHtml(props, layerLabel, color, showSearch) {
-  const rows = formatProps(props);
+function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = null) {
+  const rows = formatProps(props).filter(([k]) => pctUtilizada !== null ? k !== 'pct_utilizada' : true);
+
+  const usageBar = pctUtilizada !== null ? (() => {
+    const pct = Math.round(pctUtilizada);
+    const barColor = colorByPercentage(pct);
+    return `
+      <div style="margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid #e0e0e0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-size:10px;color:#78909c;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">% de uso</span>
+          <span style="font-size:13px;font-weight:700;color:${barColor};">${pct}%</span>
+        </div>
+        <div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${Math.min(pct, 100)}%;background:${barColor};border-radius:3px;"></div>
+        </div>
+      </div>`;
+  })() : '';
+
   const searchBtn = showSearch ? `
     <div style="margin-top:8px;padding-top:6px;border-top:1px solid #e0e0e0;text-align:center;">
       <style>.lp-feat-btn{transition:filter .15s,transform .1s}.lp-feat-btn:hover{filter:brightness(.84)}.lp-feat-btn:active{filter:brightness(.7);transform:scale(.97)}</style>
@@ -147,6 +163,7 @@ function buildFeatureHtml(props, layerLabel, color, showSearch) {
                   border-bottom:2px solid ${color};padding-bottom:4px;margin-bottom:5px;">
         ${layerLabel}
       </div>
+      ${usageBar}
       ${rows.length > 0
         ? `<table style="width:100%;font-size:11px;border-collapse:collapse;line-height:1.7;">
             ${rows.map(([k, v]) => `<tr>
@@ -656,8 +673,11 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         if (!infoWinRef.current) {
           infoWinRef.current = new window.google.maps.InfoWindow();
         }
+        const pctUtilizada = WATER_USE_LAYERS.has(id) && waterUseMapRef.current[id]
+          ? (props.pct_utilizada ?? null)
+          : null;
         infoWinRef.current.setContent(
-          buildFeatureHtml(props, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current)
+          buildFeatureHtml(props, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada)
         );
         infoWinRef.current.setPosition(event.latLng);
         infoWinRef.current.open(map);
@@ -677,9 +697,12 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
             pendingShapeRef.current = shape;
 
             L.DomEvent.stopPropagation(e);
+            const pctUtilizada = WATER_USE_LAYERS.has(id) && waterUseMapRef.current[id]
+              ? (feature.properties?.pct_utilizada ?? null)
+              : null;
             L.popup({ maxWidth: 300, closeButton: true })
               .setLatLng(e.latlng)
-              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current))
+              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada))
               .openOn(map);
           });
         },

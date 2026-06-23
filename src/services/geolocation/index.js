@@ -1,12 +1,12 @@
 
-import { getAuthHeaders } from '../auth/headers';
+import { getAuthHeaders, apiFetch } from '../auth/headers';
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
 async function findAllPointsInASubsystem(tp_id, lat, lng) {
 
   try {
-    const response = await fetch(url + `/find-points-inside-subsystem?tp_id=${tp_id}&lat=${lat}&lng=${lng}`, {
+    const response = await apiFetch(url + `/find-points-inside-subsystem?tp_id=${tp_id}&lat=${lat}&lng=${lng}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ async function findAllPointsInRectangle(nex, ney, swx, swy) {
   console.log('nex, ney, swx, swy:', nex, ney, swx, swy);
 
   try {
-    const response = await fetch(url + '/find-points-inside-rectangle', {
+    const response = await apiFetch(url + '/find-points-inside-rectangle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ async function findAllPointsInPolygon(polygon) {
   console.log(polygon);
 
   try {
-    const response = await fetch(url + '/find-points-inside-polygon', {
+    const response = await apiFetch(url + '/find-points-inside-polygon', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ async function findAllPointsInCircle(circle) {
   console.log(circleJson);
 
   try {
-    const response = await fetch(url + '/find-points-inside-circle', {
+    const response = await apiFetch(url + '/find-points-inside-circle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ async function findPointsInASystem(tp_id, lat, lng) {
   const id = Number(tp_id);
   const systemId = (id === 1 || id === 2) ? 1 : 2;
 
-  const response = await fetch(
+  const response = await apiFetch(
     `${url}/find-points-inside-subsystem?tp_id=${systemId}&lat=${lat}&lng=${lng}`,
     {
       method: 'GET',

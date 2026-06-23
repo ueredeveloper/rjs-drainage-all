@@ -81,6 +81,13 @@ export const AuthProvider = ({ children }) => {
     setLoginOpen(true);
   }, [saveSession]);
 
+  // Abre login automaticamente quando qualquer serviço recebe HTTP 401
+  useEffect(() => {
+    const handle = () => { saveSession(null); setLoginOpen(true); };
+    window.addEventListener('auth:unauthorized', handle);
+    return () => window.removeEventListener('auth:unauthorized', handle);
+  }, [saveSession]);
+
   return (
     <AuthContext.Provider value={{
       session,

@@ -1,5 +1,5 @@
 import { calculateContributingArea, convertOthoCoordToGmaps } from "../../tools";
-import { getAuthHeaders } from '../auth/headers';
+import { getAuthHeaders, apiFetch } from '../auth/headers';
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
@@ -10,7 +10,7 @@ const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.
   */
 async function fetchShape(shape_name) {
 
-  let response = await fetch(url + `/find-shape-by-name?shape_name=${shape_name}`, {
+  let response = await apiFetch(url + `/find-shape-by-name?shape_name=${shape_name}`, {
     method: 'GET',
     headers: {
       Accept: 'application/JSON',
@@ -38,7 +38,7 @@ async function fetchShape(shape_name) {
 async function fetchGrantsInsideShape(shapeName, shapeCode) {
 
   try {
-    const response = await fetch(url + `/find_points-inside-shape?shapeName=${shapeName}&shapeCode=${shapeCode}`, {
+    const response = await apiFetch(url + `/find_points-inside-shape?shapeName=${shapeName}&shapeCode=${shapeCode}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ async function fetchOttoBasins(lat, lng) {
    * @param {string} uh Unidade Hidrográfica.
    * @returns {Promise<Array>} Uma Promise que resolve com as informações de áreas de drenagem.
    */
-  let features = await fetch(`${url}/find-otto-basins-by-lat-lng?${params}`,
+  let features = await apiFetch(`${url}/find-otto-basins-by-lat-lng?${params}`,
     {
       method: "GET",
       headers: { ...getAuthHeaders() }
@@ -113,7 +113,7 @@ async function fetchOttoBasins(lat, lng) {
  */
 async function fetchMarkersByUH(uh_codigo) {
 
-  let points = await fetch(`${url}/find-surface-pointos-inside-uh?uh_codigo=${uh_codigo}`,
+  let points = await apiFetch(`${url}/find-surface-pointos-inside-uh?uh_codigo=${uh_codigo}`,
     {
       method: 'GET',
       headers: {
@@ -138,7 +138,7 @@ async function fetchMarkersByUH(uh_codigo) {
  */
 async function fetchRiversByCoordinates(lat, lng) {
 
-  let response = await fetch(url + `/rivers/filter-rivers-by-lat-lng?lat=${lat}&lng=${lng}`, {
+  let response = await apiFetch(url + `/rivers/filter-rivers-by-lat-lng?lat=${lat}&lng=${lng}`, {
     method: 'GET',
     headers: {
       Accept: 'application/JSON',

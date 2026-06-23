@@ -13,3 +13,15 @@ export function getAuthHeaders() {
     return {};
   }
 }
+
+/**
+ * Wrapper de fetch autenticado: ao receber 401, dispara o evento 'auth:unauthorized'
+ * para que o AuthProvider redirecione o usuário para o login.
+ */
+export async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
+  return res;
+}

@@ -1,5 +1,5 @@
 
-import { getAuthHeaders } from '../auth/headers';
+import { getAuthHeaders, apiFetch } from '../auth/headers';
 
 const url = 'https://app-sis-out-srh-backend-01-h3hkbcf5f8dubbdy.brazilsouth-01.azurewebsites.net';
 
@@ -9,7 +9,7 @@ async function findByColumn(keyword) {
   const urlWithParams = `${url}/find-points-by-keyword?keyword=${keyword}`;
 
   try {
-    const response = await fetch(urlWithParams, {
+    const response = await apiFetch(urlWithParams, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
