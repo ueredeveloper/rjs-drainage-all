@@ -126,13 +126,14 @@ function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = n
   const rows = formatProps(props).filter(([k]) => pctUtilizada !== null ? k !== 'pct_utilizada' : true);
 
   const usageBar = pctUtilizada !== null ? (() => {
-    const pct = Math.round(pctUtilizada);
+    const pct = pctUtilizada;
     const barColor = colorByPercentage(pct);
+    const pctFmt = pct.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return `
       <div style="margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid #e0e0e0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
           <span style="font-size:10px;color:#78909c;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">% de uso</span>
-          <span style="font-size:13px;font-weight:700;color:${barColor};">${pct}%</span>
+          <span style="font-size:13px;font-weight:700;color:${barColor};">${pctFmt}%</span>
         </div>
         <div style="height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;">
           <div style="height:100%;width:${Math.min(pct, 100)}%;background:${barColor};border-radius:3px;"></div>
