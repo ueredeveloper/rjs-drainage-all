@@ -219,13 +219,6 @@ const HTMLMarkerContent = ({ color, info }) => {
                         <strong>Processo:</strong> {info.int_processo}
                     </Typography>
 
-                    {/* E-mail */}
-                    {info.us_email && (
-                        <Typography variant="body2">
-                            <strong>E-mail:</strong> {info.us_email}
-                        </Typography>
-                    )}
-
                     {/* Telefone */}
                     {info.us_telefone_1 && (
                         <Typography variant="body2">

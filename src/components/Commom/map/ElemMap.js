@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { darkMap } from './mode/dark-map';
 import ElemStreeView from './ElemStreetView';
+import anexoGeoJson from '../../../assets/geojson/ANEXO_~1.geojson';
 
 const locations = [
   { lat: -15.7331605, lng: -47.886387, descricao: "Park Deck Norte" },
@@ -49,6 +50,29 @@ function ElemMap({ mode, map, setMap, zoom, setZoom, setIsFullscreen }) {
       setMap(newMap);
     }
   }, [map, setMap, zoom]);
+
+  // Exibe o GeoJSON ANEXO por 5 segundos na primeira renderização
+  useEffect(() => {
+    if (!map) return;
+
+    const features = map.data.addGeoJson(anexoGeoJson);
+
+    map.data.setStyle({
+      fillColor: '#1976d2',
+      fillOpacity: 0.25,
+      strokeColor: '#1976d2',
+      strokeWeight: 1.5,
+    });
+
+    const timer = setTimeout(() => {
+      features.forEach(f => map.data.remove(f));
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      features.forEach(f => { try { map.data.remove(f); } catch (_) {} });
+    };
+  }, [map]);
 
   // Configura listeners e modo do mapa
   useEffect(() => {
