@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { darkMap } from './mode/dark-map';
 import ElemStreeView from './ElemStreetView';
-import anexoGeoJson from '../../../assets/geojson/ANEXO_~1.geojson';
+import anexoGeoJson from '../../../assets/geojson/plano-piloto-uso-solo.geojson';
 
 const locations = [
   { lat: -15.7331605, lng: -47.886387, descricao: "Park Deck Norte" },

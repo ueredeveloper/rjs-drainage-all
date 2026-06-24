@@ -3,10 +3,8 @@ import ReactDOM from 'react-dom';
 import LayerPanel from './LayerPanel';
 import ElemWaterUsage from './components/ElemWaterUsage';
 import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEfluenteIcon, iwPluvialIcon, iwDefaultIcon } from '../assets/svg/svgs-icons';
-import anexoGeoJson from './anexo-uso-solo.json';
-import pilotSelecao from '../assets/geojson/plano-piloto-selecao.json';
-import setorizacaoGeoJson from './anexo-ii-setorizacao.json';
-import setorizacaoSelecao from '../assets/geojson/setorizacao-selecao.json';
+import { usePlanoPilotoLayer } from './layers/usePlanoPilotoLayer';
+import { useSetorizacaoLayer } from './layers/useSetorizacaoLayer';
 const BRASILIA  = { lat: -15.7948528, lng: -47.8831189 };
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
@@ -171,169 +169,6 @@ function makeBar() {
   return d;
 }
 
-// ─── Helpers geoespaciais (módulo) ───────────────────────────────────────────
-function classifyWing(props) {
-  if (props.tp === 'TP1') return 'eixo';
-  const tokens = (props.setores || '').toUpperCase().split(/[;\s]+/).filter(Boolean);
-  const hasN = tokens.some(t => /N$/.test(t)), hasS = tokens.some(t => /S$/.test(t));
-  if (hasN && !hasS) return 'norte'; if (hasS && !hasN) return 'sul'; return 'outros';
-}
-function splitWingN(features, wing, n) {
-  const w = features.map(f => ({ f, lat: f.geometry?.coordinates?.[0]?.[0]?.[1] ?? 0 }));
-  w.sort((a, b) => wing === 'norte' ? a.lat - b.lat : b.lat - a.lat);
-  const size = Math.ceil(w.length / n);
-  return Array.from({ length: n }, (_, i) => w.slice(i * size, (i + 1) * size).map(x => x.f));
-}
-function splitByLng(features) {
-  if (!features.length) return [[], []];
-  const w = features.map(f => ({ f, lng: f.geometry?.coordinates?.[0]?.[0]?.[0] ?? 0 }));
-  w.sort((a, b) => a.lng - b.lng); const mid = Math.ceil(w.length / 2);
-  return [w.slice(0, mid).map(x => x.f), w.slice(mid).map(x => x.f)];
-}
-function splitByLat(features, wing) {
-  if (!features.length) return [[], []];
-  const w = features.map(f => ({ f, lat: f.geometry?.coordinates?.[0]?.[0]?.[1] ?? 0 }));
-  w.sort((a, b) => wing === 'norte' ? a.lat - b.lat : b.lat - a.lat); const mid = Math.ceil(w.length / 2);
-  return [w.slice(0, mid).map(x => x.f), w.slice(mid).map(x => x.f)];
-}
-function toPoints(features) {
-  const rings = [];
-  features.forEach(f => {
-    const geom = f.geometry; if (!geom) return;
-    const raws = geom.type === 'Polygon' ? geom.coordinates : geom.type === 'MultiPolygon' ? geom.coordinates.flat(1) : [];
-    raws.forEach(ring => { if (ring.length > 1) rings.push(ring.map(([lng, lat]) => ({ lat, lng }))); });
-  });
-  if (!rings.length) return [];
-  const used = new Uint8Array(rings.length); const ordered = [rings[0]]; used[0] = 1;
-  let tail = rings[0][rings[0].length - 1];
-  for (let i = 1; i < rings.length; i++) {
-    let bestIdx = -1, bestDist = Infinity, bestRev = false;
-    for (let j = 0; j < rings.length; j++) {
-      if (used[j]) continue; const r = rings[j];
-      const dl = tail.lat-r[0].lat, dn = tail.lng-r[0].lng, ds = dl*dl+dn*dn;
-      const dl2 = tail.lat-r[r.length-1].lat, dn2 = tail.lng-r[r.length-1].lng, de = dl2*dl2+dn2*dn2;
-      if (ds < bestDist) { bestDist = ds; bestIdx = j; bestRev = false; }
-      if (de < bestDist) { bestDist = de; bestIdx = j; bestRev = true; }
-    }
-    if (bestIdx === -1) break; used[bestIdx] = 1;
-    const ring = bestRev ? rings[bestIdx].slice().reverse() : rings[bestIdx];
-    ordered.push(ring); tail = ring[ring.length - 1];
-  }
-  return ordered.flat();
-}
-
-// ─── Plano Piloto ─────────────────────────────────────────────────────────────
-const PILOT_ZONE_COLORS = ['#00E5FF', '#69F0AE', '#FFD740', '#FF6E40', '#EA80FC', '#40C4FF'];
-const PILOT_SPLIT4 = new Set(
-  [1,2,3,4,5,6].flatMap(z => [1,2].flatMap(sz => [1,2].map(ssz => `norte_${z}_${sz}_${ssz}`)))
-);
-const PILOT_GROUPS = (() => {
-  const g = { eixo: { label: 'Eixo Monumental', color: '#FFD600', delay: 0 } };
-  for (let z = 1; z <= 6; z++) {
-    const color = PILOT_ZONE_COLORS[z - 1];
-    for (let sz = 1; sz <= 2; sz++)
-      for (let ssz = 1; ssz <= 2; ssz++) {
-        const delay = 1800 + (z-1)*400 + (sz-1)*100 + (ssz-1)*50;
-        for (let sssz = 1; sssz <= 2; sssz++)
-          g[`norte_${z}_${sz}_${ssz}_${sssz}`] = { label: `${z}.${sz}.${ssz}.${sssz}`, color, delay: delay + (sssz-1)*25 };
-        g[`sul_${z}_${sz}_${ssz}`] = { label: `${z}.${sz}.${ssz}`, color, delay };
-      }
-  }
-  return g;
-})();
-const PILOT_DEFAULT_VISIBLE = new Set(pilotSelecao.selectedKeys);
-
-
-// ─── Setorização — setores individuais ───────────────────────────────────────
-const SETZ_SECTORS = (() => {
-  const data = [
-    { key:'setz_avpr_1',     sigla:'AVPR 1',          nome:'Área Verde de Proteção e Reserva 1' },
-    { key:'setz_avpr_2',     sigla:'AVPR 2',          nome:'Área Verde de Proteção e Reserva 2' },
-    { key:'setz_cand',       sigla:'CAND',             nome:'Candangolândia' },
-    { key:'setz_ces',        sigla:'CES',              nome:'Cemitério Sul' },
-    { key:'setz_emi',        sigla:'EMI',              nome:'Esplanada dos Ministérios' },
-    { key:'setz_emo',        sigla:'EMO',              nome:'Eixo Monumental Oeste' },
-    { key:'setz_ern',        sigla:'ERN',              nome:'Eixo Rodoviário-Residencial Norte' },
-    { key:'setz_ers',        sigla:'ERS',              nome:'Eixo Rodoviário-Residencial Sul' },
-    { key:'setz_eto',        sigla:'ETO',              nome:'Esplanada da Torre de TV' },
-    { key:'setz_lago_parano',sigla:'LAGO PARANOÁ',     nome:'Lago Paranoá' },
-    { key:'setz_pfr',        sigla:'PFR',              nome:'Plataforma Rodoviária' },
-    { key:'setz_pmu',        sigla:'PMU',              nome:'Praça Municipal' },
-    { key:'setz_pqeb',       sigla:'PQEB',             nome:'Parque Estação Biológica' },
-    { key:'setz_pqen',       sigla:'PQEN',             nome:'Parque Ecológico Norte' },
-    { key:'setz_ptp',        sigla:'PTP',              nome:'Praça dos Três Poderes' },
-    { key:'setz_safn',       sigla:'SAFN',             nome:'Adm. Federal Norte' },
-    { key:'setz_safs',       sigla:'SAFS',             nome:'Adm. Federal Sul' },
-    { key:'setz_sam',        sigla:'SAM',              nome:'Adm. Municipal' },
-    { key:'setz_saun',       sigla:'SAUN',             nome:'Autarquias Norte' },
-    { key:'setz_saus',       sigla:'SAUS',             nome:'Autarquias Sul' },
-    { key:'setz_sbn',        sigla:'SBN',              nome:'Bancário Norte' },
-    { key:'setz_sbs',        sigla:'SBS',              nome:'Bancário Sul' },
-    { key:'setz_scen',       sigla:'SCEN',             nome:'Clubes Esportivos Norte' },
-    { key:'setz_sces',       sigla:'SCES',             nome:'Clubes Esportivos Sul' },
-    { key:'setz_sclrn',      sigla:'SCLRN',            nome:'Comercial Local Residencial Norte' },
-    { key:'setz_scn',        sigla:'SCN',              nome:'Comercial Norte' },
-    { key:'setz_scrn',       sigla:'SCRN',             nome:'Comercial Residencial Norte' },
-    { key:'setz_scrs',       sigla:'SCRS',             nome:'Comercial Residencial Sul' },
-    { key:'setz_scs',        sigla:'SCS',              nome:'Comercial Sul' },
-    { key:'setz_sctn',       sigla:'SCTN',             nome:'Cultural Norte' },
-    { key:'setz_scts',       sigla:'SCTS',             nome:'Cultural Sul' },
-    { key:'setz_sdc',        sigla:'SDC',              nome:'Divulgação Cultural' },
-    { key:'setz_sdn',        sigla:'SDN',              nome:'Diversões Norte' },
-    { key:'setz_sds',        sigla:'SDS',              nome:'Diversões Sul' },
-    { key:'setz_sen',        sigla:'SEN',              nome:'Embaixadas Norte' },
-    { key:'setz_sepn',       sigla:'SEPN',             nome:'Edifícios Utilidade Pública Norte' },
-    { key:'setz_seps',       sigla:'SEPS',             nome:'Edifícios Utilidade Pública Sul' },
-    { key:'setz_ses',        sigla:'SES',              nome:'Embaixadas Sul' },
-    { key:'setz_sgan',       sigla:'SGAN',             nome:'Grandes Áreas Norte' },
-    { key:'setz_sgas',       sigla:'SGAS',             nome:'Grandes Áreas Sul' },
-    { key:'setz_sgmn',       sigla:'SGMN',             nome:'Garagens Ministérios Norte' },
-    { key:'setz_sgo',        sigla:'SGO',              nome:'Garagens Oficiais' },
-    { key:'setz_shcao',      sigla:'SHCAO',            nome:'Hab. Coletivas Octogonais' },
-    { key:'setz_shces',      sigla:'SHCES',            nome:'Hab. Coletivas Econ. Sul' },
-    { key:'setz_shcgn',      sigla:'SHCGN',            nome:'Hab. Coletivas Geminadas Norte' },
-    { key:'setz_shcn',       sigla:'SHCN',             nome:'Hab. Coletivas Norte' },
-    { key:'setz_shcnw',      sigla:'SHCNW',            nome:'Hab. Coletivas Noroeste' },
-    { key:'setz_shcs',       sigla:'SHCS',             nome:'Hab. Coletivas Sul' },
-    { key:'setz_shcsw',      sigla:'SHCSW',            nome:'Hab. Coletivas Sudoeste' },
-    { key:'setz_shigs',      sigla:'SHIGS',            nome:'Hab. Individuais Geminadas Sul' },
-    { key:'setz_ship',       sigla:'SHIP',             nome:'Setor Hípico' },
-    { key:'setz_shln',       sigla:'SHLN',             nome:'Hospitalar Local Norte' },
-    { key:'setz_shls',       sigla:'SHLS',             nome:'Hospitalar Local Sul' },
-    { key:'setz_shlsw',      sigla:'SHLSW',            nome:'Hospitalar Local Sudoeste' },
-    { key:'setz_shn',        sigla:'SHN',              nome:'Hoteleiro Norte' },
-    { key:'setz_shs',        sigla:'SHS',              nome:'Hoteleiro Sul' },
-    { key:'setz_shtn',       sigla:'SHTN',             nome:'Hotéis de Turismo Norte' },
-    { key:'setz_sig',        sigla:'SIG',              nome:'Indústrias Gráficas' },
-    { key:'setz_smas',       sigla:'SMAS',             nome:'Múltiplas Atividades Sul' },
-    { key:'setz_smhn',       sigla:'SMHN',             nome:'Médico-Hospitalar Norte' },
-    { key:'setz_smhs',       sigla:'SMHS',             nome:'Médico-Hospitalar Sul' },
-    { key:'setz_smin',       sigla:'SMIN',             nome:'Mansões Isoladas Norte' },
-    { key:'setz_smu',        sigla:'SMU',              nome:'Militar Urbano' },
-    { key:'setz_spo',        sigla:'SPO',              nome:'Setor Policial' },
-    { key:'setz_spp',        sigla:'SPP',              nome:'Palácio Presidencial' },
-    { key:'setz_spvp',       sigla:'SPVP',             nome:'Preservação Vila Planalto' },
-    { key:'setz_sres',       sigla:'SRES',             nome:'Residências Econômicas Sul' },
-    { key:'setz_srpn',       sigla:'SRPN',             nome:'Recreação Pública Norte' },
-    { key:'setz_srps',       sigla:'SRPS',             nome:'Recreação Pública Sul' },
-    { key:'setz_srtvn',      sigla:'SRTVN',            nome:'Rádio e TV Norte' },
-    { key:'setz_srtvs',      sigla:'SRTVS',            nome:'Rádio e TV Sul' },
-    { key:'setz_stn',        sigla:'STN',              nome:'Terminal Norte' },
-    { key:'setz_sts',        sigla:'STS',              nome:'Terminal Sul' },
-    { key:'setz_unb',        sigla:'UnB',              nome:'Universidade de Brasília' },
-    { key:'setz_vila_telebraslia', sigla:'VILA TELEBRASÍLIA', nome:'Vila Telebrasília' },
-    { key:'setz_vpla',       sigla:'VPLA',             nome:'Vila Planalto' },
-    { key:'setz_zoo_arie',   sigla:'ZOO/ARIE',         nome:'Zoológico / ARIE' },
-  ];
-  const PALETTE = [
-    '#F44336','#E91E63','#9C27B0','#3F51B5',
-    '#2196F3','#00BCD4','#009688','#4CAF50',
-    '#CDDC39','#FF9800','#FF5722','#78909C',
-  ];
-  return data.map((s, i) => ({ ...s, color: PALETTE[i % PALETTE.length], delay: 200 + i * 35 }));
-})();
-const SETZ_BY_KEY = Object.fromEntries(SETZ_SECTORS.map(s => [s.key, s]));
-const SETZ_DEFAULT_VISIBLE = new Set(setorizacaoSelecao.selectedKeys);
 
 // ─── Componente interno ───────────────────────────────────────────────────────
 function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger }) {
@@ -381,6 +216,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   onPickRef.current     = onPickCoordinate;
   onClearRef.current    = onClearAll;
   onEditSaveRef.current = onEditSave;
+
+  usePlanoPilotoLayer(mapInstance, pilotLayersRef);
+  useSetorizacaoLayer(mapInstance, setzLayersRef);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -1042,105 +880,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   }, []);
 
 
-
-  // Plano Piloto: polyline → polígono por grupo
-  useEffect(() => {
-    if (!mapInstance) return;
-    const DRAW_MS = 4000, TICK_MS = 16;
-    const raw = { eixo: [], norte: [], sul: [] };
-    (anexoGeoJson.features || []).forEach(f => { const w = classifyWing(f.properties || {}); if (w in raw) raw[w].push(f); });
-    const nZones = splitWingN(raw.norte, 'norte', 6), sZones = splitWingN(raw.sul, 'sul', 6);
-    const featureMap = { eixo: raw.eixo };
-    nZones.forEach((zone, i) => {
-      const [w, e] = splitByLng(zone);
-      [[w,1],[e,2]].forEach(([szFeats, sz]) => {
-        const [inner, outer] = splitByLat(szFeats, 'norte');
-        [[inner,1],[outer,2]].forEach(([sszFeats, ssz]) => {
-          const [a, b] = splitByLng(sszFeats);
-          featureMap[`norte_${i+1}_${sz}_${ssz}_1`] = a; featureMap[`norte_${i+1}_${sz}_${ssz}_2`] = b;
-        });
-      });
-    });
-    sZones.forEach((zone, i) => {
-      const [w, e] = splitByLng(zone);
-      const [wIn, wOut] = splitByLat(w, 'sul'); const [eIn, eOut] = splitByLat(e, 'sul');
-      featureMap[`sul_${i+1}_1_1`] = wIn; featureMap[`sul_${i+1}_1_2`] = wOut;
-      featureMap[`sul_${i+1}_2_1`] = eIn; featureMap[`sul_${i+1}_2_2`] = eOut;
-    });
-    const polylines = [], timers = [], intervals = [];
-    Object.keys(PILOT_GROUPS).forEach(key => {
-      if (!PILOT_DEFAULT_VISIBLE.has(key)) return;
-      const { color, delay } = PILOT_GROUPS[key];
-      const points = toPoints(featureMap[key] || []);
-      if (!points.length) return;
-      timers.push(setTimeout(() => {
-        const line = new window.google.maps.Polyline({ path: [], map: mapInstance, strokeColor: color, strokeWeight: 1.8, strokeOpacity: 0.9, clickable: false });
-        polylines.push(line);
-        const path = line.getPath();
-        const batchSize = Math.max(1, Math.ceil(points.length / (DRAW_MS / TICK_MS)));
-        let idx = 0;
-        const iv = setInterval(() => {
-          const end = Math.min(idx + batchSize, points.length);
-          for (; idx < end; idx++) path.push(new window.google.maps.LatLng(points[idx].lat, points[idx].lng));
-          if (idx >= points.length) {
-            clearInterval(iv); line.setMap(null);
-            const layer = new window.google.maps.Data({ map: mapInstance });
-            layer.addGeoJson({ type: 'FeatureCollection', features: featureMap[key] });
-            layer.setStyle({ fillColor: color, fillOpacity: 0.22, strokeColor: color, strokeWeight: 1.5, strokeOpacity: 0.85 });
-            pilotLayersRef.current[key] = layer;
-          }
-        }, TICK_MS);
-        intervals.push(iv);
-      }, delay));
-    });
-    return () => {
-      timers.forEach(clearTimeout); intervals.forEach(clearInterval);
-      polylines.forEach(l => { try { l.setMap(null); } catch (_) {} });
-      Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
-      pilotLayersRef.current = {};
-    };
-  }, [mapInstance]);
-
-  // Setorização: polyline → polígono por setor
-  useEffect(() => {
-    if (!mapInstance) return;
-    const DRAW_MS = 3500, TICK_MS = 16;
-    const rawFeats = setorizacaoGeoJson.features || [];
-    const featureMap = {};
-    SETZ_SECTORS.forEach(s => { featureMap[s.key] = rawFeats.filter(f => f.properties.sigla === s.sigla); });
-    const polylines = [], timers = [], intervals = [];
-    SETZ_SECTORS.forEach(sector => {
-      if (!SETZ_DEFAULT_VISIBLE.has(sector.key)) return;
-      const { key, color, delay } = sector;
-      const points = toPoints(featureMap[key] || []);
-      if (!points.length) return;
-      timers.push(setTimeout(() => {
-        const line = new window.google.maps.Polyline({ path: [], map: mapInstance, strokeColor: color, strokeWeight: 1.8, strokeOpacity: 0.9, clickable: false });
-        polylines.push(line);
-        const path = line.getPath();
-        const batchSize = Math.max(1, Math.ceil(points.length / (DRAW_MS / TICK_MS)));
-        let idx = 0;
-        const iv = setInterval(() => {
-          const end = Math.min(idx + batchSize, points.length);
-          for (; idx < end; idx++) path.push(new window.google.maps.LatLng(points[idx].lat, points[idx].lng));
-          if (idx >= points.length) {
-            clearInterval(iv); line.setMap(null);
-            const layer = new window.google.maps.Data({ map: mapInstance });
-            layer.addGeoJson({ type: 'FeatureCollection', features: featureMap[key] });
-            layer.setStyle({ fillColor: color, fillOpacity: 0.22, strokeColor: color, strokeWeight: 1.5, strokeOpacity: 0.85 });
-            setzLayersRef.current[key] = layer;
-          }
-        }, TICK_MS);
-        intervals.push(iv);
-      }, delay));
-    });
-    return () => {
-      timers.forEach(clearTimeout); intervals.forEach(clearInterval);
-      polylines.forEach(l => { try { l.setMap(null); } catch (_) {} });
-      Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
-      setzLayersRef.current = {};
-    };
-  }, [mapInstance]);
 
   useEffect(() => {
     if (!mapRef.current) return;
