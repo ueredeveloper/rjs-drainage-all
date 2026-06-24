@@ -117,7 +117,7 @@ function ResultBox({ lat, lng, onConvert }) {
       </Box>
       <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
         <Tooltip title="Copiar coordenadas">
-          <IconButton size="small" color="secondary" onClick={copy}>
+          <IconButton size="small" onClick={copy} sx={{ color: '#1565c0' }}>
             <ContentCopyIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
@@ -125,9 +125,8 @@ function ResultBox({ lat, lng, onConvert }) {
           <Button
             size="small"
             variant="outlined"
-            color="secondary"
             onClick={() => onConvert({ lat, lng })}
-            sx={{ minWidth: 0, px: 1, fontSize: '0.7rem' }}
+            sx={{ minWidth: 0, px: 1, fontSize: '0.7rem', color: '#1565c0', borderColor: '#1565c0', '&:hover': { borderColor: '#003566', color: '#003566' } }}
           >
             Aplicar
           </Button>
@@ -172,7 +171,6 @@ function UtmPanel({ onConvert }) {
           label="Fuso"
           type="number"
           size="small"
-          color="secondary"
           value={utm.zone}
           onChange={handle('zone')}
           inputProps={{ min: 1, max: 60 }}
@@ -184,13 +182,13 @@ function UtmPanel({ onConvert }) {
           <RadioGroup row value={utm.hemisphere} onChange={handle('hemisphere')}>
             <FormControlLabel
               value="N"
-              control={<Radio size="small" color="secondary" />}
+              control={<Radio size="small" />}
               label={<Typography variant="caption">N</Typography>}
               sx={{ mr: 2 }}
             />
             <FormControlLabel
               value="S"
-              control={<Radio size="small" color="secondary" />}
+              control={<Radio size="small" />}
               label={<Typography variant="caption">S</Typography>}
               sx={{ mr: 0 }}
             />
@@ -200,7 +198,6 @@ function UtmPanel({ onConvert }) {
         <TextField
           label="Easting — E (m)"
           size="small"
-          color="secondary"
           value={utm.easting}
           onChange={handle('easting')}
           sx={{ flex: 1 }}
@@ -209,7 +206,6 @@ function UtmPanel({ onConvert }) {
         <TextField
           label="Northing — N (m)"
           size="small"
-          color="secondary"
           value={utm.northing}
           onChange={handle('northing')}
           sx={{ flex: 1 }}
@@ -218,7 +214,7 @@ function UtmPanel({ onConvert }) {
 
       {error && <Typography color="error" variant="caption">{error}</Typography>}
 
-      <Button size="small" variant="contained" color="secondary" onClick={convert}>
+      <Button size="small" variant="contained" onClick={convert} sx={{ bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}>
         Converter
       </Button>
 
@@ -242,10 +238,9 @@ function GmsPanel({ onConvert }) {
   function DirSelect({ field, options }) {
     return (
       <FormControl size="small" sx={{ width: 56, flexShrink: 0 }}>
-        <InputLabel color="secondary" sx={{ fontSize: '0.75rem' }}>Dir.</InputLabel>
+        <InputLabel sx={{ fontSize: '0.75rem' }}>Dir.</InputLabel>
         <Select
           label="Dir."
-          color="secondary"
           value={gms[field]}
           onChange={handle(field)}
           sx={{ fontSize: '0.78rem' }}
@@ -265,21 +260,21 @@ function GmsPanel({ onConvert }) {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'nowrap' }}>
         <Typography variant="caption" color="text.secondary" sx={labelSx}>Lat</Typography>
-        <TextField label="G" size="small" color="secondary" value={gms.latDeg} onChange={handle('latDeg')} sx={fieldSx} />
-        <TextField label="M" size="small" color="secondary" value={gms.latMin} onChange={handle('latMin')} sx={fieldSx} />
-        <TextField label="S" size="small" color="secondary" value={gms.latSec} onChange={handle('latSec')} sx={fieldSx} />
+        <TextField label="G" size="small" value={gms.latDeg} onChange={handle('latDeg')} sx={fieldSx} />
+        <TextField label="M" size="small" value={gms.latMin} onChange={handle('latMin')} sx={fieldSx} />
+        <TextField label="S" size="small" value={gms.latSec} onChange={handle('latSec')} sx={fieldSx} />
         <DirSelect field="latDir" options={['N', 'S']} />
 
         <Box sx={{ width: '1px', height: 32, bgcolor: 'divider', mx: 0.5, flexShrink: 0 }} />
 
         <Typography variant="caption" color="text.secondary" sx={labelSx}>Lng</Typography>
-        <TextField label="G" size="small" color="secondary" value={gms.lngDeg} onChange={handle('lngDeg')} sx={fieldSx} />
-        <TextField label="M" size="small" color="secondary" value={gms.lngMin} onChange={handle('lngMin')} sx={fieldSx} />
-        <TextField label="S" size="small" color="secondary" value={gms.lngSec} onChange={handle('lngSec')} sx={fieldSx} />
+        <TextField label="G" size="small" value={gms.lngDeg} onChange={handle('lngDeg')} sx={fieldSx} />
+        <TextField label="M" size="small" value={gms.lngMin} onChange={handle('lngMin')} sx={fieldSx} />
+        <TextField label="S" size="small" value={gms.lngSec} onChange={handle('lngSec')} sx={fieldSx} />
         <DirSelect field="lngDir" options={['E', 'W']} />
       </Box>
 
-      <Button size="small" variant="contained" color="secondary" onClick={convert}>
+      <Button size="small" variant="contained" onClick={convert} sx={{ bgcolor: '#003566', '&:hover': { bgcolor: '#004080' } }}>
         Converter
       </Button>
 
@@ -314,9 +309,7 @@ export default function CoordConverter({ open, onClose, onConvert }) {
         <Tabs
           value={tab}
           onChange={(_, v) => setTab(v)}
-          textColor="secondary"
-          indicatorColor="secondary"
-          sx={{ minHeight: 36 }}
+          sx={{ minHeight: 36, '& .MuiTabs-indicator': { bgcolor: '#003566' }, '& .Mui-selected': { color: '#003566 !important' } }}
         >
           <Tab label="UTM → Decimal" sx={{ minHeight: 36, fontSize: '0.75rem', py: 0 }} />
           <Tab label="GMS → Decimal" sx={{ minHeight: 36, fontSize: '0.75rem', py: 0 }} />

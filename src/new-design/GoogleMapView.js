@@ -5,6 +5,7 @@ import ElemWaterUsage from './components/ElemWaterUsage';
 import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEfluenteIcon, iwPluvialIcon, iwDefaultIcon } from '../assets/svg/svgs-icons';
 import { usePlanoPilotoLayer } from './layers/usePlanoPilotoLayer';
 import { useSetorizacaoLayer } from './layers/useSetorizacaoLayer';
+import { useInitialCircle } from './layers/useInitialCircle';
 const BRASILIA  = { lat: -15.7948528, lng: -47.8831189 };
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
@@ -178,6 +179,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const pilotLayersRef      = useRef({});
   const setzLayersRef       = useRef({});
+  const introLayersRef      = useRef(null);
   const polygonsClearedRef  = useRef(false);
   const setLayerClearRef = useRef(null);
   setLayerClearRef.current = setLayerClearTrigger;
@@ -219,6 +221,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
   usePlanoPilotoLayer(mapInstance, pilotLayersRef);
   useSetorizacaoLayer(mapInstance, setzLayersRef);
+  useInitialCircle(mapInstance, introLayersRef);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -262,6 +265,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const revealTimer = setTimeout(() => {
       Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch(_) {} });
       Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch(_) {} });
+      if (introLayersRef.current) {
+        clearInterval(introLayersRef.current.animateIv);
+        try { introLayersRef.current.circleLine?.setMap(null); } catch(_) {}
+        introLayersRef.current.markers?.forEach(m => { try { m.map = null; } catch(_) {} });
+        introLayersRef.current = null;
+      }
       polygonsClearedRef.current = true;
       if (userMarkerRef.current && mapRef.current) userMarkerRef.current.map = mapRef.current;
     }, 10000);
