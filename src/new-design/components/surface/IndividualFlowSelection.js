@@ -3,7 +3,6 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 
-
 import { calculateDemandaAjustada, calculateDisponibilidadeHidrica, calculateQIndividualSecao, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual, calculateSolicitataMenorDisponivel } from '../../../tools/surface-tools';
 import { TableCell } from "@mui/material";
 

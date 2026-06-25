@@ -34,6 +34,7 @@ const GMAPS_API_KEY = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
 
 const MOBILE_TAB_LABELS = { 'Geral': 'GER', 'Subterrânea': 'SUB', 'Superficial': 'SUP', 'Barragem': 'BAR' };
 
+
 export default function NewDesign() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));

@@ -14,7 +14,6 @@ import LayersIcon from '@mui/icons-material/Layers';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
-
 import CoordSearchBar from '../components/CoordSearchBar';
 import CompactTable from '../components/CompactTable';
 import SectionLabel from '../components/SectionLabel';

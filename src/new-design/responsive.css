@@ -13,7 +13,6 @@
   html {
     font-size: 60%;  /* ≈ 9.6px — redução de ~40% em relação ao padrão 16px */
   }
-
   /* Painel de análise ocupa o restante após o mapa */
   #nd-analysis-panel {
     overflow-y: auto !important;

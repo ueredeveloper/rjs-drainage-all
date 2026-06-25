@@ -4,6 +4,7 @@ import selecao from '../../assets/geojson/setorizacao-selecao.json';
 import { toPoints } from './geoUtils';
 
 /* Cores específicas por setor — tema água/hídrico do SAD/DF */
+
 const SECTOR_COLORS = {
   /* ── Água ───────────────────────── */
   setz_lago_parano : '#4FC3F7',   // Lago Paranoá — azul claro água

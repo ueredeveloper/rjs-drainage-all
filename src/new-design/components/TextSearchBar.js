@@ -4,7 +4,6 @@ import SearchIcon from '@mui/icons-material/Search';
 
 const PLACEHOLDER = 'Nome, CPF/CNPJ, endereço, processo, nº do ato...';
 
-
 export default function TextSearchBar({ onSearch, loading, error }) {
   const [query, setQuery] = useState('');
 

@@ -5,7 +5,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import TransformIcon from '@mui/icons-material/Transform';
 import CoordConverter from './CoordConverter';
 
-
 export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange, onApplyCoordinates, onSearch, loading, error, title, children }) {
   const [openConverter, setOpenConverter] = useState(false);
 

@@ -6,6 +6,7 @@ const CIRCLE_RADIUS = 10000; // 10km
 const CIRCLE_COLOR = '#29B6F6'; // azul-água — tema ADASA
 const TEXT_COLOR   = '#E1F5FE'; // quase-branco azulado
 
+
 function destinationPoint(lat, lng, bearingDeg, distM) {
   const R = 6371000;
   const d = distM / R;

@@ -3,7 +3,6 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 } from '@mui/material';
 
-
 export default function CompactTable({ headers, rows, onRowClick, sx, cellSx, rowSx }) {
   return (
     <TableContainer sx={{

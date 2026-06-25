@@ -6,7 +6,6 @@ import '../../chartSetup';
  * Chart Superficial
  * @returns 
  */
-
 const SurfaceChart = ({ analyse }) => {
 
   const [data, setData] = useState({ labels: analyse.meses.values, datasets: [] })

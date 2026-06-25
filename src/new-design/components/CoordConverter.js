@@ -14,7 +14,6 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CloseIcon from '@mui/icons-material/Close';
 import * as turf from '@turf/turf';
 
-
 const BRASILIA_UTM = { zone: '23', hemisphere: 'S', easting: '190756', northing: '8253264' };
 
 const BRASILIA_GMS = {

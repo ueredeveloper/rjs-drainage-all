@@ -5,6 +5,7 @@ export function classifyWing(props) {
   if (hasN && !hasS) return 'norte'; if (hasS && !hasN) return 'sul'; return 'outros';
 }
 
+
 export function splitWingN(features, wing, n) {
   const w = features.map(f => ({ f, lat: f.geometry?.coordinates?.[0]?.[0]?.[1] ?? 0 }));
   w.sort((a, b) => wing === 'norte' ? a.lat - b.lat : b.lat - a.lat);

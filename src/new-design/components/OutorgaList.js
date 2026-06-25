@@ -4,7 +4,6 @@ import {
 } from '@mui/material';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 
-
 export function OutorgaListItem({ outorga, color = '#0277bd', bg = '#e1f5fe', Icon = WaterDropIcon }) {
   return (
     <>

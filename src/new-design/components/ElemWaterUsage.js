@@ -12,7 +12,6 @@ const marks = [
     { value: 100, label: '100%', color: "#F200FF" }
 ];
 
-
 export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
 
     // Se tela cheia, mostra o slide que explica porcentagens de uso

@@ -8,6 +8,7 @@ const ZONE_COLORS = ['#E53935', '#FB8C00', '#F9A825', '#43A047', '#7B1FA2', '#EC
 const E_COLOR = '#FFD600';
 const E_ZONES = 2;
 
+
 export const PILOT_GROUPS = (() => {
   const g = {};
   for (let z = 1; z <= E_ZONES; z++)
