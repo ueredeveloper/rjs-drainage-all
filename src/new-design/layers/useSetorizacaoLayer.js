@@ -6,7 +6,7 @@ import { toPoints } from './geoUtils';
 /* Cores específicas por setor — tema água/hídrico do SAD/DF */
 const SECTOR_COLORS = {
   /* ── Água ───────────────────────── */
-  setz_lago_parano : '#1565C0',   // Lago Paranoá — azul profundo
+  setz_lago_parano : '#4FC3F7',   // Lago Paranoá — azul claro água
 
   /* ── Parques e áreas verdes ─────── */
   setz_avpr_1      : '#2E7D32',

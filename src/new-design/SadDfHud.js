@@ -19,8 +19,8 @@ function DotRing() {
         return (
           <circle key={i} cx={x} cy={y}
             r={accent ? 1.4 : 0.78}
-            fill="#29B6F6"
-            opacity={accent ? 0.88 : 0.36}
+            fill="#1565C0"
+            opacity={accent ? 0.95 : 0.45}
           />
         );
       })}
@@ -44,9 +44,9 @@ function TickMarks() {
         return (
           <line key={i}
             x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y}
-            stroke="#29B6F6"
+            stroke="#1565C0"
             strokeWidth={vMajor ? 0.9 : major ? 0.5 : 0.28}
-            opacity={vMajor ? 0.58 : major ? 0.3 : 0.14}
+            opacity={vMajor ? 0.70 : major ? 0.38 : 0.18}
           />
         );
       })}
@@ -67,12 +67,12 @@ function RingMarkers() {
           <g key={i}>
             {cardinal && (
               <circle cx={x} cy={y} r={3.6}
-                fill="none" stroke="#29B6F6" strokeWidth="0.7" opacity="0.68" />
+                fill="none" stroke="#1565C0" strokeWidth="0.7" opacity="0.80" />
             )}
             <circle cx={x} cy={y}
               r={cardinal ? 1.7 : semi ? 1.0 : 0.6}
-              fill="#29B6F6"
-              opacity={cardinal ? 0.92 : semi ? 0.58 : 0.38}
+              fill="#1565C0"
+              opacity={cardinal ? 0.96 : semi ? 0.68 : 0.45}
             />
           </g>
         );
@@ -93,7 +93,7 @@ function RadialExtensions() {
           <line key={i}
             x1={inner.x} y1={inner.y}
             x2={outer.x} y2={outer.y}
-            stroke="#29B6F6" strokeWidth="0.45"
+            stroke="#1565C0" strokeWidth="0.45"
             strokeDasharray="2.5 4"
           />
         );
@@ -107,7 +107,7 @@ function CenterMedallion() {
   return (
     <g>
       <circle cx="0" cy="0" r="32"
-        fill="none" stroke="#1976D2"
+        fill="none" stroke="#1565C0"
         strokeWidth="0.45" strokeDasharray="8.5 24.5"
         opacity="0.32"
       />
@@ -116,7 +116,7 @@ function CenterMedallion() {
         const hx = cx < 0 ? cx + hLen : cx - hLen;
         const vy = cy < 0 ? cy + vLen : cy - vLen;
         return (
-          <g key={i} stroke="#29B6F6" strokeWidth="0.5" opacity="0.4">
+          <g key={i} stroke="#1565C0" strokeWidth="0.5" opacity="0.5">
             <line x1={cx} y1={cy} x2={hx} y2={cy} />
             <line x1={cx} y1={cy} x2={cx} y2={vy} />
           </g>
@@ -176,7 +176,7 @@ export default function SadDfHud({ phase = 'intro' }) {
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
-      setSize(Math.round(Math.min(width, height) * 0.85));
+      setSize(Math.round(Math.min(width, height) * 0.90));
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -188,7 +188,7 @@ export default function SadDfHud({ phase = 'intro' }) {
   }, []);
 
   useEffect(() => {
-    if (phase === 'ambient') setOpacity(0.25);
+    if (phase === 'ambient') setOpacity(0);
   }, [phase]);
 
   return (
@@ -202,7 +202,7 @@ export default function SadDfHud({ phase = 'intro' }) {
         justifyContent: 'center',
         pointerEvents: 'none',
         zIndex: 2,
-        transition: 'opacity 2s ease-in-out',
+        transition: 'opacity 0.3s ease-in-out',
         opacity,
       }}
     >
@@ -211,7 +211,7 @@ export default function SadDfHud({ phase = 'intro' }) {
           width={size}
           height={size}
           viewBox={`${-VB} ${-VB} ${VB * 2} ${VB * 2}`}
-          style={{ overflow: 'visible', display: 'block' }}
+          style={{ overflow: 'visible', display: 'block', transform: 'translateX(5%)' }}
         >
           <defs>
             {/*
@@ -223,8 +223,8 @@ export default function SadDfHud({ phase = 'intro' }) {
             <radialGradient id="saddf-halo" cx="50%" cy="50%" r="50%">
               <stop offset="0%"   stopColor="#0D47A1" stopOpacity="0" />
               <stop offset="60%"  stopColor="#0D47A1" stopOpacity="0" />
-              <stop offset="85%"  stopColor="#1565C0" stopOpacity="0.07" />
-              <stop offset="100%" stopColor="#29B6F6" stopOpacity="0.22" />
+              <stop offset="85%"  stopColor="#0D47A1" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#1565C0" stopOpacity="0.38" />
             </radialGradient>
             <filter id="saddf-glow" x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur stdDeviation="2.4" result="blur" />
@@ -258,14 +258,14 @@ export default function SadDfHud({ phase = 'intro' }) {
 
           {/* Borda principal com glow */}
           <circle cx="0" cy="0" r={R}
-            fill="none" stroke="#29B6F6"
-            strokeWidth="0.95" opacity="0.84"
+            fill="none" stroke="#1565C0"
+            strokeWidth="1.1" opacity="0.95"
             filter="url(#saddf-ring-glow)"
           />
 
           {/* Segunda borda interna pontilhada */}
           <circle cx="0" cy="0" r={R - 7}
-            fill="none" stroke="#1565C0"
+            fill="none" stroke="#0D47A1"
             strokeWidth="0.38" strokeDasharray="5 9"
             opacity="0.32"
           />
@@ -287,7 +287,7 @@ export default function SadDfHud({ phase = 'intro' }) {
 
           {/* Ponto central */}
           <circle cx="0" cy="0" r="1.8"
-            fill="#29B6F6" opacity="0.6"
+            fill="#1565C0" opacity="0.75"
             filter="url(#saddf-glow)"
           />
 

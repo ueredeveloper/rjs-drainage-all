@@ -40,8 +40,8 @@ export default function NewDesign() {
   const { session, setLoginOpen } = useAuth();
   const userLabel = session?.colaborador?.email ? session.colaborador.email.split('@')[0] : null;
   const [tabIndex, setTabIndex]               = useState(0);
-  const [lat, setLat]                         = useState('-15.7948528');
-  const [lng, setLng]                         = useState('-47.8831189');
+  const [lat, setLat]                         = useState('');
+  const [lng, setLng]                         = useState('');
   const [radius, setRadius]                   = useState(1300);
   const [circleData, setCircleData]           = useState(null);
   const [searchResult, setSearchResult]       = useState(null);

@@ -255,16 +255,28 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const shapeStyleIW = new window.google.maps.InfoWindow();
     shapeStyleIWRef.current = shapeStyleIW;
 
-    // Transição do HUD para modo ambiente após exibição inicial
-    setTimeout(() => setHudPhase('ambient'), 10000);
-
-    // Marcador visível imediatamente — sem timer de ocultação dos polígonos
     polygonsClearedRef.current = true;
-    userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
-      position: BRASILIA, map: mapRef.current,
-      content: makePinElement(makePinUrl('#e53935'), 24, 36),
-      zIndex: 1000,
-    });
+
+    // Transição do HUD, remoção dos polígonos e criação do marcador após 10 s
+    const introTimer = setTimeout(() => {
+      // Inicia o fade do círculo (0.3 s via CSS)
+      setHudPhase('ambient');
+      // Torna os polígonos invisíveis no mesmo instante (sem remover do mapa ainda)
+      [...Object.values(pilotLayersRef.current), ...Object.values(setzLayersRef.current)]
+        .forEach(l => { try { l.setStyle({ fillOpacity: 0, strokeOpacity: 0 }); } catch (_) {} });
+      // Remove do mapa e exibe marcador após o fade (0.3 s)
+      setTimeout(() => {
+        Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
+        pilotLayersRef.current = {};
+        Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
+        setzLayersRef.current = {};
+        userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
+          position: BRASILIA, map: mapRef.current,
+          content: makePinElement(makePinUrl('#e53935'), 24, 36),
+          zIndex: 1000,
+        });
+      }, 300);
+    }, 7000);
 
     // injeta o container do LayerPanel usando o sistema de controles do GMaps (persiste em fullscreen)
     const panelContainer = document.createElement('div');
@@ -858,6 +870,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     window.addEventListener('keydown', onKeyDown);
 
     return () => {
+      clearTimeout(introTimer);
       clearPrev();
       const ctrlArr = map.controls[window.google.maps.ControlPosition.LEFT_TOP];
       const idx = ctrlArr.getArray().indexOf(TB);
