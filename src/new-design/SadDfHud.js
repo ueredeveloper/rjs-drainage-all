@@ -166,7 +166,7 @@ function ArcText() {
  *   - intro   : visibilidade plena (primeiros 10 s)
  *   - ambient : visibilidade reduzida, permanece como marca d'água discreta
  */
-export default function SadDfHud({ phase = 'intro' }) {
+export default function SadDfHud({ phase = 'intro', ready = true }) {
   const containerRef          = useRef(null);
   const [size, setSize]       = useState(0);
   const [opacity, setOpacity] = useState(0);
@@ -183,9 +183,10 @@ export default function SadDfHud({ phase = 'intro' }) {
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
     const t = setTimeout(() => setOpacity(1), 80);
     return () => clearTimeout(t);
-  }, []);
+  }, [ready]);
 
   useEffect(() => {
     if (phase === 'ambient') setOpacity(0);

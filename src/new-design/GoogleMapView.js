@@ -171,12 +171,13 @@ function makeBar() {
 
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger }) {
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true }) {
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const [hudPhase, setHudPhase]                   = useState('intro');
+  const introStartedRef     = useRef(false);
   const pilotLayersRef      = useRef({});
   const setzLayersRef       = useRef({});
   const polygonsClearedRef  = useRef(false);
@@ -218,8 +219,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   onClearRef.current    = onClearAll;
   onEditSaveRef.current = onEditSave;
 
-  usePlanoPilotoLayer(mapInstance, pilotLayersRef);
-  useSetorizacaoLayer(mapInstance, setzLayersRef);
+  usePlanoPilotoLayer(introReady ? mapInstance : null, pilotLayersRef);
+  useSetorizacaoLayer(introReady ? mapInstance : null, setzLayersRef);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -229,12 +230,33 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
   useEffect(() => {
     if (!mapRef.current) return;
-    // Força o GMaps a recalcular as posições dos controles após mudança de fullscreen,
-    // evitando desalinhamento do BOTTOM_CENTER na primeira entrada em tela cheia.
     requestAnimationFrame(() => {
       window.google.maps.event.trigger(mapRef.current, 'resize');
     });
   }, [isFullscreen]);
+
+  // Inicia a animação de intro somente quando o mapa está pronto E o login foi concluído
+  useEffect(() => {
+    if (!introReady || !mapInstance || introStartedRef.current) return;
+    introStartedRef.current = true;
+    const introTimer = setTimeout(() => {
+      setHudPhase('ambient');
+      [...Object.values(pilotLayersRef.current), ...Object.values(setzLayersRef.current)]
+        .forEach(l => { try { l.setStyle({ fillOpacity: 0, strokeOpacity: 0 }); } catch (_) {} });
+      setTimeout(() => {
+        Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
+        pilotLayersRef.current = {};
+        Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
+        setzLayersRef.current = {};
+        userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
+          position: BRASILIA, map: mapRef.current,
+          content: makePinElement(makePinUrl('#e53935'), 24, 36),
+          zIndex: 1000,
+        });
+      }, 300);
+    }, 7000);
+    return () => clearTimeout(introTimer);
+  }, [introReady, mapInstance]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
@@ -256,27 +278,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     shapeStyleIWRef.current = shapeStyleIW;
 
     polygonsClearedRef.current = true;
-
-    // Transição do HUD, remoção dos polígonos e criação do marcador após 10 s
-    const introTimer = setTimeout(() => {
-      // Inicia o fade do círculo (0.3 s via CSS)
-      setHudPhase('ambient');
-      // Torna os polígonos invisíveis no mesmo instante (sem remover do mapa ainda)
-      [...Object.values(pilotLayersRef.current), ...Object.values(setzLayersRef.current)]
-        .forEach(l => { try { l.setStyle({ fillOpacity: 0, strokeOpacity: 0 }); } catch (_) {} });
-      // Remove do mapa e exibe marcador após o fade (0.3 s)
-      setTimeout(() => {
-        Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
-        pilotLayersRef.current = {};
-        Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
-        setzLayersRef.current = {};
-        userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
-          position: BRASILIA, map: mapRef.current,
-          content: makePinElement(makePinUrl('#e53935'), 24, 36),
-          zIndex: 1000,
-        });
-      }, 300);
-    }, 7000);
 
     // injeta o container do LayerPanel usando o sistema de controles do GMaps (persiste em fullscreen)
     const panelContainer = document.createElement('div');
@@ -870,7 +871,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     window.addEventListener('keydown', onKeyDown);
 
     return () => {
-      clearTimeout(introTimer);
       clearPrev();
       const ctrlArr = map.controls[window.google.maps.ControlPosition.LEFT_TOP];
       const idx = ctrlArr.getArray().indexOf(TB);
@@ -1058,7 +1058,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-      <SadDfHud phase={hudPhase} />
+      <SadDfHud phase={hudPhase} ready={introReady} />
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
           <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} onLocate={(pos) => onPickRef.current?.(pos)} />,

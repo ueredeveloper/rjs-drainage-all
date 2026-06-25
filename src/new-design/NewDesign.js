@@ -443,6 +443,7 @@ export default function NewDesign() {
         }}>
           {(() => {
             const mapProps = {
+              introReady: !!session,
               circleData,
               onShapeCreated: handleMapShape,
               onLayerFeatureSearch: handleMapShape,
