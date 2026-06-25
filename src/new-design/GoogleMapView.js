@@ -177,15 +177,17 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const [isFullscreen, setIsFullscreen]       = useState(false);
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const [hudPhase, setHudPhase]                   = useState('intro');
+  const [introMapInstance, setIntroMapInstance]   = useState(null);
   const introStartedRef         = useRef(false);
-  const introActiveRef          = useRef(false);
   const pilotLayersRef          = useRef({});
   const setzLayersRef           = useRef({});
   const polygonsClearedRef      = useRef(false);
   const introBrasiliaMarkerRef  = useRef(null);
   const coordCircleTimerRef     = useRef(null);
-  const setLayerClearRef = useRef(null);
-  setLayerClearRef.current = setLayerClearTrigger;
+  const setLayerClearRef    = useRef(null);
+  const setIntroMapRef      = useRef(null);
+  setLayerClearRef.current  = setLayerClearTrigger;
+  setIntroMapRef.current    = setIntroMapInstance;
   const containerRef      = useRef(null);
   const panelRootRef      = useRef(null);
   const waterUsageRootRef = useRef(null);
@@ -224,8 +226,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   onInitialMarkerRef.current = onInitialMarker;
   onEditSaveRef.current = onEditSave;
 
-  usePlanoPilotoLayer(introReady ? mapInstance : null, pilotLayersRef);
-  useSetorizacaoLayer(introReady ? mapInstance : null, setzLayersRef);
+  usePlanoPilotoLayer(introMapInstance, pilotLayersRef);
+  useSetorizacaoLayer(introMapInstance, setzLayersRef);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -244,7 +246,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   useEffect(() => {
     if (!introReady || !mapInstance || introStartedRef.current) return;
     introStartedRef.current = true;
-    introActiveRef.current  = true;
+    setIntroMapInstance(mapInstance);        // dispara os hooks de polígonos
     const startTime = Date.now();
     const INTRO_MS  = 5000;
     const fired     = { current: false };
@@ -252,16 +254,10 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const fireIntroEnd = () => {
       if (fired.current) return;
       fired.current = true;
-      introActiveRef.current = false;
       setHudPhase('ambient');
-      [...Object.values(pilotLayersRef.current), ...Object.values(setzLayersRef.current)]
-        .forEach(l => { try { l.setStyle({ fillOpacity: 0, strokeOpacity: 0 }); } catch (_) {} });
+      // null → cleanup dos hooks cancela timers/intervals e remove todas as camadas
+      setIntroMapInstance(null);
       setTimeout(() => {
-        Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
-        pilotLayersRef.current = {};
-        Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
-        setzLayersRef.current = {};
-        // marcador inicial de Brasília em ref separada — não é afetado pelo clearAll
         introBrasiliaMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
           position: BRASILIA, map: mapRef.current,
           content: makePinElement(makePinUrl('#e53935'), 24, 36),
@@ -717,7 +713,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       pickBtn.style.boxShadow = '';
       pickBtn.style.transform = '';
       map.getDiv().style.cursor = '';
-      if (!introActiveRef.current) setLayerClearRef.current?.(t => t + 1);
+      setIntroMapRef.current?.(null);
+      setLayerClearRef.current?.(t => t + 1);
       onClearRef.current?.();
     });
     actionBar.appendChild(removeBtn);
