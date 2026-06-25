@@ -14,6 +14,7 @@ const SHAPE_STYLE = {
   fillColor: '#1565c0', fillOpacity: 0.18,
 };
 
+
 const USER_SHAPE_STYLE = {
   strokeColor: '#c62828', strokeWeight: 3,
   fillColor: '#c62828', fillOpacity: 0.18,

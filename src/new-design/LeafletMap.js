@@ -16,6 +16,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     require('leaflet/dist/images/marker-shadow.png'),
 });
 
+
 const BRASILIA   = [-15.7801, -47.9292];
 const SHAPE_OPTS      = { color: '#1565c0', fillColor: '#1565c0', fillOpacity: 0.18, weight: 2 };
 const USER_SHAPE_OPTS = { color: '#c62828', fillColor: '#c62828', fillOpacity: 0.18, weight: 3 };

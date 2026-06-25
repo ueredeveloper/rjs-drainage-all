@@ -15,7 +15,6 @@ import {
   calculateSolicitataMenorDisponivel,
 } from "../../../tools/surface-tools";
 import IndividualFlowSelection from "./IndividualFlowSelection";
-
 /**
  * Componente de tabela para análise de dados superficiais de recursos hídricos.
  * Exibe um quadro de vazões mensais com campos editáveis para QSOLICITADA-SEÇÃO

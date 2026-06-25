@@ -21,6 +21,7 @@ export const MAP_PROVIDER_OPTIONS = [
 export const DEFAULT_MAP_PROVIDER = 'gmaps';
 const SETTINGS_UI_FONT_SIZE = 12;
 
+
 /**
  * Painel de configurações que desliza da direita para a esquerda.
  */

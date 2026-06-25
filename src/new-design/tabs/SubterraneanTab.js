@@ -38,6 +38,7 @@ const AVAIL_COLS = [
   'Nº Poços', 'Q Outorgada (m³/ano)', '% Utilizada', 'Vol. Disponível (m³/ano)',
 ];
 
+
 // Configuração do chart de disponibilidade
 const CHART_ITEMS = [
   { key: 'q_ex',         label: 'Q Explotável',  color: '#0277bd' },

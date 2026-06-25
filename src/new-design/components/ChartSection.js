@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
+
 export default function ChartSection({ id, title, height = 150, children }) {
   return (
     <Box id={id} sx={{ px: 2, pt: 1.2, pb: 0.5, flexShrink: 0 }}>

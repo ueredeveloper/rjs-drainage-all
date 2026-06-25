@@ -83,6 +83,7 @@ export default function GeralTab({
   const activePage = searchPages?.[activePageIdx] ?? null;
   const activeData = activePage?.data ?? null;
 
+  
   // ── Resultados da página ativa por categoria ──────────────────────────────
   const categories = useMemo(() => {
     if (!activeData) return {};

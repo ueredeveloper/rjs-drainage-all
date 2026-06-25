@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 
+
 export default function SectionLabel({ title, count }) {
   return (
     <Box sx={{ px: 2, py: 0.7, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#fafafa' }}>
