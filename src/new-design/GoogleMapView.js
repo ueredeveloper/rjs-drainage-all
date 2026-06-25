@@ -170,7 +170,7 @@ function makeBar() {
 
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true }) {
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true, onInitialMarker }) {
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
@@ -210,14 +210,16 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const distIWsRef               = useRef([]);
   const distAnchorsRef           = useRef([]);
   const markerClickSuppressRef   = useRef(false);
-  const onCreatedRef   = useRef(onShapeCreated);
-  const onPickRef      = useRef(onPickCoordinate);
-  const onClearRef     = useRef(onClearAll);
-  const onEditSaveRef  = useRef(onEditSave);
+  const onCreatedRef        = useRef(onShapeCreated);
+  const onPickRef           = useRef(onPickCoordinate);
+  const onClearRef          = useRef(onClearAll);
+  const onEditSaveRef       = useRef(onEditSave);
+  const onInitialMarkerRef  = useRef(onInitialMarker);
 
-  onCreatedRef.current  = onShapeCreated;
-  onPickRef.current     = onPickCoordinate;
-  onClearRef.current    = onClearAll;
+  onCreatedRef.current       = onShapeCreated;
+  onPickRef.current          = onPickCoordinate;
+  onClearRef.current         = onClearAll;
+  onInitialMarkerRef.current = onInitialMarker;
   onEditSaveRef.current = onEditSave;
 
   usePlanoPilotoLayer(introReady ? mapInstance : null, pilotLayersRef);
@@ -261,6 +263,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
           content: makePinElement(makePinUrl('#e53935'), 24, 36),
           zIndex: 1000,
         });
+        onInitialMarkerRef.current?.(BRASILIA);
       }, 300);
     };
 

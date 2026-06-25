@@ -319,6 +319,11 @@ export default function NewDesign() {
     setUserMarker({ lat: pLat, lng: pLng });
   }, []);
 
+  const handleInitialMarker = useCallback(({ lat: iLat, lng: iLng }) => {
+    setLat(iLat.toFixed(6));
+    setLng(iLng.toFixed(6));
+  }, []);
+
   const handleMapShape = useCallback(async (shape) => {
     if (shape.type === 'circle') {
       setLat(shape.center.lat.toFixed(6));
@@ -451,6 +456,7 @@ export default function NewDesign() {
               markerData: selectedMarker,
               userMarker,
               onPickCoordinate: handlePickCoordinate,
+              onInitialMarker: handleInitialMarker,
               onClearAll: handleClearAll,
               onEditSave: handleEditSave,
               allMarkers: hiddenCats.size === 0 ? allMarkers : allMarkers.filter(m => !hiddenCats.has(m._catKey)),
