@@ -178,6 +178,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const [hudPhase, setHudPhase]                   = useState('intro');
   const introStartedRef         = useRef(false);
+  const introActiveRef          = useRef(false);
   const pilotLayersRef          = useRef({});
   const setzLayersRef           = useRef({});
   const polygonsClearedRef      = useRef(false);
@@ -243,13 +244,15 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   useEffect(() => {
     if (!introReady || !mapInstance || introStartedRef.current) return;
     introStartedRef.current = true;
+    introActiveRef.current  = true;
     const startTime = Date.now();
-    const INTRO_MS  = 7000;
+    const INTRO_MS  = 5000;
     const fired     = { current: false };
 
     const fireIntroEnd = () => {
       if (fired.current) return;
       fired.current = true;
+      introActiveRef.current = false;
       setHudPhase('ambient');
       [...Object.values(pilotLayersRef.current), ...Object.values(setzLayersRef.current)]
         .forEach(l => { try { l.setStyle({ fillOpacity: 0, strokeOpacity: 0 }); } catch (_) {} });
@@ -714,7 +717,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       pickBtn.style.boxShadow = '';
       pickBtn.style.transform = '';
       map.getDiv().style.cursor = '';
-      setLayerClearRef.current?.(t => t + 1);
+      if (!introActiveRef.current) setLayerClearRef.current?.(t => t + 1);
       onClearRef.current?.();
     });
     actionBar.appendChild(removeBtn);
