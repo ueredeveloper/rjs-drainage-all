@@ -5,6 +5,7 @@ import Select from "@mui/material/Select";
 import { calculateDemandaAjustada, calculateDisponibilidadeHidrica, calculateQIndividualSecao, calculateQSolicitadaMenorQDisponivel, calculateQSolicitadaMenorQIndividual, calculateSolicitataMenorDisponivel } from '../../../tools/surface-tools';
 import { TableCell } from "@mui/material";
 
+
 let options = [
     {
         name: "QOUTORGÁVEL-INDIVIDUAL-SEÇÃO (20% QOUTORGÁVEL-SEÇÃO)",
