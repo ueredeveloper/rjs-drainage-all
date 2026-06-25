@@ -176,10 +176,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const [isFullscreen, setIsFullscreen]       = useState(false);
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const [hudPhase, setHudPhase]                   = useState('intro');
-  const introStartedRef     = useRef(false);
-  const pilotLayersRef      = useRef({});
-  const setzLayersRef       = useRef({});
-  const polygonsClearedRef  = useRef(false);
+  const introStartedRef         = useRef(false);
+  const pilotLayersRef          = useRef({});
+  const setzLayersRef           = useRef({});
+  const polygonsClearedRef      = useRef(false);
+  const introBrasiliaMarkerRef  = useRef(null);
   const setLayerClearRef = useRef(null);
   setLayerClearRef.current = setLayerClearTrigger;
   const containerRef      = useRef(null);
@@ -238,7 +239,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   useEffect(() => {
     if (!introReady || !mapInstance || introStartedRef.current) return;
     introStartedRef.current = true;
-    const introTimer = setTimeout(() => {
+    const startTime = Date.now();
+    const INTRO_MS  = 7000;
+    const fired     = { current: false };
+
+    const fireIntroEnd = () => {
+      if (fired.current) return;
+      fired.current = true;
       setHudPhase('ambient');
       [...Object.values(pilotLayersRef.current), ...Object.values(setzLayersRef.current)]
         .forEach(l => { try { l.setStyle({ fillOpacity: 0, strokeOpacity: 0 }); } catch (_) {} });
@@ -247,14 +254,30 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         pilotLayersRef.current = {};
         Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
         setzLayersRef.current = {};
-        userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
+        // marcador inicial de Brasília em ref separada — não é afetado pelo clearAll
+        introBrasiliaMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
           position: BRASILIA, map: mapRef.current,
           content: makePinElement(makePinUrl('#e53935'), 24, 36),
           zIndex: 1000,
         });
       }, 300);
-    }, 7000);
-    return () => clearTimeout(introTimer);
+    };
+
+    const introTimer = setTimeout(fireIntroEnd, INTRO_MS);
+
+    // Page Visibility API: dispara imediatamente ao voltar à aba se 7s já passaram
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && Date.now() - startTime >= INTRO_MS) {
+        clearTimeout(introTimer);
+        fireIntroEnd();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      clearTimeout(introTimer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [introReady, mapInstance]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -972,6 +995,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     if (!mapRef.current) return;
     if (!userMarker) return;
     if (userMarkerRef.current) { userMarkerRef.current.map = null; userMarkerRef.current = null; }
+    // remove o marcador inicial de Brasília quando o usuário faz sua primeira busca
+    if (introBrasiliaMarkerRef.current) { introBrasiliaMarkerRef.current.map = null; introBrasiliaMarkerRef.current = null; }
     const userPinEl = makePinElement(makePinUrl('#e53935'), 24, 36);
     const mkr = new window.google.maps.marker.AdvancedMarkerElement({
       position: { lat: userMarker.lat, lng: userMarker.lng },
