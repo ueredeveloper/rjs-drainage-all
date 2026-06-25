@@ -181,6 +181,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const setzLayersRef           = useRef({});
   const polygonsClearedRef      = useRef(false);
   const introBrasiliaMarkerRef  = useRef(null);
+  const coordCircleTimerRef     = useRef(null);
   const setLayerClearRef = useRef(null);
   setLayerClearRef.current = setLayerClearTrigger;
   const containerRef      = useRef(null);
@@ -953,6 +954,19 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     if (!circleData._skipFly) {
       mapRef.current.panTo(circleData.center);
       mapRef.current.setZoom(13);
+    }
+    // remove o círculo de coordenada automaticamente após 2s
+    if (circleData._replaceCoord) {
+      clearTimeout(coordCircleTimerRef.current);
+      coordCircleTimerRef.current = setTimeout(() => {
+        const st = shapeStatesRef.current.get(circle);
+        if (st?.areaIW) { try { st.areaIW.close(); } catch (_) {} }
+        if (st?.areaAnchor) { try { st.areaAnchor.map = null; } catch (_) {} }
+        shapeStatesRef.current.delete(circle);
+        allCirclesRef.current = allCirclesRef.current.filter(c => c !== circle);
+        if (coordCircleRef.current === circle) coordCircleRef.current = null;
+        try { circle.setMap(null); } catch (_) {}
+      }, 2000);
     }
   }, [circleData]);
 
