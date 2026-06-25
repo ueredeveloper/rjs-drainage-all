@@ -254,3 +254,4 @@ export function useSetorizacaoLayer(mapInstance, setzLayersRef, visibleKeys) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapInstance, vSer]);
 }
+

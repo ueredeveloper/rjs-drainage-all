@@ -47,3 +47,4 @@ export default function ScrollList({ items, color, bg, Icon }) {
     </List>
   );
 }
+

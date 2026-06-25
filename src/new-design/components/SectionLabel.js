@@ -14,3 +14,4 @@ export default function SectionLabel({ title, count }) {
     </Box>
   );
 }
+

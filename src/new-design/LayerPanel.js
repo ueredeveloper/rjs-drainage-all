@@ -1336,3 +1336,4 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     </div>
   );
 }
+

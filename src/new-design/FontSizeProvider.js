@@ -55,3 +55,4 @@ export function FontSizeProvider({ fontSize, children }) {
     </FontSizeContext.Provider>
   );
 }
+

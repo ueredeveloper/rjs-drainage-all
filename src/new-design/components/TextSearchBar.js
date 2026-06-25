@@ -49,3 +49,4 @@ export default function TextSearchBar({ onSearch, loading, error }) {
     </Box>
   );
 }
+

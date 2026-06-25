@@ -85,3 +85,4 @@ export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange,
     </Box>
   );
 }
+

@@ -1120,3 +1120,4 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 export default function GoogleMapView(props) {
   return <GMapInner {...props} />;
 }
+

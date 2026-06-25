@@ -44,3 +44,4 @@ export default function CompactTable({ headers, rows, onRowClick, sx, cellSx, ro
     </TableContainer>
   );
 }
+

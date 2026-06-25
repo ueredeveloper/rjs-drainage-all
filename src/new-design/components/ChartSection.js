@@ -12,3 +12,4 @@ export default function ChartSection({ id, title, height = 150, children }) {
     </Box>
   );
 }
+

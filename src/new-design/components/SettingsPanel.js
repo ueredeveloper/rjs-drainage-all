@@ -228,3 +228,4 @@ export default function SettingsPanel({ open, onClose, fontSize, onFontSizeChang
     </>
   );
 }
+

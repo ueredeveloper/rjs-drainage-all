@@ -59,3 +59,4 @@ export default function ElemWaterUsage({ isFullscreen, isWaterAvailable }) {
             </Box> : <Box id="nd-water-usage-hidden"></Box>
     );
 }
+

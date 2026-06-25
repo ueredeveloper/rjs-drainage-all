@@ -267,3 +267,4 @@ export default function UserSearchDialog({ open, onClose, onSelect }) {
     </Dialog>
   );
 }
+

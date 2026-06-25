@@ -88,3 +88,4 @@ export const MOCK_BAR = [
   { id: 4, nome: 'Hidrelétrica Beta', processo: '197.002.567/2019', volume: 50000,  vazao: 120.0, municipio: 'Planaltina' },
   { id: 8, nome: 'Reservatório Alto', processo: '197.006.789/2018', volume: 120000, vazao: 350.0, municipio: 'Paranoá' },
 ];
+

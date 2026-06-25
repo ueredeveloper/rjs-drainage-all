@@ -122,3 +122,4 @@ export const polarCenteredLabelsPlugin = {
     ctx.restore();
   },
 };
+
