@@ -26,6 +26,13 @@ export function splitByLat(features, wing) {
   return [w.slice(0, mid).map(x => x.f), w.slice(mid).map(x => x.f)];
 }
 
+export function splitWingByLng(features, n) {
+  const w = features.map(f => ({ f, lng: f.geometry?.coordinates?.[0]?.[0]?.[0] ?? 0 }));
+  w.sort((a, b) => a.lng - b.lng);
+  const size = Math.ceil(w.length / n);
+  return Array.from({ length: n }, (_, i) => w.slice(i * size, (i + 1) * size).map(x => x.f));
+}
+
 export function toPoints(features) {
   const rings = [];
   features.forEach(f => {

@@ -1,12 +1,22 @@
 import { useEffect } from 'react';
 import geoJson from './plano-piloto-geometrias.json';
 import selecao from '../../assets/geojson/plano-piloto-selecao.json';
-import { classifyWing, splitWingN, splitByLng, splitByLat, toPoints } from './geoUtils';
+import { classifyWing, splitWingN, splitWingByLng, splitByLng, splitByLat, toPoints } from './geoUtils';
 
-const ZONE_COLORS = ['#00E5FF', '#69F0AE', '#FFD740', '#FF6E40', '#EA80FC', '#40C4FF'];
+const ZONE_COLORS = ['#E53935', '#FB8C00', '#F9A825', '#43A047', '#7B1FA2', '#EC407A'];
 
-const GROUPS = (() => {
-  const g = { eixo: { label: 'Eixo Monumental', color: '#FFD600', delay: 0 } };
+const E_COLOR = '#FFD600';
+const E_ZONES = 2;
+
+export const PILOT_GROUPS = (() => {
+  const g = {};
+  for (let z = 1; z <= E_ZONES; z++)
+    for (let sz = 1; sz <= 2; sz++)
+      for (let ssz = 1; ssz <= 2; ssz++)
+        for (let sssz = 1; sssz <= 2; sssz++) {
+          const delay = (z - 1) * 200 + (sz - 1) * 100 + (ssz - 1) * 50 + (sssz - 1) * 25;
+          g[`eixo_${z}_${sz}_${ssz}_${sssz}`] = { label: `${z}.${sz}.${ssz}.${sssz}`, color: E_COLOR, delay };
+        }
   for (let z = 1; z <= 6; z++) {
     const color = ZONE_COLORS[z - 1];
     for (let sz = 1; sz <= 2; sz++)
@@ -20,16 +30,32 @@ const GROUPS = (() => {
   return g;
 })();
 
-const DEFAULT_VISIBLE = new Set(selecao.selectedKeys);
+export const PILOT_DEFAULT_KEYS = selecao.selectedKeys;
 
-export function usePlanoPilotoLayer(mapInstance, pilotLayersRef) {
+// visibleKeys: Set<string> opcional — se omitido usa a seleção do JSON
+export function usePlanoPilotoLayer(mapInstance, pilotLayersRef, visibleKeys) {
+  const vSer = visibleKeys ? Array.from(visibleKeys).sort().join(',') : null;
+
   useEffect(() => {
     if (!mapInstance) return;
+    const visible = visibleKeys ?? new Set(selecao.selectedKeys);
     const DRAW_MS = 4000, TICK_MS = 16;
     const raw = { eixo: [], norte: [], sul: [] };
     (geoJson.features || []).forEach(f => { const w = classifyWing(f.properties || {}); if (w in raw) raw[w].push(f); });
     const nZones = splitWingN(raw.norte, 'norte', 6), sZones = splitWingN(raw.sul, 'sul', 6);
-    const featureMap = { eixo: raw.eixo };
+    const eZones = splitWingByLng(raw.eixo, E_ZONES);
+    const featureMap = {};
+    eZones.forEach((zone, i) => {
+      const [sHalf, nHalf] = splitByLat(zone, 'norte');
+      [[sHalf, 1], [nHalf, 2]].forEach(([szFeats, sz]) => {
+        const [wHalf, eHalf] = splitByLng(szFeats);
+        [[wHalf, 1], [eHalf, 2]].forEach(([sszFeats, ssz]) => {
+          const [a, b] = splitByLat(sszFeats, 'norte');
+          featureMap[`eixo_${i + 1}_${sz}_${ssz}_1`] = a;
+          featureMap[`eixo_${i + 1}_${sz}_${ssz}_2`] = b;
+        });
+      });
+    });
     nZones.forEach((zone, i) => {
       const [w, e] = splitByLng(zone);
       [[w, 1], [e, 2]].forEach(([szFeats, sz]) => {
@@ -48,9 +74,9 @@ export function usePlanoPilotoLayer(mapInstance, pilotLayersRef) {
       featureMap[`sul_${i + 1}_2_1`] = eIn; featureMap[`sul_${i + 1}_2_2`] = eOut;
     });
     const polylines = [], timers = [], intervals = [];
-    Object.keys(GROUPS).forEach(key => {
-      if (!DEFAULT_VISIBLE.has(key)) return;
-      const { color, delay } = GROUPS[key];
+    Object.keys(PILOT_GROUPS).forEach(key => {
+      if (!visible.has(key)) return;
+      const { color, delay } = PILOT_GROUPS[key];
       const points = toPoints(featureMap[key] || []);
       if (!points.length) return;
       timers.push(setTimeout(() => {
@@ -79,5 +105,6 @@ export function usePlanoPilotoLayer(mapInstance, pilotLayersRef) {
       Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch (_) {} });
       pilotLayersRef.current = {};
     };
-  }, [mapInstance]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapInstance, vSer]);
 }

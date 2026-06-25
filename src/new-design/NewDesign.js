@@ -25,6 +25,8 @@ import SettingsPanel, {
   FONT_SIZE_OPTIONS,
   FONT_SIZE_STORAGE_KEY,
   DEFAULT_FONT_SIZE,
+  MAP_PROVIDER_STORAGE_KEY,
+  DEFAULT_MAP_PROVIDER,
 } from './components/SettingsPanel';
 import { FontSizeProvider } from './FontSizeProvider';
 
@@ -54,7 +56,14 @@ export default function NewDesign() {
   const [textError, setTextError]             = useState(null);
   const [subShape, setSubShape]               = useState(null);
   const [userMarker, setUserMarker]           = useState(null);
-  const [mapProvider, setMapProvider]         = useState('gmaps');
+  const [mapProvider, setMapProvider]         = useState(() => {
+    try {
+      const stored = localStorage.getItem(MAP_PROVIDER_STORAGE_KEY);
+      return stored === 'leaflet' ? 'leaflet' : DEFAULT_MAP_PROVIDER;
+    } catch {
+      return DEFAULT_MAP_PROVIDER;
+    }
+  });
   const [persistedLayerState, setPersistedLayerState] = useState(null);
   const [clearShapesTrigger, setClearShapesTrigger] = useState(0);
   const [settingsOpen, setSettingsOpen]       = useState(false);
@@ -77,6 +86,12 @@ export default function NewDesign() {
       localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(fontSize));
     } catch { /* ignore */ }
   }, [fontSize]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MAP_PROVIDER_STORAGE_KEY, mapProvider);
+    } catch { /* ignore */ }
+  }, [mapProvider]);
 
   const handleToggleCat = useCallback((key) => {
     setHiddenCats(prev => {
@@ -600,6 +615,8 @@ export default function NewDesign() {
         onClose={() => setSettingsOpen(false)}
         fontSize={fontSize}
         onFontSizeChange={setFontSize}
+        mapProvider={mapProvider}
+        onMapProviderChange={setMapProvider}
       />
       <LoginDialog />
     </Box>

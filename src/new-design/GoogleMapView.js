@@ -5,19 +5,19 @@ import ElemWaterUsage from './components/ElemWaterUsage';
 import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEfluenteIcon, iwPluvialIcon, iwDefaultIcon } from '../assets/svg/svgs-icons';
 import { usePlanoPilotoLayer } from './layers/usePlanoPilotoLayer';
 import { useSetorizacaoLayer } from './layers/useSetorizacaoLayer';
-import { useInitialCircle } from './layers/useInitialCircle';
+import SadDfHud from './SadDfHud';
 const BRASILIA  = { lat: -15.7948528, lng: -47.8831189 };
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
 
 const SHAPE_STYLE = {
   strokeColor: '#1565c0', strokeWeight: 2,
-  fillColor: '#1565c0', fillOpacity: 0.08,
+  fillColor: '#1565c0', fillOpacity: 0.18,
 };
 
 
 const USER_SHAPE_STYLE = {
   strokeColor: '#c62828', strokeWeight: 3,
-  fillColor: '#c62828', fillOpacity: 0.08,
+  fillColor: '#c62828', fillOpacity: 0.18,
 };
 
 const HAVERSINE = (lat1, lng1, lat2, lng2) => {
@@ -99,7 +99,6 @@ function buildInfoHtml(item) {
         ${row('Situação', item.sp_descricao)}
         ${row('Publicação', fmtDate(item.int_data_publicacao))}
         ${row('Vencimento', fmtDate(item.int_data_vencimento))}
-        ${row('E-mail', item.us_email)}
         ${row('Bacia', item.bh_nome)}
         ${row('Unid. Hidro.', item.uh_nome)}
         <tr><td ${td1}><b>Tipo</b></td><td style="color:${color};font-weight:600;">${item._catLabel ?? '—'}</td></tr>
@@ -177,9 +176,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
+  const [hudPhase, setHudPhase]                   = useState('intro');
   const pilotLayersRef      = useRef({});
   const setzLayersRef       = useRef({});
-  const introLayersRef      = useRef(null);
   const polygonsClearedRef  = useRef(false);
   const setLayerClearRef = useRef(null);
   setLayerClearRef.current = setLayerClearTrigger;
@@ -221,7 +220,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
   usePlanoPilotoLayer(mapInstance, pilotLayersRef);
   useSetorizacaoLayer(mapInstance, setzLayersRef);
-  useInitialCircle(mapInstance, introLayersRef);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -257,23 +255,16 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const shapeStyleIW = new window.google.maps.InfoWindow();
     shapeStyleIWRef.current = shapeStyleIW;
 
+    // Transição do HUD para modo ambiente após exibição inicial
+    setTimeout(() => setHudPhase('ambient'), 10000);
+
+    // Marcador visível imediatamente — sem timer de ocultação dos polígonos
+    polygonsClearedRef.current = true;
     userMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
-      position: BRASILIA, map: null,
+      position: BRASILIA, map: mapRef.current,
       content: makePinElement(makePinUrl('#e53935'), 24, 36),
       zIndex: 1000,
     });
-    const revealTimer = setTimeout(() => {
-      Object.values(pilotLayersRef.current).forEach(l => { try { l.setMap(null); } catch(_) {} });
-      Object.values(setzLayersRef.current).forEach(l => { try { l.setMap(null); } catch(_) {} });
-      if (introLayersRef.current) {
-        clearInterval(introLayersRef.current.animateIv);
-        try { introLayersRef.current.circleLine?.setMap(null); } catch(_) {}
-        introLayersRef.current.markers?.forEach(m => { try { m.map = null; } catch(_) {} });
-        introLayersRef.current = null;
-      }
-      polygonsClearedRef.current = true;
-      if (userMarkerRef.current && mapRef.current) userMarkerRef.current.map = mapRef.current;
-    }, 10000);
 
     // injeta o container do LayerPanel usando o sistema de controles do GMaps (persiste em fullscreen)
     const panelContainer = document.createElement('div');
@@ -883,7 +874,6 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       clearAreaPopups();
       if (panelContainer.parentNode) panelContainer.parentNode.removeChild(panelContainer);
       if (waterUsageContainer.parentNode) waterUsageContainer.parentNode.removeChild(waterUsageContainer);
-      clearTimeout(revealTimer);
       mapRef.current = null;
     };
   }, []);
@@ -1055,6 +1045,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      <SadDfHud phase={hudPhase} />
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
           <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} onLocate={(pos) => onPickRef.current?.(pos)} />,

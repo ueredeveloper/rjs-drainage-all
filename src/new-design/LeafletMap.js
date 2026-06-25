@@ -18,8 +18,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const BRASILIA   = [-15.7801, -47.9292];
-const SHAPE_OPTS      = { color: '#1565c0', fillColor: '#1565c0', fillOpacity: 0.08, weight: 2 };
-const USER_SHAPE_OPTS = { color: '#c62828', fillColor: '#c62828', fillOpacity: 0.08, weight: 3 };
+const SHAPE_OPTS      = { color: '#1565c0', fillColor: '#1565c0', fillOpacity: 0.18, weight: 2 };
+const USER_SHAPE_OPTS = { color: '#c62828', fillColor: '#c62828', fillOpacity: 0.18, weight: 3 };
 
 const TILE_TYPES = [
   { label: 'Mapa',
@@ -110,7 +110,6 @@ function buildPopupHtml(item) {
         ${row('Situação', item.sp_descricao)}
         ${row('Publicação', fmtDate(item.int_data_publicacao))}
         ${row('Vencimento', fmtDate(item.int_data_vencimento))}
-        ${row('E-mail', item.us_email)}
         ${row('Bacia', item.bh_nome)}
         ${row('Unid. Hidro.', item.uh_nome)}
         <tr><td ${td1}><b>Tipo</b></td><td style="color:${color};font-weight:600;">${item._catLabel ?? '—'}</td></tr>

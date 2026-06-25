@@ -20,11 +20,10 @@
     "setz_scs",
     "setz_sctn",
     "setz_scts",
-    "setz_sdc",
-    "setz_sdn",
-    "setz_sds",
-    "setz_sen",
     "setz_sepn",
-    "setz_seps"
+    "setz_seps",
+    "setz_sds",
+    "setz_sdn",
+    "setz_sdc"
   ]
 }
