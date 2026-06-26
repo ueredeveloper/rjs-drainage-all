@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
-  Box, Typography, Tabs, Tab, TextField, Button,
+  Box, Typography, Tabs, Tab, TextField,
   Chip, Stack, Divider, Slider, LinearProgress, Alert,
   IconButton, Tooltip, CircularProgress, useTheme, useMediaQuery,
 } from '@mui/material';
@@ -126,7 +126,8 @@ export default function GeralTab({
       const monthly = MESES.map((_, i) => {
         const d = demandas.find(d => parseInt(d.mes) === i + 1);
         if (!d) return '';
-        const v = parseFloat(d.vazao_ld);
+        const raw = activeCat?.key === 'superficial' ? d.vazao : d.vazao_ld;
+        const v = parseFloat(raw);
         return isNaN(v) ? '' : v;
       });
       return [...base, ...monthly];
@@ -443,7 +444,8 @@ export default function GeralTab({
                   const monthly = MESES.map((_, i) => {
                     const d = demandas.find(d => parseInt(d.mes) === i + 1);
                     if (!d) return '—';
-                    const v = parseFloat(d.vazao_ld);
+                    const raw = activeCat?.key === 'superficial' ? d.vazao : d.vazao_ld;
+                    const v = parseFloat(raw);
                     return isNaN(v) ? '—' : numberWithCommas(v, 2);
                   });
                   return [...base, ...monthly];

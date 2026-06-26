@@ -3,8 +3,19 @@ import { useEffect } from 'react';
 const BRASILIA    = { lat: -15.7948528, lng: -47.8831189 };
 const CIRCLE_RADIUS = 10000; // 10km
 
-const CIRCLE_COLOR = '#29B6F6'; // azul-água — tema ADASA
-const TEXT_COLOR   = '#E1F5FE'; // quase-branco azulado
+const TEXT_COLOR = '#E1F5FE';
+const CIRCLE_OPTIONS = [
+  { circle: '#29B6F6', glow: 'rgba(41,182,246,0.55)' },
+  { circle: '#EC407A', glow: 'rgba(236,64,122,0.55)' },
+  { circle: '#66BB6A', glow: 'rgba(102,187,106,0.55)' },
+  { circle: '#FFA726', glow: 'rgba(255,167,38,0.55)' },
+  { circle: '#AB47BC', glow: 'rgba(171,71,188,0.55)' },
+  { circle: '#26C6DA', glow: 'rgba(38,198,218,0.55)' },
+  { circle: '#EF5350', glow: 'rgba(239,83,80,0.55)' },
+  { circle: '#FFCA28', glow: 'rgba(255,202,40,0.55)' },
+  { circle: '#42A5F5', glow: 'rgba(66,165,245,0.55)' },
+  { circle: '#26A69A', glow: 'rgba(38,166,154,0.55)' },
+];
 
 
 function destinationPoint(lat, lng, bearingDeg, distM) {
@@ -45,8 +56,9 @@ function makeLetterSvg(char) {
 export function useInitialCircle(mapInstance, introLayersRef) {
   useEffect(() => {
     if (!mapInstance) return;
+    const { circle: CIRCLE_COLOR, glow: CIRCLE_GLOW } =
+      CIRCLE_OPTIONS[Math.floor(Math.random() * CIRCLE_OPTIONS.length)];
 
-    // Símbolo de traço — cria aparência de círculo dashed girando
     const dashSymbol = {
       path: 'M 0,-1 0,1',
       strokeOpacity: 1,
@@ -78,7 +90,7 @@ export function useInitialCircle(mapInstance, introLayersRef) {
         `width:20px;height:26px;display:block;` +
         `transform:rotate(${initBearing}deg);` +
         `pointer-events:none;user-select:none;` +
-        `filter:drop-shadow(0 0 5px rgba(41,182,246,0.55));`;
+        `filter:drop-shadow(0 0 5px ${CIRCLE_GLOW});`;
 
       const marker = new window.google.maps.marker.AdvancedMarkerElement({
         position: pos,

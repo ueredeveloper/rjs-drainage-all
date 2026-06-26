@@ -110,12 +110,21 @@ const SECTOR_COLORS = {
   setz_sts         : '#607D8B',
 };
 
-/* Paleta de fallback — tema água */
-const PALETTE = [
-  '#0277BD', '#0288D1', '#039BE5', '#00ACC1',
-  '#0097A7', '#00838F', '#00897B', '#26A69A',
-  '#1565C0', '#1976D2', '#1E88E5', '#42A5F5',
+const RANDOM_PALETTE = [
+  '#E53935', '#D81B60', '#8E24AA', '#5E35B1', '#3949AB', '#1E88E5',
+  '#039BE5', '#00ACC1', '#00897B', '#43A047', '#7CB342', '#C0CA33',
+  '#FFB300', '#FB8C00', '#F4511E', '#EC407A', '#7E57C2', '#26C6DA',
+  '#66BB6A', '#FFCA28', '#FF7043', '#26A69A', '#EF5350', '#42A5F5',
 ];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export const SETZ_SECTORS = (() => {
   const data = [
@@ -199,7 +208,7 @@ export const SETZ_SECTORS = (() => {
   ];
   return data.map((s, i) => ({
     ...s,
-    color: SECTOR_COLORS[s.key] ?? PALETTE[i % PALETTE.length],
+    color: SECTOR_COLORS[s.key] ?? RANDOM_PALETTE[i % RANDOM_PALETTE.length],
     delay: 200 + i * 35,
   }));
 })();
@@ -215,14 +224,16 @@ export function useSetorizacaoLayer(mapInstance, setzLayersRef, visibleKeys) {
   useEffect(() => {
     if (!mapInstance) return;
     const visible = visibleKeys ?? DEFAULT_VISIBLE;
+    const shuffledPalette = shuffle(RANDOM_PALETTE);
     const DRAW_MS = 3500, TICK_MS = 16;
     const rawFeats = geoJson.features || [];
     const featureMap = {};
     SETZ_SECTORS.forEach(s => { featureMap[s.key] = rawFeats.filter(f => f.properties.sigla === s.sigla); });
     const polylines = [], timers = [], intervals = [];
-    SETZ_SECTORS.forEach(sector => {
+    SETZ_SECTORS.forEach((sector, sectorIdx) => {
       if (!visible.has(sector.key)) return;
-      const { key, color, delay } = sector;
+      const { key, delay } = sector;
+      const color = shuffledPalette[sectorIdx % shuffledPalette.length];
       const points = toPoints(featureMap[key] || []);
       if (!points.length) return;
       timers.push(setTimeout(() => {

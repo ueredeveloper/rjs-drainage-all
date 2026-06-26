@@ -955,7 +955,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       style={{ position: 'relative', margin: '0', fontFamily: 'Roboto, Arial, sans-serif', zIndex: 9999 }}
     >
       {/* Botão de localização — aparece acima do toggle de camadas */}
-      <div style={{ padding: '6px 0 2px' }}>
+      <div style={{ padding: '6px 0 6px' }}>
         <button
           onClick={handleLocate}
           disabled={locating}

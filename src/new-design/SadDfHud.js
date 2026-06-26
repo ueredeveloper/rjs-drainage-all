@@ -133,17 +133,16 @@ function ArcText() {
    * pelo ponto inferior (0, 122) com sweep=0 (SVG counter-clockwise).
    * Isso coloca o texto na metade inferior do círculo, legível de fora.
    */
-  const r = 122;
   return (
     <g>
       <text
         textAnchor="middle"
         fontFamily="'Roboto Condensed', 'Roboto', 'Arial', sans-serif"
-        fontWeight="400"
-        fontSize="8"
-        letterSpacing="1.5"
-        fill="#82CFEA"
-        opacity="0.7"
+        fontWeight="600"
+        fontSize="10"
+        letterSpacing="1.8"
+        fill="#B3E5FC"
+        opacity="0.92"
         filter="url(#saddf-tag-glow)"
       >
         <textPath

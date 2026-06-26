@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import LayerPanel from './LayerPanel';
 import ElemWaterUsage from './components/ElemWaterUsage';
@@ -248,7 +248,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     introStartedRef.current = true;
     setIntroMapInstance(mapInstance);        // dispara os hooks de polígonos
     const startTime = Date.now();
-    const INTRO_MS  = 5000;
+    const INTRO_MS  = 7000;
     const fired     = { current: false };
 
     const fireIntroEnd = () => {
