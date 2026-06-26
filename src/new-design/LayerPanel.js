@@ -52,6 +52,14 @@ const POSITION_LAYERS = new Set(['enderecos', 'caesb_estacoes']);
 // Layers that support "Cálculo de Uso" (color by pct_utilizada)
 const WATER_USE_LAYERS = new Set(['hidrogeo_fraturado', 'hidrogeo_poroso']);
 
+// Fields that should appear first and in bold in the infowindow, per layer id
+const LAYER_FIELD_CONFIG = {
+  unidades_hidrograficas: { bold: new Set(['uh_nome', 'uh_label']) },
+  bacias_hidrograficas:   { bold: new Set(['bacia_nome', 'bacia_cod']) },
+  hidrogeo_fraturado:     { bold: new Set(['sistema', 'subsistema', 'cod_plan']) },
+  hidrogeo_poroso:        { bold: new Set(['sistema', 'cod_plan']) },
+};
+
 const METERS_OPTIONS = [200, 500, 1000, 3000, 5000];
 
 // Perceptually distinct palette for feature fills
@@ -111,20 +119,27 @@ function gmapsFeatureProps(feature) {
 
 const SKIP_KEYS = new Set(['shape', 'SHAPE', 'Shape', 'objectid', 'OBJECTID', 'FID', 'fid', 'GlobalID', 'globalid']);
 
-function formatProps(props) {
-  return Object.entries(props || {})
+function formatProps(props, priorityKeys = []) {
+  const entries = Object.entries(props || {})
     .filter(([k, v]) =>
       !SKIP_KEYS.has(k) &&
       typeof v !== 'object' &&
       v !== null &&
       v !== undefined &&
       String(v).trim() !== ''
-    )
-    .slice(0, 8);
+    );
+  if (!priorityKeys.length) return entries.slice(0, 8);
+  const prioritySet = new Set(priorityKeys);
+  const priorityEntries = priorityKeys
+    .map(k => [k, props?.[k]])
+    .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== '');
+  const rest = entries.filter(([k]) => !prioritySet.has(k));
+  return [...priorityEntries, ...rest].slice(0, 8);
 }
 
-function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = null) {
-  const rows = formatProps(props).filter(([k]) => pctUtilizada !== null ? k !== 'pct_utilizada' : true);
+function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = null, boldKeys = null) {
+  const priorityKeys = boldKeys ? [...boldKeys] : [];
+  const rows = formatProps(props, priorityKeys).filter(([k]) => pctUtilizada !== null ? k !== 'pct_utilizada' : true);
 
   const usageBar = pctUtilizada !== null ? (() => {
     const pct = pctUtilizada;
@@ -168,10 +183,13 @@ function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = n
       ${usageBar}
       ${rows.length > 0
         ? `<table style="width:100%;font-size:11px;border-collapse:collapse;line-height:1.7;">
-            ${rows.map(([k, v]) => `<tr>
-              <td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;font-weight:500;">${k}</td>
-              <td style="color:#263238;">${v}</td>
-            </tr>`).join('')}
+            ${rows.map(([k, v]) => {
+              const b = boldKeys?.has(k);
+              return `<tr>
+                <td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;font-weight:${b ? '700' : '500'};">${k}</td>
+                <td style="color:#263238;font-weight:${b ? '700' : '400'};">${v}</td>
+              </tr>`;
+            }).join('')}
           </table>`
         : '<div style="font-size:11px;color:#78909c;padding:2px 0;">Sem propriedades</div>'
       }
@@ -679,7 +697,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           ? (props.pct_utilizada ?? null)
           : null;
         infoWinRef.current.setContent(
-          buildFeatureHtml(props, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada)
+          buildFeatureHtml(props, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada, LAYER_FIELD_CONFIG[id]?.bold ?? null)
         );
         infoWinRef.current.setPosition(event.latLng);
         infoWinRef.current.open(map);
@@ -704,7 +722,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
               : null;
             L.popup({ maxWidth: 300, closeButton: true })
               .setLatLng(e.latlng)
-              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada))
+              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada, LAYER_FIELD_CONFIG[id]?.bold ?? null))
               .openOn(map);
           });
         },
