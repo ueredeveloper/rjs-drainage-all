@@ -7,7 +7,7 @@ import { usePlanoPilotoLayer } from './layers/usePlanoPilotoLayer';
 import { useSetorizacaoLayer } from './layers/useSetorizacaoLayer';
 import SadDfHud from './SadDfHud';
 const BRASILIA  = { lat: -15.7948528, lng: -47.8831189 };
-const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#bf360c' };
+const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#f57f17', 4: '#6a1b9a', 5: '#f9a825' };
 
 const SHAPE_STYLE = {
   strokeColor: '#1565c0', strokeWeight: 2,

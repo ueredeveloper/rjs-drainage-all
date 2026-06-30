@@ -13,7 +13,7 @@ export const TI_CATS = [
   { key: 'subterranea', label: 'Subterrânea', color: '#0277bd', tiId: 2, Icon: WaterDropIcon },
   { key: 'pluvial',     label: 'Pluvial',      color: '#f57f17', tiId: 3, Icon: WaterIcon },
   { key: 'efluente',    label: 'Efluente',     color: '#6a1b9a', tiId: 4, Icon: AssessmentIcon },
-  { key: 'barragem',    label: 'Barragem',     color: '#bf360c', tiId: 5, Icon: WaterIcon },
+  { key: 'barragem',    label: 'Barragem',     color: '#f9a825', tiId: 5, Icon: WaterIcon },
 ];
 
 export const MAIN_TABS = [
