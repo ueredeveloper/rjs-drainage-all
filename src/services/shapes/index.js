@@ -138,6 +138,8 @@ async function fetchMarkersByUH(uh_codigo) {
  */
 async function fetchRiversByCoordinates(lat, lng) {
 
+  console.log(`Fetching rivers by coordinates: lat=${lat}, lng=${lng}`);
+
   let response = await apiFetch(url + `/rivers/filter-rivers-by-lat-lng?lat=${lat}&lng=${lng}`, {
     method: 'GET',
     headers: {

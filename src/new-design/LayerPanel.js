@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { fetchShape } from '../services/shapes';
+import { fetchShape, fetchRiversByCoordinates } from '../services/shapes';
 import { useFontSize } from './FontSizeProvider';
 import {
   fetchAdministrativeRegions,
@@ -16,6 +16,7 @@ const LAYER_GROUPS = [
     layers: [
       { id: 'bacias_hidrograficas',   label: 'Bacias Hidrográficas',   color: '#1565c0' },
       { id: 'unidades_hidrograficas', label: 'Unidades Hidrográficas', color: '#0288d1' },
+      { id: 'rios_df',                label: 'Rios do DF',              color: '#29b6f6' },
     ],
   },
   {
@@ -48,6 +49,7 @@ const COLORED_LAYERS = new Set([
 
 // Layers loaded by map position + radius instead of full GeoJSON
 const POSITION_LAYERS = new Set(['enderecos', 'caesb_estacoes']);
+const MARKER_POSITION_LAYERS = new Set(['rios_df']);
 
 // Layers that support "Cálculo de Uso" (color by pct_utilizada)
 const WATER_USE_LAYERS = new Set(['hidrogeo_fraturado', 'hidrogeo_poroso']);
@@ -58,6 +60,7 @@ const LAYER_FIELD_CONFIG = {
   bacias_hidrograficas:   { bold: new Set(['bacia_nome', 'bacia_cod']) },
   hidrogeo_fraturado:     { bold: new Set(['sistema', 'subsistema', 'cod_plan']) },
   hidrogeo_poroso:        { bold: new Set(['sistema', 'cod_plan']) },
+  rios_df:                { bold: new Set(['nome', 'noriocor', 'norioprinci', 'nome_rio']) },
 };
 
 const METERS_OPTIONS = [200, 500, 1000, 3000, 5000];
@@ -238,6 +241,27 @@ function esriToGeoJSONPolylines(esriResult) {
   };
 }
 
+// Normaliza resposta de fetchRiversByCoordinates (GeoJSON ou ESRI) → GeoJSON FeatureCollection de LineStrings
+function normalizeRiversGeoJSON(raw) {
+  if (!raw) return { type: 'FeatureCollection', features: [] };
+  if (raw.type === 'FeatureCollection') return raw;
+  if (Array.isArray(raw?.features) && raw.features[0]?.geometry?.paths !== undefined) {
+    return esriToGeoJSONPolylines(raw);
+  }
+  if (Array.isArray(raw)) {
+    return {
+      type: 'FeatureCollection',
+      features: raw.map((f, i) => {
+        const geom = f.geometry?.paths
+          ? { type: 'LineString', coordinates: f.geometry.paths[0] ?? [] }
+          : f.geometry;
+        return { type: 'Feature', id: i, properties: f.attributes ?? f.properties ?? {}, geometry: geom };
+      }).filter(f => Array.isArray(f.geometry?.coordinates) && f.geometry.coordinates.length >= 2),
+    };
+  }
+  return { type: 'FeatureCollection', features: [] };
+}
+
 const CAESB_ICON_PATH = `M100.577,223.936c14.221,0,25.754,11.533,25.754,25.754s-11.533,25.754-25.754,25.754c-14.221,0-25.754-11.533-25.754-25.754S86.356,223.936,100.577,223.936L100.577,223.936zM103.605,179.88c39.309,0,71.157,31.848,71.157,71.157c0,6.335-0.833,12.474-2.386,18.32c0.017-0.551,0.028-1.101,0.028-1.656c0-29.758-24.109-53.867-53.867-53.867c-7.695,0-15.01,1.616-21.631,4.524l-0.001-0.003c-8.681,3.609-18.896,0.294-23.7-8.069c-5.22-9.087-2.086-20.679,6.996-25.892C86.888,180.548,95.966,179.88,103.605,179.88L103.605,179.88zM38.549,281.614c-19.655-34.043-7.998-77.547,26.045-97.202c5.487-3.168,11.219-5.516,17.059-7.093c-0.485,0.261-0.968,0.527-1.448,0.804c-25.771,14.879-34.596,47.812-19.717,73.584c3.848,6.664,8.905,12.191,14.733,16.471l-0.002,0.002c7.466,5.713,9.702,16.217,4.862,24.559c-5.259,9.064-16.866,12.146-25.921,6.887C47.487,295.757,42.369,288.23,38.549,281.614L38.549,281.614zM159.182,287.086c-19.655,34.043-63.159,45.7-97.202,26.045c-5.487-3.168-10.386-6.958-14.672-11.227c0.468,0.29,0.94,0.575,1.42,0.852c25.771,14.879,58.705,6.055,73.584-19.717c3.847-6.664,6.105-13.807,6.898-20.995l0.003,0.001c1.215-9.323,9.194-16.511,18.838-16.49c10.479,0.023,18.951,8.533,18.925,19.005C166.961,272.275,163.001,280.471,159.182,287.086L159.182,287.086z`;
 
 // fetchAddressByKeyword result → GeoJSON points
@@ -302,7 +326,7 @@ function makeCaesbContent() {
   return svg;
 }
 
-export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive, onLocate }) {
+export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive, onLocate, markerPosition = null }) {
   const { scalePx } = useFontSize();
   const [open, setOpen]               = useState(false);
   const [locating, setLocating]       = useState(false);
@@ -337,6 +361,11 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   onLayerStateRef.current  = onLayerStateChange;
   const isMarkerActiveRef  = useRef(isMarkerActive);
   isMarkerActiveRef.current = isMarkerActive;
+  const markerPositionRef      = useRef(markerPosition);
+  markerPositionRef.current    = markerPosition;
+  const activeRef              = useRef(active);
+  activeRef.current            = active;
+  const riversZoomCleanupRef   = useRef(null);
   const toggleRef          = useRef(null);
   const isMountedRef       = useRef(false);
 
@@ -370,6 +399,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       caesbIconMarkersRef.current = [];
       caesbIconMarkersLfRef.current.forEach(m => { try { if (map) map.removeLayer(m); } catch (_) {} });
       caesbIconMarkersLfRef.current = [];
+      if (riversZoomCleanupRef.current) {
+        try { riversZoomCleanupRef.current(); } catch (_) {}
+        riversZoomCleanupRef.current = null;
+      }
     };
   }, [map, mapType]);
 
@@ -399,6 +432,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     caesbIconMarkersRef.current = [];
     caesbIconMarkersLfRef.current.forEach(m => { try { if (map) map.removeLayer(m); } catch (_) {} });
     caesbIconMarkersLfRef.current = [];
+    if (riversZoomCleanupRef.current) {
+      try { riversZoomCleanupRef.current(); } catch (_) {}
+      riversZoomCleanupRef.current = null;
+    }
     setActive(new Set());
     setWaterUseMap({ hidrogeo_fraturado: false, hidrogeo_poroso: false });
     onWaterUseRef.current?.(false);
@@ -445,6 +482,114 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     const c = map.getCenter();
     return { lat: c.lat, lng: c.lng };
   }, [map, mapType]);
+
+  const loadRiversLayer = useCallback(async (id, color) => {
+    const layerDef = ALL_LAYERS.find(l => l.id === id);
+    const pos = markerPositionRef.current;
+    if (!pos?.lat || !pos?.lng) return;
+
+    if (riversZoomCleanupRef.current) {
+      try { riversZoomCleanupRef.current(); } catch (_) {}
+      riversZoomCleanupRef.current = null;
+    }
+
+    const existing = dataLayersRef.current.get(id);
+    if (existing) {
+      if (mapType === 'gmaps') { try { existing.setMap(null); } catch (_) {} }
+      else { try { if (map && map.hasLayer(existing)) map.removeLayer(existing); } catch (_) {} }
+    }
+
+    // Mutable array preenchido após o fetch — lido pelos click handlers via closure
+    const riverColors = [];
+
+    const getWeight = () => {
+      const z = map?.getZoom?.() ?? 12;
+      if (z >= 17) return 8;
+      if (z >= 15) return 6;
+      if (z >= 13) return 4;
+      return 2;
+    };
+
+    let dl;
+    if (mapType === 'gmaps') {
+      dl = new window.google.maps.Data({ map });
+      dl.addListener('click', (event) => {
+        if (isMarkerActiveRef.current?.()) return;
+        const fIdx = typeof event.feature.getId() === 'number' ? event.feature.getId() : 0;
+        const fColor = riverColors[fIdx] ?? getFeatureColor(fIdx);
+        const props = gmapsFeatureProps(event.feature);
+        pendingShapeRef.current = null;
+        if (!infoWinRef.current) infoWinRef.current = new window.google.maps.InfoWindow();
+        infoWinRef.current.setContent(buildFeatureHtml(props, layerDef?.label ?? id, fColor, false, null, LAYER_FIELD_CONFIG[id]?.bold ?? null));
+        infoWinRef.current.setPosition(event.latLng);
+        infoWinRef.current.open(map);
+      });
+    } else {
+      const L = (await import('leaflet')).default;
+      dl = L.geoJSON(null, {
+        onEachFeature: (feature, layer) => {
+          layer.on('click', (e) => {
+            const fIdx = feature?.id ?? 0;
+            const fColor = riverColors[fIdx] ?? getFeatureColor(fIdx);
+            pendingShapeRef.current = null;
+            L.DomEvent.stopPropagation(e);
+            L.popup({ maxWidth: 300, closeButton: true })
+              .setLatLng(e.latlng)
+              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, fColor, false, null, LAYER_FIELD_CONFIG[id]?.bold ?? null))
+              .openOn(map);
+          });
+        },
+      });
+      if (map) dl.addTo(map);
+    }
+    dataLayersRef.current.set(id, dl);
+
+    setLoading(prev => new Set([...prev, id]));
+    try {
+      const raw = await fetchRiversByCoordinates(pos.lat, pos.lng);
+      const gj = normalizeRiversGeoJSON(raw);
+
+      gj.features.forEach((_, i) => { riverColors[i] = getFeatureColor(i); });
+
+      if (mapType === 'gmaps') {
+        const styleFn = (feature) => {
+          const fIdx = typeof feature.getId() === 'number' ? feature.getId() : 0;
+          return { strokeColor: riverColors[fIdx] ?? getFeatureColor(fIdx), strokeOpacity: 0.9, strokeWeight: getWeight() };
+        };
+        dl.addGeoJson(gj);
+        dl.setStyle(styleFn);
+        const zoomListener = window.google.maps.event.addListener(map, 'zoom_changed', () => {
+          try { dl.setStyle(styleFn); } catch (_) {}
+        });
+        riversZoomCleanupRef.current = () => {
+          try { window.google.maps.event.removeListener(zoomListener); } catch (_) {}
+        };
+      } else {
+        const L = (await import('leaflet')).default;
+        const styleFn = (feature) => {
+          const fIdx = feature?.id ?? 0;
+          return { color: riverColors[fIdx] ?? getFeatureColor(fIdx), weight: getWeight(), opacity: 0.9 };
+        };
+        dl.addData(gj);
+        dl.setStyle(styleFn);
+        const onZoom = () => { try { dl.setStyle(styleFn); } catch (_) {} };
+        map.on('zoom', onZoom);
+        riversZoomCleanupRef.current = () => {
+          try { map.off('zoom', onZoom); } catch (_) {}
+        };
+      }
+    } catch (err) {
+      console.error('[LayerPanel] erro ao carregar rios', err);
+    } finally {
+      setLoading(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  }, [map, mapType]);
+
+  useEffect(() => {
+    if (!activeRef.current.has('rios_df') || !markerPosition?.lat || !markerPosition?.lng) return;
+    const color = ALL_LAYERS.find(l => l.id === 'rios_df')?.color ?? '#29b6f6';
+    loadRiversLayer('rios_df', color);
+  }, [markerPosition, loadRiversLayer]);
 
   // Creates and registers a point-style Data layer on the map
   const loadPositionLayer = useCallback(async (id, color, meters) => {
@@ -623,6 +768,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         caesbIconMarkersLfRef.current.forEach(m => { try { if (map) map.removeLayer(m); } catch (_) {} });
         caesbIconMarkersLfRef.current = [];
       }
+      if (id === 'rios_df' && riversZoomCleanupRef.current) {
+        try { riversZoomCleanupRef.current(); } catch (_) {}
+        riversZoomCleanupRef.current = null;
+      }
       if (WATER_USE_LAYERS.has(id)) {
         setWaterUseMap(prev => {
           const next = { ...prev, [id]: false };
@@ -638,6 +787,12 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     // Position layers always fetch fresh by map center
     if (POSITION_LAYERS.has(id)) {
       await loadPositionLayer(id, color, metersMap[id]);
+      return;
+    }
+
+    // Marker-position layers fetch by red marker coordinates
+    if (MARKER_POSITION_LAYERS.has(id)) {
+      await loadRiversLayer(id, color);
       return;
     }
 
@@ -759,7 +914,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     } finally {
       setLoading(prev => { const s = new Set(prev); s.delete(id); return s; });
     }
-  }, [active, map, mapType, metersMap, loadPositionLayer]);
+  }, [active, map, mapType, metersMap, loadPositionLayer, loadRiversLayer]);
 
   toggleRef.current = toggle;
 
