@@ -263,6 +263,11 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       return `<b>${fmt(Math.round(m2))} m²</b> &nbsp;·&nbsp; <b>${fmt(ha)} ha</b>`;
     };
 
+    const fmtRadius = (m) => {
+      const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+      return `<b>${fmt(Math.round(m))} m</b>`;
+    };
+
     // Vértice (ou ponto calculado) de latitude máxima — popup fica acima da forma
     const topOfLayer = (layer) => {
       if (layer instanceof L.Circle) {
@@ -279,10 +284,11 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     };
 
     const showAreaPopup = (layer) => {
-      let anchor, areaM2;
+      let anchor, areaM2, radiusM = null;
       try {
         if (layer instanceof L.Circle) {
-          areaM2 = Math.PI * layer.getRadius() ** 2;
+          radiusM = layer.getRadius();
+          areaM2 = Math.PI * radiusM ** 2;
         } else if (layer instanceof L.Polygon) {
           const lls = layer.getLatLngs()[0];
           areaM2 = L.GeometryUtil ? Math.abs(L.GeometryUtil.geodesicArea(lls)) : 0;
@@ -297,6 +303,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
             <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Área da camada</div>
             <div style="font-size:12px;color:#263238;">${fmtArea(areaM2)}</div>
+            ${radiusM != null ? `<div style="font-size:12px;color:#263238;margin-top:2px;">Raio: ${fmtRadius(radiusM)}</div>` : ''}
           </div>
         `)
         .addTo(map);
@@ -572,7 +579,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           let shape = null;
           if (l instanceof L.Circle) {
             const ll = l.getLatLng();
-            shape = { type: 'circle', center: { lat: ll.lat, lng: ll.lng }, radius: Math.round(l.getRadius()) };
+            // _skipDraw: o círculo editado já está no mapa — evita recriar via circleData
+            // e sobrepor o círculo anterior com um novo no mesmo lugar.
+            shape = { type: 'circle', center: { lat: ll.lat, lng: ll.lng }, radius: Math.round(l.getRadius()), _skipDraw: true };
           } else if (l instanceof L.Rectangle) {
             const ne = l.getBounds().getNorthEast(), sw = l.getBounds().getSouthWest();
             shape = { type: 'rectangle', nex: ne.lng, ney: ne.lat, swx: sw.lng, swy: sw.lat };

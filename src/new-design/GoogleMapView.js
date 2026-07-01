@@ -365,6 +365,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       return `<b>${fmt(Math.round(m2))} m²</b>&nbsp;·&nbsp;<b>${fmt(ha)} ha</b>`;
     };
 
+    const fmtRadius = (m) => {
+      const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+      return `<b>${fmt(Math.round(m))} m</b>`;
+    };
+
     // Vértice de latitude máxima — garante ponto na borda do polígono, nunca dentro
     const topOfPath = (pathArr) => {
       let top = pathArr[0];
@@ -382,12 +387,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const topOfCircle = (center, radius) =>
       new window.google.maps.LatLng(center.lat() + radius / 111320, center.lng());
 
-    const showAreaPopupG = (topLatLng, areaM2) => {
+    const showAreaPopupG = (topLatLng, areaM2, radiusM = null) => {
       const iw = new window.google.maps.InfoWindow({
         content: `
           <div style="font-family:Roboto,Arial,sans-serif;min-width:150px;text-align:center;padding:2px 4px;">
             <div style="font-size:10px;color:#78909c;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Área da camada</div>
             <div style="font-size:12px;color:#263238;">${fmtArea(areaM2)}</div>
+            ${radiusM != null ? `<div style="font-size:12px;color:#263238;margin-top:2px;">Raio: ${fmtRadius(radiusM)}</div>` : ''}
           </div>
         `,
       });
@@ -570,8 +576,10 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
       allCirclesRef.current.forEach(c => {
         const ctr = c.getCenter();
-        const cs = { type: 'circle', center: { lat: ctr.lat(), lng: ctr.lng() }, radius: Math.round(c.getRadius()) };
-        const areaInfo = showAreaPopupG(topOfCircle(ctr, c.getRadius()), computeArea(cs));
+        // _skipDraw: o círculo editado já está no mapa — evita recriar via circleData
+        // e sobrepor o círculo anterior com um novo no mesmo lugar.
+        const cs = { type: 'circle', center: { lat: ctr.lat(), lng: ctr.lng() }, radius: Math.round(c.getRadius()), _skipDraw: true };
+        const areaInfo = showAreaPopupG(topOfCircle(ctr, c.getRadius()), computeArea(cs), c.getRadius());
         addShapeClickListener(c, areaInfo, cs);
         onCreatedRef.current?.(cs);
       });
@@ -815,7 +823,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
         if (radius < 50) { clearPrev(); startPt = null; lastDrag = null; return; }
         const s = startPt; clearPrev(); setDrawMode(null); startPt = null; lastDrag = null;
         const circShape = { type: 'circle', center: { lat: s.lat(), lng: s.lng() }, radius: Math.round(radius) };
-        pendingCircleAreaRef.current = showAreaPopupG(topOfCircle(s, radius), computeArea(circShape));
+        pendingCircleAreaRef.current = showAreaPopupG(topOfCircle(s, radius), computeArea(circShape), radius);
         onCreatedRef.current?.(circShape);
       }
       if (drawMode === 'rectangle' && startPt && lastDrag) {

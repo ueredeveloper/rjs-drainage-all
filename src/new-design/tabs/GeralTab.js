@@ -201,12 +201,12 @@ export default function GeralTab({
             />
 
             <Stack direction="row" alignItems="center" spacing={1.5}>
-              <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0 }}>600 m</Typography>
+              <Typography variant="caption" sx={{ fontSize: '0.6rem', color: '#78909c', flexShrink: 0 }}>100 m</Typography>
               <Slider
-                value={radius} min={600} max={2000} step={100}
+                value={radius} min={100} max={2000} step={100}
                 onChange={(_, v) => onRadiusChange(v)}
                 valueLabelDisplay="auto" valueLabelFormat={v => `${v} m`}
-                marks={[{ value: 600 }, { value: 1000 }, { value: 1300 }, { value: 1500 }, { value: 2000 }]}
+                marks={[{ value: 100 }, { value: 600 }, { value: 1000 }, { value: 1300 }, { value: 1500 }, { value: 2000 }]}
                 sx={{
                   flex: 1, color: '#003566',
                   '& .MuiSlider-thumb': { width: 14, height: 14 },

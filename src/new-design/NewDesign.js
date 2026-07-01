@@ -148,12 +148,17 @@ export default function NewDesign() {
   }, []);
 
   // ── Handlers de busca ─────────────────────────────────────────────────────
-  const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo', skipFly = false, replaceCoord = false, userDrawn = false) => {
+  const doCircleSearch = useCallback(async (center, rad, shapeLabel = 'Círculo', skipFly = false, replaceCoord = false, userDrawn = false, skipDraw = false) => {
     const oldPageId = replaceCoord ? coordSearchPageIdRef.current : null;
     const pageId = Date.now();
     if (replaceCoord) coordSearchPageIdRef.current = pageId;
 
-    setCircleData({ center, radius: rad, _skipFly: skipFly, _replaceCoord: replaceCoord, _pageId: pageId, _userDrawn: userDrawn });
+    // Ao salvar a edição de um círculo já existente no mapa, o próprio círculo
+    // (redimensionado/movido) permanece desenhado — não recriar via circleData,
+    // senão o círculo anterior e o novo ficam sobrepostos.
+    if (!skipDraw) {
+      setCircleData({ center, radius: rad, _skipFly: skipFly, _replaceCoord: replaceCoord, _pageId: pageId, _userDrawn: userDrawn });
+    }
     setSubShape(null);
     setLoading(true);
     setError(null);
@@ -327,7 +332,7 @@ export default function NewDesign() {
     if (shape.type === 'circle') {
       setLat(shape.center.lat.toFixed(6));
       setLng(shape.center.lng.toFixed(6));
-      doCircleSearch(shape.center, shape.radius, 'Círculo', true, false, true);
+      doCircleSearch(shape.center, shape.radius, 'Círculo', true, false, true, shape._skipDraw === true);
       return;
     }
 
