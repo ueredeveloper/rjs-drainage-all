@@ -157,6 +157,7 @@ export default function SubterraneanTab({
       return;
     }
 
+    console.log('[Coordenadas][Aba Subterrânea] marcador e busca:', { lat: latN, lng: lngN });
     onApplyCoordinates?.({ lat: latN, lng: lngN });
 
     setLoading(true);
@@ -225,6 +226,7 @@ export default function SubterraneanTab({
       onClearCircle?.();
       onSubShape?.(null);
       onSubMarkers?.([]);
+      console.log('[Coordenadas][Aba Subterrânea] marcador e busca (interferência):', { lat: latN, lng: lngN });
       onApplyCoordinates?.({ lat: latN, lng: lngN, info: syntheticPoint });
 
       try {

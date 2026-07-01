@@ -108,6 +108,7 @@ export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onA
       return;
     }
 
+    console.log('[Coordenadas][Aba Superficial] marcador e busca:', { lat: latN, lng: lngN });
     onApplyCoordinates?.({ lat: latN, lng: lngN });
 
     setLoading(true);

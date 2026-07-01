@@ -1111,7 +1111,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       <SadDfHud phase={hudPhase} ready={introReady} />
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} onLocate={(pos) => onPickRef.current?.(pos)} markerPosition={userMarker} />,
+          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} onLocate={(pos) => onPickRef.current?.(pos)} markerPosition={userMarker} isFullscreen={isFullscreen} />,
           panelRootRef.current,
         )
       }

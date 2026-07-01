@@ -135,7 +135,10 @@ export default function NewDesign() {
         ...item, _catColor: c.color, _catLabel: c.label, _catKey: c.key, _pageId: pageId,
       }))
     ).filter(item => !isNaN(parseFloat(item.int_latitude)) && !isNaN(parseFloat(item.int_longitude)));
-    setAllMarkers(prev => [...prev, ...newMarkers]);
+    // Descarta marcadores deixados pelas abas Subterrânea/Superficial/Barragem
+    // (não possuem _pageId, pois aquelas abas substituem allMarkers inteiro
+    // em vez de acumular por página) antes de acumular os novos da aba Geral.
+    setAllMarkers(prev => [...prev.filter(m => m._pageId !== undefined), ...newMarkers]);
   }, []);
 
   const handleClearPage = useCallback((id) => {
@@ -197,6 +200,7 @@ export default function NewDesign() {
     skipUserMarkerEffectRef.current = true;
     setLat(String(latN.toFixed(7)));
     setLng(String(lngN.toFixed(7)));
+    console.log('[Coordenadas][marcador] aplicando ao mapa:', { lat: latN, lng: lngN });
     setUserMarker({ lat: latN, lng: lngN, info: info ?? null });
   }, []);
 
@@ -204,6 +208,7 @@ export default function NewDesign() {
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) { setError('Coordenadas inválidas. Ex: -15.7801'); return; }
+    console.log('[Coordenadas][Aba Geral] marcador e busca:', { lat: latN, lng: lngN });
     setUserMarker({ lat: latN, lng: lngN });
     doCircleSearch({ lat: latN, lng: lngN }, radius, 'Coordenada', false, true);
   }, [lat, lng, radius, doCircleSearch]);

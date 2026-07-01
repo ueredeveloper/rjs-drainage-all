@@ -94,6 +94,7 @@ export default function BarragemTab({
       setCalcError('Coordenadas inválidas. Informe lat/lng antes de calcular.');
       return;
     }
+    console.log('[Coordenadas][Aba Barragem] coordenada usada no cálculo:', { lat: latN, lng: lngN });
     setCalcLoading(true);
     setCalcError(null);
     onBarMarkers?.([]);
@@ -147,6 +148,7 @@ export default function BarragemTab({
       setCalcError('Coordenadas inválidas. Informe lat/lng antes de buscar.');
       return;
     }
+    console.log('[Coordenadas][Aba Barragem] coordenada usada no marcador:', { lat: latN, lng: lngN });
     onClearCircle?.();
     onApplyCoordinates?.({ lat: latN, lng: lngN });
     await handleCalculate();

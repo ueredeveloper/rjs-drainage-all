@@ -326,8 +326,11 @@ function makeCaesbContent() {
   return svg;
 }
 
-export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive, onLocate, markerPosition = null }) {
+export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive, onLocate, markerPosition = null, isFullscreen = false }) {
   const { scalePx } = useFontSize();
+  // Em fullscreen a janela fica muito maior que o painel, então aumentamos
+  // a fonte de todos os itens e a largura da caixa de camadas proporcionalmente.
+  const fsScalePx = useCallback((px) => scalePx(isFullscreen ? px * 1.4 : px), [scalePx, isFullscreen]);
   const [open, setOpen]               = useState(false);
   const [locating, setLocating]       = useState(false);
   const [active, setActive]           = useState(new Set());
@@ -594,7 +597,13 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   // Creates and registers a point-style Data layer on the map
   const loadPositionLayer = useCallback(async (id, color, meters) => {
     const layerDef = ALL_LAYERS.find(l => l.id === id);
-    const center = getMapCenter();
+    // Prioriza a coordenada do marcador de busca — o mapa pode estar centrado
+    // no fitBounds de um polígono resultante (subShape/supShape/barShape),
+    // que não coincide com o ponto pesquisado.
+    const markerPos = markerPositionRef.current;
+    const center = (markerPos?.lat != null && markerPos?.lng != null)
+      ? { lat: markerPos.lat, lng: markerPos.lng }
+      : getMapCenter();
     if (!center) return;
 
     // Remove previous layer for this id
@@ -1165,7 +1174,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0,
           padding: '0', background: '#fff', border: '1px solid #ccc',
           borderRadius: 2, boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
-          cursor: 'pointer', fontSize: scalePx(12), color: '#333', fontWeight: 600,
+          cursor: 'pointer', fontSize: fsScalePx(12), color: '#333', fontWeight: 600,
           whiteSpace: 'nowrap', width: 30, height: 30,
           transition: 'background 0.15s, box-shadow 0.15s',
         }}
@@ -1177,7 +1186,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           <span style={{
             background: '#1565c0', color: '#fff', borderRadius: '50%',
             width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: scalePx(10), fontWeight: 700, flexShrink: 0,
+            fontSize: fsScalePx(10), fontWeight: 700, flexShrink: 0,
           }}>
             {active.size}
           </span>
@@ -1189,7 +1198,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           position: 'absolute', bottom: 'calc(100% + 4px)', right: 0,
           background: '#fff', borderRadius: 6,
           boxShadow: '0 2px 12px rgba(0,0,0,0.22)',
-          minWidth: 230,
+          minWidth: isFullscreen ? 320 : 230,
           zIndex: 1000,
         }}>
           {/* Header */}
@@ -1197,7 +1206,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '7px 10px 6px', borderBottom: '1px solid #e8ecf0',
           }}>
-            <span style={{ fontSize: scalePx(11), fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.7px' }}>Camadas</span>
+            <span style={{ fontSize: fsScalePx(11), fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.7px' }}>Camadas</span>
             <button
               onClick={() => setOpen(false)}
               title="Fechar painel"
@@ -1239,14 +1248,14 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                 >
                   <path d="M7 10l5 5 5-5z"/>
                 </svg>
-                <span style={{ flex: 1, fontSize: scalePx(10), fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
+                <span style={{ flex: 1, fontSize: fsScalePx(10), fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
                   {group}
                 </span>
                 {groupActive > 0 && (
                   <span style={{
                     background: '#1565c0', color: '#fff', borderRadius: '50%',
                     width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: scalePx(9), fontWeight: 700, flexShrink: 0,
+                    fontSize: fsScalePx(9), fontWeight: 700, flexShrink: 0,
                   }}>
                     {groupActive}
                   </span>
@@ -1274,7 +1283,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                             onFocus={() => addressSuggestions.length > 0 && setShowSuggestions(true)}
                             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                             style={{
-                              width: '100%', fontSize: scalePx(11),
+                              width: '100%', fontSize: fsScalePx(11),
                               padding: addressKeyword ? '3px 18px 3px 6px' : '3px 6px',
                               border: '1px solid #ccc', borderRadius: 3, outline: 'none',
                               fontFamily: 'Roboto, Arial, sans-serif', boxSizing: 'border-box',
@@ -1344,7 +1353,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                                 onMouseDown={() => handleSuggestionSelect(opt)}
                                 style={{
                                   padding: '5px 8px',
-                                  fontSize: scalePx(11),
+                                  fontSize: fsScalePx(11),
                                   cursor: 'pointer',
                                   fontFamily: 'Roboto, Arial, sans-serif',
                                   borderBottom: '1px solid #f0f0f0',
@@ -1367,7 +1376,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                       style={{
                         display: 'flex', alignItems: 'center', gap: 8,
                         padding: '6px 12px', cursor: 'pointer',
-                        fontSize: scalePx(12.5), color: '#263238',
+                        fontSize: fsScalePx(12.5), color: '#263238',
                         background: isActive ? `${color}18` : 'transparent',
                         transition: 'background 0.15s',
                       }}
@@ -1392,7 +1401,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                           onChange={e => handleMetersChange(id, color, Number(e.target.value))}
                           onClick={e => e.stopPropagation()}
                           style={{
-                            fontSize: scalePx(10), padding: '1px 2px',
+                            fontSize: fsScalePx(10), padding: '1px 2px',
                             border: '1px solid #ccc', borderRadius: 2,
                             background: '#fff', cursor: 'pointer',
                             fontFamily: 'Roboto, Arial, sans-serif', flexShrink: 0,
@@ -1439,7 +1448,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
                             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                           }} />
                         </div>
-                        <span style={{ fontSize: scalePx(11), color: '#546e7a', fontStyle: 'italic' }}>Cálculo de Uso</span>
+                        <span style={{ fontSize: fsScalePx(11), color: '#546e7a', fontStyle: 'italic' }}>Cálculo de Uso</span>
                         {waterUseMap[id] && (
                           <div style={{ display: 'flex', gap: 2, marginLeft: 2 }}>
                             {[['≤10%','#4cc94c'],['≤25%','#007c00'],['≤50%','#004700'],['≤75%','#FFD32C'],['≤90%','#FF2C2C'],['>90%','#F200FF']].map(([lbl, col]) => (

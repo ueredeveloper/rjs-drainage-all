@@ -1009,7 +1009,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {mapInstance && panelContainer &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="leaflet" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} markerPosition={userMarker} />,
+          <LayerPanel map={mapInstance} mapType="leaflet" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} markerPosition={userMarker} isFullscreen={isFullscreen} />,
           panelContainer,
         )
       }
