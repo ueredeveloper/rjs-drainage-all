@@ -16,6 +16,46 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     require('leaflet/dist/images/marker-shadow.png'),
 });
 
+// Padroniza hover/estado ativo dos botões da toolbar (marcador, editar, remover,
+// distância e os de desenho da leaflet-draw) para ficarem iguais ao GoogleMapView.
+// A leaflet-draw alterna a classe .leaflet-draw-toolbar-button-enabled ao ativar
+// um modo, mas o leaflet.draw.css não define nenhum estilo pra ela — por isso os
+// botões de polígono/retângulo/círculo não pareciam reagir ao clique.
+if (typeof document !== 'undefined' && !document.getElementById('nd-leaflet-toolbar-style')) {
+  const style = document.createElement('style');
+  style.id = 'nd-leaflet-toolbar-style';
+  style.textContent = `
+    .leaflet-draw-toolbar a:hover {
+      background-color: #dbeafe !important;
+      box-shadow: inset 2px 0 0 #1565c0;
+    }
+    .leaflet-draw-toolbar a.leaflet-draw-toolbar-button-enabled,
+    .leaflet-draw-toolbar a.leaflet-draw-toolbar-button-enabled:hover {
+      background-color: #d8e8f8 !important;
+      box-shadow: inset 2px 0 0 #1565c0;
+    }
+    .nd-lf-btn { transition: background-color .18s, color .18s, box-shadow .18s, transform .15s; }
+    .nd-lf-btn:hover:not(.nd-lf-active) {
+      background-color: #dbeafe;
+      color: #1565c0;
+      box-shadow: inset 2px 0 0 #1565c0, 0 2px 6px rgba(21,101,192,0.12);
+      transform: scale(1.08);
+      position: relative;
+      z-index: 2;
+    }
+    .nd-lf-btn.nd-lf-active { background-color: #d8e8f8; color: #1565c0; }
+    .nd-lf-btn-red:hover:not(.nd-lf-active) {
+      background-color: #fce8e8;
+      color: #c62828;
+      box-shadow: inset 2px 0 0 #c62828, 0 2px 6px rgba(198,40,40,0.15);
+      transform: scale(1.08);
+      position: relative;
+      z-index: 2;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 
 const BRASILIA   = [-15.7801, -47.9292];
 const SHAPE_OPTS      = { color: '#1565c0', fillColor: '#1565c0', fillOpacity: 0.18, weight: 2 };
@@ -249,7 +289,8 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     const distA = document.createElement('a');
     distA.href  = '#';
     distA.title = 'Medir distância';
-    distA.style.cssText = 'display:flex;align-items:center;justify-content:center;color:#555;transition:background 0.15s,color 0.15s;';
+    distA.className = 'nd-lf-btn';
+    distA.style.cssText = 'display:flex;align-items:center;justify-content:center;color:#555;';
     distA.style.setProperty('background-image', 'none', 'important');
     distA.style.setProperty('background-size', 'unset', 'important');
     distA.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="21" x2="21" y2="3"/><circle cx="3" cy="21" r="2.2" fill="currentColor" stroke="none"/><circle cx="21" cy="3" r="2.2" fill="currentColor" stroke="none"/></svg>`;
@@ -477,6 +518,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       if (shape) onCreatedRef.current(shape);
     });
 
+    // Desenhar forma e medir distância são mutuamente exclusivos (mesmo comportamento do GMaps)
+    map.on(L.Draw.Event.DRAWSTART, () => { if (distModeRef.current) stopDistMode(); });
+
     // ── Botão tela cheia ─────────────────────────────────────────────────────
     const ICON_FS_ENTER = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`;
     const ICON_FS_EXIT  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`;
@@ -518,10 +562,10 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     const PickControl = L.Control.extend({
       onAdd() {
         const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        const btn = L.DomUtil.create('a', '', container);
+        const btn = L.DomUtil.create('a', 'nd-lf-btn', container);
         btn.href  = '#';
         btn.title = 'Marcador — selecionar ponto no mapa';
-        btn.style.cssText = 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;transition:background 0.15s,color 0.15s;';
+        btn.style.cssText = 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;';
         btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
           <circle cx="12" cy="9" r="2.8" fill="white"/>
@@ -532,8 +576,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           pickModeRef.current = !pickModeRef.current;
           const active = pickModeRef.current;
           map.getContainer().style.cursor = active ? 'crosshair' : '';
-          btn.style.background = active ? '#e3f2fd' : '';
-          btn.style.color      = active ? '#1565c0' : '#555';
+          btn.classList.toggle('nd-lf-active', active);
         });
         return container;
       },
@@ -604,21 +647,20 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     const EditRemoveControl = L.Control.extend({
       onAdd() {
         const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        const BTN = 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s,color 0.15s;';
+        const BTN = 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;';
 
-        const editBtn = L.DomUtil.create('a', '', container);
+        const editBtn = L.DomUtil.create('a', 'nd-lf-btn', container);
         editBtn.href = '#'; editBtn.title = 'Editar camadas';
         editBtn.style.cssText = `${BTN}color:#555;border-bottom:1px solid #ccc;`;
         editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
-        const removeBtn = L.DomUtil.create('a', '', container);
+        const removeBtn = L.DomUtil.create('a', 'nd-lf-btn nd-lf-btn-red', container);
         removeBtn.href = '#'; removeBtn.title = 'Remover';
         removeBtn.style.cssText = `${BTN}color:#c62828;`;
         removeBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.81 14.99l1.19-.92-1.43-1.43-1.19.92 1.43 1.43zm-.45-4.72L21 9l-9-7-2.91 2.27 7.87 7.88 2.4-1.88zM3.27 1L2 2.27l4.22 4.22L3 9l1.63 1.27L12 16l2.1-1.63 1.43 1.43L12 18.54l-7.37-5.73L3 14.07l9 7 4.95-3.85L20.73 21 22 19.73 3.27 1z"/></svg>`;
 
         const setEditUI = (active) => {
-          editBtn.style.background = active ? '#e3f2fd' : '';
-          editBtn.style.color      = active ? '#1565c0' : '#555';
+          editBtn.classList.toggle('nd-lf-active', active);
           editBtn.title = active ? 'Salvar edição' : 'Editar camadas';
         };
 
@@ -674,7 +716,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       distPointsRef.current = [];
       if (distPreviewRef.current) { try { map.removeLayer(distPreviewRef.current); } catch (_) {} distPreviewRef.current = null; }
       map.getContainer().style.cursor = '';
-      if (distBtnRef.current) { distBtnRef.current.style.backgroundColor = ''; distBtnRef.current.style.color = '#555'; }
+      if (distBtnRef.current) distBtnRef.current.classList.remove('nd-lf-active');
     };
 
     L.DomEvent.on(distA, 'click', L.DomEvent.stop);
@@ -683,13 +725,14 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       if (pickModeRef.current) {
         pickModeRef.current = false;
         map.getContainer().style.cursor = '';
-        if (pickBtnRef.current) { pickBtnRef.current.style.background = ''; pickBtnRef.current.style.color = '#555'; }
+        pickBtnRef.current?.classList.remove('nd-lf-active');
       }
+      // Medir distância e desenhar forma são mutuamente exclusivos (mesmo comportamento do GMaps)
+      drawCtrl._toolbars.draw?.disable();
       distModeRef.current = true;
       distPointsRef.current = [];
       map.getContainer().style.cursor = 'crosshair';
-      distA.style.backgroundColor = '#e3f2fd';
-      distA.style.color           = '#1565c0';
+      distA.classList.add('nd-lf-active');
     });
 
     // ── Listeners globais ────────────────────────────────────────────────────
@@ -698,7 +741,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       if (pickModeRef.current) {
         pickModeRef.current = false;
         map.getContainer().style.cursor = '';
-        if (pickBtnRef.current) { pickBtnRef.current.style.background = ''; pickBtnRef.current.style.color = '#555'; }
+        pickBtnRef.current?.classList.remove('nd-lf-active');
       }
       if (distModeRef.current) stopDistMode();
       if (editState.cancelFn) editState.cancelFn();
