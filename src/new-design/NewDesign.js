@@ -484,7 +484,7 @@ export default function NewDesign() {
           position: { xs: mapExpanded ? 'fixed' : 'relative', md: 'relative' },
           top:      { xs: mapExpanded ? 0 : 'auto',        md: 'auto' },
           left:     { xs: mapExpanded ? 0 : 'auto',        md: 'auto' },
-          zIndex:   { xs: mapExpanded ? 9999 : 'auto',     md: 'auto' },
+          zIndex:   { xs: mapExpanded ? 9999 : 'auto',     md: 1 },
           flexShrink: 0,
           pointerEvents: isResizingMap ? 'none' : 'auto',
         }}>

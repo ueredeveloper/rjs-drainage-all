@@ -782,7 +782,14 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     mapRef.current = map;
     setMapInstance(map);
 
+    // Leaflet não detecta sozinho mudanças de tamanho do container (ex: arrastar
+    // a divisória do painel do mapa) — sem isso os tiles ficam cortados/deslocados
+    // até o usuário redimensionar a janela.
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    resizeObserver.observe(containerRef.current);
+
     return () => {
+      resizeObserver.disconnect();
       map._fsCleanup?.();
       document.removeEventListener('keydown', onKeyDown);
       map.remove();
