@@ -6,6 +6,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { Wrapper } from '@googlemaps/react-wrapper';
 import LoginDialog from '../components/Commom/LoginDialog';
 import { useAuth } from '../hooks/auth-hooks';
@@ -68,6 +69,9 @@ export default function NewDesign() {
   const [clearShapesTrigger, setClearShapesTrigger] = useState(0);
   const [settingsOpen, setSettingsOpen]       = useState(false);
   const [mapExpanded, setMapExpanded]         = useState(false);
+  const [mapWidthPct, setMapWidthPct]         = useState(25);
+  const [isResizingMap, setIsResizingMap]     = useState(false);
+  const bodyRef                               = useRef(null);
   const coordSearchPageIdRef                  = useRef(null);
   const skipUserMarkerEffectRef               = useRef(false);
   const [removeShapeTrigger, setRemoveShapeTrigger] = useState(null);
@@ -92,6 +96,33 @@ export default function NewDesign() {
       localStorage.setItem(MAP_PROVIDER_STORAGE_KEY, mapProvider);
     } catch { /* ignore */ }
   }, [mapProvider]);
+
+  // ── Redimensionamento do painel do mapa (arrastar divisória) ─────────────
+  const handleMapResizeStart = useCallback((e) => {
+    e.preventDefault();
+    setIsResizingMap(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizingMap) return;
+    const handleMouseMove = (e) => {
+      if (!bodyRef.current) return;
+      const rect = bodyRef.current.getBoundingClientRect();
+      const pct = ((e.clientX - rect.left) / rect.width) * 100;
+      setMapWidthPct(Math.min(70, Math.max(15, pct)));
+    };
+    const handleMouseUp = () => setIsResizingMap(false);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizingMap]);
 
   const handleToggleCat = useCallback((key) => {
     setHiddenCats(prev => {
@@ -444,17 +475,18 @@ export default function NewDesign() {
       </Box>
 
       {/* ── Corpo ─────────────────────────────────────────────────────────── */}
-      <Box id="nd-body" sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: { xs: 'column', md: 'row' } }}>
+      <Box id="nd-body" ref={bodyRef} sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: { xs: 'column', md: 'row' } }}>
 
         {/* Mapa */}
         <Box id="nd-map-panel" sx={{
-          width:    { xs: mapExpanded ? '100vw' : '100%',  md: mapExpanded ? '100vw' : '25%' },
+          width:    { xs: mapExpanded ? '100vw' : '100%',  md: mapExpanded ? '100vw' : `${mapWidthPct}%` },
           height:   { xs: mapExpanded ? '100vh' : '42vh',  md: 'auto' },
           position: { xs: mapExpanded ? 'fixed' : 'relative', md: 'relative' },
           top:      { xs: mapExpanded ? 0 : 'auto',        md: 'auto' },
           left:     { xs: mapExpanded ? 0 : 'auto',        md: 'auto' },
           zIndex:   { xs: mapExpanded ? 9999 : 'auto',     md: 'auto' },
           flexShrink: 0,
+          pointerEvents: isResizingMap ? 'none' : 'auto',
         }}>
           {(() => {
             const mapProps = {
@@ -527,6 +559,65 @@ export default function NewDesign() {
             ))}
           </Box>
         </Box>
+
+        {/* Divisória arrastável — redimensiona o mapa horizontalmente (apenas desktop) */}
+        <Tooltip title="Arraste para redimensionar o mapa" placement="right">
+          <Box
+            onMouseDown={handleMapResizeStart}
+            sx={{
+              display: { xs: 'none', md: mapExpanded ? 'none' : 'block' },
+              position: 'relative',
+              width: 3,
+              flexShrink: 0,
+              cursor: 'col-resize',
+              bgcolor: isResizingMap ? '#1565c0' : '#cfd8dc',
+              transition: isResizingMap ? 'none' : 'background-color 0.15s',
+              '&:hover': { bgcolor: '#1565c0' },
+              zIndex: 20,
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: -8,
+                right: -8,
+                cursor: 'col-resize',
+              },
+              '&:hover .nd-resize-badge': {
+                transform: 'translate(-50%, -50%) scale(1.35)',
+              },
+            }}
+          >
+            <Box
+              className="nd-resize-badge"
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: isResizingMap ? 'translate(-50%, -50%) scale(1.35)' : 'translate(-50%, -50%)',
+                width: 13,
+                height: 13,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: isResizingMap ? '#1565c0' : '#fff',
+                border: '1.5px solid #1565c0',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                transition: isResizingMap ? 'none' : 'background-color 0.15s, transform 0.15s',
+                pointerEvents: 'none',
+              }}
+            >
+              <DragIndicatorIcon
+                sx={{
+                  fontSize: 9,
+                  color: isResizingMap ? '#fff' : '#1565c0',
+                  transform: 'rotate(90deg)',
+                }}
+              />
+            </Box>
+          </Box>
+        </Tooltip>
 
         {/* Painel de análise */}
         <Box id="nd-analysis-panel" sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#fff', borderLeft: '1px solid #e0e0e0', overflow: 'hidden' }}>

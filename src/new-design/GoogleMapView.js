@@ -278,9 +278,19 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
 
+    // Se o usuário mexer no mapa (arrastar ou dar zoom) antes dos 7s, encerra a animação de imediato
+    const cancelIntroOnInteraction = () => {
+      clearTimeout(introTimer);
+      fireIntroEnd();
+    };
+    const introDragL = mapRef.current.addListener('dragstart', cancelIntroOnInteraction);
+    const introZoomL = mapRef.current.addListener('zoom_changed', cancelIntroOnInteraction);
+
     return () => {
       clearTimeout(introTimer);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.google.maps.event.removeListener(introDragL);
+      window.google.maps.event.removeListener(introZoomL);
     };
   }, [introReady, mapInstance]); // eslint-disable-line react-hooks/exhaustive-deps
 
