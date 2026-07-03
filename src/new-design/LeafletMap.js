@@ -38,7 +38,7 @@ const TILE_TYPES = [
                attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>' }] },
 ];
 
-const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#6d4c41', 4: '#6a1b9a', 5: '#f57f17' };
+const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#ff00aa', 4: '#6a1b9a', 5: '#f57f17' };
 
 function getTypeSvg(item) {
   const key = (item._catLabel ?? '').toLowerCase()
