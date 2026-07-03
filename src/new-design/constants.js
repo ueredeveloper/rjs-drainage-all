@@ -11,9 +11,9 @@ export const DEV_SESSION = localStorage.getItem('rjs_session');
 export const TI_CATS = [
   { key: 'superficial', label: 'Superficial', color: '#2e7d32', tiId: 1, Icon: WavesIcon },
   { key: 'subterranea', label: 'Subterrânea', color: '#0277bd', tiId: 2, Icon: WaterDropIcon },
-  { key: 'pluvial',     label: 'Pluvial',      color: '#f57f17', tiId: 3, Icon: WaterIcon },
+  { key: 'pluvial',     label: 'Pluvial',      color: '#6d4c41', tiId: 3, Icon: WaterIcon },
   { key: 'efluente',    label: 'Efluente',     color: '#6a1b9a', tiId: 4, Icon: AssessmentIcon },
-  { key: 'barragem',    label: 'Barragem',     color: '#f9a825', tiId: 5, Icon: WaterIcon },
+  { key: 'barragem',    label: 'Barragem',     color: '#f57f17', tiId: 5, Icon: WaterIcon },
 ];
 
 export const MAIN_TABS = [
