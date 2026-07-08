@@ -76,6 +76,7 @@ function buildInfoHtml(item) {
   const td1 = 'style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;"';
   const td2 = 'style="color:#263238;"';
   const row = (label, val) => val ? `<tr><td ${td1}><b>${label}</b></td><td ${td2}>${val}</td></tr>` : '';
+  const rowAccent = (label, val) => val ? `<tr><td ${td1}><b>${label}</b></td><td style="color:${color};font-weight:600;">${val}</td></tr>` : '';
   const fmtDate = iso => { if (!iso) return null; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString('pt-BR'); };
   const fmtDoc  = v => { if (!v) return null; const n = String(v).replace(/\D/g, ''); if (n.length === 11) return n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'); if (n.length === 14) return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'); return v; };
   return `
@@ -101,6 +102,8 @@ function buildInfoHtml(item) {
         ${row('Vencimento', fmtDate(item.int_data_vencimento))}
         ${row('Bacia', item.bh_nome)}
         ${row('Unid. Hidro.', item.uh_nome)}
+        ${rowAccent('Tipo de Poço', item.tp_descricao)}
+        ${rowAccent('Tipo de Outorga', item.to_descricao)}
         <tr><td ${td1}><b>Tipo</b></td><td style="color:${color};font-weight:600;">${item._catLabel ?? '—'}</td></tr>
         ${!isNaN(lat) && !isNaN(lng)
           ? `<tr><td ${td1}><b>Lat/Lng</b></td><td ${td2}>${lat.toFixed(6)}, ${lng.toFixed(6)}</td></tr>`
