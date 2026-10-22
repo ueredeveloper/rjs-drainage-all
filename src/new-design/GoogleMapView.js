@@ -6,7 +6,13 @@ import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEflue
 import { usePlanoPilotoLayer } from './layers/usePlanoPilotoLayer';
 import { useSetorizacaoLayer } from './layers/useSetorizacaoLayer';
 import SadDfHud from './SadDfHud';
+import ElemStreetView from './ElemStreetView';
+import { buildMarkerPopupEl, markerColor } from './utils/marker-popup';
 const BRASILIA  = { lat: -15.7948528, lng: -47.8831189 };
+// Abertura com Street View desabilitada: sem fotos 360° de usuários (instáveis, 429) as imagens
+// oficiais não mostram bem mata/lago. Para reativar: STREET_VIEW_ENABLED = true.
+const STREET_VIEW_ENABLED = false;
+const FORCE_STREET_VIEW   = false; // true abre sempre com Street View (para avaliar as imagens)
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#ff00aa', 4: '#6a1b9a', 5: '#f57f17' };
 
 const SHAPE_STYLE = {
@@ -174,18 +180,24 @@ function makeBar() {
 
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true, onInitialMarker }) {
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true, onInitialMarker, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker }) {
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
   const [layerClearTrigger, setLayerClearTrigger] = useState(0);
   const [hudPhase, setHudPhase]                   = useState('intro');
   const [introMapInstance, setIntroMapInstance]   = useState(null);
-  const introStartedRef         = useRef(false);
+  // Sorteio de 0 a 9: ímpar → abre com Street View; par → vai direto para a animação (50% cada)
+  // Desabilitado (STREET_VIEW_ENABLED = false) → começa como "concluído" e roda só a animação
+  const [streetViewDone, setStreetViewDone]       = useState(() =>
+    !STREET_VIEW_ENABLED || (!FORCE_STREET_VIEW && Math.floor(Math.random() * 10) % 2 === 0));
+  const [streetViewPlayed, setStreetViewPlayed]   = useState(false);  // Street View exibido → pula a animação
+  const introStartedRef        = useRef(false);
   const pilotLayersRef          = useRef({});
   const setzLayersRef           = useRef({});
   const polygonsClearedRef      = useRef(false);
   const introBrasiliaMarkerRef  = useRef(null);
+  const stopIntroRef            = useRef(null);
   const coordCircleTimerRef     = useRef(null);
   const setLayerClearRef    = useRef(null);
   const setIntroMapRef      = useRef(null);
@@ -197,6 +209,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const mapRef            = useRef(null);
   const circleRef         = useRef(null);
   const userMarkerRef     = useRef(null);
+  const extraMkrsRef      = useRef([]);
   const selectedMkrRef    = useRef(null);
   const allMkrsRef        = useRef([]);
   const clearDrawnRef     = useRef(null);
@@ -213,7 +226,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const pageShapesRef            = useRef(new Map());
   const drawnShapesRef           = useRef([]);
   const removeFromDrawnRef       = useRef(null);
-  const distLinesRef             = useRef([]);
+  // Trata cliques do modo marcador e do desenho (polígono/régua) — inclusive sobre formas e camadas; retorna true se o clique foi consumido
+  const clickInterceptRef        = useRef(null);
+  // Atualiza a pré-visualização do desenho com a posição do cursor
+  const drawMoveRef              = useRef(null);
+  const distLinesRef            = useRef([]);
   const distIWsRef               = useRef([]);
   const distAnchorsRef           = useRef([]);
   const markerClickSuppressRef   = useRef(false);
@@ -222,7 +239,72 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const onClearRef          = useRef(onClearAll);
   const onEditSaveRef       = useRef(onEditSave);
   const onInitialMarkerRef  = useRef(onInitialMarker);
+  const onAddMarkerRef      = useRef(onAddMarker);
+  const onActivateMarkerRef = useRef(onActivateMarker);
+  const onUpdateMarkerRef   = useRef(onUpdateMarker);
+  const activeNameRef       = useRef(activeMarkerName);
+  const activeTypeRef       = useRef(activeMarkerType);
+  const activeIdRef         = useRef(activeMarkerId);
+  const userPinElRef        = useRef(null);
+  const onMoveMarkerRef     = useRef(onMoveMarker);
+  const openActivePopupRef  = useRef(false);
+  const focusNameRef        = useRef(false);      // ao abrir o popup do ativo, foca/seleciona o nome (marcador recém-adicionado)
+  const activePosRef        = useRef(null);       // posição atual do marcador ativo (muda ao digitar a coordenada no popup)
+  const movedInPlaceRef     = useRef(null);       // posição já aplicada no marcador pelo popup — o efeito não o recria
+  const markerIWRef         = useRef(null);       // InfoWindow do popup (não fixado) do marcador ativo
+  const pinnedPopupsRef     = useRef(new Map());  // id do marcador → InfoWindow fixada
+  const popupOffsetsRef     = useRef(new Map());  // id do marcador → deslocamento {x, y} do popup arrastado
 
+  onAddMarkerRef.current      = onAddMarker;
+  onActivateMarkerRef.current = onActivateMarker;
+  onUpdateMarkerRef.current   = onUpdateMarker;
+  onMoveMarkerRef.current     = onMoveMarker;
+  activeIdRef.current         = activeMarkerId;
+  activeNameRef.current       = activeMarkerName;
+  activeTypeRef.current       = activeMarkerType;
+
+  const unpinMarkerPopup = id => {
+    pinnedPopupsRef.current.get(id)?.close();
+    pinnedPopupsRef.current.delete(id);
+  };
+
+  // Coordenada digitada no popup: move o marcador ativo no lugar (sem recriá-lo,
+  // para o popup não fechar nem perder o foco) e o popup fixado junto
+  const moveMarkerInPlace = (id, pos) => {
+    if (id === activeIdRef.current && userMarkerRef.current) {
+      userMarkerRef.current.position = pos;
+      activePosRef.current = pos;
+      movedInPlaceRef.current = pos;
+      mapRef.current?.panTo(pos);
+    }
+    pinnedPopupsRef.current.get(id)?.setPosition(pos);
+    onMoveMarkerRef.current?.(id, pos);
+  };
+
+  // Fixa o popup do marcador numa InfoWindow própria, que não fecha ao clicar
+  // no mapa nem em outro marcador (vários podem ficar abertos ao mesmo tempo)
+  const pinMarkerPopup = ({ id, name, catKey, position, extraHtml }) => {
+    markerIWRef.current?.close();
+    unpinMarkerPopup(id);
+    // headerDisabled: sem cabeçalho/botão fechar nativos — o popup tem os seus próprios
+    const iw = new window.google.maps.InfoWindow({ position, pixelOffset: new window.google.maps.Size(0, -36), headerDisabled: true });
+    iw.setContent(buildMarkerPopupEl({
+      name, catKey, position, extraHtml, pinned: true,
+      onRename: n => onUpdateMarkerRef.current?.(id, { name: n }),
+      onTypeChange: k => onUpdateMarkerRef.current?.(id, { catKey: k }),
+      onTogglePin: () => unpinMarkerPopup(id),
+      onMove: p => moveMarkerInPlace(id, p),
+      offset: popupOffsetsRef.current.get(id),
+      onOffsetChange: o => popupOffsetsRef.current.set(id, o),
+      // reabre para a InfoWindow recalcular o tamanho ao expandir/recolher as opções
+      // shouldFocus: false — por padrão o GMaps move o foco para a InfoWindow aberta, o que
+      // "roubava" a digitação de outro popup (ex: nome do 2º marcador ia para o 1º, fixado)
+      onLayoutChange: () => { iw.close(); iw.open({ map: mapRef.current, shouldFocus: false }); },
+    }));
+    iw.addListener('closeclick', () => pinnedPopupsRef.current.delete(id));
+    iw.open({ map: mapRef.current, shouldFocus: false });
+    pinnedPopupsRef.current.set(id, iw);
+  };
   onCreatedRef.current       = onShapeCreated;
   onPickRef.current          = onPickCoordinate;
   onClearRef.current         = onClearAll;
@@ -245,10 +327,22 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     });
   }, [isFullscreen]);
 
-  // Inicia a animação de intro somente quando o mapa está pronto E o login foi concluído
+  // Inicia a animação de intro somente quando o mapa está pronto, o login foi concluído
+  // e a abertura com Street View terminou (ou foi descartada por indisponibilidade).
+  // Se o Street View foi exibido, a animação é pulada: só coloca o marcador de Brasília.
   useEffect(() => {
-    if (!introReady || !mapInstance || introStartedRef.current) return;
+    if (!introReady || !mapInstance || !streetViewDone || introStartedRef.current) return;
     introStartedRef.current = true;
+    if (streetViewPlayed) {
+      setHudPhase('ambient');
+      introBrasiliaMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
+        position: BRASILIA, map: mapRef.current,
+        content: makePinElement(makePinUrl('#e53935'), 24, 36),
+        zIndex: 1000,
+      });
+      onInitialMarkerRef.current?.(BRASILIA);
+      return;
+    }
     setIntroMapInstance(mapInstance);        // dispara os hooks de polígonos
     const startTime = Date.now();
     const INTRO_MS  = 7000;
@@ -271,6 +365,14 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     };
 
     const introTimer = setTimeout(fireIntroEnd, INTRO_MS);
+
+    // Botão Remover: encerra a intro sem recriar o marcador de Brasília
+    stopIntroRef.current = () => {
+      clearTimeout(introTimer);
+      fired.current = true;
+      setHudPhase('ambient');
+      setIntroMapInstance(null);
+    };
 
     // Page Visibility API: dispara imediatamente ao voltar à aba se 7s já passaram
     const onVisibilityChange = () => {
@@ -295,7 +397,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       window.google.maps.event.removeListener(introDragL);
       window.google.maps.event.removeListener(introZoomL);
     };
-  }, [introReady, mapInstance]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [introReady, mapInstance, streetViewDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
@@ -313,6 +415,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     });
     mapRef.current     = map;
     infoWinRef.current = new window.google.maps.InfoWindow();
+    // Popup do marcador ativo: sem cabeçalho nativo (o popup estilizado tem o próprio "X")
+    markerIWRef.current = new window.google.maps.InfoWindow({ headerDisabled: true });
     const shapeStyleIW = new window.google.maps.InfoWindow();
     shapeStyleIWRef.current = shapeStyleIW;
 
@@ -544,7 +648,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       shapeStatesRef.current.set(shape, state);
       if (!state._listenerAdded) {
         state._listenerAdded = true;
-        shape.addListener('click', e => openShapeStylePanel(shape, e.latLng));
+        shape.addListener('click', e => {
+          // No modo marcador ou durante o desenho, o clique sobre a forma não abre o painel de estilo
+          if (clickInterceptRef.current?.(e.latLng)) return;
+          openShapeStylePanel(shape, e.latLng);
+        });
+        // O mousemove do mapa não dispara sobre a forma — repassa a posição à pré-visualização
+        shape.addListener('mousemove', e => drawMoveRef.current?.(e.latLng));
       }
     };
     addShapeClickListenerRef.current = addShapeClickListener;
@@ -630,6 +740,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       clearAreaPopups();
       clearDistLines();
       if (userMarkerRef.current)  { userMarkerRef.current.map = null;  userMarkerRef.current = null; }
+      extraMkrsRef.current.forEach(m => { m.map = null; }); extraMkrsRef.current = [];
+      pinnedPopupsRef.current.forEach(iw => iw.close()); pinnedPopupsRef.current.clear(); popupOffsetsRef.current.clear();
+      markerIWRef.current?.close();
       if (selectedMkrRef.current) { selectedMkrRef.current.map = null; selectedMkrRef.current = null; }
       allMkrsRef.current.forEach(m => { m.map = null; }); allMkrsRef.current = [];
       if (subShapeRef.current)    { subShapeRef.current.setMap(null);    subShapeRef.current = null; }
@@ -645,7 +758,48 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
     // --- estado desenho ---
     let drawMode = null, points = [], startPt = null, dragging = false, lastDrag = null, previews = [], pickMode = false;
-    const clearPrev = () => { previews.forEach(s => s.setMap(null)); previews = []; };
+    // Linha de pré-visualização do polígono/régua: uma única instância atualizada via setPath.
+    // Recriar a Polyline a cada mousemove fazia a linha sumir (removida antes de ser renderizada).
+    let drawLine = null;
+    const clearPrev = () => {
+      previews.forEach(s => s.setMap(null)); previews = [];
+      if (drawLine) { drawLine.setMap(null); drawLine = null; }
+    };
+
+    /**
+     * Atualiza a pré-visualização do polígono/régua com os vértices fixados e,
+     * opcionalmente, o segmento até a posição atual do cursor.
+     * @param {google.maps.LatLng} [cursor] - posição atual do cursor
+     */
+    const updateDrawLine = (cursor) => {
+      if ((drawMode !== 'polygon' && drawMode !== 'polyline') || !points.length) return;
+      const path = cursor ? [...points, cursor] : [...points];
+      if (!drawLine) {
+        drawLine = new window.google.maps.Polyline(drawMode === 'polygon'
+          ? { map, strokeColor: USER_SHAPE_STYLE.strokeColor, strokeWeight: USER_SHAPE_STYLE.strokeWeight, strokeOpacity: 0.85, clickable: false }
+          : { map, strokeColor: '#e65100', strokeWeight: 2.5, strokeOpacity: 0.9, icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '12px' }], clickable: false });
+      }
+      drawLine.setPath(path);
+    };
+
+    drawMoveRef.current = (latLng) => updateDrawLine(latLng);
+
+    clickInterceptRef.current = (latLng) => {
+      // Modo marcador: posiciona/adiciona o marcador no ponto clicado, mesmo sobre formas e camadas
+      if (pickMode) {
+        const pos = { lat: latLng.lat(), lng: latLng.lng() };
+        const handler = pickMode === 'add' ? onAddMarkerRef.current : onPickRef.current;
+        // Novo marcador: abre o popup dele com o nome selecionado, para nomeá-lo em seguida
+        if (pickMode === 'add') { openActivePopupRef.current = true; focusNameRef.current = true; }
+        setPickMode(false);
+        handler?.(pos);
+        return true;
+      }
+      if (drawMode !== 'polygon' && drawMode !== 'polyline') return false;
+      points.push(latLng);
+      updateDrawLine(latLng);
+      return true;
+    };
     const drawBtnMap = {};
 
     const setDrawMode = m => {
@@ -673,25 +827,39 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     });
     TB.appendChild(drawBar);
 
-    // ── Grupo 2: marcador ─────────────────────────────────────────────────
+    // ── Grupo 2: marcador + adicionar marcador ────────────────────────────
+    // pickMode: false | 'move' (move o marcador ativo) | 'add' (adiciona novo marcador ativo)
     const pickSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
       <circle cx="12" cy="9" r="2.8" fill="white"/>
     </svg>`;
+    const addPickSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm4 8h-3v3h-2v-3H8V8h3V5h2v3h3v2z"/>
+    </svg>`;
     const pickBar = makeBar();
     const pickBtn = makeBtn(pickSvg, 'Marcador — selecionar ponto no mapa');
-    pickBtn.style.borderBottom = 'none';
-    pickBtn.addEventListener('click', e => {
-      e.preventDefault();
-      pickMode = !pickMode;
-      pickBtn._active           = pickMode;
-      map.getDiv().style.cursor = pickMode ? 'crosshair' : '';
-      pickBtn.style.background  = pickMode ? '#e3f2fd' : '#fff';
-      pickBtn.style.color       = pickMode ? '#1565c0' : '#555';
-      pickBtn.style.boxShadow   = '';
-      pickBtn.style.transform   = '';
+    const addPickBtn = makeBtn(addPickSvg, 'Adicionar marcador — o novo marcador passa a ser o ativo');
+    addPickBtn.style.borderBottom = 'none';
+    const pickBtnModes = [[pickBtn, 'move'], [addPickBtn, 'add']];
+    const setPickMode = m => {
+      pickMode = m;
+      map.getDiv().style.cursor = m ? 'crosshair' : '';
+      pickBtnModes.forEach(([btn, bMode]) => {
+        const active = m === bMode;
+        btn._active          = active;
+        btn.style.background = active ? '#e3f2fd' : '#fff';
+        btn.style.color      = active ? '#1565c0' : '#555';
+        btn.style.boxShadow  = '';
+        btn.style.transform  = '';
+      });
+    };
+    pickBtnModes.forEach(([btn, bMode]) => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        setPickMode(pickMode === bMode ? false : bMode);
+      });
+      pickBar.appendChild(btn);
     });
-    pickBar.appendChild(pickBtn);
     TB.appendChild(pickBar);
 
     // ── Grupo 3: editar + remover ─────────────────────────────────────────
@@ -727,14 +895,11 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       e.preventDefault();
       clearAll();
       setDrawMode(null);
-      pickMode = false;
-      pickBtn._active = false;
-      pickBtn.style.background = '#fff';
-      pickBtn.style.color = '#555';
-      pickBtn.style.boxShadow = '';
-      pickBtn.style.transform = '';
-      map.getDiv().style.cursor = '';
+      setPickMode(false);
       setIntroMapRef.current?.(null);
+      // encerra a animação do círculo (HUD) e remove os polígonos e o marcador de Brasília
+      stopIntroRef.current?.();
+      if (introBrasiliaMarkerRef.current) { introBrasiliaMarkerRef.current.map = null; introBrasiliaMarkerRef.current = null; }
       setLayerClearRef.current?.(t => t + 1);
       onClearRef.current?.();
     });
@@ -743,17 +908,10 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
     // --- listeners ---
     const clickL = map.addListener('click', e => {
-      if (pickMode) {
-        pickMode = false; pickBtn._active = false;
-        map.getDiv().style.cursor = '';
-        pickBtn.style.background = '#fff'; pickBtn.style.color = '#555';
-        pickBtn.style.boxShadow = ''; pickBtn.style.transform = '';
-        onPickRef.current?.({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-        return;
-      }
-      if (!drawMode) return;
-      if (drawMode === 'polygon') points.push(e.latLng);
-      if (drawMode === 'polyline') points.push(e.latLng);
+      // Popup de marcador não fixado fecha ao clicar em outra parte do mapa
+      if (!markerClickSuppressRef.current) markerIWRef.current?.close();
+      if (!pickMode && !drawMode) return;
+      clickInterceptRef.current?.(e.latLng);
     });
 
     const dblClickL = map.addListener('dblclick', (e) => {
@@ -810,13 +968,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     const mouseMoveL = map.addListener('mousemove', e => {
       if (dragging) lastDrag = e.latLng;
       if (!drawMode) return;
+      if (drawMode === 'polygon' || drawMode === 'polyline') { drawMoveRef.current?.(e.latLng); return; }
       clearPrev();
-      if (drawMode === 'polygon' && points.length > 0) {
-        previews = [new window.google.maps.Polyline({ path: [...points, e.latLng], map, strokeColor: USER_SHAPE_STYLE.strokeColor, strokeWeight: USER_SHAPE_STYLE.strokeWeight, strokeOpacity: 0.85, clickable: false })];
-      }
-      if (drawMode === 'polyline' && points.length > 0) {
-        previews = [new window.google.maps.Polyline({ path: [...points, e.latLng], map, strokeColor: '#e65100', strokeWeight: 2.5, strokeOpacity: 0.9, icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '12px' }], clickable: false })];
-      }
       if (drawMode === 'circle' && dragging && startPt) {
         const r = HAVERSINE(startPt.lat(), startPt.lng(), e.latLng.lat(), e.latLng.lng());
         previews = [new window.google.maps.Circle({ center: startPt, radius: r, map, ...USER_SHAPE_STYLE, clickable: false })];
@@ -857,7 +1010,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     };
 
     const onKeyDown = e => {
-      if (e.key === 'Escape') { setDrawMode(null); pickMode = false; exitEdit(false); }
+      if (e.key === 'Escape') { setDrawMode(null); setPickMode(false); exitEdit(false); }
     };
 
     // ── Touch: círculo e retângulo ────────────────────────────────────────────
@@ -929,6 +1082,8 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       window.google.maps.event.removeListener(mouseMoveL);
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('keydown', onKeyDown);
+      clickInterceptRef.current = null;
+      drawMoveRef.current = null;
       containerEl.removeEventListener('touchstart', onTouchStart);
       containerEl.removeEventListener('touchmove',  onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
@@ -1033,10 +1188,16 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   useEffect(() => {
     if (!mapRef.current) return;
     if (!userMarker) return;
+    // Posição já aplicada no marcador pelo popup (digitação da coordenada): não recria
+    const moved = movedInPlaceRef.current;
+    movedInPlaceRef.current = null;
+    if (moved && userMarkerRef.current && moved.lat === userMarker.lat && moved.lng === userMarker.lng) return;
     if (userMarkerRef.current) { userMarkerRef.current.map = null; userMarkerRef.current = null; }
+    markerIWRef.current?.close(); // o popup estava ancorado no marcador removido
     // remove o marcador inicial de Brasília quando o usuário faz sua primeira busca
     if (introBrasiliaMarkerRef.current) { introBrasiliaMarkerRef.current.map = null; introBrasiliaMarkerRef.current = null; }
-    const userPinEl = makePinElement(makePinUrl('#e53935'), 24, 36);
+    const userPinEl = makePinElement(makePinUrl(markerColor(activeTypeRef.current, '#e53935')), 24, 36);
+    userPinElRef.current = userPinEl;
     const mkr = new window.google.maps.marker.AdvancedMarkerElement({
       position: { lat: userMarker.lat, lng: userMarker.lng },
       map: polygonsClearedRef.current ? mapRef.current : null,
@@ -1044,19 +1205,92 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       zIndex: 1000,
       gmpClickable: true,
     });
-    if (userMarker.info) {
-      userPinEl.style.cursor = 'pointer';
-      userPinEl.addEventListener('click', e => {
+    // Popup com nome editável (e dados do usuário, quando houver)
+    const id = activeIdRef.current;
+    const position = { lat: userMarker.lat, lng: userMarker.lng };
+    activePosRef.current = position;
+    const extraHtml = userMarker.info ? buildInfoHtml({ ...userMarker.info, _catColor: '#e53935', _catLabel: 'Usuário' }) : null;
+    // focusName: marcador recém-adicionado — já deixa o nome selecionado para digitar
+    const openPopup = (focusName = false) => {
+      if (pinnedPopupsRef.current.has(id)) return; // já está fixado
+      const el = buildMarkerPopupEl({
+        name: activeNameRef.current,
+        catKey: activeTypeRef.current,
+        position: activePosRef.current,
+        extraHtml,
+        onRename: name => onUpdateMarkerRef.current?.(id, { name }),
+        onTypeChange: catKey => onUpdateMarkerRef.current?.(id, { catKey }),
+        onTogglePin: () => pinMarkerPopup({ id, name: activeNameRef.current, catKey: activeTypeRef.current, position: activePosRef.current, extraHtml }),
+        onClose: () => markerIWRef.current.close(),
+        onMove: p => moveMarkerInPlace(id, p),
+        offset: popupOffsetsRef.current.get(id),
+        onOffsetChange: o => popupOffsetsRef.current.set(id, o),
+      });
+      markerIWRef.current.setContent(el);
+      // shouldFocus: false — o foco só vai para o nome quando pedido (focusName), nunca roubado de outro popup
+      markerIWRef.current.open({ map: mapRef.current, anchor: mkr, shouldFocus: false });
+      if (focusName) {
+        window.google.maps.event.addListenerOnce(markerIWRef.current, 'domready', () => {
+          const title = el.querySelector('.ndmp-title');
+          title?.focus();
+          title?.select();
+        });
+      }
+    };
+    // Popup fixado do marcador ativo acompanha a nova posição (ex: marcador movido)
+    if (pinnedPopupsRef.current.has(id)) pinMarkerPopup({ id, name: activeNameRef.current, catKey: activeTypeRef.current, position, extraHtml });
+    userPinEl.style.cursor = 'pointer';
+    userPinEl.addEventListener('click', e => {
+      e.stopPropagation();
+      markerClickSuppressRef.current = true;
+      setTimeout(() => { markerClickSuppressRef.current = false; }, 100);
+      openPopup();
+    });
+    userMarkerRef.current = mkr;
+    mapRef.current.panTo({ lat: userMarker.lat, lng: userMarker.lng });
+    // Marcador secundário recém-ativado por clique ou marcador recém-adicionado:
+    // abre o popup no novo marcador ativo (no adicionado, com o nome selecionado)
+    if (openActivePopupRef.current) {
+      openActivePopupRef.current = false;
+      const focusName = focusNameRef.current;
+      focusNameRef.current = false;
+      openPopup(focusName);
+    }
+  }, [userMarker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cor do marcador ativo segue o tipo de outorga escolhido no popup (troca o
+  // ícone sem recriar o marcador, para não fechar o popup aberto)
+  useEffect(() => {
+    if (userPinElRef.current) userPinElRef.current.src = makePinUrl(markerColor(activeMarkerType, '#e53935'));
+  }, [activeMarkerType]);
+
+  // Marcadores secundários (cinza, ou na cor do tipo de outorga, semitransparentes):
+  // clicar em um deles o torna o marcador ativo
+  useEffect(() => {
+    extraMkrsRef.current.forEach(m => { m.map = null; }); extraMkrsRef.current = [];
+    if (!mapRef.current || !extraMarkers?.length) return;
+    extraMarkers.forEach(pos => {
+      const pinEl = makePinElement(makePinUrl(markerColor(pos.catKey, '#78909c')), 24, 36);
+      pinEl.style.opacity = '0.7';
+      pinEl.style.cursor = 'pointer';
+      pinEl.title = `${pos.name} — clique para tornar este o marcador ativo`;
+      const mkr = new window.google.maps.marker.AdvancedMarkerElement({
+        position: { lat: pos.lat, lng: pos.lng },
+        map: mapRef.current,
+        content: pinEl,
+        zIndex: 999,
+        gmpClickable: true,
+      });
+      pinEl.addEventListener('click', e => {
         e.stopPropagation();
         markerClickSuppressRef.current = true;
         setTimeout(() => { markerClickSuppressRef.current = false; }, 100);
-        infoWinRef.current.setContent(buildInfoHtml({ ...userMarker.info, _catColor: '#e53935', _catLabel: 'Usuário' }));
-        infoWinRef.current.open({ map: mapRef.current, anchor: mkr });
+        openActivePopupRef.current = true;
+        onActivateMarkerRef.current?.(pos.id);
       });
-    }
-    userMarkerRef.current = mkr;
-    mapRef.current.panTo({ lat: userMarker.lat, lng: userMarker.lng });
-  }, [userMarker]);
+      extraMkrsRef.current.push(mkr);
+    });
+  }, [extraMarkers]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -1121,10 +1355,13 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-      <SadDfHud phase={hudPhase} ready={introReady} />
+      <SadDfHud phase={hudPhase} ready={introReady && streetViewDone && !streetViewPlayed} />
+      {mapInstance && !streetViewDone &&
+        <ElemStreetView play={introReady} onDone={played => { setStreetViewPlayed(played); setStreetViewDone(true); }} />
+      }
       {mapInstance && panelRootRef.current &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={() => markerClickSuppressRef.current} onLocate={(pos) => onPickRef.current?.(pos)} markerPosition={userMarker} isFullscreen={isFullscreen} />,
+          <LayerPanel map={mapInstance} mapType="gmaps" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} isMarkerActive={(latLng) => markerClickSuppressRef.current || (!!latLng && !!clickInterceptRef.current?.(latLng))} onDrawMove={(latLng) => drawMoveRef.current?.(latLng)} onLocate={(pos) => onPickRef.current?.(pos)} markerPosition={userMarker} isFullscreen={isFullscreen} />,
           panelRootRef.current,
         )
       }

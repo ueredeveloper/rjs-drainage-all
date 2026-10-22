@@ -57,6 +57,9 @@ export default function NewDesign() {
   const [textError, setTextError]             = useState(null);
   const [subShape, setSubShape]               = useState(null);
   const [userMarker, setUserMarker]           = useState(null);
+  const [extraMarkers, setExtraMarkers]       = useState([]);
+  const [activeMarkerMeta, setActiveMarkerMeta] = useState({ id: 1, name: 'Marcador 1', catKey: null });
+  const nextMarkerIdRef                       = useRef(2);
   const [mapProvider, setMapProvider]         = useState(() => {
     try {
       const stored = localStorage.getItem(MAP_PROVIDER_STORAGE_KEY);
@@ -73,7 +76,9 @@ export default function NewDesign() {
   const [isResizingMap, setIsResizingMap]     = useState(false);
   const bodyRef                               = useRef(null);
   const coordSearchPageIdRef                  = useRef(null);
-  const skipUserMarkerEffectRef               = useRef(false);
+  // {lat, lng} (strings) que o efeito de lat/lng deve ignorar — vieram do próprio marcador,
+  // que já foi posicionado; comparar por valor evita o flag "preso" quando o texto não muda
+  const skipUserMarkerEffectRef               = useRef(null);
   const [removeShapeTrigger, setRemoveShapeTrigger] = useState(null);
   const [lastDrawnPageId, setLastDrawnPageId] = useState(null);
   const [fontSize, setFontSize]               = useState(() => {
@@ -220,20 +225,32 @@ export default function NewDesign() {
     }
   }, [pushHistory, updateAllMarkers, normalizeResult]);
 
+  /**
+   * Atualiza os inputs de latitude/longitude sem que o efeito abaixo recrie o
+   * userMarker (quem chama já define o marcador com a posição exata).
+   * @param {string} latStr
+   * @param {string} lngStr
+   */
+  const setLatLngSkippingMarker = useCallback((latStr, lngStr) => {
+    skipUserMarkerEffectRef.current = { lat: latStr, lng: lngStr };
+    setLat(latStr);
+    setLng(lngStr);
+  }, []);
+
   useEffect(() => {
-    if (skipUserMarkerEffectRef.current) { skipUserMarkerEffectRef.current = false; return; }
+    const skip = skipUserMarkerEffectRef.current;
+    skipUserMarkerEffectRef.current = null;
+    if (skip && skip.lat === lat && skip.lng === lng) return;
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (!isNaN(latN) && !isNaN(lngN)) setUserMarker({ lat: latN, lng: lngN });
   }, [lat, lng]);
 
   const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN, info }) => {
-    skipUserMarkerEffectRef.current = true;
-    setLat(String(latN.toFixed(7)));
-    setLng(String(lngN.toFixed(7)));
+    setLatLngSkippingMarker(String(latN.toFixed(7)), String(lngN.toFixed(7)));
     console.log('[Coordenadas][marcador] aplicando ao mapa:', { lat: latN, lng: lngN });
     setUserMarker({ lat: latN, lng: lngN, info: info ?? null });
-  }, []);
+  }, [setLatLngSkippingMarker]);
 
   const handleCoordSearch = useCallback(() => {
     const latN = parseFloat(lat);
@@ -335,7 +352,13 @@ export default function NewDesign() {
   const handleClearAll = useCallback(() => {
     coordSearchPageIdRef.current = null;
     setCircleData(null);
-    setUserMarker(null);
+    // Recria o marcador vermelho inicial ("Marcador 1") na coordenada dos inputs da aba Geral
+    const latN = parseFloat(lat);
+    const lngN = parseFloat(lng);
+    setUserMarker(!isNaN(latN) && !isNaN(lngN) ? { lat: latN, lng: lngN } : null);
+    setExtraMarkers([]);
+    setActiveMarkerMeta({ id: 1, name: 'Marcador 1', catKey: null });
+    nextMarkerIdRef.current = 2;
     setSubShape(null);
     setAllMarkers([]);
     setSearchResult(null);
@@ -344,7 +367,7 @@ export default function NewDesign() {
     setSelectedMarker(null);
     setError(null);
     setClearShapesTrigger(prev => prev + 1);
-  }, []);
+  }, [lat, lng]);
 
   const handleEditSave = useCallback(() => {
     setAllMarkers([]);
@@ -358,6 +381,62 @@ export default function NewDesign() {
     setLng(pLng.toFixed(6));
     setUserMarker({ lat: pLat, lng: pLng });
   }, []);
+
+  /**
+   * Adiciona um novo marcador no ponto clicado. O marcador ativo anterior passa a
+   * ser secundário (apenas visual) e o novo assume coordenadas, inputs e buscas.
+   * @param {{lat: number, lng: number}} pos - Posição clicada no mapa
+   */
+  const handleAddMarker = useCallback(({ lat: pLat, lng: pLng }) => {
+    if (userMarker) setExtraMarkers(prev => [...prev, { ...userMarker, ...activeMarkerMeta }]);
+    const id = nextMarkerIdRef.current++;
+    setActiveMarkerMeta({ id, name: `Marcador ${id}`, catKey: null });
+    setLatLngSkippingMarker(pLat.toFixed(6), pLng.toFixed(6));
+    setUserMarker({ lat: pLat, lng: pLng });
+  }, [userMarker, activeMarkerMeta, setLatLngSkippingMarker]);
+
+  /**
+   * Torna ativo um marcador secundário: mapa e inputs passam para a coordenada dele
+   * e o marcador ativo atual vira secundário.
+   * @param {number} id - Id do marcador em extraMarkers
+   */
+  const handleActivateMarker = useCallback((id) => {
+    const target = extraMarkers.find(m => m.id === id);
+    if (!target) return;
+    const { id: tId, name: tName, catKey: tCatKey, ...pos } = target;
+    setExtraMarkers(prev => {
+      const next = prev.filter(m => m.id !== id);
+      return userMarker ? [...next, { ...userMarker, ...activeMarkerMeta }] : next;
+    });
+    setActiveMarkerMeta({ id: tId, name: tName, catKey: tCatKey });
+    setLatLngSkippingMarker(pos.lat.toFixed(6), pos.lng.toFixed(6));
+    setUserMarker(pos);
+  }, [extraMarkers, userMarker, activeMarkerMeta, setLatLngSkippingMarker]);
+
+  /**
+   * Atualiza nome e/ou tipo de outorga de um marcador (ativo ou secundário) pelo popup.
+   * @param {number} id - Id do marcador
+   * @param {{name?: string, catKey?: string|null}} patch - Campos alterados
+   */
+  const handleUpdateMarker = useCallback((id, patch) => {
+    setActiveMarkerMeta(prev => (prev.id === id ? { ...prev, ...patch } : prev));
+    setExtraMarkers(prev => (prev.some(m => m.id === id) ? prev.map(m => (m.id === id ? { ...m, ...patch } : m)) : prev));
+  }, []);
+
+  /**
+   * Move um marcador para a coordenada digitada no popup. Se for o marcador ativo,
+   * atualiza também os inputs de latitude/longitude.
+   * @param {number} id - Id do marcador
+   * @param {{lat: number, lng: number}} pos - Nova posição
+   */
+  const handleMoveMarker = useCallback((id, { lat: mLat, lng: mLng }) => {
+    if (id === activeMarkerMeta.id) {
+      setLatLngSkippingMarker(mLat.toFixed(6), mLng.toFixed(6));
+      setUserMarker(prev => (prev ? { ...prev, lat: mLat, lng: mLng } : { lat: mLat, lng: mLng }));
+      return;
+    }
+    setExtraMarkers(prev => prev.map(m => (m.id === id ? { ...m, lat: mLat, lng: mLng } : m)));
+  }, [activeMarkerMeta.id, setLatLngSkippingMarker]);
 
   const handleInitialMarker = useCallback(({ lat: iLat, lng: iLng }) => {
     setLat(iLat.toFixed(6));
@@ -497,6 +576,14 @@ export default function NewDesign() {
               markerData: selectedMarker,
               userMarker,
               onPickCoordinate: handlePickCoordinate,
+              extraMarkers,
+              onAddMarker: handleAddMarker,
+              onActivateMarker: handleActivateMarker,
+              activeMarkerId: activeMarkerMeta.id,
+              activeMarkerName: activeMarkerMeta.name,
+              activeMarkerType: activeMarkerMeta.catKey,
+              onUpdateMarker: handleUpdateMarker,
+              onMoveMarker: handleMoveMarker,
               onInitialMarker: handleInitialMarker,
               onClearAll: handleClearAll,
               onEditSave: handleEditSave,

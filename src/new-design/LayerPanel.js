@@ -54,9 +54,24 @@ const MARKER_POSITION_LAYERS = new Set(['rios_df']);
 // Layers that support "Cálculo de Uso" (color by pct_utilizada)
 const WATER_USE_LAYERS = new Set(['hidrogeo_fraturado', 'hidrogeo_poroso']);
 
-// Fields that should appear first and in bold in the infowindow, per layer id
+// Vazões médias mensais (qmm_*) em ordem cronológica, de janeiro a dezembro
+const QMM_MONTH_KEYS = [
+  'qmm_jan', 'qmm_fev', 'qmm_mar', 'qmm_abr', 'qmm_mai', 'qmm_jun',
+  'qmm_jul', 'qmm_ago', 'qmm_set', 'qmm_out', 'qmm_nov', 'qmm_dez',
+];
+
+// Rótulos amigáveis dos meses exibidos na seção de vazões do infowindow
+const QMM_MONTH_LABELS = {
+  qmm_jan: 'Jan', qmm_fev: 'Fev', qmm_mar: 'Mar', qmm_abr: 'Abr',
+  qmm_mai: 'Mai', qmm_jun: 'Jun', qmm_jul: 'Jul', qmm_ago: 'Ago',
+  qmm_set: 'Set', qmm_out: 'Out', qmm_nov: 'Nov', qmm_dez: 'Dez',
+};
+
+// Fields that should appear first and in bold in the infowindow, per layer id.
+// `order` lists fields shown right after the bold ones, in the given order;
+// `limit` overrides the default maximum number of rows.
 const LAYER_FIELD_CONFIG = {
-  unidades_hidrograficas: { bold: new Set(['uh_nome', 'uh_label']) },
+  unidades_hidrograficas: { bold: new Set(['uh_nome', 'uh_label']), order: QMM_MONTH_KEYS, limit: 20 },
   bacias_hidrograficas:   { bold: new Set(['bacia_nome', 'bacia_cod']) },
   hidrogeo_fraturado:     { bold: new Set(['sistema', 'subsistema', 'cod_plan']) },
   hidrogeo_poroso:        { bold: new Set(['sistema', 'cod_plan']) },
@@ -122,7 +137,7 @@ function gmapsFeatureProps(feature) {
 
 const SKIP_KEYS = new Set(['shape', 'SHAPE', 'Shape', 'objectid', 'OBJECTID', 'FID', 'fid', 'GlobalID', 'globalid']);
 
-function formatProps(props, priorityKeys = []) {
+function formatProps(props, priorityKeys = [], limit = 8) {
   const entries = Object.entries(props || {})
     .filter(([k, v]) =>
       !SKIP_KEYS.has(k) &&
@@ -131,18 +146,39 @@ function formatProps(props, priorityKeys = []) {
       v !== undefined &&
       String(v).trim() !== ''
     );
-  if (!priorityKeys.length) return entries.slice(0, 8);
+  if (!priorityKeys.length) return entries.slice(0, limit);
   const prioritySet = new Set(priorityKeys);
   const priorityEntries = priorityKeys
     .map(k => [k, props?.[k]])
     .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== '');
   const rest = entries.filter(([k]) => !prioritySet.has(k));
-  return [...priorityEntries, ...rest].slice(0, 8);
+  return [...priorityEntries, ...rest].slice(0, limit);
 }
 
-function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = null, boldKeys = null) {
+function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = null, boldKeys = null, orderKeys = [], limit = 8) {
   const priorityKeys = boldKeys ? [...boldKeys] : [];
-  const rows = formatProps(props, priorityKeys).filter(([k]) => pctUtilizada !== null ? k !== 'pct_utilizada' : true);
+  // Vazões mensais (qmm_*) saem da tabela geral e vão para uma seção própria, de janeiro a dezembro
+  const monthKeys = new Set(QMM_MONTH_KEYS);
+  const orderedRows = orderKeys
+    .map(k => [k, props?.[k]])
+    .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== '');
+  const otherProps = Object.fromEntries(
+    Object.entries(props || {}).filter(([k]) => !orderKeys.includes(k) && !monthKeys.has(k))
+  );
+  const rows = formatProps(otherProps, priorityKeys, limit).filter(([k]) => pctUtilizada !== null ? k !== 'pct_utilizada' : true);
+
+  const orderedSection = orderedRows.length > 0 ? `
+      <div style="margin-top:6px;padding-top:5px;border-top:1px solid #e0e0e0;">
+        <div style="font-size:10px;color:#78909c;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">
+          Vazões médias mensais
+        </div>
+        <table style="width:100%;font-size:11px;border-collapse:collapse;line-height:1.6;">
+          ${orderedRows.map(([k, v]) => `<tr>
+            <td style="color:#78909c;padding:1px 8px 1px 0;white-space:nowrap;font-weight:500;">${QMM_MONTH_LABELS[k] ?? k}</td>
+            <td style="color:#263238;text-align:right;">${typeof v === 'number' ? v.toLocaleString('pt-BR') : v}</td>
+          </tr>`).join('')}
+        </table>
+      </div>` : '';
 
   const usageBar = pctUtilizada !== null ? (() => {
     const pct = pctUtilizada;
@@ -196,6 +232,7 @@ function buildFeatureHtml(props, layerLabel, color, showSearch, pctUtilizada = n
           </table>`
         : '<div style="font-size:11px;color:#78909c;padding:2px 0;">Sem propriedades</div>'
       }
+      ${orderedSection}
       ${searchBtn}
     </div>`;
 }
@@ -326,7 +363,7 @@ function makeCaesbContent() {
   return svg;
 }
 
-export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive, onLocate, markerPosition = null, isFullscreen = false }) {
+export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, onWaterUseChange, clearTrigger, initialLayerState, onLayerStateChange, isMarkerActive, onDrawMove, onLocate, markerPosition = null, isFullscreen = false }) {
   const { scalePx } = useFontSize();
   // Em fullscreen a janela fica muito maior que o painel, então aumentamos
   // a fonte de todos os itens e a largura da caixa de camadas proporcionalmente.
@@ -364,6 +401,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
   onLayerStateRef.current  = onLayerStateChange;
   const isMarkerActiveRef  = useRef(isMarkerActive);
   isMarkerActiveRef.current = isMarkerActive;
+  const onDrawMoveRef      = useRef(onDrawMove);
+  onDrawMoveRef.current = onDrawMove;
   const markerPositionRef      = useRef(markerPosition);
   markerPositionRef.current    = markerPosition;
   const activeRef              = useRef(active);
@@ -516,8 +555,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     let dl;
     if (mapType === 'gmaps') {
       dl = new window.google.maps.Data({ map });
+      // Durante o desenho de polígono, o mousemove do mapa não dispara sobre a camada
+      dl.addListener('mousemove', (event) => onDrawMoveRef.current?.(event.latLng));
       dl.addListener('click', (event) => {
-        if (isMarkerActiveRef.current?.()) return;
+        if (isMarkerActiveRef.current?.(event.latLng)) return;
         const fIdx = typeof event.feature.getId() === 'number' ? event.feature.getId() : 0;
         const fColor = riverColors[fIdx] ?? getFeatureColor(fIdx);
         const props = gmapsFeatureProps(event.feature);
@@ -532,6 +573,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       dl = L.geoJSON(null, {
         onEachFeature: (feature, layer) => {
           layer.on('click', (e) => {
+            if (isMarkerActiveRef.current?.(e.latlng)) { L.DomEvent.stopPropagation(e); return; }
             const fIdx = feature?.id ?? 0;
             const fColor = riverColors[fIdx] ?? getFeatureColor(fIdx);
             pendingShapeRef.current = null;
@@ -639,8 +681,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
     if (mapType === 'gmaps') {
       dl = new window.google.maps.Data({ map });
       dl.setStyle(isCaesb ? gmapsLineStyle : isEndereco ? gmapsPolygonStyle : gmapsPointStyle);
+      // Durante o desenho de polígono, o mousemove do mapa não dispara sobre a camada
+      dl.addListener('mousemove', (event) => onDrawMoveRef.current?.(event.latLng));
       dl.addListener('click', (event) => {
-        if (isMarkerActiveRef.current?.()) return;
+        if (isMarkerActiveRef.current?.(event.latLng)) return;
         const props = gmapsFeatureProps(event.feature);
         pendingShapeRef.current = null;
         if (!infoWinRef.current) infoWinRef.current = new window.google.maps.InfoWindow();
@@ -655,6 +699,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           style: () => ({ color: '#134FAF', weight: 4, opacity: 1 }),
           onEachFeature: (feature, layer) => {
             layer.on('click', (e) => {
+              if (isMarkerActiveRef.current?.(e.latlng)) { L.DomEvent.stopPropagation(e); return; }
               pendingShapeRef.current = null;
               L.DomEvent.stopPropagation(e);
               L.popup({ maxWidth: 300, closeButton: true })
@@ -669,6 +714,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           style: () => ({ color, weight: 2, opacity: 1, fillColor: color, fillOpacity: 0.30 }),
           onEachFeature: (feature, layer) => {
             layer.on('click', (e) => {
+              if (isMarkerActiveRef.current?.(e.latlng)) { L.DomEvent.stopPropagation(e); return; }
               pendingShapeRef.current = null;
               L.DomEvent.stopPropagation(e);
               L.popup({ maxWidth: 300, closeButton: true })
@@ -686,6 +732,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           }),
           onEachFeature: (feature, layer) => {
             layer.on('click', (e) => {
+              if (isMarkerActiveRef.current?.(e.latlng)) { L.DomEvent.stopPropagation(e); return; }
               pendingShapeRef.current = null;
               L.DomEvent.stopPropagation(e);
               L.popup({ maxWidth: 300, closeButton: true })
@@ -843,8 +890,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       dl = new window.google.maps.Data({ map });
       dl.setStyle(gmapsStyleFn);
 
+      // Durante o desenho de polígono, o mousemove do mapa não dispara sobre a camada
+      dl.addListener('mousemove', (event) => onDrawMoveRef.current?.(event.latLng));
       dl.addListener('click', (event) => {
-        if (isMarkerActiveRef.current?.()) return;
+        if (isMarkerActiveRef.current?.(event.latLng)) return;
         const feature = event.feature;
         const props   = gmapsFeatureProps(feature);
         const shape   = gmapsFeatureToShape(feature);
@@ -861,7 +910,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           ? (props.pct_utilizada ?? null)
           : null;
         infoWinRef.current.setContent(
-          buildFeatureHtml(props, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada, LAYER_FIELD_CONFIG[id]?.bold ?? null)
+          buildFeatureHtml(props, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada, LAYER_FIELD_CONFIG[id]?.bold ?? null, LAYER_FIELD_CONFIG[id]?.order, LAYER_FIELD_CONFIG[id]?.limit)
         );
         infoWinRef.current.setPosition(event.latLng);
         infoWinRef.current.open(map);
@@ -873,6 +922,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
         style: leafletStyleFn,
         onEachFeature: (feature, layer) => {
           layer.on('click', (e) => {
+            if (isMarkerActiveRef.current?.(e.latlng)) { L.DomEvent.stopPropagation(e); return; }
             const shape  = geoJsonGeometryToShape(feature.geometry);
             const fIdx   = feature.id ?? 0;
             const colors = colorCacheRef.current.get(id);
@@ -886,7 +936,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
               : null;
             L.popup({ maxWidth: 300, closeButton: true })
               .setLatLng(e.latlng)
-              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada, LAYER_FIELD_CONFIG[id]?.bold ?? null))
+              .setContent(buildFeatureHtml(feature.properties, layerDef?.label ?? id, fColor, !!shape && !!onSearchRef.current, pctUtilizada, LAYER_FIELD_CONFIG[id]?.bold ?? null, LAYER_FIELD_CONFIG[id]?.order, LAYER_FIELD_CONFIG[id]?.limit))
               .openOn(map);
           });
         },
@@ -959,8 +1009,10 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           },
         });
         dl.setStyle(styleFn);
+        // Durante o desenho de polígono, o mousemove do mapa não dispara sobre a camada
+        dl.addListener('mousemove', (event) => onDrawMoveRef.current?.(event.latLng));
         dl.addListener('click', (event) => {
-          if (isMarkerActiveRef.current?.()) return;
+          if (isMarkerActiveRef.current?.(event.latLng)) return;
           const props = gmapsFeatureProps(event.feature);
           pendingShapeRef.current = null;
           if (!infoWinRef.current) infoWinRef.current = new window.google.maps.InfoWindow();
@@ -979,6 +1031,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
           }),
           onEachFeature: (feature, layer) => {
             layer.on('click', (e) => {
+              if (isMarkerActiveRef.current?.(e.latlng)) { L.DomEvent.stopPropagation(e); return; }
               pendingShapeRef.current = null;
               L.DomEvent.stopPropagation(e);
               L.popup({ maxWidth: 300, closeButton: true })
@@ -1045,7 +1098,8 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       addressPolygonRef.current = polygon;
       if (!infoWinRef.current) infoWinRef.current = new window.google.maps.InfoWindow();
       infoWinRef.current.setContent(html);
-      polygon.addListener('click', () => {
+      polygon.addListener('click', (e) => {
+        if (isMarkerActiveRef.current?.(e.latLng)) return;
         if (centroid) {
           infoWinRef.current.setPosition(centroid);
           infoWinRef.current.open(map);
@@ -1064,6 +1118,7 @@ export default function LayerPanel({ map, mapType = 'gmaps', onFeatureSearch, on
       poly.addTo(map);
       addressPolygonRef.current = poly;
       poly.on('click', (e) => {
+        if (isMarkerActiveRef.current?.(e.latlng)) { L.DomEvent.stopPropagation(e); return; }
         L.DomEvent.stopPropagation(e);
         if (centroid) {
           L.popup({ maxWidth: 300, closeButton: true })

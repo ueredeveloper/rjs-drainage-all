@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import L from 'leaflet';
 import LayerPanel from './LayerPanel';
 import ElemWaterUsage from './components/ElemWaterUsage';
+import { buildMarkerPopupEl, markerColor, MARKER_POPUP_LEAFLET_CLASS } from './utils/marker-popup';
 import { iwManualIcon, iwTubularIcon, iwSuperficialIcon, iwBarragemIcon, iwEfluenteIcon, iwPluvialIcon, iwDefaultIcon } from '../assets/svg/svgs-icons';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -161,7 +162,7 @@ function buildPopupHtml(item) {
     </div>`;
 }
 
-export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger }) {
+export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker }) {
   const containerRef       = useRef(null);
   const mapRef             = useRef(null);
   const [mapInstance, setMapInstance]             = useState(null);
@@ -176,6 +177,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   const circleLayerRef     = useRef(null);
   const markerLayerRef     = useRef(null);
   const userMarkerLayerRef = useRef(null);
+  const extraMarkersLayerRef = useRef(null);
   const allMarkersLayerRef = useRef(null);
   const subShapeLayerRef   = useRef(null);
   const areaPopupsRef            = useRef([]);
@@ -187,8 +189,80 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   const lastDrawnLayerRef        = useRef(null);
   const onCreatedRef             = useRef(onShapeCreated);
   const onPickRef          = useRef(onPickCoordinate);
+  // pickMode: false | 'move' (move o marcador ativo) | 'add' (adiciona novo marcador ativo)
   const pickModeRef        = useRef(false);
+  // Trata o clique do modo marcador — inclusive sobre formas e camadas; retorna true se o clique foi consumido
+  const pickClickRef       = useRef(null);
   const pickBtnRef         = useRef(null);
+  const addPickBtnRef      = useRef(null);
+  const onAddMarkerRef      = useRef(onAddMarker);
+  const onActivateMarkerRef = useRef(onActivateMarker);
+  const onUpdateMarkerRef   = useRef(onUpdateMarker);
+  const activeNameRef       = useRef(activeMarkerName);
+  const activeTypeRef       = useRef(activeMarkerType);
+  const activeIdRef         = useRef(activeMarkerId);
+  const openActivePopupRef  = useRef(false);
+  const focusNameRef        = useRef(false);      // ao abrir o popup do ativo, foca/seleciona o nome (marcador recém-adicionado)
+  const activePosRef        = useRef(null);       // posição atual do marcador ativo (muda ao digitar a coordenada no popup)
+  const movedInPlaceRef     = useRef(null);       // posição já aplicada no marcador pelo popup — o efeito não o recria
+  const onMoveMarkerRef     = useRef(onMoveMarker);
+  onMoveMarkerRef.current   = onMoveMarker;
+  const pinnedPopupsRef     = useRef(new Map());  // id do marcador → L.popup fixado
+  const popupOffsetsRef     = useRef(new Map());  // id do marcador → deslocamento {x, y} do popup arrastado
+  onAddMarkerRef.current      = onAddMarker;
+  onActivateMarkerRef.current = onActivateMarker;
+  onUpdateMarkerRef.current   = onUpdateMarker;
+  activeNameRef.current       = activeMarkerName;
+  activeTypeRef.current       = activeMarkerType;
+  activeIdRef.current         = activeMarkerId;
+
+  // Coordenada digitada no popup: move o marcador ativo no lugar (sem recriá-lo,
+  // para o popup não fechar nem perder o foco) e o popup fixado junto
+  const moveMarkerInPlace = (id, pos) => {
+    if (id === activeIdRef.current && userMarkerLayerRef.current) {
+      userMarkerLayerRef.current.setLatLng([pos.lat, pos.lng]); // o popup vinculado acompanha
+      activePosRef.current = pos;
+      movedInPlaceRef.current = pos;
+      mapRef.current?.panTo([pos.lat, pos.lng]);
+    }
+    pinnedPopupsRef.current.get(id)?.setLatLng([pos.lat, pos.lng]);
+    onMoveMarkerRef.current?.(id, pos);
+  };
+
+  const unpinMarkerPopup = id => {
+    const popup = pinnedPopupsRef.current.get(id);
+    pinnedPopupsRef.current.delete(id);
+    if (popup && mapRef.current) mapRef.current.removeLayer(popup);
+  };
+
+  // Fixa o popup do marcador num L.popup próprio (autoClose/closeOnClick desligados),
+  // que não fecha ao clicar no mapa nem em outro marcador (vários podem ficar abertos)
+  const pinMarkerPopup = ({ id, name, catKey, position, extraHtml }) => {
+    const map = mapRef.current;
+    if (!map) return;
+    userMarkerLayerRef.current?.closePopup();
+    unpinMarkerPopup(id);
+    const el = buildMarkerPopupEl({
+      name, catKey, position, extraHtml, pinned: true,
+      onRename: n => onUpdateMarkerRef.current?.(id, { name: n }),
+      onTypeChange: k => onUpdateMarkerRef.current?.(id, { catKey: k }),
+      onTogglePin: () => unpinMarkerPopup(id),
+      onMove: p => moveMarkerInPlace(id, p),
+      offset: popupOffsetsRef.current.get(id),
+      onOffsetChange: o => popupOffsetsRef.current.set(id, o),
+      // recalcula largura/posição do popup ao expandir/recolher as opções
+      onLayoutChange: () => popup.update(),
+    });
+    L.DomEvent.disableClickPropagation(el);
+    // offset equivale ao popupAnchor do pin (36px) somado ao offset padrão do popup
+    // sem botão fechar nativo — o popup tem os seus próprios; className remove margens (ver marker-popup.js)
+    const popup = L.popup({ autoClose: false, closeOnClick: false, closeButton: false, className: MARKER_POPUP_LEAFLET_CLASS, maxWidth: 320, minWidth: 0, offset: [0, -31] })
+      .setLatLng([position.lat, position.lng])
+      .setContent(el)
+      .addTo(map);
+    popup.on('remove', () => { if (pinnedPopupsRef.current.get(id) === popup) pinnedPopupsRef.current.delete(id); });
+    pinnedPopupsRef.current.set(id, popup);
+  };
   const distModeRef        = useRef(false);
   const distPointsRef      = useRef([]);
   const distPreviewRef     = useRef(null);
@@ -488,7 +562,12 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       shapeStatesRef.current.set(layer, state);
       if (!state._listenerAdded) {
         state._listenerAdded = true;
-        layer.on('click', (e) => { L.DomEvent.stop(e); openLeafletStylePopup(layer, e.latlng); });
+        layer.on('click', (e) => {
+          L.DomEvent.stop(e);
+          // No modo marcador, o clique sobre a forma posiciona o marcador em vez de abrir o painel de estilo
+          if (pickClickRef.current?.(e.latlng)) return;
+          openLeafletStylePopup(layer, e.latlng);
+        });
       }
     };
     addLayerClickListenerRef.current = addLayerClickListener;
@@ -561,26 +640,37 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     });
     new FullscreenControl({ position: 'topright' }).addTo(map);
 
-    // ── Grupo 2: Marcador ────────────────────────────────────────────────────
+    // ── Grupo 2: Marcador + adicionar marcador ───────────────────────────────
+    const setPickMode = (m) => {
+      pickModeRef.current = m;
+      map.getContainer().style.cursor = m ? 'crosshair' : '';
+      pickBtnRef.current?.classList.toggle('nd-lf-active', m === 'move');
+      addPickBtnRef.current?.classList.toggle('nd-lf-active', m === 'add');
+    };
+
     const PickControl = L.Control.extend({
       onAdd() {
         const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        const btn = L.DomUtil.create('a', 'nd-lf-btn', container);
-        btn.href  = '#';
-        btn.title = 'Marcador — selecionar ponto no mapa';
-        btn.style.cssText = 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;';
-        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        const BTN = 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;';
+        const makePickBtn = (title, svg, bMode, ref) => {
+          const btn = L.DomUtil.create('a', 'nd-lf-btn', container);
+          btn.href  = '#';
+          btn.title = title;
+          btn.style.cssText = BTN;
+          btn.innerHTML = svg;
+          ref.current = btn;
+          L.DomEvent.on(btn, 'click', L.DomEvent.stop);
+          L.DomEvent.on(btn, 'click', () => setPickMode(pickModeRef.current === bMode ? false : bMode));
+          return btn;
+        };
+        const pickBtn = makePickBtn('Marcador — selecionar ponto no mapa', `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
           <circle cx="12" cy="9" r="2.8" fill="white"/>
-        </svg>`;
-        pickBtnRef.current = btn;
-        L.DomEvent.on(btn, 'click', L.DomEvent.stop);
-        L.DomEvent.on(btn, 'click', () => {
-          pickModeRef.current = !pickModeRef.current;
-          const active = pickModeRef.current;
-          map.getContainer().style.cursor = active ? 'crosshair' : '';
-          btn.classList.toggle('nd-lf-active', active);
-        });
+        </svg>`, 'move', pickBtnRef);
+        pickBtn.style.borderBottom = '1px solid #ccc';
+        makePickBtn('Adicionar marcador — o novo marcador passa a ser o ativo', `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm4 8h-3v3h-2v-3H8V8h3V5h2v3h3v2z"/>
+        </svg>`, 'add', addPickBtnRef);
         return container;
       },
     });
@@ -689,7 +779,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
           if (editState.active) { exitEditMode(false); setEditUI(false); }
           stopDistMode();
           drawnItems.clearLayers();
-          [circleLayerRef, userMarkerLayerRef, markerLayerRef, allMarkersLayerRef, subShapeLayerRef].forEach(ref => {
+          setPickMode(false);
+          pinnedPopupsRef.current.forEach(p => map.removeLayer(p)); pinnedPopupsRef.current.clear(); popupOffsetsRef.current.clear();
+          [circleLayerRef, userMarkerLayerRef, extraMarkersLayerRef, markerLayerRef, allMarkersLayerRef, subShapeLayerRef].forEach(ref => {
             if (ref.current) { map.removeLayer(ref.current); ref.current = null; }
           });
           areaPopupsRef.current.forEach(p => { try { p.remove(); } catch (_) {} });
@@ -725,11 +817,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     L.DomEvent.on(distA, 'click', L.DomEvent.stop);
     L.DomEvent.on(distA, 'click', () => {
       if (distModeRef.current) { stopDistMode(); return; }
-      if (pickModeRef.current) {
-        pickModeRef.current = false;
-        map.getContainer().style.cursor = '';
-        pickBtnRef.current?.classList.remove('nd-lf-active');
-      }
+      if (pickModeRef.current) setPickMode(false);
       // Medir distância e desenhar forma são mutuamente exclusivos (mesmo comportamento do GMaps)
       drawCtrl._toolbars.draw?.disable();
       distModeRef.current = true;
@@ -741,11 +829,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     // ── Listeners globais ────────────────────────────────────────────────────
     const onKeyDown = (e) => {
       if (e.key !== 'Escape') return;
-      if (pickModeRef.current) {
-        pickModeRef.current = false;
-        map.getContainer().style.cursor = '';
-        pickBtnRef.current?.classList.remove('nd-lf-active');
-      }
+      if (pickModeRef.current) setPickMode(false);
       if (distModeRef.current) stopDistMode();
       if (editState.cancelFn) editState.cancelFn();
     };
@@ -798,12 +882,18 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
         }, 220);
         return;
       }
-      if (!pickModeRef.current) return;
-      pickModeRef.current = false;
-      map.getContainer().style.cursor = '';
-      if (pickBtnRef.current) { pickBtnRef.current.style.background = ''; pickBtnRef.current.style.color = '#555'; }
-      if (onPickRef.current) onPickRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
+      pickClickRef.current?.(e.latlng);
     });
+
+    pickClickRef.current = (latlng) => {
+      if (!pickModeRef.current) return false;
+      const handler = pickModeRef.current === 'add' ? onAddMarkerRef.current : onPickRef.current;
+      // Novo marcador: abre o popup dele com o nome selecionado, para nomeá-lo em seguida
+      if (pickModeRef.current === 'add') { openActivePopupRef.current = true; focusNameRef.current = true; }
+      setPickMode(false);
+      handler?.({ lat: latlng.lat, lng: latlng.lng });
+      return true;
+    };
 
     // Controle do painel de camadas (canto inferior direito, acima do zoom)
     const LayerPanelControl = L.Control.extend({
@@ -948,6 +1038,11 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     const map = mapRef.current;
     if (!map) return;
 
+    // Posição já aplicada no marcador pelo popup (digitação da coordenada): não recria
+    const moved = movedInPlaceRef.current;
+    movedInPlaceRef.current = null;
+    if (moved && userMarker && userMarkerLayerRef.current && moved.lat === userMarker.lat && moved.lng === userMarker.lng) return;
+
     if (userMarkerLayerRef.current) {
       map.removeLayer(userMarkerLayerRef.current);
       userMarkerLayerRef.current = null;
@@ -955,14 +1050,94 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
 
     if (!userMarker) return;
 
+    // Popup com nome editável, tipo de outorga e botão de fixar (e dados do
+    // usuário, quando houver) — conteúdo gerado na abertura para refletir o estado atual
+    const id = activeIdRef.current;
+    const position = { lat: userMarker.lat, lng: userMarker.lng };
+    activePosRef.current = position;
+    const extraHtml = userMarker.info ? buildPopupHtml({ ...userMarker.info, _catColor: '#e53935', _catLabel: 'Usuário' }) : null;
     const marker = L.marker([userMarker.lat, userMarker.lng], {
-      icon: makePinIcon('#e53935'),
+      icon: makePinIcon(markerColor(activeTypeRef.current, '#e53935')),
       zIndexOffset: 1000,
-    }).addTo(map);
+    })
+      .bindPopup(() => {
+        const el = buildMarkerPopupEl({
+          name: activeNameRef.current,
+          catKey: activeTypeRef.current,
+          position: activePosRef.current,
+          extraHtml,
+          onRename: name => onUpdateMarkerRef.current?.(id, { name }),
+          onTypeChange: catKey => onUpdateMarkerRef.current?.(id, { catKey }),
+          onTogglePin: () => pinMarkerPopup({ id, name: activeNameRef.current, catKey: activeTypeRef.current, position: activePosRef.current, extraHtml }),
+          onClose: () => marker.closePopup(),
+          onMove: p => moveMarkerInPlace(id, p),
+          offset: popupOffsetsRef.current.get(id),
+          onOffsetChange: o => popupOffsetsRef.current.set(id, o),
+        });
+        L.DomEvent.disableClickPropagation(el);
+        return el;
+      }, { maxWidth: 320, minWidth: 0, closeButton: false, className: MARKER_POPUP_LEAFLET_CLASS })
+      .addTo(map);
+    // Popup já fixado: não abre o popup comum por cima dele
+    marker.on('popupopen', () => { if (pinnedPopupsRef.current.has(id)) marker.closePopup(); });
 
     userMarkerLayerRef.current = marker;
     map.panTo([userMarker.lat, userMarker.lng]);
-  }, [userMarker]);
+    // Popup fixado do marcador ativo acompanha a nova posição (ex: marcador movido)
+    if (pinnedPopupsRef.current.has(id)) pinMarkerPopup({ id, name: activeNameRef.current, catKey: activeTypeRef.current, position, extraHtml });
+    // Marcador secundário recém-ativado por clique ou marcador recém-adicionado:
+    // abre o popup no novo marcador ativo (no adicionado, com o nome selecionado)
+    if (openActivePopupRef.current) {
+      openActivePopupRef.current = false;
+      const focusName = focusNameRef.current;
+      focusNameRef.current = false;
+      if (!pinnedPopupsRef.current.has(id)) {
+        marker.openPopup();
+        if (focusName) {
+          const title = marker.getPopup()?.getElement()?.querySelector('.ndmp-title');
+          title?.focus();
+          title?.select();
+        }
+      }
+    }
+  }, [userMarker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cor do marcador ativo segue o tipo de outorga escolhido no popup (troca o
+  // ícone sem recriar o marcador, para não fechar o popup aberto)
+  useEffect(() => {
+    userMarkerLayerRef.current?.setIcon(makePinIcon(markerColor(activeMarkerType, '#e53935')));
+  }, [activeMarkerType]);
+
+  // ── Marcadores secundários (cinza, ou na cor do tipo de outorga,
+  //    semitransparentes): clicar em um deles o torna o ativo ─────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (extraMarkersLayerRef.current) {
+      map.removeLayer(extraMarkersLayerRef.current);
+      extraMarkersLayerRef.current = null;
+    }
+
+    if (!extraMarkers || extraMarkers.length === 0) return;
+
+    const group = L.layerGroup();
+    extraMarkers.forEach(pos => {
+      L.marker([pos.lat, pos.lng], {
+        icon: makePinIcon(markerColor(pos.catKey, '#78909c')),
+        opacity: 0.7,
+        zIndexOffset: 900,
+        title: `${pos.name} — clique para tornar este o marcador ativo`,
+      })
+        .on('click', () => {
+          openActivePopupRef.current = true;
+          onActivateMarkerRef.current?.(pos.id);
+        })
+        .addTo(group);
+    });
+    group.addTo(map);
+    extraMarkersLayerRef.current = group;
+  }, [extraMarkers]);
 
   // ── Marcador de outorga selecionada ───────────────────────────────────────
   useEffect(() => {
@@ -1062,7 +1237,7 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {mapInstance && panelContainer &&
         ReactDOM.createPortal(
-          <LayerPanel map={mapInstance} mapType="leaflet" onFeatureSearch={onLayerFeatureSearch} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} markerPosition={userMarker} isFullscreen={isFullscreen} />,
+          <LayerPanel map={mapInstance} mapType="leaflet" onFeatureSearch={onLayerFeatureSearch} isMarkerActive={(latlng) => !!latlng && !!pickClickRef.current?.(latlng)} onWaterUseChange={setIsWaterAvailable} clearTrigger={layerClearTrigger} initialLayerState={initialLayerState} onLayerStateChange={onLayerStateChange} markerPosition={userMarker} isFullscreen={isFullscreen} />,
           panelContainer,
         )
       }
