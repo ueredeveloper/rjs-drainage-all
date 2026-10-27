@@ -180,7 +180,7 @@ function makeBar() {
 
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true, onInitialMarker, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker, newMarkerPopupRequest = 0 }) {
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true, onInitialMarker, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker, onPinnedChange, newMarkerPopupRequest = 0 }) {
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
@@ -266,9 +266,14 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   activeNameRef.current       = activeMarkerName;
   activeTypeRef.current       = activeMarkerType;
 
+  const onPinnedChangeRef = useRef(onPinnedChange);
+  onPinnedChangeRef.current = onPinnedChange;
+
   const unpinMarkerPopup = id => {
-    pinnedPopupsRef.current.get(id)?.close();
+    if (!pinnedPopupsRef.current.has(id)) return;
+    pinnedPopupsRef.current.get(id).close();
     pinnedPopupsRef.current.delete(id);
+    onPinnedChangeRef.current?.(id, false);
   };
 
   // Coordenada digitada no popup: move o marcador ativo no lugar (sem recriá-lo,
@@ -304,9 +309,14 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
       // "roubava" a digitação de outro popup (ex: nome do 2º marcador ia para o 1º, fixado)
       onLayoutChange: () => { iw.close(); iw.open({ map: mapRef.current, shouldFocus: false }); },
     }));
-    iw.addListener('closeclick', () => pinnedPopupsRef.current.delete(id));
+    iw.addListener('closeclick', () => {
+      if (pinnedPopupsRef.current.get(id) !== iw) return;
+      pinnedPopupsRef.current.delete(id);
+      onPinnedChangeRef.current?.(id, false);
+    });
     iw.open({ map: mapRef.current, shouldFocus: false });
     pinnedPopupsRef.current.set(id, iw);
+    onPinnedChangeRef.current?.(id, true);
   };
   onCreatedRef.current       = onShapeCreated;
   onPickRef.current          = onPickCoordinate;

@@ -162,7 +162,7 @@ function buildPopupHtml(item) {
     </div>`;
 }
 
-export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker, newMarkerPopupRequest = 0 }) {
+export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker, onPinnedChange, newMarkerPopupRequest = 0 }) {
   const containerRef       = useRef(null);
   const mapRef             = useRef(null);
   const [mapInstance, setMapInstance]             = useState(null);
@@ -232,10 +232,15 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     onMoveMarkerRef.current?.(id, pos);
   };
 
+  const onPinnedChangeRef = useRef(onPinnedChange);
+  onPinnedChangeRef.current = onPinnedChange;
+
   const unpinMarkerPopup = id => {
     const popup = pinnedPopupsRef.current.get(id);
+    if (!popup) return;
     pinnedPopupsRef.current.delete(id);
-    if (popup && mapRef.current) mapRef.current.removeLayer(popup);
+    if (mapRef.current) mapRef.current.removeLayer(popup);
+    onPinnedChangeRef.current?.(id, false);
   };
 
   // Fixa o popup do marcador num L.popup próprio (autoClose/closeOnClick desligados),
@@ -263,8 +268,13 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
       .setLatLng([position.lat, position.lng])
       .setContent(el)
       .addTo(map);
-    popup.on('remove', () => { if (pinnedPopupsRef.current.get(id) === popup) pinnedPopupsRef.current.delete(id); });
+    popup.on('remove', () => {
+      if (pinnedPopupsRef.current.get(id) !== popup) return;
+      pinnedPopupsRef.current.delete(id);
+      onPinnedChangeRef.current?.(id, false);
+    });
     pinnedPopupsRef.current.set(id, popup);
+    onPinnedChangeRef.current?.(id, true);
   };
   const distModeRef        = useRef(false);
   const distPointsRef      = useRef([]);

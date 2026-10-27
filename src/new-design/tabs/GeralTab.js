@@ -284,8 +284,7 @@ export default function GeralTab({
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
-                  animation: { duration: 900, easing: 'easeInOutCubic', animateRotate: true, animateScale: true },
-                  transitions: { active: { animation: { duration: 250 } } },
+                  animation: false,
                   plugins: {
                     legend: { display: false },
                     tooltip: {

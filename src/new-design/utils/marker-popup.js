@@ -175,7 +175,7 @@ function button(className, html, title, onClick) {
  * (só o cabeçalho). Usado tanto pelo GoogleMapView quanto pelo LeafletMap.
  *
  * @param {Object} opts
- * @param {string} opts.name - Nome atual do marcador (ex: "Marcador 1")
+ * @param {string} opts.name - Nome atual do marcador (padrão: "Nome")
  * @param {{lat: number, lng: number}} opts.position - Coordenada do marcador
  * @param {(name: string) => void} opts.onRename - Chamado a cada alteração do nome
  * @param {string|null} [opts.catKey] - Tipo de outorga atual do marcador

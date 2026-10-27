@@ -35,6 +35,9 @@ const GMAPS_API_KEY = 'AIzaSyDELUXEV5kZ2MNn47NVRgCcDX-96Vtyj0w';
 
 const MOBILE_TAB_LABELS = { 'Geral': 'GER', 'Subterrânea': 'SUB', 'Superficial': 'SUP', 'Barragem': 'BAR' };
 
+// Nome padrão de todo marcador novo — o popup abre com ele selecionado para o usuário digitar
+const DEFAULT_MARKER_NAME = 'Nome';
+
 export default function NewDesign() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -61,7 +64,7 @@ export default function NewDesign() {
   // Incrementado quando um marcador é adicionado fora do mapa (barra de coordenadas): o mapa
   // abre o popup do novo marcador com o nome selecionado, como no botão "+" do mapa
   const [newMarkerPopupRequest, setNewMarkerPopupRequest] = useState(0);
-  const [activeMarkerMeta, setActiveMarkerMeta] = useState({ id: 1, name: 'Marcador 1', catKey: null });
+  const [activeMarkerMeta, setActiveMarkerMeta] = useState({ id: 1, name: DEFAULT_MARKER_NAME, catKey: null });
   const nextMarkerIdRef                       = useRef(2);
   const [mapProvider, setMapProvider]         = useState(() => {
     try {
@@ -82,6 +85,13 @@ export default function NewDesign() {
   // {lat, lng} (strings) que o efeito de lat/lng deve ignorar — vieram do próprio marcador,
   // que já foi posicionado; comparar por valor evita o flag "preso" quando o texto não muda
   const skipUserMarkerEffectRef               = useRef(null);
+  // Ids dos marcadores com popup fixado no mapa (avisado pelos mapas via onPinnedChange)
+  const pinnedMarkerIdsRef                    = useRef(new Set());
+  const userMarkerRef                         = useRef(userMarker);
+  const activeMarkerIdRef                     = useRef(activeMarkerMeta.id);
+  const addMarkerAtRef                        = useRef(null);
+  userMarkerRef.current     = userMarker;
+  activeMarkerIdRef.current = activeMarkerMeta.id;
   const [removeShapeTrigger, setRemoveShapeTrigger] = useState(null);
   const [lastDrawnPageId, setLastDrawnPageId] = useState(null);
   const [fontSize, setFontSize]               = useState(() => {
@@ -240,29 +250,48 @@ export default function NewDesign() {
     setLng(lngStr);
   }, []);
 
+  /**
+   * Posiciona o marcador conforme a coordenada vinda dos inputs da busca por coordenadas.
+   * Se o marcador ativo estiver com o popup fixado, ele não é movido: cria-se outro
+   * marcador (que passa a ser o ativo). Mesma posição do fixado (ex: "Buscar" sem
+   * editar, inputs com 6 casas) não cria duplicata.
+   * @param {{lat: number, lng: number, info?: Object}} pos - Posição
+   * @param {boolean} syncInputs - Se reescreve os inputs com a posição (6 casas)
+   */
+  const placeMarkerFromInputs = useCallback((pos, syncInputs) => {
+    const cur = userMarkerRef.current;
+    const samePos = cur && Math.abs(cur.lat - pos.lat) < 1e-6 && Math.abs(cur.lng - pos.lng) < 1e-6;
+    if (pinnedMarkerIdsRef.current.has(activeMarkerIdRef.current) && !samePos) {
+      addMarkerAtRef.current?.(pos, syncInputs);
+      return;
+    }
+    setUserMarker(pos);
+  }, []);
+
   useEffect(() => {
     const skip = skipUserMarkerEffectRef.current;
     skipUserMarkerEffectRef.current = null;
     if (skip && skip.lat === lat && skip.lng === lng) return;
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
-    if (!isNaN(latN) && !isNaN(lngN)) setUserMarker({ lat: latN, lng: lngN });
-  }, [lat, lng]);
+    // sem reescrever os inputs: o usuário pode estar digitando
+    if (!isNaN(latN) && !isNaN(lngN)) placeMarkerFromInputs({ lat: latN, lng: lngN }, false);
+  }, [lat, lng, placeMarkerFromInputs]);
 
   const handleApplyCoordinates = useCallback(({ lat: latN, lng: lngN, info }) => {
     setLatLngSkippingMarker(String(latN.toFixed(7)), String(lngN.toFixed(7)));
     console.log('[Coordenadas][marcador] aplicando ao mapa:', { lat: latN, lng: lngN });
-    setUserMarker({ lat: latN, lng: lngN, info: info ?? null });
-  }, [setLatLngSkippingMarker]);
+    placeMarkerFromInputs({ lat: latN, lng: lngN, info: info ?? null }, false);
+  }, [setLatLngSkippingMarker, placeMarkerFromInputs]);
 
   const handleCoordSearch = useCallback(() => {
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     if (isNaN(latN) || isNaN(lngN)) { setError('Coordenadas inválidas. Ex: -15.7801'); return; }
     console.log('[Coordenadas][Aba Geral] marcador e busca:', { lat: latN, lng: lngN });
-    setUserMarker({ lat: latN, lng: lngN });
+    placeMarkerFromInputs({ lat: latN, lng: lngN }, false);
     doCircleSearch({ lat: latN, lng: lngN }, radius, 'Coordenada', false, true);
-  }, [lat, lng, radius, doCircleSearch]);
+  }, [lat, lng, radius, doCircleSearch, placeMarkerFromInputs]);
 
   const handleSubSearch = useCallback(() => {
     const latN = parseFloat(lat);
@@ -355,12 +384,13 @@ export default function NewDesign() {
   const handleClearAll = useCallback(() => {
     coordSearchPageIdRef.current = null;
     setCircleData(null);
-    // Recria o marcador vermelho inicial ("Marcador 1") na coordenada dos inputs da aba Geral
+    // Recria o marcador vermelho inicial na coordenada dos inputs da aba Geral
     const latN = parseFloat(lat);
     const lngN = parseFloat(lng);
     setUserMarker(!isNaN(latN) && !isNaN(lngN) ? { lat: latN, lng: lngN } : null);
     setExtraMarkers([]);
-    setActiveMarkerMeta({ id: 1, name: 'Marcador 1', catKey: null });
+    pinnedMarkerIdsRef.current.clear(); // o mapa fecha os popups fixados
+    setActiveMarkerMeta({ id: 1, name: DEFAULT_MARKER_NAME, catKey: null });
     nextMarkerIdRef.current = 2;
     setSubShape(null);
     setAllMarkers([]);
@@ -388,15 +418,28 @@ export default function NewDesign() {
   /**
    * Adiciona um novo marcador no ponto clicado. O marcador ativo anterior passa a
    * ser secundário (apenas visual) e o novo assume coordenadas, inputs e buscas.
-   * @param {{lat: number, lng: number}} pos - Posição clicada no mapa
+   * @param {{lat: number, lng: number, info?: Object}} pos - Posição clicada no mapa
+   * @param {boolean} [syncInputs=true] - Se reescreve os inputs de lat/lng com a posição
    */
-  const handleAddMarker = useCallback(({ lat: pLat, lng: pLng }) => {
+  const handleAddMarker = useCallback((pos, syncInputs = true) => {
     if (userMarker) setExtraMarkers(prev => [...prev, { ...userMarker, ...activeMarkerMeta }]);
     const id = nextMarkerIdRef.current++;
-    setActiveMarkerMeta({ id, name: `Marcador ${id}`, catKey: null });
-    setLatLngSkippingMarker(pLat.toFixed(6), pLng.toFixed(6));
-    setUserMarker({ lat: pLat, lng: pLng });
+    setActiveMarkerMeta({ id, name: DEFAULT_MARKER_NAME, catKey: null });
+    if (syncInputs) setLatLngSkippingMarker(pos.lat.toFixed(6), pos.lng.toFixed(6));
+    setUserMarker({ ...pos });
   }, [userMarker, activeMarkerMeta, setLatLngSkippingMarker]);
+  addMarkerAtRef.current = handleAddMarker;
+
+  /**
+   * Popup de um marcador fixado/desafixado no mapa: com o ativo fixado, coordenadas
+   * vindas dos inputs criam outro marcador em vez de movê-lo.
+   * @param {number} id - Id do marcador
+   * @param {boolean} pinned - Se ficou fixado
+   */
+  const handlePinnedChange = useCallback((id, pinned) => {
+    if (pinned) pinnedMarkerIdsRef.current.add(id);
+    else pinnedMarkerIdsRef.current.delete(id);
+  }, []);
 
   /**
    * Botão "Adicionar marcador" das barras de busca por coordenadas: apenas adiciona
@@ -598,6 +641,7 @@ export default function NewDesign() {
               activeMarkerType: activeMarkerMeta.catKey,
               onUpdateMarker: handleUpdateMarker,
               onMoveMarker: handleMoveMarker,
+              onPinnedChange: handlePinnedChange,
               onInitialMarker: handleInitialMarker,
               onClearAll: handleClearAll,
               onEditSave: handleEditSave,
