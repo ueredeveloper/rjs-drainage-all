@@ -4,9 +4,10 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SearchIcon from '@mui/icons-material/Search';
 import TransformIcon from '@mui/icons-material/Transform';
 import CoordConverter from './CoordConverter';
+import AddMarkerButton from './AddMarkerButton';
 
 
-export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange, onApplyCoordinates, onSearch, loading, error, title, children }) {
+export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange, onApplyCoordinates, onAddMarker, onSearch, loading, error, title, children }) {
   const [openConverter, setOpenConverter] = useState(false);
 
   const handleCopy = useCallback(() => {
@@ -57,6 +58,7 @@ export default function CoordSearchBar({ id, lat, lng, onLatChange, onLngChange,
             <TransformIcon sx={{ fontSize: 18 }} />
           </IconButton>
         </Tooltip>
+        <AddMarkerButton lat={lat} lng={lng} onAddMarker={onAddMarker} />
         <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
           <span>
             <IconButton

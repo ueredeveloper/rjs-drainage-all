@@ -19,6 +19,7 @@ import { Bar }          from 'react-chartjs-2';
 import CompactTable      from '../components/CompactTable';
 import UserSearchDialog  from '../components/UserSearchDialog';
 import CoordConverter    from '../components/CoordConverter';
+import AddMarkerButton   from '../components/AddMarkerButton';
 import { findPointsInASystem } from '../../services/geolocation';
 import { analyzeAvailability, numberWithCommas } from '../../tools';
 import { MESES, abbr } from '../constants';
@@ -109,7 +110,7 @@ function AvailChart({ avail, qUsuario, logScale }) {
 }
 
 export default function SubterraneanTab({
-  lat, lng, onLatChange, onLngChange, onApplyCoordinates,
+  lat, lng, onLatChange, onLngChange, onApplyCoordinates, onAddMarker,
   onMarkerSelect, onSubShape, onSubMarkers, onClearCircle,
 }) {
   const theme = useTheme();
@@ -294,6 +295,7 @@ export default function SubterraneanTab({
               <TransformIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
+          <AddMarkerButton lat={lat} lng={lng} onAddMarker={onAddMarker} />
           <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
             <span>
               <IconButton

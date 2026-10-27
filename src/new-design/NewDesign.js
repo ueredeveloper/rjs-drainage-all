@@ -58,6 +58,9 @@ export default function NewDesign() {
   const [subShape, setSubShape]               = useState(null);
   const [userMarker, setUserMarker]           = useState(null);
   const [extraMarkers, setExtraMarkers]       = useState([]);
+  // Incrementado quando um marcador é adicionado fora do mapa (barra de coordenadas): o mapa
+  // abre o popup do novo marcador com o nome selecionado, como no botão "+" do mapa
+  const [newMarkerPopupRequest, setNewMarkerPopupRequest] = useState(0);
   const [activeMarkerMeta, setActiveMarkerMeta] = useState({ id: 1, name: 'Marcador 1', catKey: null });
   const nextMarkerIdRef                       = useRef(2);
   const [mapProvider, setMapProvider]         = useState(() => {
@@ -396,6 +399,16 @@ export default function NewDesign() {
   }, [userMarker, activeMarkerMeta, setLatLngSkippingMarker]);
 
   /**
+   * Botão "Adicionar marcador" das barras de busca por coordenadas: apenas adiciona
+   * o marcador na coordenada digitada (sem buscar), como o botão "+" do mapa.
+   * @param {{lat: number, lng: number}} pos - Coordenada digitada
+   */
+  const handleAddMarkerFromBar = useCallback((pos) => {
+    setNewMarkerPopupRequest(n => n + 1);
+    handleAddMarker(pos);
+  }, [handleAddMarker]);
+
+  /**
    * Torna ativo um marcador secundário: mapa e inputs passam para a coordenada dele
    * e o marcador ativo atual vira secundário.
    * @param {number} id - Id do marcador em extraMarkers
@@ -579,6 +592,7 @@ export default function NewDesign() {
               extraMarkers,
               onAddMarker: handleAddMarker,
               onActivateMarker: handleActivateMarker,
+              newMarkerPopupRequest,
               activeMarkerId: activeMarkerMeta.id,
               activeMarkerName: activeMarkerMeta.name,
               activeMarkerType: activeMarkerMeta.catKey,
@@ -736,6 +750,7 @@ export default function NewDesign() {
               lat={lat} lng={lng}
               onLatChange={setLat} onLngChange={setLng}
               onApplyCoordinates={handleApplyCoordinates}
+              onAddMarker={handleAddMarkerFromBar}
               radius={radius} onRadiusChange={setRadius}
               onSearch={handleCoordSearch}
               onTextSearch={handleTextSearch}
@@ -757,6 +772,7 @@ export default function NewDesign() {
             <SubterraneanTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
               onApplyCoordinates={handleApplyCoordinates}
+              onAddMarker={handleAddMarkerFromBar}
               onMarkerSelect={setSelectedMarker}
               onSubShape={setSubShape}
               onSubMarkers={handleSubMarkers}
@@ -767,6 +783,7 @@ export default function NewDesign() {
             <SuperficialTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
               onApplyCoordinates={handleApplyCoordinates}
+              onAddMarker={handleAddMarkerFromBar}
               onMarkerSelect={setSelectedMarker}
               onSupShape={setSubShape}
               onSupMarkers={handleSupMarkers}
@@ -777,6 +794,7 @@ export default function NewDesign() {
             <BarragemTab
               lat={lat} lng={lng} onLatChange={setLat} onLngChange={setLng}
               onApplyCoordinates={handleApplyCoordinates}
+              onAddMarker={handleAddMarkerFromBar}
               onMarkerSelect={setSelectedMarker}
               onBarMarkers={handleBarMarkers}
               onBarShape={setSubShape}

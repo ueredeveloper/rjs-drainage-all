@@ -56,7 +56,7 @@ const MOCK_UH = {
   attributes: { uh_codigo: '', uh_nome: '' },
 };
 
-export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect, onSupShape, onSupMarkers, onClearCircle }) {
+export default function SuperficialTab({ lat, lng, onLatChange, onLngChange, onApplyCoordinates, onAddMarker, onMarkerSelect, onSupShape, onSupMarkers, onClearCircle }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [tabIndex, setTabIndex] = useState(0);
@@ -208,6 +208,7 @@ const hydrographicBasin = await searchHydrograficUnit(
         lat={lat} lng={lng}
         onLatChange={onLatChange} onLngChange={onLngChange}
         onApplyCoordinates={onApplyCoordinates}
+        onAddMarker={onAddMarker}
         onSearch={handleSearch} loading={loading} error={error}
         title={abbr('Busca por Coordenadas', isMobile)}
       />

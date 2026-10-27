@@ -180,7 +180,7 @@ function makeBar() {
 
 
 // ─── Componente interno ───────────────────────────────────────────────────────
-function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true, onInitialMarker, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker }) {
+function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, onClearAll, onEditSave, allMarkers, subShape, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, introReady = true, onInitialMarker, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker, newMarkerPopupRequest = 0 }) {
   const [mapInstance, setMapInstance]         = useState(null);
   const [isWaterAvailable, setIsWaterAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen]       = useState(false);
@@ -248,6 +248,9 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   const userPinElRef        = useRef(null);
   const onMoveMarkerRef     = useRef(onMoveMarker);
   const openActivePopupRef  = useRef(false);
+  const newMarkerPopupReqRef = useRef(newMarkerPopupRequest); // pedido de abrir o popup do marcador adicionado fora do mapa
+  const lastPopupReqRef      = useRef(newMarkerPopupRequest);
+  newMarkerPopupReqRef.current = newMarkerPopupRequest;
   const focusNameRef        = useRef(false);      // ao abrir o popup do ativo, foca/seleciona o nome (marcador recém-adicionado)
   const activePosRef        = useRef(null);       // posição atual do marcador ativo (muda ao digitar a coordenada no popup)
   const movedInPlaceRef     = useRef(null);       // posição já aplicada no marcador pelo popup — o efeito não o recria
@@ -1248,6 +1251,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     });
     userMarkerRef.current = mkr;
     mapRef.current.panTo({ lat: userMarker.lat, lng: userMarker.lng });
+    // Marcador adicionado pela barra de busca por coordenadas: abre o popup como no botão "+" do mapa
+    if (newMarkerPopupReqRef.current !== lastPopupReqRef.current) {
+      lastPopupReqRef.current = newMarkerPopupReqRef.current;
+      openActivePopupRef.current = true;
+      focusNameRef.current = true;
+    }
     // Marcador secundário recém-ativado por clique ou marcador recém-adicionado:
     // abre o popup no novo marcador ativo (no adicionado, com o nome selecionado)
     if (openActivePopupRef.current) {
@@ -1346,6 +1355,10 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
     dataLayer.addGeoJson(geoJson);
     const s = subShape._style ?? {};
     dataLayer.setStyle({ strokeColor: s.color ?? '#6a1b9a', strokeWeight: 2, strokeOpacity: 0.85, fillColor: s.fillColor ?? '#ce93d8', fillOpacity: 0.12 });
+    // A camada (clicável) absorve o clique e o mapa não o recebe: repassa ao modo marcador /
+    // desenho, como nas camadas do LayerPanel — permite adicionar/mover marcador dentro dela
+    dataLayer.addListener('click', e => clickInterceptRef.current?.(e.latLng));
+    dataLayer.addListener('mousemove', e => drawMoveRef.current?.(e.latLng));
     subShapeRef.current = dataLayer;
     const bounds = new window.google.maps.LatLngBounds();
     dataLayer.forEach(f => f.getGeometry()?.forEachLatLng(ll => bounds.extend(ll)));

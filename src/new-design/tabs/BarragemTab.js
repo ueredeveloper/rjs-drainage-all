@@ -38,7 +38,7 @@ const StatusChip = ({ check }) => String(check).toLowerCase() === 'ok'
   : <Chip icon={<ErrorOutlineIcon     sx={{ fontSize: 12, color: '#b71c1c !important' }} />} label="Problema" size="small" sx={{ height: 17, fontSize: '0.78rem', bgcolor: '#ffebee', color: '#b71c1c', '& .MuiChip-icon': { ml: 0.5 } }} />;
 
 export default function BarragemTab({
-  lat, lng, onLatChange, onLngChange, onApplyCoordinates, onMarkerSelect,
+  lat, lng, onLatChange, onLngChange, onApplyCoordinates, onAddMarker, onMarkerSelect,
   onBarMarkers, onBarShape, onClearCircle,
 }) {
   const theme = useTheme();
@@ -177,6 +177,7 @@ export default function BarragemTab({
         lat={lat} lng={lng}
         onLatChange={onLatChange} onLngChange={onLngChange}
         onApplyCoordinates={onApplyCoordinates}
+        onAddMarker={onAddMarker}
         onSearch={handleSearch} loading={calcLoading} error={calcError}
         title={abbr('Busca por Coordenadas', isMobile)}
       />

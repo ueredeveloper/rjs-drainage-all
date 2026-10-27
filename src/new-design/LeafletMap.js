@@ -162,7 +162,7 @@ function buildPopupHtml(item) {
     </div>`;
 }
 
-export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker }) {
+export default function LeafletMap({ circleData, onShapeCreated, markerData, userMarker, onPickCoordinate, allMarkers, subShape, onClearAll, onEditSave, clearShapesTrigger, onLayerFeatureSearch, initialLayerState, onLayerStateChange, lastDrawnPageId, removeShapeTrigger, extraMarkers, onAddMarker, onActivateMarker, activeMarkerId, activeMarkerName, activeMarkerType, onUpdateMarker, onMoveMarker, newMarkerPopupRequest = 0 }) {
   const containerRef       = useRef(null);
   const mapRef             = useRef(null);
   const [mapInstance, setMapInstance]             = useState(null);
@@ -202,6 +202,9 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
   const activeTypeRef       = useRef(activeMarkerType);
   const activeIdRef         = useRef(activeMarkerId);
   const openActivePopupRef  = useRef(false);
+  const newMarkerPopupReqRef = useRef(newMarkerPopupRequest); // pedido de abrir o popup do marcador adicionado fora do mapa
+  const lastPopupReqRef      = useRef(newMarkerPopupRequest);
+  newMarkerPopupReqRef.current = newMarkerPopupRequest;
   const focusNameRef        = useRef(false);      // ao abrir o popup do ativo, foca/seleciona o nome (marcador recém-adicionado)
   const activePosRef        = useRef(null);       // posição atual do marcador ativo (muda ao digitar a coordenada no popup)
   const movedInPlaceRef     = useRef(null);       // posição já aplicada no marcador pelo popup — o efeito não o recria
@@ -1085,6 +1088,12 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
     map.panTo([userMarker.lat, userMarker.lng]);
     // Popup fixado do marcador ativo acompanha a nova posição (ex: marcador movido)
     if (pinnedPopupsRef.current.has(id)) pinMarkerPopup({ id, name: activeNameRef.current, catKey: activeTypeRef.current, position, extraHtml });
+    // Marcador adicionado pela barra de busca por coordenadas: abre o popup como no botão "+" do mapa
+    if (newMarkerPopupReqRef.current !== lastPopupReqRef.current) {
+      lastPopupReqRef.current = newMarkerPopupReqRef.current;
+      openActivePopupRef.current = true;
+      focusNameRef.current = true;
+    }
     // Marcador secundário recém-ativado por clique ou marcador recém-adicionado:
     // abre o popup no novo marcador ativo (no adicionado, com o nome selecionado)
     if (openActivePopupRef.current) {
@@ -1225,6 +1234,10 @@ export default function LeafletMap({ circleData, onShapeCreated, markerData, use
         dashArray:   '6 4',
       },
     });
+
+    // Clique dentro da forma com o modo marcador ativo: adiciona/move o marcador
+    // (mesmo tratamento das camadas do LayerPanel)
+    layer.on('click', e => { if (pickClickRef.current?.(e.latlng)) L.DomEvent.stopPropagation(e); });
 
     layer.addTo(map);
     subShapeLayerRef.current = layer;

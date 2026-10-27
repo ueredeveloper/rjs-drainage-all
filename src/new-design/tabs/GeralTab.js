@@ -16,6 +16,7 @@ import { abbr } from '../constants';
 import CompactTable from '../components/CompactTable';
 import TextSearchBar from '../components/TextSearchBar';
 import CoordConverter from '../components/CoordConverter';
+import AddMarkerButton from '../components/AddMarkerButton';
 import { polarCenteredLabelsPlugin } from '../chartSetup';
 import { TI_CATS, MESES } from '../constants';
 import { numberWithCommas } from '../../tools';
@@ -50,7 +51,7 @@ const CAT_EXTRA_COLS = {
 const CATS_SEM_VAZAO = new Set(Object.keys(CAT_EXTRA_COLS));
 
 export default function GeralTab({
-  lat, lng, onLatChange, onLngChange, onApplyCoordinates,
+  lat, lng, onLatChange, onLngChange, onApplyCoordinates, onAddMarker,
   radius, onRadiusChange,
   onSearch, onTextSearch,
   loading, error,
@@ -179,6 +180,7 @@ export default function GeralTab({
                   <TransformIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
+              <AddMarkerButton lat={lat} lng={lng} onAddMarker={onAddMarker} />
               <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
                 <span>
                   <IconButton
