@@ -13,6 +13,9 @@ const BRASILIA  = { lat: -15.7948528, lng: -47.8831189 };
 // oficiais não mostram bem mata/lago. Para reativar: STREET_VIEW_ENABLED = true.
 const STREET_VIEW_ENABLED = false;
 const FORCE_STREET_VIEW   = false; // true abre sempre com Street View (para avaliar as imagens)
+// Animação de abertura (círculo e polígonos do Plano Piloto/setorização sendo preenchidos)
+// desabilitada: o site abre direto com o marcador de Brasília. Para reativar: INTRO_ANIMATION_ENABLED = true.
+const INTRO_ANIMATION_ENABLED = false;
 const TI_COLORS = { 1: '#2e7d32', 2: '#0277bd', 3: '#ff00aa', 4: '#6a1b9a', 5: '#f57f17' };
 
 const SHAPE_STYLE = {
@@ -342,11 +345,12 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
 
   // Inicia a animação de intro somente quando o mapa está pronto, o login foi concluído
   // e a abertura com Street View terminou (ou foi descartada por indisponibilidade).
-  // Se o Street View foi exibido, a animação é pulada: só coloca o marcador de Brasília.
+  // Se o Street View foi exibido (ou a animação está desabilitada), a animação é pulada:
+  // só coloca o marcador de Brasília.
   useEffect(() => {
     if (!introReady || !mapInstance || !streetViewDone || introStartedRef.current) return;
     introStartedRef.current = true;
-    if (streetViewPlayed) {
+    if (streetViewPlayed || !INTRO_ANIMATION_ENABLED) {
       setHudPhase('ambient');
       introBrasiliaMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
         position: BRASILIA, map: mapRef.current,
@@ -1378,7 +1382,7 @@ function GMapInner({ circleData, onShapeCreated, markerData, userMarker, onPickC
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-      <SadDfHud phase={hudPhase} ready={introReady && streetViewDone && !streetViewPlayed} />
+      <SadDfHud phase={hudPhase} ready={INTRO_ANIMATION_ENABLED && introReady && streetViewDone && !streetViewPlayed} />
       {mapInstance && !streetViewDone &&
         <ElemStreetView play={introReady} onDone={played => { setStreetViewPlayed(played); setStreetViewDone(true); }} />
       }
