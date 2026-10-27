@@ -172,6 +172,7 @@ export default function GeralTab({
                   <ContentCopyIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
+              <AddMarkerButton lat={lat} lng={lng} onAddMarker={onAddMarker} />
               <Tooltip title="Converter coordenadas (UTM ou GMS → Decimal)">
                 <IconButton
                   size="small" onClick={() => setOpenConverter(true)}
@@ -180,7 +181,6 @@ export default function GeralTab({
                   <TransformIcon sx={{ fontSize: 18 }} />
                 </IconButton>
               </Tooltip>
-              <AddMarkerButton lat={lat} lng={lng} onAddMarker={onAddMarker} />
               <Tooltip title={loading ? 'Buscando…' : 'Buscar'}>
                 <span>
                   <IconButton
